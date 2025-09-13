@@ -7,6 +7,7 @@ import type { DomainReport } from "@/lib/mock"
 import { Section } from "./section"
 import { KeyValue } from "./key-value"
 import { Shield, Server, Globe, Lock } from "lucide-react"
+import { DnsGroup } from "./dns-group"
 
 export function DomainReportView({ report }: { report: DomainReport }) {
   function copy(text: string) {
@@ -64,10 +65,37 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           icon={<Globe className="h-4 w-4" />}
           accent="blue"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {report.dns.map((r, i) => (
-              <KeyValue key={i} label={`${r.type} ${r.name}`} value={r.value} copyable />
-            ))}
+          <div className="space-y-4">
+            <DnsGroup title="A Records" chart={1}>
+              {report.dns.filter((d) => d.type === "A").map((r, i) => (
+                <KeyValue key={`A-${i}`} label={`${r.name}`} value={r.value} copyable />
+              ))}
+            </DnsGroup>
+            <DnsGroup title="AAAA Records" chart={2}>
+              {report.dns.filter((d) => d.type === "AAAA").map((r, i) => (
+                <KeyValue key={`AAAA-${i}`} label={`${r.name}`} value={r.value} copyable />
+              ))}
+            </DnsGroup>
+            <DnsGroup title="MX Records" chart={3}>
+              {report.dns.filter((d) => d.type === "MX").map((r, i) => (
+                <KeyValue key={`MX-${i}`} label={`${r.name}${r.priority ? ` (prio ${r.priority})` : ""}`} value={r.value} copyable />
+              ))}
+            </DnsGroup>
+            <DnsGroup title="CNAME Records" chart={4}>
+              {report.dns.filter((d) => d.type === "CNAME").map((r, i) => (
+                <KeyValue key={`CNAME-${i}`} label={`${r.name}`} value={r.value} copyable />
+              ))}
+            </DnsGroup>
+            <DnsGroup title="TXT Records" chart={5}>
+              {report.dns.filter((d) => d.type === "TXT").map((r, i) => (
+                <KeyValue key={`TXT-${i}`} label={`${r.name}`} value={r.value} copyable />
+              ))}
+            </DnsGroup>
+            <DnsGroup title="NS Records" chart={1}>
+              {report.dns.filter((d) => d.type === "NS").map((r, i) => (
+                <KeyValue key={`NS-${i}`} label={`${r.name}`} value={r.value} copyable />
+              ))}
+            </DnsGroup>
           </div>
         </Section>
 
