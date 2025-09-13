@@ -1,6 +1,22 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ domain: string }>;
+}): Promise<Metadata> {
+  const { domain: raw } = await params;
+  const decoded = decodeURIComponent(raw);
+  const normalized = normalizeDomainInput(decoded);
+  if (!isValidDomain(normalized)) notFound();
+  return {
+    title: `${normalized} | Domain report on hoot.sh`,
+    description: `Investigate ${normalized} with WHOIS, DNS, SSL, headers, and more.`,
+  };
+}
 
 export default async function DomainPage({
   params,
@@ -10,7 +26,7 @@ export default async function DomainPage({
   const { domain: raw } = await params;
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
-  if (!isValidDomain(normalized)) return notFound();
+  if (!isValidDomain(normalized)) notFound();
   // Canonicalize URL to the normalized domain
   if (normalized !== decoded) {
     redirect(`/${encodeURIComponent(normalized)}`);
