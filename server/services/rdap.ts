@@ -1,4 +1,4 @@
-import { getOrSet, ns } from "@/lib/redis";
+import { cacheGet, cacheSet, ns } from "@/lib/redis";
 
 export type Whois = {
   registrar: string;
@@ -20,58 +20,63 @@ type RdapJson = {
 
 export async function fetchWhois(domain: string): Promise<Whois> {
   const key = ns("rdap", domain.toLowerCase());
-  return await getOrSet(key, 24 * 60 * 60, async () => {
-    const rdapBase = await rdapBaseForDomain(domain);
-    const url = `${rdapBase}/domain/${encodeURIComponent(domain)}`;
-    const res = await fetch(url, {
-      headers: { accept: "application/rdap+json" },
-    });
-    if (res.status === 404) {
-      return {
-        registrar: "",
-        creationDate: "",
-        expirationDate: "",
-        registrant: { organization: "", country: "" },
-        status: ["available"],
-        registered: false,
-      };
-    }
-    if (!res.ok) throw new Error(`RDAP failed ${res.status}`);
-    const json = (await res.json()) as unknown as RdapJson;
+  const cached = await cacheGet<Whois>(key);
+  if (cached) return cached;
 
-    const registrarName =
-      json.registrar?.name ??
-      findVcardValue(findEntity(json.entities, "registrar"), "fn") ??
-      "Unknown";
-    const creationDate =
-      json.events?.find((e) => e.eventAction === "registration")?.eventDate ??
-      "";
-    const expirationDate =
-      json.events?.find((e) => e.eventAction === "expiration")?.eventDate ?? "";
-    const registrantEnt = findEntity(json.entities, "registrant");
-    const organization = findVcardValue(registrantEnt, "org") ?? "";
-    const adr = findVcardEntry(registrantEnt, "adr");
-    const country =
-      Array.isArray(adr?.[3]) && typeof adr?.[3]?.[6] === "string"
-        ? (adr?.[3]?.[6] as string)
-        : "";
-    const state =
-      Array.isArray(adr?.[3]) && typeof adr?.[3]?.[4] === "string"
-        ? (adr?.[3]?.[4] as string)
-        : undefined;
-
-    const status = json.status ?? [];
-    const registered = !status.some((s) => s.toLowerCase() === "available");
-
-    return {
-      registrar: registrarName,
-      creationDate,
-      expirationDate,
-      registrant: { organization, country, state },
-      status,
-      registered,
-    };
+  const rdapBase = await rdapBaseForDomain(domain);
+  const url = `${rdapBase}/domain/${encodeURIComponent(domain)}`;
+  const res = await fetch(url, {
+    headers: { accept: "application/rdap+json" },
   });
+  if (res.status === 404) {
+    const result: Whois = {
+      registrar: "",
+      creationDate: "",
+      expirationDate: "",
+      registrant: { organization: "", country: "" },
+      status: ["available"],
+      registered: false,
+    };
+    await cacheSet(key, result, 60 * 60);
+    return result;
+  }
+  if (!res.ok) throw new Error(`RDAP failed ${res.status}`);
+  const json = (await res.json()) as unknown as RdapJson;
+
+  const registrarName =
+    json.registrar?.name ??
+    findVcardValue(findEntity(json.entities, "registrar"), "fn") ??
+    "Unknown";
+  const creationDate =
+    json.events?.find((e) => e.eventAction === "registration")?.eventDate ??
+    "";
+  const expirationDate =
+    json.events?.find((e) => e.eventAction === "expiration")?.eventDate ?? "";
+  const registrantEnt = findEntity(json.entities, "registrant");
+  const organization = findVcardValue(registrantEnt, "org") ?? "";
+  const adr = findVcardEntry(registrantEnt, "adr");
+  const country =
+    Array.isArray(adr?.[3]) && typeof adr?.[3]?.[6] === "string"
+      ? (adr?.[3]?.[6] as string)
+      : "";
+  const state =
+    Array.isArray(adr?.[3]) && typeof adr?.[3]?.[4] === "string"
+      ? (adr?.[3]?.[4] as string)
+      : undefined;
+
+  const status = json.status ?? [];
+  const registered = !status.some((s) => s.toLowerCase() === "available");
+
+  const result: Whois = {
+    registrar: registrarName,
+    creationDate,
+    expirationDate,
+    registrant: { organization, country, state },
+    status,
+    registered,
+  };
+  await cacheSet(key, result, registered ? 24 * 60 * 60 : 60 * 60);
+  return result;
 }
 
 async function rdapBaseForDomain(domain: string): Promise<string> {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import React from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc/client";
 import { DnsGroup } from "./dns-group";
 import { Favicon } from "./favicon";
@@ -80,6 +81,103 @@ export function DomainReportView({ domain }: { domain: string }) {
       }
     }
   }, [whois.isSuccess, whois.data?.registered, resolvedDomain]);
+
+  // Show only a loading indicator until WHOIS completes (registration validated)
+  if (whois.isLoading) {
+    return (
+      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-6 w-40" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-28 rounded-md" />
+          </div>
+        </div>
+
+        <Accordion type="multiple" className="space-y-4">
+          <Section
+            title="WHOIS"
+            description="Registrar and registrant details"
+            help="WHOIS shows registrar, registration dates, and registrant details."
+            icon={<Shield className="h-4 w-4" />}
+            accent="purple"
+            status="loading"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+            </div>
+          </Section>
+
+          <Section
+            title="DNS Records"
+            description="A, AAAA, MX, CNAME, TXT, NS"
+            help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
+            icon={<Globe className="h-4 w-4" />}
+            accent="blue"
+            status="loading"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+            </div>
+          </Section>
+
+          <Section
+            title="Hosting & Email"
+            description="Providers and IP geolocation"
+            help="Hosting provider serves your site; email provider handles your domain's email."
+            icon={<Server className="h-4 w-4" />}
+            accent="green"
+            status="loading"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+            </div>
+          </Section>
+
+          <Section
+            title="SSL Certificates"
+            description="Issuer and validity"
+            help="SSL/TLS certificates encrypt traffic and verify your domain's identity."
+            icon={<Lock className="h-4 w-4" />}
+            accent="orange"
+            status="loading"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-24 rounded-2xl" />
+            </div>
+          </Section>
+
+          <Section
+            title="HTTP Headers"
+            description="Server, security, caching"
+            help="Headers include server info and security/caching directives returned by your site."
+            icon={<Server className="h-4 w-4" />}
+            accent="purple"
+            status="loading"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+              <Skeleton className="h-10 rounded-2xl" />
+            </div>
+          </Section>
+        </Accordion>
+      </div>
+    );
+  }
 
   const isUnregistered = whois.isSuccess && whois.data?.registered === false;
 
