@@ -1,4 +1,4 @@
-import { TTLCache } from "./cache";
+import { getOrSet, ns } from "@/lib/redis";
 import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 
@@ -9,36 +9,31 @@ export type HostingInfo = {
   geo: { city: string; region: string; country: string };
 };
 
-const cache = new TTLCache<string, HostingInfo>(24 * 60 * 60 * 1000, (k) =>
-  k.toLowerCase(),
-);
-
 export async function detectHosting(domain: string): Promise<HostingInfo> {
-  const key = domain.toLowerCase();
-  const cached = cache.get(key);
-  if (cached) return cached;
+  const key = ns("hosting", domain.toLowerCase());
+  return await getOrSet(key, 24 * 60 * 60, async () => {
+    const dns = await resolveAll(domain);
+    const a = dns.find((d) => d.type === "A");
+    const mx = dns.filter((d) => d.type === "MX");
+    const ip = a?.value ?? null;
 
-  const dns = await resolveAll(domain);
-  const a = dns.find((d) => d.type === "A");
-  const mx = dns.filter((d) => d.type === "MX");
-  const ip = a?.value ?? null;
+    const headers = await probeHeaders(domain).catch(() => ({
+      headers: [] as { name: string; value: string }[],
+    }));
+    const provider = detectHostingProvider(headers.headers);
+    const email = detectEmailProvider(mx.map((m) => m.value));
 
-  const headers = await probeHeaders(domain).catch(() => ({
-    headers: [] as { name: string; value: string }[],
-  }));
-  const provider = detectHostingProvider(headers.headers);
-  const email = detectEmailProvider(mx.map((m) => m.value));
+    const geo = ip
+      ? await lookupGeo(ip)
+      : { city: "", region: "", country: "" };
 
-  const geo = ip ? await lookupGeo(ip) : { city: "", region: "", country: "" };
-
-  const out: HostingInfo = {
-    hostingProvider: provider,
-    emailProvider: email,
-    ipAddress: ip,
-    geo,
-  };
-  cache.set(key, out);
-  return out;
+    return {
+      hostingProvider: provider,
+      emailProvider: email,
+      ipAddress: ip,
+      geo,
+    };
+  });
 }
 
 function detectHostingProvider(

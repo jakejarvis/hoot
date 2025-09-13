@@ -1,4 +1,4 @@
-import { TTLCache } from "./cache";
+import { getOrSet, ns } from "@/lib/redis";
 
 export type DnsRecord = {
   type: "A" | "AAAA" | "MX" | "CNAME" | "TXT" | "NS";
@@ -11,21 +11,16 @@ export type DnsRecord = {
 type DnsType = DnsRecord["type"];
 const TYPES: DnsType[] = ["A", "AAAA", "MX", "CNAME", "TXT", "NS"];
 
-const cache = new TTLCache<{ domain: string; type: DnsType }, DnsRecord[]>(
-  5 * 60 * 1000,
-  (k) => `${k.domain}:${k.type}`,
-);
-
 export async function resolveAll(domain: string): Promise<DnsRecord[]> {
   const results: DnsRecord[] = [];
   for (const type of TYPES) {
-    const cached = cache.get({ domain, type });
-    if (cached) {
-      results.push(...cached);
-      continue;
-    }
-    const recs = await resolveType(domain, type).catch(() => [] as DnsRecord[]);
-    cache.set({ domain, type }, recs);
+    const key = ns("dns", `${domain.toLowerCase()}:${type}`);
+    const recs = await getOrSet<DnsRecord[]>(
+      key,
+      5 * 60,
+      async () =>
+        await resolveType(domain, type).catch(() => [] as DnsRecord[]),
+    );
     results.push(...recs);
   }
   return results;
