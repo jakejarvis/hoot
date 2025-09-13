@@ -7,12 +7,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Favicon } from "./favicon";
 
 const domainSchema = z
@@ -96,21 +90,14 @@ export function DomainSearchForm({
             Enter a domain like example.com
           </span>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button type="submit" disabled={loading} className="h-12 px-5">
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4" />
-                )}
-                Analyze
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Start analysis</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button type="submit" disabled={loading} size="lg" className="h-12">
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
+          Analyze
+        </Button>
       </form>
 
       {showHistory && history.length > 0 && (

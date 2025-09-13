@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ export function KeyValue({
 }) {
   const valueRef = useRef<HTMLSpanElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const resetTimerRef = useRef<number | null>(null);
   const recalcTruncation = useCallback(() => {
     const element = valueRef.current;
     if (!element) return;
@@ -117,13 +119,26 @@ export function KeyValue({
           variant="outline"
           size="sm"
           className="shrink-0 h-7 px-2 bg-background/50 backdrop-blur border-white/20 dark:border-white/10"
-          aria-label={`Copy ${label}`}
+          aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
           onClick={() => {
             navigator.clipboard.writeText(value);
             toast.success("Copied");
+            setCopied(true);
+            if (resetTimerRef.current) {
+              window.clearTimeout(resetTimerRef.current);
+            }
+            resetTimerRef.current = window.setTimeout(() => {
+              setCopied(false);
+              resetTimerRef.current = null;
+            }, 1200);
           }}
         >
-          <Copy className="mr-1 h-3.5 w-3.5" /> Copy
+          {copied ? (
+            <Check className="mr-1 h-3.5 w-3.5" />
+          ) : (
+            <Copy className="mr-1 h-3.5 w-3.5" />
+          )}
+          {copied ? "Copied" : "Copy"}
         </Button>
       )}
     </div>
