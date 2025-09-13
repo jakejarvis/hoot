@@ -15,12 +15,12 @@ export function KeyValue({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/12 dark:border-white/10 bg-background/40 backdrop-blur-lg px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-      <div className="min-w-0">
-        <div className="text-[10px] uppercase tracking-[0.08em] text-foreground/75 dark:text-foreground/80">
+      <div className="min-w-0 space-y-1">
+        {label && <div className="text-[10px] uppercase tracking-[0.08em] text-foreground/75 dark:text-foreground/80">
           {label}
-        </div>
+        </div>}
         <div
-          className="text-[13px] leading-[1.2] truncate text-foreground/95 flex items-center gap-2"
+          className="text-[13px] leading-[1.2] truncate text-foreground/95 flex items-center gap-[5px]"
           title={value}
         >
           {leading}
