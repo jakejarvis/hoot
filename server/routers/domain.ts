@@ -5,6 +5,7 @@ import { generateMockReport } from "@/lib/mock"
 import { resolveAll } from "../services/dns"
 import { probeHeaders } from "../services/headers"
 import { fetchWhois } from "../services/rdap"
+import { detectHosting } from "../services/hosting"
 
 const domainInput = z.object({ domain: z.string().min(1) })
 
@@ -24,9 +25,11 @@ export const domainRouter = router({
     }
   }),
   hosting: publicProcedure.input(domainInput).query(async ({ input }) => {
-    await wait(400)
-    const report = generateMockReport(input.domain)
-    return report.hosting
+    try {
+      return await detectHosting(input.domain)
+    } catch (err) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Hosting detection failed" })
+    }
   }),
   certificates: publicProcedure.input(domainInput).query(async ({ input }) => {
     await wait(700)
