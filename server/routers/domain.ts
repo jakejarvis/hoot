@@ -3,6 +3,7 @@ import { publicProcedure, router } from "../trpc"
 import { TRPCError } from "@trpc/server"
 import { generateMockReport } from "@/lib/mock"
 import { resolveAll } from "../services/dns"
+import { probeHeaders } from "../services/headers"
 
 const domainInput = z.object({ domain: z.string().min(1) })
 
@@ -30,9 +31,12 @@ export const domainRouter = router({
     return report.certificates
   }),
   headers: publicProcedure.input(domainInput).query(async ({ input }) => {
-    await wait(300)
-    const report = generateMockReport(input.domain)
-    return report.headers
+    try {
+      const res = await probeHeaders(input.domain)
+      return res.headers
+    } catch (err) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Header probe failed" })
+    }
   }),
 })
 
