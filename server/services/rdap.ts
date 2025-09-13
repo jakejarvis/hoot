@@ -48,8 +48,7 @@ export async function fetchWhois(domain: string): Promise<Whois> {
     findVcardValue(findEntity(json.entities, "registrar"), "fn") ??
     "Unknown";
   const creationDate =
-    json.events?.find((e) => e.eventAction === "registration")?.eventDate ??
-    "";
+    json.events?.find((e) => e.eventAction === "registration")?.eventDate ?? "";
   const expirationDate =
     json.events?.find((e) => e.eventAction === "expiration")?.eventDate ?? "";
   const registrantEnt = findEntity(json.entities, "registrant");
