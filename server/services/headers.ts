@@ -42,10 +42,13 @@ function normalize(h: HttpHeader[]): HttpHeader[] {
   const important = new Set([
     "strict-transport-security",
     "content-security-policy",
+    "content-security-policy-report-only",
     "x-frame-options",
     "referrer-policy",
     "server",
+    "x-powered-by",
     "cache-control",
+    "permissions-policy",
   ]);
   return [...h].sort(
     (a, b) =>
