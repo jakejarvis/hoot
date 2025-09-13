@@ -6,6 +6,7 @@ import { resolveAll } from "../services/dns"
 import { probeHeaders } from "../services/headers"
 import { fetchWhois } from "../services/rdap"
 import { detectHosting } from "../services/hosting"
+import { getCertificates } from "../services/tls"
 
 const domainInput = z.object({ domain: z.string().min(1) })
 
@@ -32,9 +33,11 @@ export const domainRouter = router({
     }
   }),
   certificates: publicProcedure.input(domainInput).query(async ({ input }) => {
-    await wait(700)
-    const report = generateMockReport(input.domain)
-    return report.certificates
+    try {
+      return await getCertificates(input.domain)
+    } catch (err) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Certificate fetch failed" })
+    }
   }),
   headers: publicProcedure.input(domainInput).query(async ({ input }) => {
     try {
