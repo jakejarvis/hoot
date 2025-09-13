@@ -306,14 +306,25 @@ export function DomainReportView({ domain }: { domain: string }) {
         >
           {headers.data ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {headers.data.map((h) => (
-                <KeyValue
-                  key={`${h.name}:${h.value}`}
-                  label={h.name}
-                  value={h.value}
-                  copyable
-                />
-              ))}
+              {(() => {
+                const important = new Set([
+                  "strict-transport-security",
+                  "content-security-policy",
+                  "x-frame-options",
+                  "referrer-policy",
+                  "server",
+                  "cache-control",
+                ]);
+                return headers.data.map((h) => (
+                  <KeyValue
+                    key={`${h.name}:${h.value}`}
+                    label={h.name}
+                    value={h.value}
+                    copyable
+                    highlight={important.has(h.name)}
+                  />
+                ));
+              })()}
             </div>
           ) : headers.isError ? (
             <div className="text-sm text-destructive flex items-center gap-2">
