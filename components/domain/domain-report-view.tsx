@@ -11,6 +11,7 @@ import { KeyValue } from "./key-value"
 import { Shield, Server, Globe, Lock } from "lucide-react"
 import { DnsGroup } from "./dns-group"
 import { Skeletons } from "./skeletons"
+import { ProviderLogo } from "./provider-logo"
 
 export function DomainReportView({ report, domain }: { report?: DomainReport; domain?: string }) {
   const resolvedDomain = domain ?? report?.domain ?? ""
@@ -71,7 +72,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
         >
           {whois.data ? (
             <>
-              <KeyValue label="Registrar" value={whois.data.registrar} />
+              <KeyValue label="Registrar" value={whois.data.registrar} leading={<ProviderLogo name={whois.data.registrar} />} />
               <KeyValue label="Created" value={formatDate(whois.data.creationDate)} />
               <KeyValue label="Expires" value={formatDate(whois.data.expirationDate)} />
               <KeyValue label="Registrant" value={`${whois.data.registrant.organization} (${whois.data.registrant.country})`} />
@@ -103,7 +104,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
               </DnsGroup>
               <DnsGroup title="MX Records" chart={3}>
                 {dns.data.filter((d) => d.type === "MX").map((r, i) => (
-                  <KeyValue key={`MX-${i}`} label={`${r.priority ? `Priority ${r.priority}` : null}`} value={r.value} copyable />
+                  <KeyValue key={`MX-${i}`} label={`${r.priority ? `Priority ${r.priority}` : ""}`} value={r.value} copyable />
                 ))}
               </DnsGroup>
               <DnsGroup title="TXT Records" chart={5}>
@@ -132,8 +133,8 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
         >
           {hosting.data ? (
             <>
-              <KeyValue label="Hosting" value={hosting.data.hostingProvider} />
-              <KeyValue label="Email" value={hosting.data.emailProvider} />
+              <KeyValue label="Hosting" value={hosting.data.hostingProvider} leading={<ProviderLogo name={hosting.data.hostingProvider} />} />
+              <KeyValue label="Email" value={hosting.data.emailProvider} leading={<ProviderLogo name={hosting.data.emailProvider} />} />
               <KeyValue label="IP" value={`${hosting.data.ipAddress} (${hosting.data.geo.city}, ${hosting.data.geo.country})`} copyable />
             </>
           ) : (
