@@ -6,6 +6,7 @@ export type Whois = {
   expirationDate: string;
   registrant: { organization: string; country: string; state?: string };
   status?: string[];
+  registered: boolean;
 };
 
 type RdapEvent = { eventAction?: string; eventDate?: string };
@@ -25,6 +26,16 @@ export async function fetchWhois(domain: string): Promise<Whois> {
     const res = await fetch(url, {
       headers: { accept: "application/rdap+json" },
     });
+    if (res.status === 404) {
+      return {
+        registrar: "",
+        creationDate: "",
+        expirationDate: "",
+        registrant: { organization: "", country: "" },
+        status: ["available"],
+        registered: false,
+      };
+    }
     if (!res.ok) throw new Error(`RDAP failed ${res.status}`);
     const json = (await res.json()) as unknown as RdapJson;
 
@@ -49,12 +60,16 @@ export async function fetchWhois(domain: string): Promise<Whois> {
         ? (adr?.[3]?.[4] as string)
         : undefined;
 
+    const status = json.status ?? [];
+    const registered = !status.some((s) => s.toLowerCase() === "available");
+
     return {
       registrar: registrarName,
       creationDate,
       expirationDate,
       registrant: { organization, country, state },
-      status: json.status ?? [],
+      status,
+      registered,
     };
   });
 }

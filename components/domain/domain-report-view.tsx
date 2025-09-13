@@ -21,19 +21,19 @@ export function DomainReportView({ domain }: { domain: string }) {
   );
   const dns = trpc.domain.dns.useQuery(
     { domain: resolvedDomain },
-    { enabled: !!domain, retry: 2 },
+    { enabled: !!domain && whois.data?.registered === true, retry: 2 },
   );
   const hosting = trpc.domain.hosting.useQuery(
     { domain: resolvedDomain },
-    { enabled: !!domain, retry: 1 },
+    { enabled: !!domain && whois.data?.registered === true, retry: 1 },
   );
   const certs = trpc.domain.certificates.useQuery(
     { domain: resolvedDomain },
-    { enabled: !!domain, retry: 0 },
+    { enabled: !!domain && whois.data?.registered === true, retry: 0 },
   );
   const headers = trpc.domain.headers.useQuery(
     { domain: resolvedDomain },
-    { enabled: !!domain, retry: 1 },
+    { enabled: !!domain && whois.data?.registered === true, retry: 1 },
   );
   function _copy(text: string) {
     navigator.clipboard.writeText(text);
@@ -63,6 +63,50 @@ export function DomainReportView({ domain }: { domain: string }) {
     a.download = `${resolvedDomain}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  React.useEffect(() => {
+    if (whois.isSuccess && whois.data?.registered === true) {
+      try {
+        const stored = localStorage.getItem("hoot-history");
+        const list = stored ? (JSON.parse(stored) as string[]) : [];
+        const next = [
+          resolvedDomain,
+          ...list.filter((d) => d !== resolvedDomain),
+        ].slice(0, 5);
+        localStorage.setItem("hoot-history", JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [whois.isSuccess, whois.data?.registered, resolvedDomain]);
+
+  const isUnregistered = whois.isSuccess && whois.data?.registered === false;
+
+  if (isUnregistered) {
+    return (
+      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <Link
+              href={`https://${resolvedDomain}`}
+              target="_blank"
+              rel="noopener"
+              className="flex items-center gap-2"
+            >
+              <Favicon domain={resolvedDomain} size={20} className="rounded" />
+              <h2 className="text-xl font-semibold tracking-tight">
+                {resolvedDomain}
+              </h2>
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-lg border p-6 text-center">
+          <p className="text-base">This domain appears to be unregistered.</p>
+        </div>
+      </div>
+    );
   }
 
   return (

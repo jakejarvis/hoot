@@ -35,11 +35,8 @@ export function DomainSearchForm({
     if (stored) setHistory(JSON.parse(stored));
   }, []);
 
-  function updateHistory(domain: string) {
-    const next = [domain, ...history.filter((d) => d !== domain)].slice(0, 5);
-    setHistory(next);
-    localStorage.setItem("hoot-history", JSON.stringify(next));
-  }
+  // History is now updated post-lookup in DomainReportView after a confirmed registered WHOIS.
+  // We keep rendering from localStorage here for convenience.
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,7 +48,6 @@ export function DomainSearchForm({
       return;
     }
     setLoading(true);
-    updateHistory(parsed.data);
     router.push(`/${encodeURIComponent(parsed.data)}`);
   }
 
