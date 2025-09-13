@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
+import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCProvider } from "@/components/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";

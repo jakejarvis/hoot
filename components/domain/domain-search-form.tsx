@@ -14,7 +14,7 @@ const domainSchema = z
   .string()
   .transform((v) => normalizeDomainInput(v))
   .refine((v) => isValidDomain(v), {
-    message: "Enter a valid domain like example.com",
+    message: "Please enter a valid domain, such as hoot.sh",
   });
 
 export function DomainSearchForm({
@@ -71,7 +71,7 @@ export function DomainSearchForm({
             ref={inputRef}
             inputMode="url"
             autoComplete="off"
-            placeholder="example.com"
+            placeholder="hoot.sh"
             aria-invalid={false}
             aria-describedby="domain-help"
             value={value}
@@ -79,7 +79,7 @@ export function DomainSearchForm({
             className="pl-9 h-12"
           />
           <span id="domain-help" className="sr-only">
-            Enter a domain like example.com
+            Enter a domain, such as hoot.sh
           </span>
         </div>
         <Button type="submit" disabled={loading} size="lg" className="h-12">

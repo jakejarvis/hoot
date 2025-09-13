@@ -6,13 +6,7 @@ export function AppFooter() {
     <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground leading-relaxed [&_a]:text-foreground/85 [&_a]:hover:text-foreground/60 [&_a]:hover:no-underline [&_svg]:inline-block [&_svg]:align-top [&_svg]:mx-[1px] [&_svg]:size-4">
       <p>
         Made with <Heart className="stroke-destructive fill-destructive" /> and{" "}
-        <Link
-          href="https://nextjs.org/"
-          title="Powered by Next.js"
-          target="_blank"
-          rel="noopener"
-          aria-label="Next.js"
-        >
+        <Link href="https://nextjs.org/" target="_blank" rel="noopener">
           {/** biome-ignore lint/a11y/noSvgWithoutTitle: not necessary */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -25,26 +19,24 @@ export function AppFooter() {
           </svg>
         </Link>{" "}
         by{" "}
-        <Link
-          href="https://jarv.is"
-          title="Jake Jarvis"
-          target="_blank"
-          rel="noopener"
-        >
+        <Link href="https://jarv.is/" target="_blank" rel="noopener">
           @jakejarvis
         </Link>
         .
       </p>
       <p>
-        Owl logo by mcarranza from{" "}
-        <a
-          href="https://thenounproject.com/browse/icons/term/owl/"
+        Owl logo by{" "}
+        <Link
+          href="https://thenounproject.com/creator/carranzamaria/"
           target="_blank"
-          rel="noopener noreferrer"
-          title="Owl Icons"
+          rel="noopener"
         >
+          @mcarranza
+        </Link>{" "}
+        from{" "}
+        <Link href="https://thenounproject.com/" target="_blank" rel="noopener">
           Noun Project
-        </a>{" "}
+        </Link>{" "}
         (CC BY 3.0).
       </p>
     </footer>
