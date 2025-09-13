@@ -1,4 +1,4 @@
-import { Info } from "lucide-react"
+import { Info, Loader2 } from "lucide-react"
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -10,6 +10,7 @@ export function Section({
   help,
   icon,
   accent,
+  status,
   children,
 }: {
   title: string
@@ -17,6 +18,7 @@ export function Section({
   help?: string
   icon?: React.ReactNode
   accent?: "blue" | "purple" | "green" | "orange"
+  status?: "loading" | "ready" | "error"
   children: React.ReactNode
 }) {
   return (
@@ -60,6 +62,22 @@ export function Section({
                 </CardDescription>
               )}
             </div>
+            {status && (
+              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                {status === "loading" && (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading
+                  </>
+                )}
+                {status === "ready" && (
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-green-500/80" aria-label="Ready" />
+                )}
+                {status === "error" && (
+                  <span className="text-destructive">Error</span>
+                )}
+              </div>
+            )}
           </div>
         </AccordionTrigger>
         <AccordionContent>

@@ -63,6 +63,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
           help="WHOIS shows registrar, registration dates, and registrant details."
           icon={<Shield className="h-4 w-4" />}
           accent="purple"
+          status={whois.isLoading ? "loading" : whois.isError ? "error" : "ready"}
         >
           {whois.data ? (
             <>
@@ -82,6 +83,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
           help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
           icon={<Globe className="h-4 w-4" />}
           accent="blue"
+          status={dns.isLoading ? "loading" : dns.isError ? "error" : "ready"}
         >
           {dns.data ? (
             <div className="space-y-4">
@@ -127,6 +129,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
           help="Hosting provider serves your site; email provider handles your domain's email."
           icon={<Server className="h-4 w-4" />}
           accent="green"
+          status={hosting.isLoading ? "loading" : hosting.isError ? "error" : "ready"}
         >
           {hosting.data ? (
             <>
@@ -145,6 +148,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
           help="SSL/TLS certificates encrypt traffic and verify your domain's identity."
           icon={<Lock className="h-4 w-4" />}
           accent="orange"
+          status={certs.isLoading ? "loading" : certs.isError ? "error" : "ready"}
         >
           {certs.data ? certs.data.map((c, i) => (
             <div key={i} className="rounded-lg border p-3">
@@ -167,6 +171,7 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
           help="Headers include server info and security/caching directives returned by your site."
           icon={<Server className="h-4 w-4" />}
           accent="purple"
+          status={headers.isLoading ? "loading" : headers.isError ? "error" : "ready"}
         >
           {headers.data ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
