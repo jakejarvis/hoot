@@ -15,11 +15,11 @@ import { ProviderLogo } from "./provider-logo"
 
 export function DomainReportView({ report, domain }: { report?: DomainReport; domain?: string }) {
   const resolvedDomain = domain ?? report?.domain ?? ""
-  const whois = trpc.domain.whois.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
-  const dns = trpc.domain.dns.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
-  const hosting = trpc.domain.hosting.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
-  const certs = trpc.domain.certificates.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
-  const headers = trpc.domain.headers.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
+  const whois = trpc.domain.whois.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 1 })
+  const dns = trpc.domain.dns.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 2 })
+  const hosting = trpc.domain.hosting.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 1 })
+  const certs = trpc.domain.certificates.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 0 })
+  const headers = trpc.domain.headers.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 1 })
   function copy(text: string) {
     navigator.clipboard.writeText(text)
   }
@@ -78,7 +78,12 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
               <KeyValue label="Registrant" value={`${whois.data.registrant.organization} (${whois.data.registrant.country})`} />
             </>
           ) : (
-            <Skeletons count={4} />
+            whois.isError ? (
+              <div className="text-sm text-destructive flex items-center gap-2">
+                Failed to load WHOIS.
+                <Button variant="outline" size="sm" onClick={() => whois.refetch()}>Retry</Button>
+              </div>
+            ) : <Skeletons count={4} />
           )}
         </Section>
 
@@ -119,7 +124,12 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
               </DnsGroup>
             </div>
           ) : (
-            <Skeletons count={6} />
+            dns.isError ? (
+              <div className="text-sm text-destructive flex items-center gap-2">
+                Failed to load DNS.
+                <Button variant="outline" size="sm" onClick={() => dns.refetch()}>Retry</Button>
+              </div>
+            ) : <Skeletons count={6} />
           )}
         </Section>
 
@@ -138,7 +148,12 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
               <KeyValue label="IP" value={`${hosting.data.ipAddress} (${hosting.data.geo.city}, ${hosting.data.geo.country})`} copyable />
             </>
           ) : (
-            <Skeletons count={3} />
+            hosting.isError ? (
+              <div className="text-sm text-destructive flex items-center gap-2">
+                Failed to load hosting details.
+                <Button variant="outline" size="sm" onClick={() => hosting.refetch()}>Retry</Button>
+              </div>
+            ) : <Skeletons count={3} />
           )}
         </Section>
 
@@ -162,7 +177,14 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
               </div>
               <div className="mt-2 text-xs text-muted-foreground">Chain: {c.chain.join(" → ")}</div>
             </div>
-          )) : <Skeletons count={1} />}
+          )) : (
+            certs.isError ? (
+              <div className="text-sm text-destructive flex items-center gap-2">
+                Failed to load certificates.
+                <Button variant="outline" size="sm" onClick={() => certs.refetch()}>Retry</Button>
+              </div>
+            ) : <Skeletons count={1} />
+          )}
         </Section>
 
         <Section
@@ -180,7 +202,12 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
               ))}
             </div>
           ) : (
-            <Skeletons count={4} />
+            headers.isError ? (
+              <div className="text-sm text-destructive flex items-center gap-2">
+                Failed to load headers.
+                <Button variant="outline" size="sm" onClick={() => headers.refetch()}>Retry</Button>
+              </div>
+            ) : <Skeletons count={4} />
           )}
         </Section>
       </Accordion>

@@ -18,6 +18,14 @@ export class TTLCache<Key, Value> {
     const sk = this.serializeKey(key)
     this.store.set(sk, { value, expiresAt: Date.now() + this.ttlMs })
   }
+
+  async getOrSet(key: Key, loader: () => Promise<Value>): Promise<Value> {
+    const cached = this.get(key)
+    if (cached !== undefined) return cached
+    const value = await loader()
+    this.set(key, value)
+    return value
+  }
 }
 
 
