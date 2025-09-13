@@ -46,6 +46,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           description="Registrar and registrant details"
           help="WHOIS shows registrar, registration dates, and registrant details."
           icon={<Shield className="h-4 w-4" />}
+          accent="purple"
         >
           <KeyValue label="Registrar" value={report.whois.registrar} />
           <KeyValue label="Created" value={formatDate(report.whois.creationDate)} />
@@ -61,6 +62,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           description="A, AAAA, MX, CNAME, TXT, NS"
           help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
           icon={<Globe className="h-4 w-4" />}
+          accent="blue"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {report.dns.map((r, i) => (
@@ -74,6 +76,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           description="Providers and IP geolocation"
           help="Hosting provider serves your site; email provider handles your domain's email."
           icon={<Server className="h-4 w-4" />}
+          accent="green"
         >
           <KeyValue label="Hosting" value={report.hosting.hostingProvider} />
           <KeyValue label="Email" value={report.hosting.emailProvider} />
@@ -89,6 +92,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           description="Issuer and validity"
           help="SSL/TLS certificates encrypt traffic and verify your domain's identity."
           icon={<Lock className="h-4 w-4" />}
+          accent="orange"
         >
           {report.certificates.map((c, i) => (
             <div key={i} className="rounded-lg border p-3">
@@ -110,6 +114,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           description="Server, security, caching"
           help="Headers include server info and security/caching directives returned by your site."
           icon={<Server className="h-4 w-4" />}
+          accent="purple"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {report.headers.map((h, i) => (

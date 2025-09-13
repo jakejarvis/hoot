@@ -30,11 +30,8 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          {/* Frosted glass gradient background */}
-          <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-            <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_50%_-50%,oklch(0.96_0.02_250_/_0.9),transparent_60%)] dark:bg-[radial-gradient(1200px_800px_at_50%_-50%,oklch(0.25_0.03_250_/_0.9),transparent_60%)]" />
-            <div className="absolute inset-0 backdrop-blur-xl" />
-          </div>
+          {/* Solid background for light/dark modes */}
+          <div aria-hidden className="fixed inset-0 -z-10 bg-background" />
 
           {/* App Shell */}
           <div className="min-h-svh flex flex-col">

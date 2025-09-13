@@ -9,18 +9,31 @@ export function Section({
   description,
   help,
   icon,
+  accent,
   children,
 }: {
   title: string
   description?: string
   help?: string
   icon?: React.ReactNode
+  accent?: "blue" | "purple" | "green" | "orange"
   children: React.ReactNode
 }) {
   return (
     <AccordionItem value={title} className="border-none">
-      <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-0 rounded-2xl border border-white/10 dark:border-white/5 shadow-sm">
-        <AccordionTrigger className={cn("px-4 py-3 hover:no-underline no-underline")}> 
+      <Card className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-white/15 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]">
+        {/* Accent glow */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -inset-x-8 -top-8 h-24 blur-2xl opacity-30",
+            accent === "blue" && "bg-[radial-gradient(closest-side,oklch(0.82_0.08_230),transparent)]",
+            accent === "purple" && "bg-[radial-gradient(closest-side,oklch(0.78_0.10_310),transparent)]",
+            accent === "green" && "bg-[radial-gradient(closest-side,oklch(0.86_0.09_160),transparent)]",
+            accent === "orange" && "bg-[radial-gradient(closest-side,oklch(0.86_0.12_60),transparent)]",
+          )}
+        />
+        <AccordionTrigger className={cn("px-5 py-4 hover:no-underline no-underline")}> 
           <div className="flex w-full items-center gap-3 text-left">
             {icon && (
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
@@ -50,7 +63,7 @@ export function Section({
           </div>
         </AccordionTrigger>
         <AccordionContent>
-          <CardContent className="pt-0 px-4 pb-4">{children}</CardContent>
+          <CardContent className="pt-0 px-5 pb-5 space-y-3">{children}</CardContent>
         </AccordionContent>
       </Card>
     </AccordionItem>
