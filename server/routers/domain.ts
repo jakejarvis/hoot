@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { publicProcedure, router } from "../trpc"
+import { TRPCError } from "@trpc/server"
 import { generateMockReport } from "@/lib/mock"
+import { resolveAll } from "../services/dns"
 
 const domainInput = z.object({ domain: z.string().min(1) })
 
@@ -11,9 +13,11 @@ export const domainRouter = router({
     return report.whois
   }),
   dns: publicProcedure.input(domainInput).query(async ({ input }) => {
-    await wait(500)
-    const report = generateMockReport(input.domain)
-    return report.dns
+    try {
+      return await resolveAll(input.domain)
+    } catch (err) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DNS resolution failed" })
+    }
   }),
   hosting: publicProcedure.input(domainInput).query(async ({ input }) => {
     await wait(400)
