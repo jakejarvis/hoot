@@ -4,14 +4,17 @@ import { TRPCError } from "@trpc/server"
 import { generateMockReport } from "@/lib/mock"
 import { resolveAll } from "../services/dns"
 import { probeHeaders } from "../services/headers"
+import { fetchWhois } from "../services/rdap"
 
 const domainInput = z.object({ domain: z.string().min(1) })
 
 export const domainRouter = router({
   whois: publicProcedure.input(domainInput).query(async ({ input }) => {
-    await wait(350)
-    const report = generateMockReport(input.domain)
-    return report.whois
+    try {
+      return await fetchWhois(input.domain)
+    } catch (err) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "WHOIS lookup failed" })
+    }
   }),
   dns: publicProcedure.input(domainInput).query(async ({ input }) => {
     try {
