@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { ModeToggle } from "@/components/mode-toggle";
+import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCProvider } from "@/components/trpc-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
           {/* Solid background for light/dark modes */}
@@ -38,7 +39,7 @@ export default function RootLayout({
           <TRPCProvider>
             <div className="min-h-svh flex flex-col">
               <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-                <div className="font-semibold tracking-tight">whoozle</div>
+                <div className="font-semibold tracking-tight">hoot.sh</div>
                 <ModeToggle />
               </header>
               <main className="flex-1">{children}</main>

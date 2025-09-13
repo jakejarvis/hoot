@@ -1,17 +1,22 @@
-"use client"
+"use client";
 
-import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
-import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ModeToggle() {
-  const { theme, setTheme, systemTheme } = useTheme()
-  const current = theme === "system" ? systemTheme : theme
-  const isDark = current === "dark"
+  const { theme, setTheme, systemTheme } = useTheme();
+  const current = theme === "system" ? systemTheme : theme;
+  const isDark = current === "dark";
 
   function toggleTheme() {
-    setTheme(isDark ? "light" : "dark")
+    setTheme(isDark ? "light" : "dark");
   }
 
   return (
@@ -34,7 +39,5 @@ export function ModeToggle() {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 }
-
-
