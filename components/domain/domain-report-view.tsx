@@ -73,7 +73,6 @@ export function DomainReportView({ domain }: { domain: string }) {
               {resolvedDomain}
             </h2>
           </div>
-          <p className="text-muted-foreground text-sm">Mock data</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -81,10 +80,10 @@ export function DomainReportView({ domain }: { domain: string }) {
             size="sm"
             onClick={() => copy(resolvedDomain)}
           >
-            <Copy className="mr-2 h-4 w-4" /> Copy domain
+            <Copy className="h-4 w-4" /> Copy domain
           </Button>
           <Button variant="default" size="sm" onClick={exportJson}>
-            <Download className="mr-2 h-4 w-4" /> Export JSON
+            <Download className="h-4 w-4" /> Export JSON
           </Button>
         </div>
       </div>
@@ -149,23 +148,27 @@ export function DomainReportView({ domain }: { domain: string }) {
               <DnsGroup title="A Records" chart={1}>
                 {dns.data
                   .filter((d) => d.type === "A")
-                  .map((r, i) => (
-                    <KeyValue key={`A-${i}`} value={r.value} copyable />
+                  .map((r) => (
+                    <KeyValue key={`A-${r.value}`} value={r.value} copyable />
                   ))}
               </DnsGroup>
               <DnsGroup title="AAAA Records" chart={2}>
                 {dns.data
                   .filter((d) => d.type === "AAAA")
-                  .map((r, i) => (
-                    <KeyValue key={`AAAA-${i}`} value={r.value} copyable />
+                  .map((r) => (
+                    <KeyValue
+                      key={`AAAA-${r.value}`}
+                      value={r.value}
+                      copyable
+                    />
                   ))}
               </DnsGroup>
               <DnsGroup title="MX Records" chart={3}>
                 {dns.data
                   .filter((d) => d.type === "MX")
-                  .map((r, i) => (
+                  .map((r) => (
                     <KeyValue
-                      key={`MX-${i}`}
+                      key={`MX-${r.value}-${r.priority ?? ""}`}
                       label={`${r.priority ? `Priority ${r.priority}` : ""}`}
                       value={r.value}
                       copyable
@@ -175,15 +178,15 @@ export function DomainReportView({ domain }: { domain: string }) {
               <DnsGroup title="TXT Records" chart={5}>
                 {dns.data
                   .filter((d) => d.type === "TXT")
-                  .map((r, i) => (
-                    <KeyValue key={`TXT-${i}`} value={r.value} copyable />
+                  .map((r) => (
+                    <KeyValue key={`TXT-${r.value}`} value={r.value} copyable />
                   ))}
               </DnsGroup>
               <DnsGroup title="NS Records" chart={1}>
                 {dns.data
                   .filter((d) => d.type === "NS")
-                  .map((r, i) => (
-                    <KeyValue key={`NS-${i}`} value={r.value} copyable />
+                  .map((r) => (
+                    <KeyValue key={`NS-${r.value}`} value={r.value} copyable />
                   ))}
               </DnsGroup>
             </div>
@@ -254,8 +257,11 @@ export function DomainReportView({ domain }: { domain: string }) {
           }
         >
           {certs.data ? (
-            certs.data.map((c, i) => (
-              <div key={i} className="rounded-lg border p-3">
+            certs.data.map((c) => (
+              <div
+                key={`${c.subject}-${c.validFrom}-${c.validTo}`}
+                className="rounded-lg border p-3"
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <KeyValue label="Issuer" value={c.issuer} />
                   <KeyValue label="Subject" value={c.subject} />
@@ -300,8 +306,13 @@ export function DomainReportView({ domain }: { domain: string }) {
         >
           {headers.data ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {headers.data.map((h, i) => (
-                <KeyValue key={i} label={h.name} value={h.value} copyable />
+              {headers.data.map((h) => (
+                <KeyValue
+                  key={`${h.name}:${h.value}`}
+                  label={h.name}
+                  value={h.value}
+                  copyable
+                />
               ))}
             </div>
           ) : headers.isError ? (

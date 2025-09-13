@@ -79,7 +79,12 @@ async function lookupGeo(
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
     if (!res.ok) throw new Error("geo fail");
-    const j = (await res.json()) as any;
+    const j = (await res.json()) as {
+      city?: string;
+      region?: string;
+      state?: string;
+      country?: string;
+    };
     return {
       city: j.city || "",
       region: j.region || j.state || "",

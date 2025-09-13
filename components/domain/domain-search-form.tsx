@@ -101,9 +101,9 @@ export function DomainSearchForm({
             <TooltipTrigger asChild>
               <Button type="submit" disabled={loading} className="h-12 px-5">
                 {loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Search className="mr-2 h-4 w-4" />
+                  <Search className="h-4 w-4" />
                 )}
                 Analyze
               </Button>

@@ -56,11 +56,14 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     subject: toName(c.subject),
     validFrom: new Date(c.valid_from).toISOString(),
     validTo: new Date(c.valid_to).toISOString(),
-    signatureAlgorithm: (c as any).signatureAlgorithm || "",
+    signatureAlgorithm:
+      (c as Partial<{ signatureAlgorithm: string }>).signatureAlgorithm || "",
     // Ensure we never return Buffers/typed arrays (which break superjson)
     keyType:
-      typeof (c as any).publicKeyAlgorithm === "string"
-        ? (c as any).publicKeyAlgorithm
+      typeof (c as Partial<{ publicKeyAlgorithm: string }>)
+        .publicKeyAlgorithm === "string"
+        ? (c as Partial<{ publicKeyAlgorithm: string }>).publicKeyAlgorithm ||
+          ""
         : "",
     chain: [],
   }));
@@ -73,7 +76,12 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
 function toName(subject: tls.PeerCertificate["subject"] | undefined) {
   if (!subject) return "";
-  const cn = (subject as any).CN;
-  const o = (subject as any).O;
+  const maybeRecord = subject as unknown as Record<string, unknown>;
+  const cn =
+    typeof maybeRecord?.CN === "string"
+      ? (maybeRecord.CN as string)
+      : undefined;
+  const o =
+    typeof maybeRecord?.O === "string" ? (maybeRecord.O as string) : undefined;
   return cn ? `CN=${cn}` : o ? `O=${o}` : JSON.stringify(subject);
 }

@@ -25,7 +25,9 @@ export async function probeHeaders(domain: string) {
         redirect: "follow" as RequestRedirect,
       });
   const headers: HttpHeader[] = [];
-  final.headers.forEach((value, name) => headers.push({ name, value }));
+  final.headers.forEach((value, name) => {
+    headers.push({ name, value });
+  });
   const out = {
     url: final.url,
     status: final.status,
