@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Heart } from "lucide-react";
 import Link from "next/link";
-import { ModeToggle } from "@/components/mode-toggle";
+import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCProvider } from "@/components/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -40,12 +40,7 @@ export default function RootLayout({
           {/* App Shell */}
           <TRPCProvider>
             <div className="min-h-svh flex flex-col">
-              <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-                <Link href="/" className="font-semibold tracking-tight">
-                  hoot.sh
-                </Link>
-                <ModeToggle />
-              </header>
+              <AppHeader />
               <main className="flex-1">{children}</main>
               <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground">
                 Made with{" "}
