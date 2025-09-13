@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ModeToggle } from "@/components/mode-toggle";
+import { TRPCProvider } from "@/components/trpc-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,16 +35,18 @@ export default function RootLayout({
           <div aria-hidden className="fixed inset-0 -z-10 bg-background" />
 
           {/* App Shell */}
-          <div className="min-h-svh flex flex-col">
-            <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-              <div className="font-semibold tracking-tight">whoozle</div>
-              <ModeToggle />
-            </header>
-            <main className="flex-1">{children}</main>
-            <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground">
-              Built with Next.js + shadcn/ui
-            </footer>
-          </div>
+          <TRPCProvider>
+            <div className="min-h-svh flex flex-col">
+              <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                <div className="font-semibold tracking-tight">whoozle</div>
+                <ModeToggle />
+              </header>
+              <main className="flex-1">{children}</main>
+              <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground">
+                Built with Next.js + shadcn/ui
+              </footer>
+            </div>
+          </TRPCProvider>
           <Toaster richColors closeButton />
         </ThemeProvider>
       </body>

@@ -4,22 +4,37 @@ import { Accordion } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Copy, Download } from "lucide-react"
 import type { DomainReport } from "@/lib/mock"
+import { trpc } from "@/lib/trpc/client"
 import { Section } from "./section"
 import { KeyValue } from "./key-value"
 import { Shield, Server, Globe, Lock } from "lucide-react"
 import { DnsGroup } from "./dns-group"
+import { Skeletons } from "./skeletons"
 
-export function DomainReportView({ report }: { report: DomainReport }) {
+export function DomainReportView({ report, domain }: { report?: DomainReport; domain?: string }) {
+  const resolvedDomain = domain ?? report?.domain ?? ""
+  const whois = trpc.domain.whois.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
+  const dns = trpc.domain.dns.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
+  const hosting = trpc.domain.hosting.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
+  const certs = trpc.domain.certificates.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
+  const headers = trpc.domain.headers.useQuery({ domain: resolvedDomain }, { enabled: !!domain })
   function copy(text: string) {
     navigator.clipboard.writeText(text)
   }
 
   function exportJson() {
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" })
+    const blob = new Blob([JSON.stringify({
+      domain: resolvedDomain,
+      whois: whois.data,
+      dns: dns.data,
+      hosting: hosting.data,
+      certificates: certs.data,
+      headers: headers.data,
+    }, null, 2)], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${report.domain}-whoozle.json`
+    a.download = `${resolvedDomain}-whoozle.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -28,11 +43,11 @@ export function DomainReportView({ report }: { report: DomainReport }) {
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">{report.domain}</h2>
+          <h2 className="text-xl font-semibold tracking-tight">{resolvedDomain}</h2>
           <p className="text-muted-foreground text-sm">Mock data</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => copy(report.domain)}>
+          <Button variant="outline" size="sm" onClick={() => copy(resolvedDomain)}>
             <Copy className="mr-2 h-4 w-4" /> Copy domain
           </Button>
           <Button variant="default" size="sm" onClick={exportJson}>
@@ -49,13 +64,16 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           icon={<Shield className="h-4 w-4" />}
           accent="purple"
         >
-          <KeyValue label="Registrar" value={report.whois.registrar} />
-          <KeyValue label="Created" value={formatDate(report.whois.creationDate)} />
-          <KeyValue label="Expires" value={formatDate(report.whois.expirationDate)} />
-          <KeyValue
-            label="Registrant"
-            value={`${report.whois.registrant.organization} (${report.whois.registrant.country})`}
-          />
+          {whois.data ? (
+            <>
+              <KeyValue label="Registrar" value={whois.data.registrar} />
+              <KeyValue label="Created" value={formatDate(whois.data.creationDate)} />
+              <KeyValue label="Expires" value={formatDate(whois.data.expirationDate)} />
+              <KeyValue label="Registrant" value={`${whois.data.registrant.organization} (${whois.data.registrant.country})`} />
+            </>
+          ) : (
+            <Skeletons count={4} />
+          )}
         </Section>
 
         <Section
@@ -65,38 +83,42 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           icon={<Globe className="h-4 w-4" />}
           accent="blue"
         >
-          <div className="space-y-4">
-            <DnsGroup title="A Records" chart={1}>
-              {report.dns.filter((d) => d.type === "A").map((r, i) => (
-                <KeyValue key={`A-${i}`} label={`${r.name}`} value={r.value} copyable />
-              ))}
-            </DnsGroup>
-            <DnsGroup title="AAAA Records" chart={2}>
-              {report.dns.filter((d) => d.type === "AAAA").map((r, i) => (
-                <KeyValue key={`AAAA-${i}`} label={`${r.name}`} value={r.value} copyable />
-              ))}
-            </DnsGroup>
-            <DnsGroup title="MX Records" chart={3}>
-              {report.dns.filter((d) => d.type === "MX").map((r, i) => (
-                <KeyValue key={`MX-${i}`} label={`${r.name}${r.priority ? ` (prio ${r.priority})` : ""}`} value={r.value} copyable />
-              ))}
-            </DnsGroup>
-            <DnsGroup title="CNAME Records" chart={4}>
-              {report.dns.filter((d) => d.type === "CNAME").map((r, i) => (
-                <KeyValue key={`CNAME-${i}`} label={`${r.name}`} value={r.value} copyable />
-              ))}
-            </DnsGroup>
-            <DnsGroup title="TXT Records" chart={5}>
-              {report.dns.filter((d) => d.type === "TXT").map((r, i) => (
-                <KeyValue key={`TXT-${i}`} label={`${r.name}`} value={r.value} copyable />
-              ))}
-            </DnsGroup>
-            <DnsGroup title="NS Records" chart={1}>
-              {report.dns.filter((d) => d.type === "NS").map((r, i) => (
-                <KeyValue key={`NS-${i}`} label={`${r.name}`} value={r.value} copyable />
-              ))}
-            </DnsGroup>
-          </div>
+          {dns.data ? (
+            <div className="space-y-4">
+              <DnsGroup title="A Records" chart={1}>
+                {dns.data.filter((d) => d.type === "A").map((r, i) => (
+                  <KeyValue key={`A-${i}`} label={`${r.name}`} value={r.value} copyable />
+                ))}
+              </DnsGroup>
+              <DnsGroup title="AAAA Records" chart={2}>
+                {dns.data.filter((d) => d.type === "AAAA").map((r, i) => (
+                  <KeyValue key={`AAAA-${i}`} label={`${r.name}`} value={r.value} copyable />
+                ))}
+              </DnsGroup>
+              <DnsGroup title="MX Records" chart={3}>
+                {dns.data.filter((d) => d.type === "MX").map((r, i) => (
+                  <KeyValue key={`MX-${i}`} label={`${r.name}${r.priority ? ` (prio ${r.priority})` : ""}`} value={r.value} copyable />
+                ))}
+              </DnsGroup>
+              <DnsGroup title="CNAME Records" chart={4}>
+                {dns.data.filter((d) => d.type === "CNAME").map((r, i) => (
+                  <KeyValue key={`CNAME-${i}`} label={`${r.name}`} value={r.value} copyable />
+                ))}
+              </DnsGroup>
+              <DnsGroup title="TXT Records" chart={5}>
+                {dns.data.filter((d) => d.type === "TXT").map((r, i) => (
+                  <KeyValue key={`TXT-${i}`} label={`${r.name}`} value={r.value} copyable />
+                ))}
+              </DnsGroup>
+              <DnsGroup title="NS Records" chart={1}>
+                {dns.data.filter((d) => d.type === "NS").map((r, i) => (
+                  <KeyValue key={`NS-${i}`} label={`${r.name}`} value={r.value} copyable />
+                ))}
+              </DnsGroup>
+            </div>
+          ) : (
+            <Skeletons count={6} />
+          )}
         </Section>
 
         <Section
@@ -106,13 +128,15 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           icon={<Server className="h-4 w-4" />}
           accent="green"
         >
-          <KeyValue label="Hosting" value={report.hosting.hostingProvider} />
-          <KeyValue label="Email" value={report.hosting.emailProvider} />
-          <KeyValue
-            label="IP"
-            value={`${report.hosting.ipAddress} (${report.hosting.geo.city}, ${report.hosting.geo.country})`}
-            copyable
-          />
+          {hosting.data ? (
+            <>
+              <KeyValue label="Hosting" value={hosting.data.hostingProvider} />
+              <KeyValue label="Email" value={hosting.data.emailProvider} />
+              <KeyValue label="IP" value={`${hosting.data.ipAddress} (${hosting.data.geo.city}, ${hosting.data.geo.country})`} copyable />
+            </>
+          ) : (
+            <Skeletons count={3} />
+          )}
         </Section>
 
         <Section
@@ -122,7 +146,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           icon={<Lock className="h-4 w-4" />}
           accent="orange"
         >
-          {report.certificates.map((c, i) => (
+          {certs.data ? certs.data.map((c, i) => (
             <div key={i} className="rounded-lg border p-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <KeyValue label="Issuer" value={c.issuer} />
@@ -134,7 +158,7 @@ export function DomainReportView({ report }: { report: DomainReport }) {
               </div>
               <div className="mt-2 text-xs text-muted-foreground">Chain: {c.chain.join(" → ")}</div>
             </div>
-          ))}
+          )) : <Skeletons count={1} />}
         </Section>
 
         <Section
@@ -144,11 +168,15 @@ export function DomainReportView({ report }: { report: DomainReport }) {
           icon={<Server className="h-4 w-4" />}
           accent="purple"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {report.headers.map((h, i) => (
-              <KeyValue key={i} label={h.name} value={h.value} copyable />
-            ))}
-          </div>
+          {headers.data ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {headers.data.map((h, i) => (
+                <KeyValue key={i} label={h.name} value={h.value} copyable />
+              ))}
+            </div>
+          ) : (
+            <Skeletons count={4} />
+          )}
         </Section>
       </Accordion>
     </div>
