@@ -41,7 +41,9 @@ export default function RootLayout({
           <TRPCProvider>
             <div className="min-h-svh flex flex-col">
               <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-                <div className="font-semibold tracking-tight">hoot.sh</div>
+                <Link href="/" className="font-semibold tracking-tight">
+                  hoot.sh
+                </Link>
                 <ModeToggle />
               </header>
               <main className="flex-1">{children}</main>

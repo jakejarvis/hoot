@@ -1,14 +1,7 @@
 "use client";
 
-import {
-  ArrowDown,
-  Copy,
-  Download,
-  Globe,
-  Lock,
-  Server,
-  Shield,
-} from "lucide-react";
+import { ArrowDown, Download, Globe, Lock, Server, Shield } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -42,7 +35,7 @@ export function DomainReportView({ domain }: { domain: string }) {
     { domain: resolvedDomain },
     { enabled: !!domain, retry: 1 },
   );
-  function copy(text: string) {
+  function _copy(text: string) {
     navigator.clipboard.writeText(text);
   }
 
@@ -76,21 +69,19 @@ export function DomainReportView({ domain }: { domain: string }) {
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
+          <Link
+            href={`https://${resolvedDomain}`}
+            target="_blank"
+            rel="noopener"
+            className="flex items-center gap-2"
+          >
             <Favicon domain={resolvedDomain} size={20} className="rounded" />
             <h2 className="text-xl font-semibold tracking-tight">
               {resolvedDomain}
             </h2>
-          </div>
+          </Link>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => copy(resolvedDomain)}
-          >
-            <Copy className="h-4 w-4" /> Copy domain
-          </Button>
           <Button variant="default" size="sm" onClick={exportJson}>
             <Download className="h-4 w-4" /> Export JSON
           </Button>
