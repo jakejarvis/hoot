@@ -7,19 +7,15 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 import { Favicon } from "./favicon";
 
 const domainSchema = z
   .string()
-  .trim()
-  .toLowerCase()
-  .refine(
-    (v) =>
-      /^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z]{2,})+$/.test(v),
-    {
-      message: "Enter a valid domain like example.com",
-    },
-  );
+  .transform((v) => normalizeDomainInput(v))
+  .refine((v) => isValidDomain(v), {
+    message: "Enter a valid domain like example.com",
+  });
 
 export function DomainSearchForm({
   initialValue = "",

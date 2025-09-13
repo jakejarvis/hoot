@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DomainReportView } from "@/components/domain/domain-report-view";
+import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 
 export default async function DomainPage({
   params,
@@ -7,18 +8,17 @@ export default async function DomainPage({
   params: Promise<{ domain: string }>;
 }) {
   const { domain: raw } = await params;
-  const domain = decodeURIComponent(raw);
-  if (!isValidDomain(domain)) return notFound();
+  const decoded = decodeURIComponent(raw);
+  const normalized = normalizeDomainInput(decoded);
+  if (!isValidDomain(normalized)) return notFound();
+  // Canonicalize URL to the normalized domain
+  if (normalized !== decoded) {
+    redirect(`/${encodeURIComponent(normalized)}`);
+  }
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
-      <DomainReportView domain={domain} />
+      <DomainReportView domain={normalized} />
     </div>
-  );
-}
-
-function isValidDomain(v: string) {
-  return /^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z]{2,})+$/.test(
-    v,
   );
 }

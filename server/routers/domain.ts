@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 import { resolveAll } from "../services/dns";
 import { probeHeaders } from "../services/headers";
 import { detectHosting } from "../services/hosting";
@@ -7,7 +8,13 @@ import { fetchWhois } from "../services/rdap";
 import { getCertificates } from "../services/tls";
 import { publicProcedure, router } from "../trpc";
 
-const domainInput = z.object({ domain: z.string().min(1) });
+const domainInput = z
+  .object({ domain: z.string().min(1) })
+  .transform(({ domain }) => ({ domain: normalizeDomainInput(domain) }))
+  .refine(({ domain }) => isValidDomain(domain), {
+    message: "Invalid domain",
+    path: ["domain"],
+  });
 
 export const domainRouter = router({
   whois: publicProcedure.input(domainInput).query(async ({ input }) => {
