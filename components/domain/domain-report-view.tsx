@@ -4,7 +4,6 @@ import { Accordion } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Copy, Download } from "lucide-react"
 import { Favicon } from "./favicon"
-import type { DomainReport } from "@/lib/mock"
 import { trpc } from "@/lib/trpc/client"
 import { Section } from "./section"
 import { KeyValue } from "./key-value"
@@ -13,8 +12,8 @@ import { DnsGroup } from "./dns-group"
 import { Skeletons } from "./skeletons"
 import { ProviderLogo } from "./provider-logo"
 
-export function DomainReportView({ report, domain }: { report?: DomainReport; domain?: string }) {
-  const resolvedDomain = domain ?? report?.domain ?? ""
+export function DomainReportView({ domain }: { domain: string }) {
+  const resolvedDomain = domain
   const whois = trpc.domain.whois.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 1 })
   const dns = trpc.domain.dns.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 2 })
   const hosting = trpc.domain.hosting.useQuery({ domain: resolvedDomain }, { enabled: !!domain, retry: 1 })
