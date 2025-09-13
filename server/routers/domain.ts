@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
+import { normalizeDomainInput } from "@/lib/domain";
+import { isAcceptableDomainInput } from "@/lib/domain-server";
 import { resolveAll } from "../services/dns";
 import { probeHeaders } from "../services/headers";
 import { detectHosting } from "../services/hosting";
@@ -11,7 +12,7 @@ import { publicProcedure, router } from "../trpc";
 const domainInput = z
   .object({ domain: z.string().min(1) })
   .transform(({ domain }) => ({ domain: normalizeDomainInput(domain) }))
-  .refine(({ domain }) => isValidDomain(domain), {
+  .refine(({ domain }) => isAcceptableDomainInput(domain), {
     message: "Invalid domain",
     path: ["domain"],
   });

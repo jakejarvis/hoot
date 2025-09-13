@@ -1,3 +1,4 @@
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
 
 export type Whois = {
@@ -19,12 +20,14 @@ type RdapJson = {
 };
 
 export async function fetchWhois(domain: string): Promise<Whois> {
-  const key = ns("rdap", domain.toLowerCase());
+  const registrable = toRegistrableDomain(domain);
+  if (!registrable) throw new Error("Invalid domain");
+  const key = ns("rdap", registrable.toLowerCase());
   const cached = await cacheGet<Whois>(key);
   if (cached) return cached;
 
-  const rdapBase = await rdapBaseForDomain(domain);
-  const url = `${rdapBase}/domain/${encodeURIComponent(domain)}`;
+  const rdapBase = await rdapBaseForDomain(registrable);
+  const url = `${rdapBase}/domain/${encodeURIComponent(registrable)}`;
   const res = await fetch(url, {
     headers: { accept: "application/rdap+json" },
   });
