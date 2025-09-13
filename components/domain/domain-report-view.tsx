@@ -1,6 +1,15 @@
 "use client";
 
-import { Copy, Download, Globe, Lock, Server, Shield } from "lucide-react";
+import {
+  ArrowDown,
+  Copy,
+  Download,
+  Globe,
+  Lock,
+  Server,
+  Shield,
+} from "lucide-react";
+import React from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/client";
@@ -257,26 +266,27 @@ export function DomainReportView({ domain }: { domain: string }) {
           }
         >
           {certs.data ? (
-            certs.data.map((c) => (
-              <div
-                key={`${c.subject}-${c.validFrom}-${c.validTo}`}
-                className="rounded-lg border p-3"
+            certs.data.map((c, idx) => (
+              <React.Fragment
+                key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <KeyValue label="Issuer" value={c.issuer} />
-                  <KeyValue label="Subject" value={c.subject} />
-                  <KeyValue
-                    label="Valid from"
-                    value={formatDate(c.validFrom)}
-                  />
-                  <KeyValue label="Valid to" value={formatDate(c.validTo)} />
-                  <KeyValue label="Key" value={c.keyType} />
-                  <KeyValue label="Signature" value={c.signatureAlgorithm} />
+                <div className="rounded-lg border p-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <KeyValue label="Issuer" value={stripCN(c.issuer)} />
+                    <KeyValue label="Subject" value={stripCN(c.subject)} />
+                    <KeyValue
+                      label="Valid from"
+                      value={formatDate(c.validFrom)}
+                    />
+                    <KeyValue label="Valid to" value={formatDate(c.validTo)} />
+                  </div>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Chain: {c.chain.join(" → ")}
-                </div>
-              </div>
+                {idx < certs.data.length - 1 && (
+                  <div className="flex justify-center my-2" aria-hidden>
+                    <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+                  </div>
+                )}
+              </React.Fragment>
             ))
           ) : certs.isError ? (
             <div className="text-sm text-destructive flex items-center gap-2">
@@ -352,4 +362,9 @@ function formatDate(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function stripCN(value: string): string {
+  if (!value) return value;
+  return value.startsWith("CN=") ? value.slice(3) : value;
 }
