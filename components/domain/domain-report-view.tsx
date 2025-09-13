@@ -3,6 +3,7 @@
 import { Accordion } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Copy, Download } from "lucide-react"
+import { Favicon } from "./favicon"
 import type { DomainReport } from "@/lib/mock"
 import { trpc } from "@/lib/trpc/client"
 import { Section } from "./section"
@@ -43,7 +44,10 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">{resolvedDomain}</h2>
+          <div className="flex items-center gap-2">
+            <Favicon domain={resolvedDomain} size={20} className="rounded" />
+            <h2 className="text-xl font-semibold tracking-tight">{resolvedDomain}</h2>
+          </div>
           <p className="text-muted-foreground text-sm">Mock data</p>
         </div>
         <div className="flex items-center gap-2">

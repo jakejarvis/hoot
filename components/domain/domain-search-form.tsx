@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Search, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { Favicon } from "./favicon"
 
 const domainSchema = z
   .string()
@@ -45,7 +46,8 @@ export function DomainSearchForm({
     e.preventDefault()
     const parsed = domainSchema.safeParse(value)
     if (!parsed.success) {
-      toast.error(parsed.error.errors[0]?.message ?? "Invalid domain")
+      const issue = parsed.error.issues?.[0]
+      toast.error(issue?.message ?? "Invalid domain")
       inputRef.current?.focus()
       return
     }
@@ -102,7 +104,10 @@ export function DomainSearchForm({
         <div className="mt-3 flex flex-wrap gap-2" aria-label="Recent searches">
           {history.map((d) => (
             <Button key={d} variant="secondary" size="sm" onClick={() => router.push(`/${encodeURIComponent(d)}`)}>
-              {d}
+              <span className="inline-flex items-center gap-2">
+                <Favicon domain={d} size={14} className="rounded" />
+                {d}
+              </span>
             </Button>
           ))}
         </div>
