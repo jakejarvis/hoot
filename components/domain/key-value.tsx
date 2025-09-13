@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Copy } from "lucide-react"
 import { toast } from "sonner"
 
-export function KeyValue({ label, value, copyable, leading }: { label: string; value: string; copyable?: boolean; leading?: React.ReactNode }) {
+export function KeyValue({ label, value, copyable, leading }: { label?: string; value: string; copyable?: boolean; leading?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/12 dark:border-white/10 bg-background/40 backdrop-blur-lg px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
       <div className="min-w-0 flex items-center gap-2">

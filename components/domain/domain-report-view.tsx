@@ -93,32 +93,27 @@ export function DomainReportView({ report, domain }: { report?: DomainReport; do
             <div className="space-y-4">
               <DnsGroup title="A Records" chart={1}>
                 {dns.data.filter((d) => d.type === "A").map((r, i) => (
-                  <KeyValue key={`A-${i}`} label={`${r.name}`} value={r.value} copyable />
+                  <KeyValue key={`A-${i}`} value={r.value} copyable />
                 ))}
               </DnsGroup>
               <DnsGroup title="AAAA Records" chart={2}>
                 {dns.data.filter((d) => d.type === "AAAA").map((r, i) => (
-                  <KeyValue key={`AAAA-${i}`} label={`${r.name}`} value={r.value} copyable />
+                  <KeyValue key={`AAAA-${i}`} value={r.value} copyable />
                 ))}
               </DnsGroup>
               <DnsGroup title="MX Records" chart={3}>
                 {dns.data.filter((d) => d.type === "MX").map((r, i) => (
-                  <KeyValue key={`MX-${i}`} label={`${r.name}${r.priority ? ` (prio ${r.priority})` : ""}`} value={r.value} copyable />
-                ))}
-              </DnsGroup>
-              <DnsGroup title="CNAME Records" chart={4}>
-                {dns.data.filter((d) => d.type === "CNAME").map((r, i) => (
-                  <KeyValue key={`CNAME-${i}`} label={`${r.name}`} value={r.value} copyable />
+                  <KeyValue key={`MX-${i}`} label={`${r.priority ? `Priority ${r.priority}` : null}`} value={r.value} copyable />
                 ))}
               </DnsGroup>
               <DnsGroup title="TXT Records" chart={5}>
                 {dns.data.filter((d) => d.type === "TXT").map((r, i) => (
-                  <KeyValue key={`TXT-${i}`} label={`${r.name}`} value={r.value} copyable />
+                  <KeyValue key={`TXT-${i}`} value={r.value} copyable />
                 ))}
               </DnsGroup>
               <DnsGroup title="NS Records" chart={1}>
                 {dns.data.filter((d) => d.type === "NS").map((r, i) => (
-                  <KeyValue key={`NS-${i}`} label={`${r.name}`} value={r.value} copyable />
+                  <KeyValue key={`NS-${i}`} value={r.value} copyable />
                 ))}
               </DnsGroup>
             </div>

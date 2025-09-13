@@ -70,9 +70,6 @@ export function Section({
                     Loading
                   </>
                 )}
-                {status === "ready" && (
-                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-green-500/80" aria-label="Ready" />
-                )}
                 {status === "error" && (
                   <span className="text-destructive">Error</span>
                 )}
