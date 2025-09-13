@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +26,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider>
+          {/* Frosted glass gradient background */}
+          <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+            <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_50%_-50%,oklch(0.96_0.02_250_/_0.9),transparent_60%)] dark:bg-[radial-gradient(1200px_800px_at_50%_-50%,oklch(0.25_0.03_250_/_0.9),transparent_60%)]" />
+            <div className="absolute inset-0 backdrop-blur-xl" />
+          </div>
+
+          {/* App Shell */}
+          <div className="min-h-svh flex flex-col">
+            <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+              <div className="font-semibold tracking-tight">whoozle</div>
+              <ModeToggle />
+            </header>
+            <main className="flex-1">{children}</main>
+            <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground">
+              Built with Next.js + shadcn/ui
+            </footer>
+          </div>
+          <Toaster richColors closeButton />
+        </ThemeProvider>
       </body>
     </html>
   );
