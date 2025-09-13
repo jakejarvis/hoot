@@ -1,7 +1,6 @@
 import { z } from "zod"
 import { publicProcedure, router } from "../trpc"
 import { TRPCError } from "@trpc/server"
-import { generateMockReport } from "@/lib/mock"
 import { resolveAll } from "../services/dns"
 import { probeHeaders } from "../services/headers"
 import { fetchWhois } from "../services/rdap"
@@ -48,9 +47,4 @@ export const domainRouter = router({
     }
   }),
 })
-
-function wait(ms: number) {
-  return new Promise((res) => setTimeout(res, ms))
-}
-
 
