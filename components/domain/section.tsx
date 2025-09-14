@@ -37,7 +37,7 @@ export function Section({
 }) {
   return (
     <AccordionItem value={title} className="border-none">
-      <Card className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-white/15 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]">
+      <Card className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]">
         {/* Accent glow */}
         <div
           aria-hidden

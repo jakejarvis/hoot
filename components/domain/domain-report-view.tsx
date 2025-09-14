@@ -192,7 +192,7 @@ export function DomainReportView({ domain }: { domain: string }) {
   if (isUnregistered) {
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-        <div className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 rounded-3xl border border-white/15 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)] p-8 text-center">
+        <div className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)] p-8 text-center">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-x-16 -top-16 h-40 blur-3xl opacity-40 bg-[radial-gradient(closest-side,oklch(0.86_0.12_60),transparent)]"
@@ -416,7 +416,7 @@ export function DomainReportView({ domain }: { domain: string }) {
               <React.Fragment
                 key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}
               >
-                <div className="rounded-lg border p-3">
+                <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <KeyValue label="Issuer" value={stripCN(c.issuer)} />
                     <KeyValue label="Subject" value={stripCN(c.subject)} />

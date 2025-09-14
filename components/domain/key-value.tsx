@@ -78,7 +78,7 @@ export function KeyValue({
         "flex items-center justify-between gap-4 rounded-2xl border bg-background/40 backdrop-blur-lg px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] min-w-0",
         highlight
           ? "border-purple-500/20 dark:border-purple-500/20 bg-purple-500/5 shadow-[inset_0_1px_0_rgba(168,85,247,0.18)]"
-          : "border-white/12 dark:border-white/10",
+          : "border-black/10 dark:border-white/10",
       )}
     >
       <div className="min-w-0 space-y-1">
@@ -118,7 +118,7 @@ export function KeyValue({
         <Button
           variant="outline"
           size="sm"
-          className="shrink-0 h-7 px-2 bg-background/50 backdrop-blur border-white/20 dark:border-white/10"
+          className="shrink-0 h-7 px-2 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
           aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
           onClick={() => {
             navigator.clipboard.writeText(value);
