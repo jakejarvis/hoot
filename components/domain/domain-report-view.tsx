@@ -332,6 +332,7 @@ export function DomainReportView({ domain }: { domain: string }) {
             >
               <Checkbox
                 id="show-ttls"
+                className="cursor-pointer"
                 checked={showTtls}
                 onCheckedChange={(v) => setShowTtls(v === true)}
                 onClick={(e) => e.stopPropagation()}

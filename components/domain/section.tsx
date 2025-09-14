@@ -58,6 +58,7 @@ export function Section({
         <div className="relative">
           <AccordionTrigger
             className={cn("px-5 py-4 hover:no-underline no-underline group")}
+            disabled={status !== "ready"}
           >
             <div className="flex w-full items-center gap-3 text-left">
               {icon && (

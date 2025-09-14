@@ -68,7 +68,7 @@ export function HeaderSearch() {
           className="h-10 sm:h-11 pl-9 pr-14 rounded-xl"
           aria-label="Search domains"
         />
-        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none rounded-md border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none rounded-md border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground invisible sm:visible">
           ⌘ K
         </kbd>
       </div>
