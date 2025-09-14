@@ -12,8 +12,16 @@ import {
 import Link from "next/link";
 import React from "react";
 import { Accordion } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc/client";
 import { DnsGroup } from "./dns-group";
 import { Favicon } from "./favicon";
@@ -73,6 +81,21 @@ export function DomainReportView({ domain }: { domain: string }) {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  const [showTtls, setShowTtls] = React.useState(false);
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem("hoot-show-dns-ttls");
+      if (stored !== null) setShowTtls(stored === "1");
+    } catch {}
+  }, []);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("hoot-show-dns-ttls", showTtls ? "1" : "0");
+    } catch {}
+  }, [showTtls]);
+
+  // no need for layout probing; we will place the toggle in the section header
 
   React.useEffect(() => {
     if (whois.isSuccess && whois.data?.registered === true) {
@@ -296,6 +319,31 @@ export function DomainReportView({ domain }: { domain: string }) {
           help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
           icon={<Globe className="h-4 w-4" />}
           accent="blue"
+          headerRight={
+            <Label
+              htmlFor="show-ttls"
+              className="cursor-pointer select-none"
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") e.stopPropagation();
+              }}
+            >
+              <Checkbox
+                id="show-ttls"
+                checked={showTtls}
+                onCheckedChange={(v) => setShowTtls(v === true)}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                }}
+              />
+              Show TTLs
+            </Label>
+          }
           status={dns.isLoading ? "loading" : dns.isError ? "error" : "ready"}
         >
           {dns.data ? (
@@ -304,7 +352,23 @@ export function DomainReportView({ domain }: { domain: string }) {
                 {dns.data
                   .filter((d) => d.type === "A")
                   .map((r) => (
-                    <KeyValue key={`A-${r.value}`} value={r.value} copyable />
+                    <KeyValue
+                      key={`A-${r.value}`}
+                      value={r.value}
+                      copyable
+                      trailing={
+                        showTtls && typeof r.ttl === "number" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" title="Time to Live">
+                                {formatTtl(r.ttl)}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>{r.ttl}</TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                    />
                   ))}
               </DnsGroup>
               <DnsGroup title="AAAA Records" chart={2}>
@@ -315,6 +379,18 @@ export function DomainReportView({ domain }: { domain: string }) {
                       key={`AAAA-${r.value}`}
                       value={r.value}
                       copyable
+                      trailing={
+                        showTtls && typeof r.ttl === "number" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" title="Time to Live">
+                                {formatTtl(r.ttl)}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>{r.ttl}</TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
                     />
                   ))}
               </DnsGroup>
@@ -327,6 +403,18 @@ export function DomainReportView({ domain }: { domain: string }) {
                       label={`${r.priority ? `Priority ${r.priority}` : ""}`}
                       value={r.value}
                       copyable
+                      trailing={
+                        showTtls && typeof r.ttl === "number" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" title="Time to Live">
+                                {formatTtl(r.ttl)}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>{r.ttl}</TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
                     />
                   ))}
               </DnsGroup>
@@ -334,14 +422,46 @@ export function DomainReportView({ domain }: { domain: string }) {
                 {dns.data
                   .filter((d) => d.type === "TXT")
                   .map((r) => (
-                    <KeyValue key={`TXT-${r.value}`} value={r.value} copyable />
+                    <KeyValue
+                      key={`TXT-${r.value}`}
+                      value={r.value}
+                      copyable
+                      trailing={
+                        showTtls && typeof r.ttl === "number" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" title="Time to Live">
+                                {formatTtl(r.ttl)}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>{r.ttl}</TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                    />
                   ))}
               </DnsGroup>
               <DnsGroup title="NS Records" chart={1}>
                 {dns.data
                   .filter((d) => d.type === "NS")
                   .map((r) => (
-                    <KeyValue key={`NS-${r.value}`} value={r.value} copyable />
+                    <KeyValue
+                      key={`NS-${r.value}`}
+                      value={r.value}
+                      copyable
+                      trailing={
+                        showTtls && typeof r.ttl === "number" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" title="Time to Live">
+                                {formatTtl(r.ttl)}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>{r.ttl}</TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                    />
                   ))}
               </DnsGroup>
             </div>
@@ -516,4 +636,16 @@ function formatDate(iso: string) {
 function stripCN(value: string): string {
   if (!value) return value;
   return value.startsWith("CN=") ? value.slice(3) : value;
+}
+
+function formatTtl(ttl: number): string {
+  if (!Number.isFinite(ttl) || ttl <= 0) return `${ttl}s`;
+  const hours = Math.floor(ttl / 3600);
+  const minutes = Math.floor((ttl % 3600) / 60);
+  const seconds = ttl % 60;
+  const parts: string[] = [];
+  if (hours) parts.push(`${hours}h`);
+  if (minutes) parts.push(`${minutes}m`);
+  if (!hours && !minutes) parts.push(`${seconds}s`);
+  return parts.join(" ");
 }

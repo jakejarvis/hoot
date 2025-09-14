@@ -17,12 +17,14 @@ export function KeyValue({
   copyable,
   leading,
   highlight,
+  trailing,
 }: {
   label?: string;
   value: string;
   copyable?: boolean;
   leading?: React.ReactNode;
   highlight?: boolean;
+  trailing?: React.ReactNode;
 }) {
   const valueRef = useRef<HTMLSpanElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -114,33 +116,36 @@ export function KeyValue({
           </TooltipContent>
         </Tooltip>
       </div>
-      {copyable && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0 h-7 px-2 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
-          aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
-          onClick={() => {
-            navigator.clipboard.writeText(value);
-            toast.success("Copied");
-            setCopied(true);
-            if (resetTimerRef.current) {
-              window.clearTimeout(resetTimerRef.current);
-            }
-            resetTimerRef.current = window.setTimeout(() => {
-              setCopied(false);
-              resetTimerRef.current = null;
-            }, 1200);
-          }}
-        >
-          {copied ? (
-            <Check className="mr-1 h-3.5 w-3.5" />
-          ) : (
-            <Copy className="mr-1 h-3.5 w-3.5" />
-          )}
-          {copied ? "Copied" : "Copy"}
-        </Button>
-      )}
+      <div className="shrink-0 flex items-center gap-2">
+        {trailing}
+        {copyable && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 h-7 px-2 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
+            aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
+            onClick={() => {
+              navigator.clipboard.writeText(value);
+              toast.success("Copied");
+              setCopied(true);
+              if (resetTimerRef.current) {
+                window.clearTimeout(resetTimerRef.current);
+              }
+              resetTimerRef.current = window.setTimeout(() => {
+                setCopied(false);
+                resetTimerRef.current = null;
+              }, 1200);
+            }}
+          >
+            {copied ? (
+              <Check className="mr-1 h-3.5 w-3.5" />
+            ) : (
+              <Copy className="mr-1 h-3.5 w-3.5" />
+            )}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

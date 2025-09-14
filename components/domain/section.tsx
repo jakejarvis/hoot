@@ -25,6 +25,7 @@ export function Section({
   icon,
   accent,
   status,
+  headerRight,
   children,
 }: {
   title: string;
@@ -33,10 +34,11 @@ export function Section({
   icon?: React.ReactNode;
   accent?: "blue" | "purple" | "green" | "orange";
   status?: "loading" | "ready" | "error";
+  headerRight?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <AccordionItem value={title} className="border-none">
+    <AccordionItem value={title} className="border-none group">
       <Card className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]">
         {/* Accent glow */}
         <div
@@ -53,57 +55,66 @@ export function Section({
               "bg-[radial-gradient(closest-side,oklch(0.86_0.12_60),transparent)]",
           )}
         />
-        <AccordionTrigger
-          className={cn("px-5 py-4 hover:no-underline no-underline")}
-        >
-          <div className="flex w-full items-center gap-3 text-left">
-            {icon && (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
-                {icon}
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-base">{title}</CardTitle>
-              {(description || help) && (
-                <CardDescription className="flex items-center gap-1 whitespace-normal">
-                  {description}
-                  {help && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            role="img"
-                            aria-label={`More info about ${title}`}
-                            className="inline-flex"
-                          >
-                            <Info
-                              className="h-3.5 w-3.5 opacity-60"
-                              aria-hidden
-                            />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>{help}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </CardDescription>
+        <div className="relative">
+          <AccordionTrigger
+            className={cn("px-5 py-4 hover:no-underline no-underline group")}
+          >
+            <div className="flex w-full items-center gap-3 text-left">
+              {icon && (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
+                  {icon}
+                </div>
               )}
-            </div>
-            {status && (
-              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-                {status === "loading" && (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Loading
-                  </>
-                )}
-                {status === "error" && (
-                  <span className="text-destructive">Error</span>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-base">{title}</CardTitle>
+                {(description || help) && (
+                  <CardDescription className="flex items-center gap-1 whitespace-normal">
+                    {description}
+                    {help && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              role="img"
+                              aria-label={`More info about ${title}`}
+                              className="inline-flex"
+                            >
+                              <Info
+                                className="h-3.5 w-3.5 opacity-60"
+                                aria-hidden
+                              />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>{help}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </CardDescription>
                 )}
               </div>
-            )}
-          </div>
-        </AccordionTrigger>
+              <div className="ml-auto flex items-center gap-3">
+                {status && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {status === "loading" && (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Loading
+                      </>
+                    )}
+                    {status === "error" && (
+                      <span className="text-destructive">Error</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </AccordionTrigger>
+          {headerRight && (
+            <div className="absolute right-16 top-1/2 -translate-y-1/2 hidden group-data-[state=open]:flex z-10">
+              {headerRight}
+            </div>
+          )}
+        </div>
         <AccordionContent>
           <CardContent className="pt-0 px-5 pb-5 space-y-3">
             {children}
