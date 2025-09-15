@@ -64,12 +64,15 @@ function detectHostingProvider(
     headerNames.some((n) => n.startsWith("x-vercel"))
   )
     return "Vercel";
-  if (server.includes("cloudflare") || byName["cf-ray"]) return "Cloudflare";
+  if (byName["x-powered-by"]?.includes("WP Engine")) return "WP Engine";
+  if (byName["host-header"]?.includes("WordPress.com")) return "WordPress.com";
+  if (server.includes("amazons3")) return "Amazon S3";
   if (server.includes("netlify")) return "Netlify";
   if (server.includes("github")) return "GitHub Pages";
   if (server.includes("fly.io")) return "Fly.io";
   if (server.includes("akamai")) return "Akamai";
   if (server.includes("heroku")) return "Heroku";
+  if (server.includes("cloudflare") || byName["cf-ray"]) return "Cloudflare";
   return server ? capitalize(server.split("/")[0]) : "Unknown";
 }
 
@@ -81,6 +84,7 @@ function detectEmailProvider(mxHosts: string[]): string {
   if (hosts.includes("zoho")) return "Zoho";
   if (hosts.includes("proton")) return "Proton";
   if (hosts.includes("messagingengine")) return "Fastmail";
+
   if (hosts.includes("mx.cloudflare.net")) return "Cloudflare Email Routing";
   return mxHosts[0] ? mxHosts[0] : "Unknown";
 }

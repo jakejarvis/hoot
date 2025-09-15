@@ -31,6 +31,8 @@ function mapProviderToDomain(name: string): string | undefined {
   if (n.includes("akamai")) return "akamai.com";
   if (n.includes("heroku")) return "heroku.com";
   if (n.includes("nginx")) return "nginx.org";
+  if (n.includes("wp engine")) return "wpengine.com";
+  if (n.includes("wordpress")) return "wordpress.com";
 
   // Email
   if (n.includes("google workspace") || n.includes("gmail"))
