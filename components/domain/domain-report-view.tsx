@@ -9,6 +9,7 @@ import {
   Shield,
   ShoppingBasket,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import React from "react";
 import { Accordion } from "@/components/ui/accordion";
@@ -31,6 +32,16 @@ import { Section } from "./section";
 import { Skeletons } from "./skeletons";
 
 export function DomainReportView({ domain }: { domain: string }) {
+  const HostingMap = React.useMemo(
+    () =>
+      dynamic(() => import("./hosting-map").then((m) => m.HostingMap), {
+        ssr: false,
+        loading: () => (
+          <div className="h-[280px] w-full rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10" />
+        ),
+      }),
+    [],
+  );
   const resolvedDomain = domain;
   const whois = trpc.domain.whois.useQuery(
     { domain: resolvedDomain },
@@ -505,6 +516,11 @@ export function DomainReportView({ domain }: { domain: string }) {
                 value={`${hosting.data.ipAddress} (${hosting.data.geo.city}, ${hosting.data.geo.country})`}
                 copyable
               />
+              {hosting.data.geo.lat != null && hosting.data.geo.lon != null ? (
+                <div className="mt-2">
+                  <HostingMap hosting={hosting.data} />
+                </div>
+              ) : null}
             </>
           ) : hosting.isError ? (
             <div className="text-sm text-destructive flex items-center gap-2">

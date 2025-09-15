@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCProvider } from "@/components/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

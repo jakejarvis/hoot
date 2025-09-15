@@ -6,7 +6,13 @@ export type HostingInfo = {
   hostingProvider: string;
   emailProvider: string;
   ipAddress: string | null;
-  geo: { city: string; region: string; country: string };
+  geo: {
+    city: string;
+    region: string;
+    country: string;
+    lat: number | null;
+    lon: number | null;
+  };
 };
 
 export async function detectHosting(domain: string): Promise<HostingInfo> {
@@ -25,7 +31,7 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
 
     const geo = ip
       ? await lookupGeo(ip)
-      : { city: "", region: "", country: "" };
+      : { city: "", region: "", country: "", lat: null, lon: null };
 
     return {
       hostingProvider: provider,
@@ -68,9 +74,13 @@ function detectEmailProvider(mxHosts: string[]): string {
   return mxHosts[0] ? mxHosts[0] : "Unknown";
 }
 
-async function lookupGeo(
-  ip: string,
-): Promise<{ city: string; region: string; country: string }> {
+async function lookupGeo(ip: string): Promise<{
+  city: string;
+  region: string;
+  country: string;
+  lat: number | null;
+  lon: number | null;
+}> {
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
     if (!res.ok) throw new Error("geo fail");
@@ -79,14 +89,18 @@ async function lookupGeo(
       region?: string;
       state?: string;
       country?: string;
+      latitude?: number;
+      longitude?: number;
     };
     return {
       city: j.city || "",
       region: j.region || j.state || "",
       country: j.country || "",
+      lat: typeof j.latitude === "number" ? j.latitude : null,
+      lon: typeof j.longitude === "number" ? j.longitude : null,
     };
   } catch {
-    return { city: "", region: "", country: "" };
+    return { city: "", region: "", country: "", lat: null, lon: null };
   }
 }
 
