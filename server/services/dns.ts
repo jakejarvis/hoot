@@ -1,7 +1,7 @@
 import { getOrSet, ns } from "@/lib/redis";
 
 export type DnsRecord = {
-  type: "A" | "AAAA" | "MX" | "CNAME" | "TXT" | "NS";
+  type: "A" | "AAAA" | "MX" | "TXT" | "NS";
   name: string;
   value: string;
   ttl?: number;
@@ -9,7 +9,7 @@ export type DnsRecord = {
 };
 
 type DnsType = DnsRecord["type"];
-const TYPES: DnsType[] = ["A", "AAAA", "MX", "CNAME", "TXT", "NS"];
+const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
 
 export async function resolveAll(domain: string): Promise<DnsRecord[]> {
   const results: DnsRecord[] = [];
@@ -41,6 +41,7 @@ async function resolveType(
   });
   if (!res.ok) throw new Error(`DoH failed: ${res.status}`);
   const json = (await res.json()) as CloudflareDnsJson;
+  console.log(json);
   const ans = json.Answer ?? [];
   return ans
     .map((a) => normalizeAnswer(domain, type, a))
@@ -61,8 +62,6 @@ function normalizeAnswer(
       return { type, name, value: trimDot(a.data), ttl };
     case "TXT":
       return { type, name, value: stripTxtQuotes(a.data), ttl };
-    case "CNAME":
-      return { type, name, value: trimDot(a.data), ttl };
     case "MX": {
       const [prioStr, ...hostParts] = a.data.split(" ");
       const priority = Number(prioStr);

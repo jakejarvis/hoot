@@ -62,9 +62,9 @@ function detectEmailProvider(mxHosts: string[]): string {
   if (hosts.includes("google")) return "Google Workspace";
   if (hosts.includes("outlook") || hosts.includes("protection.outlook.com"))
     return "Microsoft 365";
-  if (hosts.includes("fastmail")) return "Fastmail";
   if (hosts.includes("zoho")) return "Zoho";
   if (hosts.includes("proton")) return "Proton";
+  if (hosts.includes("messagingengine")) return "Fastmail";
   return mxHosts[0] ? mxHosts[0] : "Unknown";
 }
 

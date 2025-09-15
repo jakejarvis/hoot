@@ -67,29 +67,30 @@ export function Section({
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-base">{title}</CardTitle>
+                <CardTitle className="gap-2 flex items-center">
+                  <span className="text-base">{title}</span>
+                  {help && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            role="img"
+                            aria-label={`More info about ${title}`}
+                          >
+                            <Info
+                              className="h-3.5 w-3.5 opacity-60"
+                              aria-hidden
+                            />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{help}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </CardTitle>
                 {(description || help) && (
-                  <CardDescription className="flex items-center gap-1 whitespace-normal">
+                  <CardDescription className="sr-only">
                     {description}
-                    {help && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span
-                              role="img"
-                              aria-label={`More info about ${title}`}
-                              className="inline-flex"
-                            >
-                              <Info
-                                className="h-3.5 w-3.5 opacity-60"
-                                aria-hidden
-                              />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>{help}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
                   </CardDescription>
                 )}
               </div>
