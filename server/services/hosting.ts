@@ -81,6 +81,7 @@ function detectEmailProvider(mxHosts: string[]): string {
   if (hosts.includes("zoho")) return "Zoho";
   if (hosts.includes("proton")) return "Proton";
   if (hosts.includes("messagingengine")) return "Fastmail";
+  if (hosts.includes("mx.cloudflare.net")) return "Cloudflare Email Routing";
   return mxHosts[0] ? mxHosts[0] : "Unknown";
 }
 
