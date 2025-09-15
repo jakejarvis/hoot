@@ -176,7 +176,7 @@ export function DomainReportView({ domain }: { domain: string }) {
           <Section
             title="Hosting & Email"
             description="Providers and IP geolocation"
-            help="Hosting provider serves your site; email provider handles your domain's email."
+            help="Hosting provider serves a site; email provider handles a domain's email."
             icon={<Server className="h-4 w-4" />}
             accent="green"
             status="loading"
@@ -191,7 +191,7 @@ export function DomainReportView({ domain }: { domain: string }) {
           <Section
             title="SSL Certificates"
             description="Issuer and validity"
-            help="SSL/TLS certificates encrypt traffic and verify your domain's identity."
+            help="SSL/TLS certificates encrypt traffic and verify a domain's identity."
             icon={<Lock className="h-4 w-4" />}
             accent="orange"
             status="loading"
@@ -204,7 +204,7 @@ export function DomainReportView({ domain }: { domain: string }) {
           <Section
             title="HTTP Headers"
             description="Server, security, caching"
-            help="Headers include server info and security/caching directives returned by your site."
+            help="Headers include server info and security/caching directives returned by a site."
             icon={<Server className="h-4 w-4" />}
             accent="purple"
             status="loading"
@@ -376,7 +376,9 @@ export function DomainReportView({ domain }: { domain: string }) {
                                 {formatTtl(r.ttl)}
                               </Badge>
                             </TooltipTrigger>
-                            <TooltipContent>{r.ttl}</TooltipContent>
+                            <TooltipContent>
+                              <span className="font-mono">{r.ttl}</span>
+                            </TooltipContent>
                           </Tooltip>
                         ) : undefined
                       }
@@ -399,7 +401,9 @@ export function DomainReportView({ domain }: { domain: string }) {
                                 {formatTtl(r.ttl)}
                               </Badge>
                             </TooltipTrigger>
-                            <TooltipContent>{r.ttl}</TooltipContent>
+                            <TooltipContent>
+                              <span className="font-mono">{r.ttl}</span>
+                            </TooltipContent>
                           </Tooltip>
                         ) : undefined
                       }
@@ -423,7 +427,9 @@ export function DomainReportView({ domain }: { domain: string }) {
                                 {formatTtl(r.ttl)}
                               </Badge>
                             </TooltipTrigger>
-                            <TooltipContent>{r.ttl}</TooltipContent>
+                            <TooltipContent>
+                              <span className="font-mono">{r.ttl}</span>
+                            </TooltipContent>
                           </Tooltip>
                         ) : undefined
                       }
@@ -446,7 +452,9 @@ export function DomainReportView({ domain }: { domain: string }) {
                                 {formatTtl(r.ttl)}
                               </Badge>
                             </TooltipTrigger>
-                            <TooltipContent>{r.ttl}</TooltipContent>
+                            <TooltipContent>
+                              <span className="font-mono">{r.ttl}</span>
+                            </TooltipContent>
                           </Tooltip>
                         ) : undefined
                       }
@@ -469,7 +477,9 @@ export function DomainReportView({ domain }: { domain: string }) {
                                 {formatTtl(r.ttl)}
                               </Badge>
                             </TooltipTrigger>
-                            <TooltipContent>{r.ttl}</TooltipContent>
+                            <TooltipContent>
+                              <span className="font-mono">{r.ttl}</span>
+                            </TooltipContent>
                           </Tooltip>
                         ) : undefined
                       }
@@ -492,7 +502,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         <Section
           title="Hosting & Email"
           description="Providers and IP geolocation"
-          help="Hosting provider serves your site; email provider handles your domain's email."
+          help="Hosting provider serves a site; email provider handles a domain's email."
           icon={<Server className="h-4 w-4" />}
           accent="green"
           status={
@@ -512,9 +522,8 @@ export function DomainReportView({ domain }: { domain: string }) {
                 leading={<ProviderLogo name={hosting.data.emailProvider} />}
               />
               <KeyValue
-                label="IP"
-                value={`${hosting.data.geo.emoji} ${hosting.data.ipAddress} ${hosting.data.geo.city || hosting.data.geo.region || hosting.data.geo.country ? `(${hosting.data.geo.city ? `${hosting.data.geo.city}, ` : ""}${hosting.data.geo.region ? `${hosting.data.geo.region}, ` : ""}${hosting.data.geo.country})` : ""}`}
-                copyable
+                label="Location"
+                value={`${hosting.data.geo.emoji} ${hosting.data.geo.city || hosting.data.geo.region || hosting.data.geo.country ? `${hosting.data.geo.city ? `${hosting.data.geo.city}, ` : ""}${hosting.data.geo.region ? `${hosting.data.geo.region}, ` : ""}${hosting.data.geo.country}` : ""}`}
               />
               {hosting.data.geo.lat != null && hosting.data.geo.lon != null ? (
                 <div className="mt-2">
@@ -541,7 +550,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         <Section
           title="SSL Certificates"
           description="Issuer and validity"
-          help="SSL/TLS certificates encrypt traffic and verify your domain's identity."
+          help="SSL/TLS certificates encrypt traffic and verify a domain's identity."
           icon={<Lock className="h-4 w-4" />}
           accent="orange"
           status={
@@ -618,7 +627,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         <Section
           title="HTTP Headers"
           description="Server, security, caching"
-          help="Headers include server info and security/caching directives returned by your site."
+          help="Headers include server info and security/caching directives returned by a site."
           icon={<Server className="h-4 w-4" />}
           accent="purple"
           status={
