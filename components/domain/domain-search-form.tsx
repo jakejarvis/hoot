@@ -14,7 +14,7 @@ const domainSchema = z
   .string()
   .transform((v) => normalizeDomainInput(v))
   .refine((v) => isValidDomain(v), {
-    message: "Please enter a valid domain, such as hoot.sh",
+    message: "Please enter a valid domain.",
   });
 
 export function DomainSearchForm({
@@ -79,7 +79,7 @@ export function DomainSearchForm({
             className="pl-9 h-12"
           />
           <span id="domain-help" className="sr-only">
-            Enter a domain, such as hoot.sh
+            Enter a domain.
           </span>
         </div>
         <Button type="submit" disabled={loading} size="lg" className="h-12">
@@ -93,7 +93,7 @@ export function DomainSearchForm({
       </form>
 
       {showHistory && history.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2 justify-center">
           {history.map((d) => (
             <Button
               key={d}
