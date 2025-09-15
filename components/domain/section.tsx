@@ -35,7 +35,7 @@ export function Section({
   accent?: "blue" | "purple" | "green" | "orange";
   status?: "loading" | "ready" | "error";
   headerRight?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <AccordionItem value={title} className="border-none group">
@@ -118,9 +118,11 @@ export function Section({
           )}
         </div>
         <AccordionContent>
-          <CardContent className="pt-0 px-5 pb-5 space-y-3">
-            {children}
-          </CardContent>
+          {children && (
+            <CardContent className="pt-0 px-5 pb-5 space-y-3">
+              {children}
+            </CardContent>
+          )}
         </AccordionContent>
       </Card>
     </AccordionItem>

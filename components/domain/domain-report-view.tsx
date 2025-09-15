@@ -4,10 +4,11 @@ import {
   ArrowDown,
   Download,
   Globe,
-  Lock,
-  Server,
-  Shield,
+  HardDrive,
+  List,
+  ShieldCheck,
   ShoppingBasket,
+  User,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -140,20 +141,13 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <Accordion type="multiple" className="space-y-4">
           <Section
-            title="WHOIS"
+            title="Registration"
             description="Registrar and registrant details"
             help="WHOIS shows registrar, registration dates, and registrant details."
-            icon={<Shield className="h-4 w-4" />}
+            icon={<User className="h-4 w-4" />}
             accent="purple"
             status="loading"
-          >
-            <div className="space-y-2">
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-            </div>
-          </Section>
+          />
 
           <Section
             title="DNS Records"
@@ -162,60 +156,34 @@ export function DomainReportView({ domain }: { domain: string }) {
             icon={<Globe className="h-4 w-4" />}
             accent="blue"
             status="loading"
-          >
-            <div className="space-y-2">
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-            </div>
-          </Section>
+          />
 
           <Section
             title="Hosting & Email"
             description="Providers and IP geolocation"
             help="Hosting provider serves a site; email provider handles a domain's email."
-            icon={<Server className="h-4 w-4" />}
+            icon={<HardDrive className="h-4 w-4" />}
             accent="green"
             status="loading"
-          >
-            <div className="space-y-2">
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-            </div>
-          </Section>
+          />
 
           <Section
             title="SSL Certificates"
             description="Issuer and validity"
             help="SSL/TLS certificates encrypt traffic and verify a domain's identity."
-            icon={<Lock className="h-4 w-4" />}
+            icon={<ShieldCheck className="h-4 w-4" />}
             accent="orange"
             status="loading"
-          >
-            <div className="space-y-2">
-              <Skeleton className="h-24 rounded-2xl" />
-            </div>
-          </Section>
+          />
 
           <Section
             title="HTTP Headers"
             description="Server, security, caching"
             help="Headers include server info and security/caching directives returned by a site."
-            icon={<Server className="h-4 w-4" />}
+            icon={<List className="h-4 w-4" />}
             accent="purple"
             status="loading"
-          >
-            <div className="space-y-2">
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-              <Skeleton className="h-10 rounded-2xl" />
-            </div>
-          </Section>
+          />
         </Accordion>
       </div>
     );
@@ -279,10 +247,10 @@ export function DomainReportView({ domain }: { domain: string }) {
 
       <Accordion type="multiple" className="space-y-4">
         <Section
-          title="WHOIS"
+          title="Registration"
           description="Registrar and registrant details"
           help="WHOIS shows registrar, registration dates, and registrant details."
-          icon={<Shield className="h-4 w-4" />}
+          icon={<User className="h-4 w-4" />}
           accent="purple"
           status={
             whois.isLoading ? "loading" : whois.isError ? "error" : "ready"
@@ -503,7 +471,7 @@ export function DomainReportView({ domain }: { domain: string }) {
           title="Hosting & Email"
           description="Providers and IP geolocation"
           help="Hosting provider serves a site; email provider handles a domain's email."
-          icon={<Server className="h-4 w-4" />}
+          icon={<HardDrive className="h-4 w-4" />}
           accent="green"
           status={
             hosting.isLoading ? "loading" : hosting.isError ? "error" : "ready"
@@ -551,7 +519,7 @@ export function DomainReportView({ domain }: { domain: string }) {
           title="SSL Certificates"
           description="Issuer and validity"
           help="SSL/TLS certificates encrypt traffic and verify a domain's identity."
-          icon={<Lock className="h-4 w-4" />}
+          icon={<ShieldCheck className="h-4 w-4" />}
           accent="orange"
           status={
             certs.isLoading ? "loading" : certs.isError ? "error" : "ready"
@@ -628,7 +596,7 @@ export function DomainReportView({ domain }: { domain: string }) {
           title="HTTP Headers"
           description="Server, security, caching"
           help="Headers include server info and security/caching directives returned by a site."
-          icon={<Server className="h-4 w-4" />}
+          icon={<List className="h-4 w-4" />}
           accent="purple"
           status={
             headers.isLoading ? "loading" : headers.isError ? "error" : "ready"
