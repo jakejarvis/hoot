@@ -46,7 +46,6 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
       emailProvider: email,
       ipAddress: ip,
       geo,
-      emoji: geo.emoji,
     };
   });
 }

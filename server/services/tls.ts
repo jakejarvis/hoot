@@ -7,9 +7,6 @@ export type Certificate = {
   altNames: string[];
   validFrom: string;
   validTo: string;
-  signatureAlgorithm: string;
-  keyType: string;
-  chain: string[];
 };
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
@@ -55,19 +52,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       ),
       validFrom: new Date(c.valid_from).toISOString(),
       validTo: new Date(c.valid_to).toISOString(),
-      signatureAlgorithm:
-        (c as Partial<{ signatureAlgorithm: string }>).signatureAlgorithm || "",
-      // Ensure we never return Buffers/typed arrays (which break superjson)
-      keyType:
-        typeof (c as Partial<{ publicKeyAlgorithm: string }>)
-          .publicKeyAlgorithm === "string"
-          ? (c as Partial<{ publicKeyAlgorithm: string }>).publicKeyAlgorithm ||
-            ""
-          : "",
-      chain: [],
     }));
-    // Add simple subject chain for readability
-    if (out.length > 0) out[0].chain = out.map((c) => c.issuer);
 
     return out;
   });
