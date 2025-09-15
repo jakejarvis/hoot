@@ -27,11 +27,11 @@ export function AppFooter() {
       <p>
         Owl logo by{" "}
         <Link
-          href="https://thenounproject.com/creator/carranzamaria/"
+          href="https://thenounproject.com/creator/jordymadueno/"
           target="_blank"
           rel="noopener"
         >
-          @mcarranza
+          Jordy Madueño
         </Link>{" "}
         from{" "}
         <Link href="https://thenounproject.com/" target="_blank" rel="noopener">
