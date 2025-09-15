@@ -121,8 +121,8 @@ export function KeyValue({
         {copyable && (
           <Button
             variant="outline"
-            size="sm"
-            className="shrink-0 h-7 px-2 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
+            size="icon"
+            className="shrink-0 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
             aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
             onClick={() => {
               navigator.clipboard.writeText(value);
@@ -142,7 +142,7 @@ export function KeyValue({
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}
-            Copy
+            <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
           </Button>
         )}
       </div>
