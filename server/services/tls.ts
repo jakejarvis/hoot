@@ -4,6 +4,7 @@ import { getOrSet, ns } from "@/lib/redis";
 export type Certificate = {
   issuer: string;
   subject: string;
+  altNames: string[];
   validFrom: string;
   validTo: string;
   signatureAlgorithm: string;
@@ -49,6 +50,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     const out: Certificate[] = chain.map((c) => ({
       issuer: toName(c.issuer),
       subject: toName(c.subject),
+      altNames: parseAltNames(
+        (c as Partial<{ subjectaltname: string }>).subjectaltname,
+      ),
       validFrom: new Date(c.valid_from).toISOString(),
       validTo: new Date(c.valid_to).toISOString(),
       signatureAlgorithm:
@@ -79,4 +83,24 @@ function toName(subject: tls.PeerCertificate["subject"] | undefined) {
   const o =
     typeof maybeRecord?.O === "string" ? (maybeRecord.O as string) : undefined;
   return cn ? `CN=${cn}` : o ? `O=${o}` : JSON.stringify(subject);
+}
+
+function parseAltNames(subjectAltName: string | undefined): string[] {
+  if (typeof subjectAltName !== "string" || subjectAltName.length === 0) {
+    return [];
+  }
+  return subjectAltName
+    .split(",")
+    .map((segment) => segment.trim())
+    .map((segment) => {
+      const idx = segment.indexOf(":");
+      if (idx === -1) return ["", segment] as const;
+      const kind = segment.slice(0, idx).trim().toUpperCase();
+      const value = segment.slice(idx + 1).trim();
+      return [kind, value] as const;
+    })
+    .filter(
+      ([kind, value]) => !!value && (kind === "DNS" || kind === "IP ADDRESS"),
+    )
+    .map(([_, value]) => value);
 }

@@ -18,6 +18,7 @@ export function KeyValue({
   leading,
   highlight,
   trailing,
+  suffix,
 }: {
   label?: string;
   value: string;
@@ -25,6 +26,7 @@ export function KeyValue({
   leading?: React.ReactNode;
   highlight?: boolean;
   trailing?: React.ReactNode;
+  suffix?: React.ReactNode;
 }) {
   const valueRef = useRef<HTMLSpanElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -96,25 +98,53 @@ export function KeyValue({
             {label}
           </div>
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-[5px] min-w-0 truncate">
-              {leading}
-              <span ref={valueRef} className="truncate flex-1 min-w-0 block">
+        {suffix ? (
+          <div className="flex items-center gap-[6px] min-w-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-[5px] min-w-0 truncate">
+                  {leading}
+                  <span
+                    ref={valueRef}
+                    className="truncate flex-1 min-w-0 block"
+                  >
+                    {value}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent
+                className={cn(
+                  isTruncated
+                    ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
+                    : "hidden",
+                )}
+              >
                 {value}
-              </span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent
-            className={cn(
-              isTruncated
-                ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
-                : "hidden",
-            )}
-          >
-            {value}
-          </TooltipContent>
-        </Tooltip>
+              </TooltipContent>
+            </Tooltip>
+            <div className="shrink-0">{suffix}</div>
+          </div>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-[5px] min-w-0 truncate">
+                {leading}
+                <span ref={valueRef} className="truncate flex-1 min-w-0 block">
+                  {value}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              className={cn(
+                isTruncated
+                  ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
+                  : "hidden",
+              )}
+            >
+              {value}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
       <div className="shrink-0 flex items-center gap-2">
         {trailing}

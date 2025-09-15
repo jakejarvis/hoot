@@ -556,7 +556,35 @@ export function DomainReportView({ domain }: { domain: string }) {
                 <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <KeyValue label="Issuer" value={stripCN(c.issuer)} />
-                    <KeyValue label="Subject" value={stripCN(c.subject)} />
+                    <KeyValue
+                      label="Subject"
+                      value={stripCN(c.subject)}
+                      suffix={(() => {
+                        const subjectName = stripCN(c.subject);
+                        const sans = Array.isArray(c.altNames)
+                          ? c.altNames.filter(
+                              (n) => !equalHostname(n, subjectName),
+                            )
+                          : [];
+                        return sans.length > 0 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-[11px] leading-none text-muted-foreground/80 hover:text-foreground/80"
+                                aria-label={`Show ${sans.length} alternate names`}
+                                onClick={(e) => e.preventDefault()}
+                              >
+                                +{sans.length}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap">
+                              {sans.join(", ")}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null;
+                      })()}
+                    />
                     <KeyValue
                       label="Valid from"
                       value={formatDate(c.validFrom)}
@@ -665,4 +693,12 @@ function formatTtl(ttl: number): string {
   if (minutes) parts.push(`${minutes}m`);
   if (!hours && !minutes) parts.push(`${seconds}s`);
   return parts.join(" ");
+}
+
+function equalHostname(a: string, b: string): boolean {
+  try {
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+  } catch {
+    return a === b;
+  }
 }
