@@ -70,7 +70,7 @@ function normalizeAnswer(
         name,
         value: host,
         ttl,
-        priority: Number.isFinite(priority) ? priority : undefined,
+        priority: Number.isFinite(priority) ? priority : 0,
       };
     }
   }

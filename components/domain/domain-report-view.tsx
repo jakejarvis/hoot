@@ -384,7 +384,7 @@ export function DomainReportView({ domain }: { domain: string }) {
                   .map((r) => (
                     <KeyValue
                       key={`MX-${r.value}-${r.priority ?? ""}`}
-                      label={`${r.priority ? `Priority ${r.priority}` : ""}`}
+                      label={`Priority ${r.priority}`}
                       value={r.value}
                       copyable
                       trailing={
