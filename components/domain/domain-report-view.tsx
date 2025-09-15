@@ -513,7 +513,7 @@ export function DomainReportView({ domain }: { domain: string }) {
               />
               <KeyValue
                 label="IP"
-                value={`${hosting.data.ipAddress} (${hosting.data.geo.city}, ${hosting.data.geo.country})`}
+                value={`${hosting.data.geo.emoji} ${hosting.data.ipAddress} ${hosting.data.geo.city || hosting.data.geo.region || hosting.data.geo.country ? `(${hosting.data.geo.city ? `${hosting.data.geo.city}, ` : ""}${hosting.data.geo.region ? `${hosting.data.geo.region}, ` : ""}${hosting.data.geo.country})` : ""}`}
                 copyable
               />
               {hosting.data.geo.lat != null && hosting.data.geo.lon != null ? (

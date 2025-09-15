@@ -12,6 +12,7 @@ export type HostingInfo = {
     country: string;
     lat: number | null;
     lon: number | null;
+    emoji: string | null;
   };
 };
 
@@ -31,13 +32,21 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
 
     const geo = ip
       ? await lookupGeo(ip)
-      : { city: "", region: "", country: "", lat: null, lon: null };
+      : {
+          city: "",
+          region: "",
+          country: "",
+          lat: null,
+          lon: null,
+          emoji: null,
+        };
 
     return {
       hostingProvider: provider,
       emailProvider: email,
       ipAddress: ip,
       geo,
+      emoji: geo.emoji,
     };
   });
 }
@@ -80,6 +89,7 @@ async function lookupGeo(ip: string): Promise<{
   country: string;
   lat: number | null;
   lon: number | null;
+  emoji: string | null;
 }> {
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
@@ -91,6 +101,9 @@ async function lookupGeo(ip: string): Promise<{
       country?: string;
       latitude?: number;
       longitude?: number;
+      flag?: {
+        emoji?: string;
+      };
     };
     return {
       city: j.city || "",
@@ -98,9 +111,17 @@ async function lookupGeo(ip: string): Promise<{
       country: j.country || "",
       lat: typeof j.latitude === "number" ? j.latitude : null,
       lon: typeof j.longitude === "number" ? j.longitude : null,
+      emoji: j.flag?.emoji || null,
     };
   } catch {
-    return { city: "", region: "", country: "", lat: null, lon: null };
+    return {
+      city: "",
+      region: "",
+      country: "",
+      lat: null,
+      lon: null,
+      emoji: null,
+    };
   }
 }
 
