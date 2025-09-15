@@ -41,7 +41,6 @@ async function resolveType(
   });
   if (!res.ok) throw new Error(`DoH failed: ${res.status}`);
   const json = (await res.json()) as CloudflareDnsJson;
-  console.log(json);
   const ans = json.Answer ?? [];
   return ans
     .map((a) => normalizeAnswer(domain, type, a))

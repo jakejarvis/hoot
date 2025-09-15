@@ -26,6 +26,11 @@ function mapProviderToDomain(name: string): string | undefined {
   if (n.includes("digitalocean")) return "digitalocean.com";
   if (n === "aws" || n.includes("amazon web services") || n.includes("amazon"))
     return "aws.amazon.com";
+  if (n.includes("github pages")) return "github.com";
+  if (n.includes("fly.io")) return "fly.io";
+  if (n.includes("akamai")) return "akamai.com";
+  if (n.includes("heroku")) return "heroku.com";
+  if (n.includes("nginx")) return "nginx.org";
 
   // Email
   if (n.includes("google workspace") || n.includes("gmail"))
@@ -40,6 +45,12 @@ function mapProviderToDomain(name: string): string | undefined {
   if (n.includes("godaddy")) return "godaddy.com";
   if (n.includes("google domains")) return "domains.google";
   if (n.includes("cloudflare registrar")) return "cloudflare.com";
+  if (n.includes("markmonitor")) return "markmonitor.com";
+  if (n.includes("porkbun")) return "porkbun.com";
+  if (n.includes("name.com")) return "name.com";
+  if (n.includes("enom")) return "enom.com";
+  if (n.includes("hover")) return "hover.com";
+  if (n.includes("dynadot")) return "dynadot.com";
 
   return undefined;
 }

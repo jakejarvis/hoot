@@ -9,7 +9,7 @@ export function Favicon({
   size?: number;
   className?: string;
 }) {
-  const src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
+  const src = `/api/favicon?domain=${encodeURIComponent(domain)}`;
   return (
     <Image
       src={src}
@@ -17,6 +17,7 @@ export function Favicon({
       width={size}
       height={size}
       className={className}
+      unoptimized
     />
   );
 }

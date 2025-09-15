@@ -69,6 +69,7 @@ function detectHostingProvider(
   if (server.includes("github")) return "GitHub Pages";
   if (server.includes("fly.io")) return "Fly.io";
   if (server.includes("akamai")) return "Akamai";
+  if (server.includes("heroku")) return "Heroku";
   return server ? capitalize(server.split("/")[0]) : "Unknown";
 }
 
