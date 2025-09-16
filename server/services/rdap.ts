@@ -1,5 +1,6 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { getRdapBaseForTld } from "./rdap-bootstrap";
 import { fetchWhoisTcp } from "./whois";
 
 export type Whois = {
@@ -30,6 +31,10 @@ export async function fetchWhois(domain: string): Promise<Whois> {
 
   try {
     const rdapBase = await rdapBaseForDomain(registrable);
+    if (!rdapBase) {
+      // TLD has no RDAP support → go straight to WHOIS
+      return await fetchWhoisTcp(registrable);
+    }
     const url = `${rdapBase}/domain/${encodeURIComponent(registrable)}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
@@ -105,15 +110,10 @@ export async function fetchWhois(domain: string): Promise<Whois> {
   }
 }
 
-async function rdapBaseForDomain(domain: string): Promise<string> {
+async function rdapBaseForDomain(domain: string): Promise<string | null> {
   const tld = domain.split(".").pop() || "com";
-  // IANA bootstrap
-  const iana = (await fetch(`https://data.iana.org/rdap/dns.json`).then((r) =>
-    r.json(),
-  )) as { services?: [string[], string[]][] };
-  const entry = iana.services?.find((s) => s[0].includes(tld));
-  const base = entry?.[1]?.[0] || "https://rdap.verisign.com/com/v1";
-  return base.replace(/\/$/, "");
+  const base = await getRdapBaseForTld(tld);
+  return base;
 }
 
 function findEntity(
