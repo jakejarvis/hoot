@@ -42,7 +42,10 @@ export async function fetchWhois(domain: string): Promise<Whois> {
     let res: Response;
     try {
       res = await fetch(url, {
-        headers: { accept: "application/rdap+json" },
+        headers: {
+          accept: "application/rdap+json",
+          "user-agent": "hoot.sh/0.1 (+https://hoot.sh)",
+        },
         signal: controller.signal,
       });
     } finally {

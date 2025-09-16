@@ -36,7 +36,7 @@ async function resolveType(
   const res = await fetch(q, {
     headers: {
       accept: "application/dns-json",
-      "user-agent": "hoot.sh/0.1",
+      "user-agent": "hoot.sh/0.1 (+https://hoot.sh)",
     },
   });
   if (!res.ok) throw new Error(`DoH failed: ${res.status}`);

@@ -102,7 +102,7 @@ export function DomainSearchForm({
               onClick={() => router.push(`/${encodeURIComponent(d)}`)}
             >
               <span className="inline-flex items-center gap-2">
-                <Favicon domain={d} size={14} className="rounded" />
+                <Favicon domain={d} size={16} className="rounded" />
                 {d}
               </span>
             </Button>

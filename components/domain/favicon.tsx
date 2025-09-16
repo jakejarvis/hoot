@@ -14,12 +14,12 @@ export function Favicon({
   size?: number;
   className?: string;
 }) {
-  const duckUrl = React.useMemo(
-    () => `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`,
+  const apiUrl = React.useMemo(
+    () => `/api/favicon?domain=${encodeURIComponent(domain)}`,
     [domain],
   );
   const [failedUrl, setFailedUrl] = React.useState<string | null>(null);
-  const failed = failedUrl === duckUrl;
+  const failed = failedUrl === apiUrl;
 
   if (failed) {
     return (
@@ -33,12 +33,13 @@ export function Favicon({
 
   return (
     <Image
-      src={duckUrl}
+      src={apiUrl}
       alt="Favicon"
       width={size}
       height={size}
       className={className}
-      onError={() => setFailedUrl(duckUrl)}
+      unoptimized
+      onError={() => setFailedUrl(apiUrl)}
     />
   );
 }

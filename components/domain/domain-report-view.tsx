@@ -281,7 +281,7 @@ export function DomainReportView({ domain }: { domain: string }) {
                 leading={(() => {
                   const domain = whois.data.registrar.iconDomain;
                   return domain ? (
-                    <Favicon domain={domain} size={14} />
+                    <Favicon domain={domain} size={16} />
                   ) : undefined;
                 })()}
                 suffix={(() => {
@@ -516,7 +516,7 @@ export function DomainReportView({ domain }: { domain: string }) {
                 leading={(() => {
                   const domain = hosting.data.hostingProvider.iconDomain;
                   return domain ? (
-                    <Favicon domain={domain} size={14} />
+                    <Favicon domain={domain} size={16} />
                   ) : undefined;
                 })()}
               />
@@ -526,7 +526,7 @@ export function DomainReportView({ domain }: { domain: string }) {
                 leading={(() => {
                   const domain = hosting.data.emailProvider.iconDomain;
                   return domain ? (
-                    <Favicon domain={domain} size={14} />
+                    <Favicon domain={domain} size={16} />
                   ) : undefined;
                 })()}
               />
@@ -711,8 +711,6 @@ function formatRegistrant(reg: {
   if (parts.length === 0) return "Unavailable";
   return parts.join(" — ");
 }
-
- 
 
 function formatTtl(ttl: number): string {
   if (!Number.isFinite(ttl) || ttl <= 0) return `${ttl}s`;
