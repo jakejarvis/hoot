@@ -67,7 +67,7 @@ function toName(subject: tls.PeerCertificate["subject"] | undefined) {
       : undefined;
   const o =
     typeof maybeRecord?.O === "string" ? (maybeRecord.O as string) : undefined;
-  return cn ? `CN=${cn}` : o ? `O=${o}` : JSON.stringify(subject);
+  return cn ? cn : o ? o : JSON.stringify(subject);
 }
 
 function parseAltNames(subjectAltName: string | undefined): string[] {

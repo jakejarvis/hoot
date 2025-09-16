@@ -573,12 +573,12 @@ export function DomainReportView({ domain }: { domain: string }) {
               >
                 <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <KeyValue label="Issuer" value={stripCN(c.issuer)} />
+                    <KeyValue label="Issuer" value={c.issuer} />
                     <KeyValue
                       label="Subject"
-                      value={stripCN(c.subject)}
+                      value={c.subject}
                       suffix={(() => {
-                        const subjectName = stripCN(c.subject);
+                        const subjectName = c.subject;
                         const sans = Array.isArray(c.altNames)
                           ? c.altNames.filter(
                               (n) => !equalHostname(n, subjectName),
@@ -712,10 +712,7 @@ function formatRegistrant(reg: {
   return parts.join(" — ");
 }
 
-function stripCN(value: string): string {
-  if (!value) return value;
-  return value.startsWith("CN=") ? value.slice(3) : value;
-}
+ 
 
 function formatTtl(ttl: number): string {
   if (!Number.isFinite(ttl) || ttl <= 0) return `${ttl}s`;
