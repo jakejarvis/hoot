@@ -282,7 +282,8 @@ export function detectHostingProviderFromHeaders(
     }
   }
 
-  return server ? capitalize(server.split("/")[0]) : "Unknown";
+  // Do not fall back to raw Server header (e.g., nginx, Apache) as a provider name
+  return "Unknown";
 }
 
 export function detectEmailProviderFromMx(mxHosts: string[]): string {
@@ -296,9 +297,6 @@ export function detectEmailProviderFromMx(mxHosts: string[]): string {
 }
 
 // ---- Utils ----
-function capitalize(s: string) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
 
 // Optionally export the catalog for UI use/debugging
 export const ProviderCatalog = {

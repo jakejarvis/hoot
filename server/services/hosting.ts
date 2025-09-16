@@ -34,42 +34,63 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     const headers = await probeHeaders(domain).catch(() => ({
       headers: [] as { name: string; value: string }[],
     }));
-    const provider = detectHostingProviderFromHeaders(headers.headers);
-    const email = detectEmailProviderFromMx(mx.map((m) => m.value));
-    const hostingIconDomain = mapProviderNameToDomain(provider) || null;
-    const emailIconDomain = mapProviderNameToDomain(email) || null;
+    // Determine email provider, using "none" when MX is unset
+    const emailName =
+      mx.length === 0
+        ? "none"
+        : detectEmailProviderFromMx(mx.map((m) => m.value));
 
-    const geo = ip
-      ? await lookupGeo(ip)
+    const meta = ip
+      ? await lookupIpMeta(ip)
       : {
-          city: "",
-          region: "",
-          country: "",
-          lat: null,
-          lon: null,
-          emoji: null,
+          geo: {
+            city: "",
+            region: "",
+            country: "",
+            lat: null,
+            lon: null,
+            emoji: null,
+          },
+          owner: null,
         };
+    const geo = meta.geo;
+
+    // Hosting provider detection with fallback:
+    // - If no A record/IP → unset → "none"
+    // - Else if unknown → try IP ownership org/ISP
+    let hostingName = detectHostingProviderFromHeaders(headers.headers);
+    if (!ip) {
+      hostingName = "none";
+    } else if (/^unknown$/i.test(hostingName)) {
+      if (meta.owner) hostingName = meta.owner;
+    }
+
+    const hostingIconDomain = mapProviderNameToDomain(hostingName) || null;
+    const emailIconDomain = mapProviderNameToDomain(emailName) || null;
 
     return {
-      hostingProvider: { name: provider, iconDomain: hostingIconDomain },
-      emailProvider: { name: email, iconDomain: emailIconDomain },
+      hostingProvider: { name: hostingName, iconDomain: hostingIconDomain },
+      emailProvider: { name: emailName, iconDomain: emailIconDomain },
       ipAddress: ip,
       geo,
     };
   });
 }
 
-async function lookupGeo(ip: string): Promise<{
-  city: string;
-  region: string;
-  country: string;
-  lat: number | null;
-  lon: number | null;
-  emoji: string | null;
+async function lookupIpMeta(ip: string): Promise<{
+  geo: {
+    city: string;
+    region: string;
+    country: string;
+    lat: number | null;
+    lon: number | null;
+    emoji: string | null;
+  };
+  owner: string | null;
 }> {
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
-    if (!res.ok) throw new Error("geo fail");
+    if (!res.ok) throw new Error("ipwho fail");
     const j = (await res.json()) as {
       city?: string;
       region?: string;
@@ -80,8 +101,9 @@ async function lookupGeo(ip: string): Promise<{
       flag?: {
         emoji?: string;
       };
+      connection?: { org?: string; isp?: string };
     };
-    return {
+    const geo = {
       city: j.city || "",
       region: j.region || j.state || "",
       country: j.country || "",
@@ -89,14 +111,21 @@ async function lookupGeo(ip: string): Promise<{
       lon: typeof j.longitude === "number" ? j.longitude : null,
       emoji: j.flag?.emoji || null,
     };
+    const org = j.connection?.org?.trim();
+    const isp = j.connection?.isp?.trim();
+    const owner = (org || isp || "").trim() || null;
+    return { geo, owner };
   } catch {
     return {
-      city: "",
-      region: "",
-      country: "",
-      lat: null,
-      lon: null,
-      emoji: null,
+      geo: {
+        city: "",
+        region: "",
+        country: "",
+        lat: null,
+        lon: null,
+        emoji: null,
+      },
+      owner: null,
     };
   }
 }

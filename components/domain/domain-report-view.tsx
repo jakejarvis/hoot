@@ -29,7 +29,6 @@ import { trpc } from "@/lib/trpc/client";
 import { DnsGroup } from "./dns-group";
 import { Favicon } from "./favicon";
 import { KeyValue } from "./key-value";
-// ProviderLogo removed; use Favicon + shared mapping instead
 import { Section } from "./section";
 import { Skeletons } from "./skeletons";
 
