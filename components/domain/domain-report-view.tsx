@@ -222,6 +222,14 @@ export function DomainReportView({ domain }: { domain: string }) {
     );
   }
 
+  const allSectionsReady =
+    whois.isSuccess &&
+    whois.data?.registered === true &&
+    dns.isSuccess &&
+    hosting.isSuccess &&
+    certs.isSuccess &&
+    headers.isSuccess;
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center justify-between">
@@ -243,7 +251,12 @@ export function DomainReportView({ domain }: { domain: string }) {
           </Link>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportJson}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportJson}
+            disabled={!allSectionsReady}
+          >
             <Download className="h-4 w-4" /> Export JSON
           </Button>
         </div>
