@@ -64,7 +64,7 @@ export function DomainSearchForm({
           <Input
             id="domain"
             ref={inputRef}
-            type="url"
+            inputMode="url"
             autoComplete="off"
             placeholder="hoot.sh"
             aria-invalid={false}

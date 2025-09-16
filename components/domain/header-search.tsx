@@ -63,7 +63,7 @@ export function HeaderSearch() {
           onKeyDown={(e) => {
             if (e.key === "Enter") submit();
           }}
-          type="url"
+          inputMode="url"
           placeholder="Search any domain"
           className="h-10 sm:h-11 pl-9 pr-14 rounded-xl"
           aria-label="Search domains"
