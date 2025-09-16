@@ -389,6 +389,12 @@ const PROVIDERS: ProviderEntry[] = [
     category: "registrar",
     aliases: ["hostinger"],
   },
+  {
+    name: "WordPress.com",
+    domain: "wordpress.com",
+    category: "registrar",
+    aliases: ["automattic", "automattic inc"],
+  },
 ];
 
 // ---- Detection rules ----

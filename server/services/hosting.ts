@@ -1,3 +1,4 @@
+import { toRegistrableDomain } from "@/lib/domain-server";
 import {
   detectEmailProviderFromMx,
   detectHostingProviderFromHeaders,
@@ -35,7 +36,7 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
       headers: [] as { name: string; value: string }[],
     }));
     // Determine email provider, using "none" when MX is unset
-    const emailName =
+    let emailName =
       mx.length === 0
         ? "none"
         : detectEmailProviderFromMx(mx.map((m) => m.value));
@@ -66,7 +67,16 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     }
 
     const hostingIconDomain = mapProviderNameToDomain(hostingName) || null;
-    const emailIconDomain = mapProviderNameToDomain(emailName) || null;
+    let emailIconDomain = mapProviderNameToDomain(emailName) || null;
+
+    // If no known match for email provider, fall back to the root domain of the first MX host
+    if (emailName !== "none" && !emailIconDomain && mx[0]?.value) {
+      const root = toRegistrableDomain(mx[0].value);
+      if (root) {
+        emailName = root;
+        emailIconDomain = root;
+      }
+    }
 
     return {
       hostingProvider: { name: hostingName, iconDomain: hostingIconDomain },
