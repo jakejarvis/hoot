@@ -47,11 +47,13 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
     "Created Date",
     "Creation Date",
     "registered",
+    "Domain record activated",
   ]);
   const expirationDate = pickString(result, [
     "Expiry Date",
     "Expiration Date",
     "expire",
+    "Domain expires",
   ]);
   const statusCandidate = (result as Record<string, unknown>)["Domain Status"];
   const statusArr = Array.isArray(statusCandidate)
@@ -77,11 +79,21 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
     ? (textCandidate.filter((v) => typeof v === "string") as string[])
     : [];
   const errorText = String((result as Record<string, unknown>).error || "");
+  const nameServersCandidate = (result as Record<string, unknown>)[
+    "Name Server"
+  ];
+  const hasNameServers = Array.isArray(nameServersCandidate)
+    ? nameServersCandidate.length > 0
+    : false;
   const notFound =
     errorText.toLowerCase().includes("not found") ||
     text.some((t) => /no match|not found|no entries found/i.test(t));
   const hasSignals = Boolean(
-    registrar || creationDate || expirationDate || statusArr.length > 0,
+    registrar ||
+      creationDate ||
+      expirationDate ||
+      statusArr.length > 0 ||
+      hasNameServers,
   );
   const registered = hasSignals && !notFound;
 
