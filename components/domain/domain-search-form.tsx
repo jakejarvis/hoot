@@ -3,13 +3,14 @@
 import { Loader2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 import { Favicon } from "./favicon";
 
-const _domainSchema = z
+const domainSchema = z
   .string()
   .transform((v) => normalizeDomainInput(v))
   .refine((v) => isValidDomain(v), {
@@ -25,7 +26,7 @@ export function DomainSearchForm({
 }) {
   const router = useRouter();
   const [value, setValue] = React.useState(initialValue);
-  const [loading, _setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -37,13 +38,17 @@ export function DomainSearchForm({
   // History is now updated post-lookup in DomainReportView after a confirmed registered WHOIS.
   // We keep rendering from localStorage here for convenience.
 
-  function submit() {
-    const normalized = normalizeDomainInput(value);
-    if (!isValidDomain(normalized)) {
-      // Do nothing on invalid input in header; users can refine inline.
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = domainSchema.safeParse(value);
+    if (!parsed.success) {
+      const issue = parsed.error.issues?.[0];
+      toast.error(issue?.message ?? "Invalid domain");
+      inputRef.current?.focus();
       return;
     }
-    router.push(`/${encodeURIComponent(normalized)}`);
+    setLoading(true);
+    router.push(`/${encodeURIComponent(parsed.data)}`);
   }
 
   return (
@@ -51,7 +56,7 @@ export function DomainSearchForm({
       <form
         aria-label="Domain search"
         className="relative flex items-center gap-2 rounded-xl border bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 shadow-sm"
-        onSubmit={submit}
+        onSubmit={onSubmit}
       >
         <label htmlFor="domain" className="sr-only">
           Domain
@@ -71,9 +76,6 @@ export function DomainSearchForm({
             aria-describedby="domain-help"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submit();
-            }}
             className="pl-9 h-12"
           />
           <span id="domain-help" className="sr-only">
