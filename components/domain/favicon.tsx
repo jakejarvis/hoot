@@ -1,7 +1,9 @@
 "use client";
 
+import { Globe } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 export function Favicon({
   domain,
@@ -16,24 +18,27 @@ export function Favicon({
     () => `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`,
     [domain],
   );
-  const [src, setSrc] = React.useState(duckUrl);
+  const [failedUrl, setFailedUrl] = React.useState<string | null>(null);
+  const failed = failedUrl === duckUrl;
 
-  React.useEffect(() => {
-    setSrc(duckUrl);
-  }, [duckUrl]);
+  if (failed) {
+    return (
+      <Globe
+        className={cn("text-muted-foreground", className)}
+        width={size}
+        height={size}
+      />
+    );
+  }
 
   return (
     <Image
-      src={src}
+      src={duckUrl}
       alt="Favicon"
       width={size}
       height={size}
       className={className}
-      onError={() => {
-        if (src !== "/globe.svg") {
-          setSrc("/globe.svg");
-        }
-      }}
+      onError={() => setFailedUrl(duckUrl)}
     />
   );
 }

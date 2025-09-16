@@ -664,7 +664,11 @@ function formatDate(iso: string) {
   }
 }
 
-function formatRegistrant(reg: { organization: string; country: string; state?: string }) {
+function formatRegistrant(reg: {
+  organization: string;
+  country: string;
+  state?: string;
+}) {
   const org = (reg.organization || "").trim();
   const country = (reg.country || "").trim();
   const state = (reg.state || "").trim();
