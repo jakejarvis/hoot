@@ -282,7 +282,7 @@ export function DomainReportView({ domain }: { domain: string }) {
               />
               <KeyValue
                 label="Registrant"
-                value={`${whois.data.registrant.organization} (${whois.data.registrant.country})`}
+                value={formatRegistrant(whois.data.registrant)}
               />
             </>
           ) : whois.isError ? (
@@ -662,6 +662,18 @@ function formatDate(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function formatRegistrant(reg: { organization: string; country: string; state?: string }) {
+  const org = (reg.organization || "").trim();
+  const country = (reg.country || "").trim();
+  const state = (reg.state || "").trim();
+  const parts = [] as string[];
+  if (org) parts.push(org);
+  const loc = [state, country].filter(Boolean).join(", ");
+  if (loc) parts.push(loc);
+  if (parts.length === 0) return "Unavailable";
+  return parts.join(" — ");
 }
 
 function stripCN(value: string): string {
