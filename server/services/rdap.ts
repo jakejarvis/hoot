@@ -1,11 +1,12 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { mapProviderNameToDomain } from "@/lib/providers";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
 import { getRdapBaseForTld } from "./rdap-bootstrap";
 import { fetchWhoisTcp } from "./whois";
 
 export type Whois = {
   source?: "rdap" | "whois";
-  registrar: string;
+  registrar: { name: string; iconDomain: string | null };
   creationDate: string;
   expirationDate: string;
   registrant: { organization: string; country: string; state?: string };
@@ -51,7 +52,7 @@ export async function fetchWhois(domain: string): Promise<Whois> {
     if (res.status === 404) {
       const result: Whois = {
         source: "rdap",
-        registrar: "",
+        registrar: { name: "", iconDomain: null },
         creationDate: "",
         expirationDate: "",
         registrant: { organization: "", country: "" },
@@ -95,7 +96,10 @@ export async function fetchWhois(domain: string): Promise<Whois> {
 
     const result: Whois = {
       source: "rdap",
-      registrar: registrarName,
+      registrar: {
+        name: registrarName,
+        iconDomain: mapProviderNameToDomain(registrarName) || null,
+      },
       creationDate,
       expirationDate,
       registrant: { organization, country, state },

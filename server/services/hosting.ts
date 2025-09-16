@@ -1,10 +1,17 @@
+import {
+  detectEmailProviderFromMx,
+  detectHostingProviderFromHeaders,
+  mapProviderNameToDomain,
+} from "@/lib/providers";
 import { getOrSet, ns } from "@/lib/redis";
 import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 
+export type ProviderRef = { name: string; iconDomain: string | null };
+
 export type HostingInfo = {
-  hostingProvider: string;
-  emailProvider: string;
+  hostingProvider: ProviderRef;
+  emailProvider: ProviderRef;
   ipAddress: string | null;
   geo: {
     city: string;
@@ -27,8 +34,10 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     const headers = await probeHeaders(domain).catch(() => ({
       headers: [] as { name: string; value: string }[],
     }));
-    const provider = detectHostingProvider(headers.headers);
-    const email = detectEmailProvider(mx.map((m) => m.value));
+    const provider = detectHostingProviderFromHeaders(headers.headers);
+    const email = detectEmailProviderFromMx(mx.map((m) => m.value));
+    const hostingIconDomain = mapProviderNameToDomain(provider) || null;
+    const emailIconDomain = mapProviderNameToDomain(email) || null;
 
     const geo = ip
       ? await lookupGeo(ip)
@@ -42,50 +51,12 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
         };
 
     return {
-      hostingProvider: provider,
-      emailProvider: email,
+      hostingProvider: { name: provider, iconDomain: hostingIconDomain },
+      emailProvider: { name: email, iconDomain: emailIconDomain },
       ipAddress: ip,
       geo,
     };
   });
-}
-
-function detectHostingProvider(
-  headers: { name: string; value: string }[],
-): string {
-  const byName = Object.fromEntries(
-    headers.map((h) => [h.name.toLowerCase(), h.value]),
-  ) as Record<string, string>;
-  const server = (byName.server || "").toLowerCase();
-  const headerNames = headers.map((h) => h.name.toLowerCase());
-  if (
-    server.includes("vercel") ||
-    headerNames.some((n) => n.startsWith("x-vercel"))
-  )
-    return "Vercel";
-  if (byName["x-powered-by"]?.includes("WP Engine")) return "WP Engine";
-  if (byName["host-header"]?.includes("WordPress.com")) return "WordPress.com";
-  if (server.includes("amazons3")) return "Amazon S3";
-  if (server.includes("netlify")) return "Netlify";
-  if (server.includes("github")) return "GitHub Pages";
-  if (server.includes("fly.io")) return "Fly.io";
-  if (server.includes("akamai")) return "Akamai";
-  if (server.includes("heroku")) return "Heroku";
-  if (server.includes("cloudflare") || byName["cf-ray"]) return "Cloudflare";
-  return server ? capitalize(server.split("/")[0]) : "Unknown";
-}
-
-function detectEmailProvider(mxHosts: string[]): string {
-  const hosts = mxHosts.join(" ").toLowerCase();
-  if (hosts.includes("google")) return "Google Workspace";
-  if (hosts.includes("outlook") || hosts.includes("protection.outlook.com"))
-    return "Microsoft 365";
-  if (hosts.includes("zoho")) return "Zoho";
-  if (hosts.includes("proton")) return "Proton";
-  if (hosts.includes("messagingengine")) return "Fastmail";
-
-  if (hosts.includes("mx.cloudflare.net")) return "Cloudflare Email Routing";
-  return mxHosts[0] ? mxHosts[0] : "Unknown";
 }
 
 async function lookupGeo(ip: string): Promise<{
@@ -128,8 +99,4 @@ async function lookupGeo(ip: string): Promise<{
       emoji: null,
     };
   }
-}
-
-function capitalize(s: string) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }

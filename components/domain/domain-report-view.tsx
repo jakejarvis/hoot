@@ -29,7 +29,7 @@ import { trpc } from "@/lib/trpc/client";
 import { DnsGroup } from "./dns-group";
 import { Favicon } from "./favicon";
 import { KeyValue } from "./key-value";
-import { ProviderLogo } from "./provider-logo";
+// ProviderLogo removed; use Favicon + shared mapping instead
 import { Section } from "./section";
 import { Skeletons } from "./skeletons";
 
@@ -265,8 +265,13 @@ export function DomainReportView({ domain }: { domain: string }) {
             <>
               <KeyValue
                 label="Registrar"
-                value={whois.data.registrar}
-                leading={<ProviderLogo name={whois.data.registrar} />}
+                value={whois.data.registrar.name}
+                leading={(() => {
+                  const domain = whois.data.registrar.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={14} />
+                  ) : undefined;
+                })()}
                 suffix={(() => {
                   const source = whois.data?.source;
                   const label = source ? source.toUpperCase() : "RDAP";
@@ -495,13 +500,23 @@ export function DomainReportView({ domain }: { domain: string }) {
             <>
               <KeyValue
                 label="Hosting"
-                value={hosting.data.hostingProvider}
-                leading={<ProviderLogo name={hosting.data.hostingProvider} />}
+                value={hosting.data.hostingProvider.name}
+                leading={(() => {
+                  const domain = hosting.data.hostingProvider.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={14} />
+                  ) : undefined;
+                })()}
               />
               <KeyValue
                 label="Email"
-                value={hosting.data.emailProvider}
-                leading={<ProviderLogo name={hosting.data.emailProvider} />}
+                value={hosting.data.emailProvider.name}
+                leading={(() => {
+                  const domain = hosting.data.emailProvider.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={14} />
+                  ) : undefined;
+                })()}
               />
               <KeyValue
                 label="Location"
