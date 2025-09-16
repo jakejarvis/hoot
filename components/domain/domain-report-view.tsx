@@ -3,6 +3,7 @@
 import {
   ArrowDown,
   Download,
+  ExternalLink,
   Globe,
   HardDrive,
   List,
@@ -236,6 +237,10 @@ export function DomainReportView({ domain }: { domain: string }) {
             <h2 className="text-xl font-semibold tracking-tight">
               {resolvedDomain}
             </h2>
+            <ExternalLink
+              className="h-4 w-4 text-muted-foreground/60"
+              aria-hidden="true"
+            />
           </Link>
         </div>
         <div className="flex items-center gap-2">
