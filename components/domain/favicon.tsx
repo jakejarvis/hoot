@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import * as React from "react";
 
 export function Favicon({
   domain,
@@ -9,7 +12,16 @@ export function Favicon({
   size?: number;
   className?: string;
 }) {
-  const src = `/api/favicon?domain=${encodeURIComponent(domain)}`;
+  const duckUrl = React.useMemo(
+    () => `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`,
+    [domain],
+  );
+  const [src, setSrc] = React.useState(duckUrl);
+
+  React.useEffect(() => {
+    setSrc(duckUrl);
+  }, [duckUrl]);
+
   return (
     <Image
       src={src}
@@ -17,7 +29,11 @@ export function Favicon({
       width={size}
       height={size}
       className={className}
-      unoptimized
+      onError={() => {
+        if (src !== "/globe.svg") {
+          setSrc("/globe.svg");
+        }
+      }}
     />
   );
 }
