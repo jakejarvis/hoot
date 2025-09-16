@@ -249,7 +249,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         <Section
           title="Registration"
           description="Registrar and registrant details"
-          help="WHOIS shows registrar, registration dates, and registrant details."
+          help="RDAP/WHOIS shows registrar, registration dates, and registrant details."
           icon={<User className="h-4 w-4" />}
           accent="purple"
           status={
@@ -262,6 +262,15 @@ export function DomainReportView({ domain }: { domain: string }) {
                 label="Registrar"
                 value={whois.data.registrar}
                 leading={<ProviderLogo name={whois.data.registrar} />}
+                suffix={(() => {
+                  const source = whois.data?.source;
+                  const label = source ? source.toUpperCase() : "RDAP";
+                  return (
+                    <Badge variant="secondary" title="Data source">
+                      {label}
+                    </Badge>
+                  );
+                })()}
               />
               <KeyValue
                 label="Created"

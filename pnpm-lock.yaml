@@ -179,6 +179,9 @@ importers:
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.1.9(@types/react@19.1.13))(@types/react@19.1.13)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      whoiser:
+        specifier: 2.0.0-beta.8
+        version: 2.0.0-beta.8
       zod:
         specifier: ^4.1.8
         version: 4.1.8
@@ -1646,6 +1649,10 @@ packages:
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
+  punycode-esm@1.0.15:
+    resolution: {integrity: sha512-pR7pzaunGU4g3v3vMIXD9WnrGUiEBs2ezcVYr9piTC/HVem9F+MJ+JNdSeYD9pK7EumLMUMO9F3Gsa3RS+o7pA==}
+    engines: {node: '>=20'}
+
   react-day-picker@9.10.0:
     resolution: {integrity: sha512-tedecLSd+fpSN+J08601MaMsf122nxtqZXxB6lwX37qFoLtuPNuRJN8ylxFjLhyJS1kaLfAqL1GUkSLd2BMrpQ==}
     engines: {node: '>=18'}
@@ -1857,6 +1864,9 @@ packages:
 
   victory-vendor@36.9.2:
     resolution: {integrity: sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ==}
+
+  whoiser@2.0.0-beta.8:
+    resolution: {integrity: sha512-b5URu8ZGLfLRimfsvYifj6qe/R9a3FGBrnmFwcVa/c5pykb9R/bYsUIwhTzaVzcVx5liVLe3UTV6UUUt6HeYnA==}
 
   yallist@5.0.0:
     resolution: {integrity: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==}
@@ -3174,6 +3184,8 @@ snapshots:
       object-assign: 4.1.1
       react-is: 16.13.1
 
+  punycode-esm@1.0.15: {}
+
   react-day-picker@9.10.0(react@19.1.1):
     dependencies:
       '@date-fns/tz': 1.4.1
@@ -3404,6 +3416,10 @@ snapshots:
       d3-shape: 3.2.0
       d3-time: 3.1.0
       d3-timer: 3.0.1
+
+  whoiser@2.0.0-beta.8:
+    dependencies:
+      punycode-esm: 1.0.15
 
   yallist@5.0.0: {}
 

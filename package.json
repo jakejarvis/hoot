@@ -67,6 +67,7 @@
     "tailwind-merge": "^3.3.1",
     "tldts": "^7.0.14",
     "vaul": "^1.1.2",
+    "whoiser": "2.0.0-beta.8",
     "zod": "^4.1.8"
   },
   "devDependencies": {

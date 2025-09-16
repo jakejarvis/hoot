@@ -1,7 +1,9 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { fetchWhoisTcp } from "./whois";
 
 export type Whois = {
+  source?: "rdap" | "whois";
   registrar: string;
   creationDate: string;
   expirationDate: string;
@@ -22,63 +24,85 @@ type RdapJson = {
 export async function fetchWhois(domain: string): Promise<Whois> {
   const registrable = toRegistrableDomain(domain);
   if (!registrable) throw new Error("Invalid domain");
-  const key = ns("rdap", registrable.toLowerCase());
+  const key = ns("reg", registrable.toLowerCase());
   const cached = await cacheGet<Whois>(key);
   if (cached) return cached;
 
-  const rdapBase = await rdapBaseForDomain(registrable);
-  const url = `${rdapBase}/domain/${encodeURIComponent(registrable)}`;
-  const res = await fetch(url, {
-    headers: { accept: "application/rdap+json" },
-  });
-  if (res.status === 404) {
+  try {
+    const rdapBase = await rdapBaseForDomain(registrable);
+    const url = `${rdapBase}/domain/${encodeURIComponent(registrable)}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        headers: { accept: "application/rdap+json" },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (res.status === 404) {
+      const result: Whois = {
+        source: "rdap",
+        registrar: "",
+        creationDate: "",
+        expirationDate: "",
+        registrant: { organization: "", country: "" },
+        status: ["available"],
+        registered: false,
+      };
+      await cacheSet(key, result, 60 * 60);
+      return result;
+    }
+
+    if (!res.ok) {
+      // Fallback to WHOIS on RDAP upstream errors
+      return await fetchWhoisTcp(registrable);
+    }
+
+    const json = (await res.json()) as unknown as RdapJson;
+
+    const registrarName =
+      json.registrar?.name ??
+      findVcardValue(findEntity(json.entities, "registrar"), "fn") ??
+      "Unknown";
+    const creationDate =
+      json.events?.find((e) => e.eventAction === "registration")?.eventDate ??
+      "";
+    const expirationDate =
+      json.events?.find((e) => e.eventAction === "expiration")?.eventDate ?? "";
+    const registrantEnt = findEntity(json.entities, "registrant");
+    const organization = findVcardValue(registrantEnt, "org") ?? "";
+    const adr = findVcardEntry(registrantEnt, "adr");
+    const country =
+      Array.isArray(adr?.[3]) && typeof adr?.[3]?.[6] === "string"
+        ? (adr?.[3]?.[6] as string)
+        : "";
+    const state =
+      Array.isArray(adr?.[3]) && typeof adr?.[3]?.[4] === "string"
+        ? (adr?.[3]?.[4] as string)
+        : undefined;
+
+    const status = json.status ?? [];
+    const registered = !status.some((s) => s.toLowerCase() === "available");
+
     const result: Whois = {
-      registrar: "",
-      creationDate: "",
-      expirationDate: "",
-      registrant: { organization: "", country: "" },
-      status: ["available"],
-      registered: false,
+      source: "rdap",
+      registrar: registrarName,
+      creationDate,
+      expirationDate,
+      registrant: { organization, country, state },
+      status,
+      registered,
     };
-    await cacheSet(key, result, 60 * 60);
+    await cacheSet(key, result, registered ? 24 * 60 * 60 : 60 * 60);
     return result;
+  } catch (_err) {
+    // RDAP lookup failed (network/timeout/bootstrap). Fall back to WHOIS.
+    return await fetchWhoisTcp(registrable);
   }
-  if (!res.ok) throw new Error(`RDAP failed ${res.status}`);
-  const json = (await res.json()) as unknown as RdapJson;
-
-  const registrarName =
-    json.registrar?.name ??
-    findVcardValue(findEntity(json.entities, "registrar"), "fn") ??
-    "Unknown";
-  const creationDate =
-    json.events?.find((e) => e.eventAction === "registration")?.eventDate ?? "";
-  const expirationDate =
-    json.events?.find((e) => e.eventAction === "expiration")?.eventDate ?? "";
-  const registrantEnt = findEntity(json.entities, "registrant");
-  const organization = findVcardValue(registrantEnt, "org") ?? "";
-  const adr = findVcardEntry(registrantEnt, "adr");
-  const country =
-    Array.isArray(adr?.[3]) && typeof adr?.[3]?.[6] === "string"
-      ? (adr?.[3]?.[6] as string)
-      : "";
-  const state =
-    Array.isArray(adr?.[3]) && typeof adr?.[3]?.[4] === "string"
-      ? (adr?.[3]?.[4] as string)
-      : undefined;
-
-  const status = json.status ?? [];
-  const registered = !status.some((s) => s.toLowerCase() === "available");
-
-  const result: Whois = {
-    registrar: registrarName,
-    creationDate,
-    expirationDate,
-    registrant: { organization, country, state },
-    status,
-    registered,
-  };
-  await cacheSet(key, result, registered ? 24 * 60 * 60 : 60 * 60);
-  return result;
 }
 
 async function rdapBaseForDomain(domain: string): Promise<string> {
