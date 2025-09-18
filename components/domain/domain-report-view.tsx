@@ -511,6 +511,16 @@ export function DomainReportView({ domain }: { domain: string }) {
           {hosting.data ? (
             <>
               <KeyValue
+                label="DNS"
+                value={hosting.data.dnsProvider.name}
+                leading={(() => {
+                  const domain = hosting.data.dnsProvider.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={16} />
+                  ) : undefined;
+                })()}
+              />
+              <KeyValue
                 label="Hosting"
                 value={hosting.data.hostingProvider.name}
                 leading={(() => {

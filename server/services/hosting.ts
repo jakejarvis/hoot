@@ -1,5 +1,6 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
+  detectDnsProviderFromNs,
   detectEmailProviderFromMx,
   detectHostingProviderFromHeaders,
   mapProviderNameToDomain,
@@ -13,6 +14,7 @@ export type ProviderRef = { name: string; iconDomain: string | null };
 export type HostingInfo = {
   hostingProvider: ProviderRef;
   emailProvider: ProviderRef;
+  dnsProvider: ProviderRef;
   ipAddress: string | null;
   geo: {
     city: string;
@@ -30,6 +32,7 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     const dns = await resolveAll(domain);
     const a = dns.find((d) => d.type === "A");
     const mx = dns.filter((d) => d.type === "MX");
+    const ns = dns.filter((d) => d.type === "NS");
     const ip = a?.value ?? null;
 
     const headers = await probeHeaders(domain).catch(() => ({
@@ -68,6 +71,9 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
 
     const hostingIconDomain = mapProviderNameToDomain(hostingName) || null;
     let emailIconDomain = mapProviderNameToDomain(emailName) || null;
+    // DNS provider from nameservers
+    let dnsName = detectDnsProviderFromNs(ns.map((n) => n.value));
+    let dnsIconDomain = mapProviderNameToDomain(dnsName) || null;
 
     // If no known match for email provider, fall back to the root domain of the first MX host
     if (emailName !== "none" && !emailIconDomain && mx[0]?.value) {
@@ -78,9 +84,19 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
       }
     }
 
+    // If no known match for DNS provider, fall back to the root domain of the first NS host
+    if (!dnsIconDomain && ns[0]?.value) {
+      const root = toRegistrableDomain(ns[0].value);
+      if (root) {
+        dnsName = root;
+        dnsIconDomain = root;
+      }
+    }
+
     return {
       hostingProvider: { name: hostingName, iconDomain: hostingIconDomain },
       emailProvider: { name: emailName, iconDomain: emailIconDomain },
+      dnsProvider: { name: dnsName, iconDomain: dnsIconDomain },
       ipAddress: ip,
       geo,
     };

@@ -2,7 +2,7 @@
 
 export type HttpHeader = { name: string; value: string };
 
-type ProviderCategory = "hosting" | "email" | "registrar";
+type ProviderCategory = "hosting" | "email" | "registrar" | "dns";
 
 type ProviderEntry = {
   name: string;
@@ -24,6 +24,12 @@ type EmailRule = {
   provider: string; // must match ProviderEntry.name
   // Match if any MX host string contains one of these substrings (case-insensitive)
   mxIncludes: string[];
+};
+
+type DnsRule = {
+  provider: string; // must match ProviderEntry.name
+  // Match if any NS host string contains one of these substrings (case-insensitive)
+  nsIncludes: string[];
 };
 
 // ---- Provider catalog ----
@@ -395,6 +401,44 @@ const PROVIDERS: ProviderEntry[] = [
     category: "registrar",
     aliases: ["automattic", "automattic inc"],
   },
+
+  // DNS Providers
+  {
+    name: "DNSimple",
+    domain: "dnsimple.com",
+    category: "dns",
+    aliases: ["dnsimple"],
+  },
+  {
+    name: "DNS Made Easy",
+    domain: "dnsmadeeasy.com",
+    category: "dns",
+    aliases: ["dnsmadeeasy"],
+  },
+  {
+    name: "NS1",
+    domain: "ns1.com",
+    category: "dns",
+    aliases: ["nsone", "ns1"],
+  },
+  {
+    name: "Amazon Route 53",
+    domain: "aws.amazon.com",
+    category: "dns",
+    aliases: ["route 53", "route53", "awsdns"],
+  },
+  {
+    name: "Google Cloud DNS",
+    domain: "cloud.google.com",
+    category: "dns",
+    aliases: ["google cloud dns", "googledomains"],
+  },
+  {
+    name: "Hurricane Electric",
+    domain: "he.net",
+    category: "dns",
+    aliases: ["he.net", "hurricane electric"],
+  },
 ];
 
 // ---- Detection rules ----
@@ -459,6 +503,27 @@ const EMAIL_RULES: EmailRule[] = [
   { provider: "Mailjet", mxIncludes: ["mailjet"] },
   { provider: "Postmark", mxIncludes: ["postmark", "postmarkapp"] },
   { provider: "Rackspace Email", mxIncludes: ["emailsrvr"] },
+];
+
+const DNS_RULES: DnsRule[] = [
+  { provider: "Cloudflare", nsIncludes: ["cloudflare"] },
+  { provider: "DNSimple", nsIncludes: ["dnsimple"] },
+  { provider: "DNS Made Easy", nsIncludes: ["dnsmadeeasy"] },
+  { provider: "DigitalOcean", nsIncludes: ["digitalocean"] },
+  { provider: "NS1", nsIncludes: ["nsone.net", "nsone", "ns1.com"] },
+  {
+    provider: "Amazon Route 53",
+    nsIncludes: ["awsdns", "route 53", "route53"],
+  },
+  { provider: "GoDaddy", nsIncludes: ["domaincontrol.com", "godaddy"] },
+  {
+    provider: "Google Cloud DNS",
+    nsIncludes: ["googledomains.com", "ns-cloud"],
+  },
+  {
+    provider: "Hurricane Electric",
+    nsIncludes: ["he.net", "hurricane electric"],
+  },
 ];
 
 // ---- Public helpers ----
@@ -530,6 +595,16 @@ export function detectEmailProviderFromMx(mxHosts: string[]): string {
   return mxHosts[0] ? mxHosts[0] : "Unknown";
 }
 
+export function detectDnsProviderFromNs(nsHosts: string[]): string {
+  const hostsJoined = nsHosts.join(" ").toLowerCase();
+  for (const rule of DNS_RULES) {
+    if (rule.nsIncludes.some((s) => hostsJoined.includes(s)))
+      return rule.provider;
+  }
+  // Fallback: return the first raw NS host if any, else Unknown
+  return nsHosts[0] ? nsHosts[0] : "Unknown";
+}
+
 // ---- Utils ----
 
 // Optionally export the catalog for UI use/debugging
@@ -537,4 +612,5 @@ export const ProviderCatalog = {
   all: PROVIDERS,
   hostingRules: HOSTING_RULES,
   emailRules: EMAIL_RULES,
+  dnsRules: DNS_RULES,
 };
