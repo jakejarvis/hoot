@@ -7,15 +7,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "icons.duckduckgo.com",
-        pathname: "/ip3/**",
-      },
-    ],
-  },
   experimental: {
     reactCompiler: true,
     inlineCss: true,

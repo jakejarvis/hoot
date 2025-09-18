@@ -589,7 +589,7 @@ export function DomainReportView({ domain }: { domain: string }) {
                             <TooltipTrigger asChild>
                               <button
                                 type="button"
-                                className="text-[11px] font-mono leading-none text-muted-foreground/80 underline decoration-dotted hover:text-foreground/80"
+                                className="text-[11px] font-mono leading-none text-muted-foreground/80 underline underline-offset-2 hover:text-foreground/80"
                                 aria-label={`Show ${sans.length} alternate names`}
                                 onClick={(e) => e.preventDefault()}
                               >
