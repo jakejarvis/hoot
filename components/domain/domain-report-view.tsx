@@ -150,19 +150,19 @@ export function DomainReportView({ domain }: { domain: string }) {
           />
 
           <Section
-            title="DNS Records"
-            description="A, AAAA, MX, CNAME, TXT, NS"
-            help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
-            icon={<Globe className="h-4 w-4" />}
+            title="Hosting & Email"
+            description="Providers and IP geolocation"
+            help="Hosting provider serves a site; email provider handles a domain's email."
+            icon={<HardDrive className="h-4 w-4" />}
             accent="blue"
             status="loading"
           />
 
           <Section
-            title="Hosting & Email"
-            description="Providers and IP geolocation"
-            help="Hosting provider serves a site; email provider handles a domain's email."
-            icon={<HardDrive className="h-4 w-4" />}
+            title="DNS Records"
+            description="A, AAAA, MX, CNAME, TXT, NS"
+            help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
+            icon={<Globe className="h-4 w-4" />}
             accent="green"
             status="loading"
           />
@@ -324,11 +324,79 @@ export function DomainReportView({ domain }: { domain: string }) {
         </Section>
 
         <Section
+          title="Hosting & Email"
+          description="Providers and IP geolocation"
+          help="Hosting provider serves a site; email provider handles a domain's email."
+          icon={<HardDrive className="h-4 w-4" />}
+          accent="blue"
+          status={
+            hosting.isLoading ? "loading" : hosting.isError ? "error" : "ready"
+          }
+        >
+          {hosting.data ? (
+            <>
+              <KeyValue
+                label="DNS"
+                value={hosting.data.dnsProvider.name}
+                leading={(() => {
+                  const domain = hosting.data.dnsProvider.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={16} />
+                  ) : undefined;
+                })()}
+              />
+              <KeyValue
+                label="Hosting"
+                value={hosting.data.hostingProvider.name}
+                leading={(() => {
+                  const domain = hosting.data.hostingProvider.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={16} />
+                  ) : undefined;
+                })()}
+              />
+              <KeyValue
+                label="Email"
+                value={hosting.data.emailProvider.name}
+                leading={(() => {
+                  const domain = hosting.data.emailProvider.iconDomain;
+                  return domain ? (
+                    <Favicon domain={domain} size={16} />
+                  ) : undefined;
+                })()}
+              />
+              <KeyValue
+                label="Location"
+                value={`${hosting.data.geo.emoji} ${hosting.data.geo.city || hosting.data.geo.region || hosting.data.geo.country ? `${hosting.data.geo.city ? `${hosting.data.geo.city}, ` : ""}${hosting.data.geo.region ? `${hosting.data.geo.region}, ` : ""}${hosting.data.geo.country}` : ""}`}
+              />
+              {hosting.data.geo.lat != null && hosting.data.geo.lon != null ? (
+                <div className="mt-2">
+                  <HostingMap hosting={hosting.data} />
+                </div>
+              ) : null}
+            </>
+          ) : hosting.isError ? (
+            <div className="text-sm text-destructive flex items-center gap-2">
+              Failed to load hosting details.
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => hosting.refetch()}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <Skeletons count={3} />
+          )}
+        </Section>
+
+        <Section
           title="DNS Records"
           description="A, AAAA, MX, CNAME, TXT, NS"
           help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
           icon={<Globe className="h-4 w-4" />}
-          accent="blue"
+          accent="green"
           headerRight={
             <Label
               htmlFor="show-ttls"
@@ -495,74 +563,6 @@ export function DomainReportView({ domain }: { domain: string }) {
             </div>
           ) : (
             <Skeletons count={6} />
-          )}
-        </Section>
-
-        <Section
-          title="Hosting & Email"
-          description="Providers and IP geolocation"
-          help="Hosting provider serves a site; email provider handles a domain's email."
-          icon={<HardDrive className="h-4 w-4" />}
-          accent="green"
-          status={
-            hosting.isLoading ? "loading" : hosting.isError ? "error" : "ready"
-          }
-        >
-          {hosting.data ? (
-            <>
-              <KeyValue
-                label="DNS"
-                value={hosting.data.dnsProvider.name}
-                leading={(() => {
-                  const domain = hosting.data.dnsProvider.iconDomain;
-                  return domain ? (
-                    <Favicon domain={domain} size={16} />
-                  ) : undefined;
-                })()}
-              />
-              <KeyValue
-                label="Hosting"
-                value={hosting.data.hostingProvider.name}
-                leading={(() => {
-                  const domain = hosting.data.hostingProvider.iconDomain;
-                  return domain ? (
-                    <Favicon domain={domain} size={16} />
-                  ) : undefined;
-                })()}
-              />
-              <KeyValue
-                label="Email"
-                value={hosting.data.emailProvider.name}
-                leading={(() => {
-                  const domain = hosting.data.emailProvider.iconDomain;
-                  return domain ? (
-                    <Favicon domain={domain} size={16} />
-                  ) : undefined;
-                })()}
-              />
-              <KeyValue
-                label="Location"
-                value={`${hosting.data.geo.emoji} ${hosting.data.geo.city || hosting.data.geo.region || hosting.data.geo.country ? `${hosting.data.geo.city ? `${hosting.data.geo.city}, ` : ""}${hosting.data.geo.region ? `${hosting.data.geo.region}, ` : ""}${hosting.data.geo.country}` : ""}`}
-              />
-              {hosting.data.geo.lat != null && hosting.data.geo.lon != null ? (
-                <div className="mt-2">
-                  <HostingMap hosting={hosting.data} />
-                </div>
-              ) : null}
-            </>
-          ) : hosting.isError ? (
-            <div className="text-sm text-destructive flex items-center gap-2">
-              Failed to load hosting details.
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => hosting.refetch()}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : (
-            <Skeletons count={3} />
           )}
         </Section>
 

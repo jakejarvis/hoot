@@ -513,7 +513,7 @@ const DNS_RULES: DnsRule[] = [
   { provider: "NS1", nsIncludes: ["nsone.net", "nsone", "ns1.com"] },
   {
     provider: "Amazon Route 53",
-    nsIncludes: ["awsdns", "route 53", "route53"],
+    nsIncludes: ["awsdns", "route53"],
   },
   { provider: "GoDaddy", nsIncludes: ["domaincontrol.com", "godaddy"] },
   {
@@ -523,6 +523,34 @@ const DNS_RULES: DnsRule[] = [
   {
     provider: "Hurricane Electric",
     nsIncludes: ["he.net", "hurricane electric"],
+  },
+  {
+    provider: "Linode",
+    nsIncludes: ["linode"],
+  },
+  {
+    provider: "Hetzner",
+    nsIncludes: ["hetzner"],
+  },
+  {
+    provider: "OVHcloud",
+    nsIncludes: ["ovh", "ovhcloud"],
+  },
+  {
+    provider: "IONOS",
+    nsIncludes: ["ionos", "1and1"],
+  },
+  {
+    provider: "NameSilo",
+    nsIncludes: ["namesilo"],
+  },
+  {
+    provider: "DreamHost",
+    nsIncludes: ["dreamhost"],
+  },
+  {
+    provider: "WordPress.com",
+    nsIncludes: ["wordpress.com"],
   },
 ];
 
