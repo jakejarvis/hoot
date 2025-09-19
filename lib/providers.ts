@@ -285,6 +285,12 @@ const PROVIDERS: ProviderEntry[] = [
     category: "email",
     aliases: ["rackspace", "emailsrvr"],
   },
+  {
+    name: "Proofpoint",
+    domain: "proofpoint.com",
+    category: "email",
+    aliases: ["proofpoint"],
+  },
 
   // Registrars (for favicon mapping only)
   {
@@ -401,6 +407,12 @@ const PROVIDERS: ProviderEntry[] = [
     category: "registrar",
     aliases: ["automattic", "automattic inc"],
   },
+  {
+    name: "Network Solutions",
+    domain: "networksolutions.com",
+    category: "registrar",
+    aliases: ["networksolutions", "network solutions", "netsol"],
+  },
 
   // DNS Providers
   {
@@ -483,13 +495,16 @@ const HOSTING_RULES: HostingRule[] = [
 ];
 
 const EMAIL_RULES: EmailRule[] = [
-  { provider: "Google Workspace", mxIncludes: ["google"] },
+  {
+    provider: "Google Workspace",
+    mxIncludes: ["google.com", "googlemail.com"],
+  },
   {
     provider: "Microsoft 365",
-    mxIncludes: ["outlook", "protection.outlook.com"],
+    mxIncludes: ["protection.outlook.com"],
   },
   { provider: "Zoho", mxIncludes: ["zoho"] },
-  { provider: "Proton", mxIncludes: ["proton"] },
+  { provider: "Proton", mxIncludes: ["protonmail"] },
   { provider: "Fastmail", mxIncludes: ["messagingengine"] },
   { provider: "Cloudflare Email Routing", mxIncludes: ["mx.cloudflare.net"] },
   { provider: "Yahoo Mail", mxIncludes: ["yahoo", "yahoodns"] },
@@ -502,7 +517,8 @@ const EMAIL_RULES: EmailRule[] = [
   { provider: "SendGrid", mxIncludes: ["sendgrid"] },
   { provider: "Mailjet", mxIncludes: ["mailjet"] },
   { provider: "Postmark", mxIncludes: ["postmark", "postmarkapp"] },
-  { provider: "Rackspace Email", mxIncludes: ["emailsrvr"] },
+  { provider: "Rackspace Email", mxIncludes: ["emailsrvr.com"] },
+  { provider: "Proofpoint", mxIncludes: ["pphosted.com"] },
 ];
 
 const DNS_RULES: DnsRule[] = [
@@ -510,19 +526,19 @@ const DNS_RULES: DnsRule[] = [
   { provider: "DNSimple", nsIncludes: ["dnsimple"] },
   { provider: "DNS Made Easy", nsIncludes: ["dnsmadeeasy"] },
   { provider: "DigitalOcean", nsIncludes: ["digitalocean"] },
-  { provider: "NS1", nsIncludes: ["nsone.net", "nsone", "ns1.com"] },
+  { provider: "NS1", nsIncludes: ["nsone.net", "ns1.com"] },
   {
     provider: "Amazon Route 53",
-    nsIncludes: ["awsdns", "route53"],
+    nsIncludes: ["awsdns"],
   },
-  { provider: "GoDaddy", nsIncludes: ["domaincontrol.com", "godaddy"] },
+  { provider: "GoDaddy", nsIncludes: ["domaincontrol.com"] },
   {
     provider: "Google Cloud DNS",
     nsIncludes: ["googledomains.com", "ns-cloud"],
   },
   {
     provider: "Hurricane Electric",
-    nsIncludes: ["he.net", "hurricane electric"],
+    nsIncludes: ["he.net"],
   },
   {
     provider: "Linode",
