@@ -12,18 +12,18 @@ type DnsType = DnsRecord["type"];
 const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
 
 export async function resolveAll(domain: string): Promise<DnsRecord[]> {
-  const results: DnsRecord[] = [];
-  for (const type of TYPES) {
-    const key = ns("dns", `${domain.toLowerCase()}:${type}`);
-    const recs = await getOrSet<DnsRecord[]>(
+  const lower = domain.toLowerCase();
+  const promises = TYPES.map(async (type) => {
+    const key = ns("dns", `${lower}:${type}`);
+    return await getOrSet<DnsRecord[]>(
       key,
       5 * 60,
       async () =>
         await resolveType(domain, type).catch(() => [] as DnsRecord[]),
     );
-    results.push(...recs);
-  }
-  return results;
+  });
+  const results = await Promise.all(promises);
+  return results.flat();
 }
 
 async function resolveType(
