@@ -10,6 +10,7 @@
     "email": "jake@jarv.is",
     "url": "https://github.com/jakejarvis"
   },
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
