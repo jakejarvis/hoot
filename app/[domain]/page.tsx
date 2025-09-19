@@ -5,6 +5,7 @@ import { DomainReportFallback } from "@/components/domain/domain-report-fallback
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { prefetchWhois } from "@/server/prefetch/domain";
 
 export const experimental_ppr = true;
 
@@ -39,10 +40,16 @@ export default async function DomainPage({
     redirect(`/${encodeURIComponent(normalized)}`);
   }
 
+  const whois = await prefetchWhois(normalized);
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
       <Suspense fallback={<DomainReportFallback />}>
-        <DomainReportView domain={normalized} />
+        <DomainReportView
+          domain={normalized}
+          initialWhois={whois}
+          initialRegistered={whois?.registered === true}
+        />
       </Suspense>
     </div>
   );

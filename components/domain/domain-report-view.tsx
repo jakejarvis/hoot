@@ -17,9 +17,17 @@ import { HostingEmailSection } from "./sections/hosting-email-section";
 import { RegistrationSection } from "./sections/registration-section";
 import { exportDomainData } from "./utils/export-data";
 
-export function DomainReportView({ domain }: { domain: string }) {
+export function DomainReportView({
+  domain,
+  initialWhois,
+  initialRegistered,
+}: {
+  domain: string;
+  initialWhois?: import("@/server/services/rdap-parser").Whois;
+  initialRegistered?: boolean;
+}) {
   const { whois, dns, hosting, certs, headers, allSectionsReady } =
-    useDomainQueries(domain);
+    useDomainQueries(domain, { initialWhois, initialRegistered });
   const { showTtls, setShowTtls } = useTtlPreferences();
 
   // Manage domain history
