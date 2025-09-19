@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { toRegistrableDomain } from "@/lib/domain-server";
 
 export const runtime = "nodejs";
+export const maxDuration = 10;
 
 const DEFAULT_SIZE = 32;
 const MIN_SIZE = 16;
@@ -155,9 +156,8 @@ export async function GET(req: Request) {
         status: 200,
         headers: {
           "Content-Type": "image/png",
-          // Cache for a day; allow CDN to keep for a day; revalidate in background for a week
-          "Cache-Control":
-            "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
+          // Cache for a week; allow CDN to keep for a week
+          "Cache-Control": "public, max-age=604800, s-maxage=604800",
           "Content-Length": String(png.length),
         },
       });
