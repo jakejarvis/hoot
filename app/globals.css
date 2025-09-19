@@ -68,6 +68,32 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  /* Section accent glow (light) */
+  --accent-blue-glow: radial-gradient(
+    closest-side,
+    oklch(0.94 0.1 230),
+    transparent
+  );
+  --accent-purple-glow: radial-gradient(
+    closest-side,
+    oklch(0.96 0.1 310),
+    transparent
+  );
+  --accent-green-glow: radial-gradient(
+    closest-side,
+    oklch(0.96 0.09 160),
+    transparent
+  );
+  --accent-orange-glow: radial-gradient(
+    closest-side,
+    oklch(0.96 0.12 60),
+    transparent
+  );
+  --accent-pink-glow: radial-gradient(
+    closest-side,
+    oklch(0.96 0.16 350),
+    transparent
+  );
   /* DNS badge accent tokens */
   --dns-a: oklch(0.62 0.2 255);
   --dns-aaaa: oklch(0.6 0.19 275);
@@ -109,6 +135,32 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  /* Section accent glow (dark) */
+  --accent-blue-glow: radial-gradient(
+    closest-side,
+    oklch(0.82 0.08 230),
+    transparent
+  );
+  --accent-purple-glow: radial-gradient(
+    closest-side,
+    oklch(0.78 0.1 310),
+    transparent
+  );
+  --accent-green-glow: radial-gradient(
+    closest-side,
+    oklch(0.86 0.09 160),
+    transparent
+  );
+  --accent-orange-glow: radial-gradient(
+    closest-side,
+    oklch(0.86 0.12 60),
+    transparent
+  );
+  --accent-pink-glow: radial-gradient(
+    closest-side,
+    oklch(0.82 0.16 350),
+    transparent
+  );
   /* DNS badge accent tokens (dark) */
   --dns-a: oklch(0.72 0.16 255);
   --dns-aaaa: oklch(0.7 0.16 275);
@@ -132,5 +184,47 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .accent-glow-blue {
+    background: radial-gradient(
+      closest-side,
+      oklch(0.82 0.08 230),
+      transparent
+    );
+  }
+  .accent-glow-purple {
+    background: radial-gradient(closest-side, oklch(0.78 0.1 310), transparent);
+  }
+  .accent-glow-green {
+    background: radial-gradient(
+      closest-side,
+      oklch(0.86 0.09 160),
+      transparent
+    );
+  }
+  .accent-glow-orange {
+    background: radial-gradient(closest-side, oklch(0.86 0.12 60), transparent);
+  }
+  /* Variable-driven accent glow */
+  .accent-glow {
+    background: var(--section-accent-glow, var(--accent-blue-glow));
+  }
+  [data-accent="blue"] .accent-glow {
+    --section-accent-glow: var(--accent-blue-glow);
+  }
+  [data-accent="purple"] .accent-glow {
+    --section-accent-glow: var(--accent-purple-glow);
+  }
+  [data-accent="green"] .accent-glow {
+    --section-accent-glow: var(--accent-green-glow);
+  }
+  [data-accent="orange"] .accent-glow {
+    --section-accent-glow: var(--accent-orange-glow);
+  }
+  [data-accent="pink"] .accent-glow {
+    --section-accent-glow: var(--accent-pink-glow);
   }
 }

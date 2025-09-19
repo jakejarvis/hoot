@@ -1,6 +1,5 @@
 "use client";
 
-import { Globe } from "lucide-react";
 import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
@@ -9,6 +8,7 @@ import { Skeletons } from "@/components/domain/skeletons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { DnsRecord } from "@/server/services/dns";
+import { SECTION_DEFS } from "./sections-meta";
 
 export function DnsRecordsSection({
   records,
@@ -52,13 +52,14 @@ export function DnsRecordsSection({
     </Label>
   );
 
+  const Def = SECTION_DEFS.dns;
   return (
     <Section
-      title="DNS Records"
-      description="A, AAAA, MX, CNAME, TXT, NS"
-      help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
-      icon={<Globe className="h-4 w-4" />}
-      accent="green"
+      title={Def.title}
+      description={Def.description}
+      help={Def.help}
+      icon={<Def.Icon className="h-4 w-4" />}
+      accent={Def.accent}
       headerRight={headerRight}
       status={isLoading ? "loading" : isError ? "error" : "ready"}
     >

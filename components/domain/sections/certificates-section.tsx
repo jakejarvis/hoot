@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowDown, ShieldCheck } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import React from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
 import { equalHostname, formatDate } from "@/lib/format";
+import { SECTION_DEFS } from "./sections-meta";
 
 export function CertificatesSection({
   data,
@@ -25,13 +26,14 @@ export function CertificatesSection({
   isError: boolean;
   onRetry: () => void;
 }) {
+  const Def = SECTION_DEFS.certificates;
   return (
     <Section
-      title="SSL Certificates"
-      description="Issuer and validity"
-      help="SSL/TLS certificates encrypt traffic and verify a domain's identity."
-      icon={<ShieldCheck className="h-4 w-4" />}
-      accent="orange"
+      title={Def.title}
+      description={Def.description}
+      help={Def.help}
+      icon={<Def.Icon className="h-4 w-4" />}
+      accent={Def.accent}
       status={isLoading ? "loading" : isError ? "error" : "ready"}
     >
       {data ? (

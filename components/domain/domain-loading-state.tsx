@@ -1,6 +1,7 @@
 import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Section } from "./section";
+import { SECTION_DEFS } from "./sections/sections-meta";
 
 export function DomainLoadingState() {
   return (
@@ -17,33 +18,43 @@ export function DomainLoadingState() {
 
       <Accordion type="multiple" className="space-y-4">
         <Section
-          title="Registration"
-          description="Registrar and registrant details"
-          help="WHOIS shows registrar, registration dates, and registrant details."
+          title={SECTION_DEFS.registration.title}
+          description={SECTION_DEFS.registration.description}
+          help={SECTION_DEFS.registration.help}
+          icon={<SECTION_DEFS.registration.Icon className="h-4 w-4" />}
+          accent={SECTION_DEFS.registration.accent}
           status="loading"
         />
         <Section
-          title="Hosting & Email"
-          description="Providers and IP geolocation"
-          help="Hosting provider serves a site; email provider handles a domain's email."
+          title={SECTION_DEFS.hosting.title}
+          description={SECTION_DEFS.hosting.description}
+          help={SECTION_DEFS.hosting.help}
+          icon={<SECTION_DEFS.hosting.Icon className="h-4 w-4" />}
+          accent={SECTION_DEFS.hosting.accent}
           status="loading"
         />
         <Section
-          title="DNS Records"
-          description="A, AAAA, MX, CNAME, TXT, NS"
-          help="DNS records map the domain to services like web (A/AAAA), mail (MX), and aliases (CNAME)."
+          title={SECTION_DEFS.dns.title}
+          description={SECTION_DEFS.dns.description}
+          help={SECTION_DEFS.dns.help}
+          icon={<SECTION_DEFS.dns.Icon className="h-4 w-4" />}
+          accent={SECTION_DEFS.dns.accent}
           status="loading"
         />
         <Section
-          title="SSL Certificates"
-          description="Issuer and validity"
-          help="SSL/TLS certificates encrypt traffic and verify a domain's identity."
+          title={SECTION_DEFS.certificates.title}
+          description={SECTION_DEFS.certificates.description}
+          help={SECTION_DEFS.certificates.help}
+          icon={<SECTION_DEFS.certificates.Icon className="h-4 w-4" />}
+          accent={SECTION_DEFS.certificates.accent}
           status="loading"
         />
         <Section
-          title="HTTP Headers"
-          description="Server, security, caching"
-          help="Headers include server info and security/caching directives returned by a site."
+          title={SECTION_DEFS.headers.title}
+          description={SECTION_DEFS.headers.description}
+          help={SECTION_DEFS.headers.help}
+          icon={<SECTION_DEFS.headers.Icon className="h-4 w-4" />}
+          accent={SECTION_DEFS.headers.accent}
           status="loading"
         />
       </Accordion>

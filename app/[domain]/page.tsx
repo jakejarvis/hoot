@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
+import { DomainReportFallback } from "@/components/domain/domain-report-fallback";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
+
+export const experimental_ppr = true;
 
 export async function generateMetadata({
   params,
@@ -37,7 +41,9 @@ export default async function DomainPage({
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
-      <DomainReportView domain={normalized} />
+      <Suspense fallback={<DomainReportFallback />}>
+        <DomainReportView domain={normalized} />
+      </Suspense>
     </div>
   );
 }

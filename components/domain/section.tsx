@@ -32,27 +32,23 @@ export function Section({
   description?: string;
   help?: string;
   icon?: React.ReactNode;
-  accent?: "blue" | "purple" | "green" | "orange";
+  accent?: "blue" | "purple" | "green" | "orange" | "pink";
   status?: "loading" | "ready" | "error";
   headerRight?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
     <AccordionItem value={title} className="border-none group">
-      <Card className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]">
+      <Card
+        className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]"
+        data-accent={accent}
+      >
         {/* Accent glow */}
         <div
           aria-hidden
           className={cn(
             "pointer-events-none absolute -inset-x-8 -top-8 h-24 blur-2xl opacity-30",
-            accent === "blue" &&
-              "bg-[radial-gradient(closest-side,oklch(0.82_0.08_230),transparent)]",
-            accent === "purple" &&
-              "bg-[radial-gradient(closest-side,oklch(0.78_0.10_310),transparent)]",
-            accent === "green" &&
-              "bg-[radial-gradient(closest-side,oklch(0.86_0.09_160),transparent)]",
-            accent === "orange" &&
-              "bg-[radial-gradient(closest-side,oklch(0.86_0.12_60),transparent)]",
+            "accent-glow",
           )}
         />
         <div className="relative">

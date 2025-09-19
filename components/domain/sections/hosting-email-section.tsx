@@ -1,6 +1,5 @@
 "use client";
 
-import { HardDrive } from "lucide-react";
 import dynamic from "next/dynamic";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
@@ -8,6 +7,7 @@ import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
 import type { HostingInfo } from "@/server/services/hosting";
+import { SECTION_DEFS } from "./sections-meta";
 
 export function HostingEmailSection({
   data,
@@ -30,13 +30,14 @@ export function HostingEmailSection({
     },
   );
 
+  const Def = SECTION_DEFS.hosting;
   return (
     <Section
-      title="Hosting & Email"
-      description="Providers and IP geolocation"
-      help="Hosting provider serves a site; email provider handles a domain's email."
-      icon={<HardDrive className="h-4 w-4" />}
-      accent="blue"
+      title={Def.title}
+      description={Def.description}
+      help={Def.help}
+      icon={<Def.Icon className="h-4 w-4" />}
+      accent={Def.accent}
       status={isLoading ? "loading" : isError ? "error" : "ready"}
     >
       {data ? (

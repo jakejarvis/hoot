@@ -1,6 +1,5 @@
 "use client";
 
-import { User } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -8,6 +7,7 @@ import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
+import { SECTION_DEFS } from "./sections-meta";
 
 type Registrar = { name: string; iconDomain: string | null };
 type Registrant = { organization: string; country: string; state?: string };
@@ -29,13 +29,14 @@ export function RegistrationSection({
   isError: boolean;
   onRetry: () => void;
 }) {
+  const Def = SECTION_DEFS.registration;
   return (
     <Section
-      title="Registration"
-      description="Registrar and registrant details"
-      help="RDAP/WHOIS shows registrar, registration dates, and registrant details."
-      icon={<User className="h-4 w-4" />}
-      accent="purple"
+      title={Def.title}
+      description={Def.description}
+      help={Def.help}
+      icon={<Def.Icon className="h-4 w-4" />}
+      accent={Def.accent}
       status={isLoading ? "loading" : isError ? "error" : "ready"}
     >
       {data ? (

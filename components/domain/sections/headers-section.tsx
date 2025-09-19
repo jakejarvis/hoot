@@ -1,10 +1,10 @@
 "use client";
 
-import { List } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
+import { SECTION_DEFS } from "./sections-meta";
 
 export function HeadersSection({
   data,
@@ -21,13 +21,14 @@ export function HeadersSection({
   isError: boolean;
   onRetry: () => void;
 }) {
+  const Def = SECTION_DEFS.headers;
   return (
     <Section
-      title="HTTP Headers"
-      description="Server, security, caching"
-      help="Headers include server info and security/caching directives returned by a site."
-      icon={<List className="h-4 w-4" />}
-      accent="purple"
+      title={Def.title}
+      description={Def.description}
+      help={Def.help}
+      icon={<Def.Icon className="h-4 w-4" />}
+      accent={Def.accent}
       status={isLoading ? "loading" : isError ? "error" : "ready"}
     >
       {data ? (
