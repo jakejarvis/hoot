@@ -4,6 +4,9 @@ import L from "leaflet";
 import React from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import type { HostingInfo } from "@/server/services/hosting";
+import markerIcon from "./leaflet-icons/marker-icon.png";
+import markerIcon2x from "./leaflet-icons/marker-icon-2x.png";
+import markerShadow from "./leaflet-icons/marker-shadow.png";
 
 // Fix default icon paths in Next.js
 // Leaflet looks for marker images via URL; in bundlers, we need to set them explicitly
@@ -17,11 +20,9 @@ function useFixLeafletIcons() {
     };
     delete DefaultIcon.prototype._getIconUrl;
     DefaultIcon.mergeOptions({
-      iconRetinaUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconRetinaUrl: markerIcon2x.src,
+      iconUrl: markerIcon.src,
+      shadowUrl: markerShadow.src,
     });
   }, []);
 }
