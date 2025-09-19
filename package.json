@@ -2,12 +2,21 @@
   "name": "hoot.sh",
   "version": "0.0.0-beta.1",
   "private": true,
+  "license": "MIT",
+  "homepage": "https://hoot.sh",
+  "repository": "jakejarvis/hoot.sh",
+  "author": {
+    "name": "Jake Jarvis",
+    "email": "jake@jarv.is",
+    "url": "https://github.com/jakejarvis"
+  },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -63,25 +72,29 @@
     "react-resizable-panels": "^3.0.6",
     "recharts": "^2.15.4",
     "server-only": "0.0.1",
-    "sharp": "^0.34.3",
+    "sharp": "^0.34.4",
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "tldts": "^7.0.14",
     "vaul": "^1.1.2",
     "whoiser": "2.0.0-beta.8",
-    "zod": "^4.1.8"
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/leaflet": "^1.9.20",
-    "@types/node": "^24.5.0",
+    "@types/node": "^24.5.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "tailwindcss": "^4.1.13",
     "tw-animate-css": "^1.3.8",
     "typescript": "5.9.2"
-  }
+  },
+  "engines": {
+    "node": ">=22.x"
+  },
+  "packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef"
 }
