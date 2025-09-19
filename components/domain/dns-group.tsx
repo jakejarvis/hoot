@@ -14,14 +14,16 @@ export function DnsGroup({
   children,
   color = "slate",
   chart,
+  count,
 }: {
   title: string;
   children: React.ReactNode;
   color?: DnsGroupColor;
   chart?: 1 | 2 | 3 | 4 | 5;
+  count?: number;
 }) {
-  const count = React.Children.count(children);
-  if (count === 0) return null;
+  const actualCount = count ?? React.Children.count(children);
+  if (actualCount === 0) return null;
   const chartVar =
     chart === 1
       ? "--dns-a"
@@ -65,7 +67,7 @@ export function DnsGroup({
               : undefined
           }
         >
-          {count}
+          {actualCount}
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{children}</div>

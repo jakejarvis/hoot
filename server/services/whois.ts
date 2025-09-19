@@ -2,7 +2,7 @@ import { firstResult, whoisDomain } from "whoiser";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { mapProviderNameToDomain } from "@/lib/providers";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
-import type { Whois } from "./rdap";
+import type { Whois } from "./rdap-parser";
 
 /**
  * Fetch WHOIS data over TCP (port 43) and normalize to our Whois shape.

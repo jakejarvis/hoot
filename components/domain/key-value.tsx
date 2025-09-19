@@ -1,15 +1,9 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { CopyButton } from "./copy-button";
+import { useTruncation } from "./hooks/use-truncation";
+import { TruncatedValue } from "./truncated-value";
 
 export function KeyValue({
   label,
@@ -28,53 +22,7 @@ export function KeyValue({
   trailing?: React.ReactNode;
   suffix?: React.ReactNode;
 }) {
-  const valueRef = useRef<HTMLSpanElement | null>(null);
-  const [isTruncated, setIsTruncated] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const resetTimerRef = useRef<number | null>(null);
-  const recalcTruncation = useCallback(() => {
-    const element = valueRef.current;
-    if (!element) return;
-    setIsTruncated(element.scrollWidth > element.clientWidth);
-  }, []);
-
-  useEffect(() => {
-    const element = valueRef.current;
-    if (!element) return;
-
-    // Initial check after layout
-    const raf = requestAnimationFrame(recalcTruncation);
-
-    // Observe size changes
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(() => recalcTruncation());
-      resizeObserver.observe(element);
-    }
-
-    // Observe text/content changes
-    let mutationObserver: MutationObserver | null = null;
-    if (typeof MutationObserver !== "undefined") {
-      mutationObserver = new MutationObserver(() => recalcTruncation());
-      mutationObserver.observe(element, {
-        subtree: true,
-        characterData: true,
-        childList: true,
-      });
-    }
-
-    // Also listen for window resizes
-    window.addEventListener("resize", recalcTruncation);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", recalcTruncation);
-      if (resizeObserver) resizeObserver.disconnect();
-      if (mutationObserver) mutationObserver.disconnect();
-    };
-  }, [recalcTruncation]);
-
-  // Mutation/resize observers will keep this in sync; no interactive handlers required.
+  const { valueRef, isTruncated } = useTruncation();
 
   return (
     <div
@@ -98,83 +46,17 @@ export function KeyValue({
             {label}
           </div>
         )}
-        {suffix ? (
-          <div className="flex items-center gap-[6px] min-w-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-[5px] min-w-0 truncate">
-                  {leading}
-                  <span
-                    ref={valueRef}
-                    className="truncate flex-1 min-w-0 block"
-                  >
-                    {value}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent
-                className={cn(
-                  isTruncated
-                    ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
-                    : "hidden",
-                )}
-              >
-                {value}
-              </TooltipContent>
-            </Tooltip>
-            <div className="shrink-0">{suffix}</div>
-          </div>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-[5px] min-w-0 truncate">
-                {leading}
-                <span ref={valueRef} className="truncate flex-1 min-w-0 block">
-                  {value}
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent
-              className={cn(
-                isTruncated
-                  ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
-                  : "hidden",
-              )}
-            >
-              {value}
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <TruncatedValue
+          value={value}
+          leading={leading}
+          suffix={suffix}
+          isTruncated={isTruncated}
+          valueRef={valueRef}
+        />
       </div>
       <div className="shrink-0 flex items-center gap-2">
         {trailing}
-        {copyable && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
-            aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
-            onClick={() => {
-              navigator.clipboard.writeText(value);
-              toast.success("Copied");
-              setCopied(true);
-              if (resetTimerRef.current) {
-                window.clearTimeout(resetTimerRef.current);
-              }
-              resetTimerRef.current = window.setTimeout(() => {
-                setCopied(false);
-                resetTimerRef.current = null;
-              }, 1200);
-            }}
-          >
-            {copied ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-            <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
-          </Button>
-        )}
+        {copyable && <CopyButton value={value} label={label} />}
       </div>
     </div>
   );

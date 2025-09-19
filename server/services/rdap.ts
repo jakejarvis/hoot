@@ -1,27 +1,19 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { mapProviderNameToDomain } from "@/lib/providers";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
 import { getRdapBaseForTld } from "./rdap-bootstrap";
+import { parseRdapResponse, type Whois } from "./rdap-parser";
 import { fetchWhoisTcp } from "./whois";
 
-export type Whois = {
-  source?: "rdap" | "whois";
-  registrar: { name: string; iconDomain: string | null };
-  creationDate: string;
-  expirationDate: string;
-  registrant: { organization: string; country: string; state?: string };
-  status?: string[];
-  registered: boolean;
-};
-
-type RdapEvent = { eventAction?: string; eventDate?: string };
-type RdapEntity = { roles?: string[]; vcardArray?: [string, unknown[]] };
 type RdapJson = {
   registrar?: { name?: string };
   entities?: RdapEntity[];
   events?: RdapEvent[];
   status?: string[];
 };
+
+// Re-export types for backward compatibility
+type RdapEvent = { eventAction?: string; eventDate?: string };
+type RdapEntity = { roles?: string[]; vcardArray?: [string, unknown[]] };
 
 export async function fetchWhois(domain: string): Promise<Whois> {
   const registrable = toRegistrableDomain(domain);
@@ -72,44 +64,8 @@ export async function fetchWhois(domain: string): Promise<Whois> {
     }
 
     const json = (await res.json()) as unknown as RdapJson;
-
-    const registrarName =
-      json.registrar?.name ??
-      findVcardValue(findEntity(json.entities, "registrar"), "fn") ??
-      "Unknown";
-    const creationDate =
-      json.events?.find((e) => e.eventAction === "registration")?.eventDate ??
-      "";
-    const expirationDate =
-      json.events?.find((e) => e.eventAction === "expiration")?.eventDate ?? "";
-    const registrantEnt = findEntity(json.entities, "registrant");
-    const organization = findVcardValue(registrantEnt, "org") ?? "";
-    const adr = findVcardEntry(registrantEnt, "adr");
-    const country =
-      Array.isArray(adr?.[3]) && typeof adr?.[3]?.[6] === "string"
-        ? (adr?.[3]?.[6] as string)
-        : "";
-    const state =
-      Array.isArray(adr?.[3]) && typeof adr?.[3]?.[4] === "string"
-        ? (adr?.[3]?.[4] as string)
-        : undefined;
-
-    const status = json.status ?? [];
-    const registered = !status.some((s) => s.toLowerCase() === "available");
-
-    const result: Whois = {
-      source: "rdap",
-      registrar: {
-        name: registrarName,
-        iconDomain: mapProviderNameToDomain(registrarName) || null,
-      },
-      creationDate,
-      expirationDate,
-      registrant: { organization, country, state },
-      status,
-      registered,
-    };
-    await cacheSet(key, result, registered ? 24 * 60 * 60 : 60 * 60);
+    const result = parseRdapResponse(json);
+    await cacheSet(key, result, result.registered ? 24 * 60 * 60 : 60 * 60);
     return result;
   } catch (_err) {
     // RDAP lookup failed (network/timeout/bootstrap). Fall back to WHOIS.
@@ -121,31 +77,4 @@ async function rdapBaseForDomain(domain: string): Promise<string | null> {
   const tld = domain.split(".").pop() || "com";
   const base = await getRdapBaseForTld(tld);
   return base;
-}
-
-function findEntity(
-  entities: RdapEntity[] | undefined,
-  role: string,
-): RdapEntity | undefined {
-  return entities?.find((e) => e.roles?.includes(role));
-}
-
-function findVcardEntry(
-  entity: RdapEntity | undefined,
-  key: string,
-): unknown[] | undefined {
-  const arr = entity?.vcardArray?.[1];
-  if (!Array.isArray(arr)) return undefined;
-  return arr.find((v) => Array.isArray(v) && v[0] === key) as
-    | unknown[]
-    | undefined;
-}
-
-function findVcardValue(
-  entity: RdapEntity | undefined,
-  key: string,
-): string | undefined {
-  const entry = findVcardEntry(entity, key);
-  const value = entry?.[3];
-  return typeof value === "string" ? value : undefined;
 }

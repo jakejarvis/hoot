@@ -64,19 +64,39 @@ export function DnsRecordsSection({
     >
       {records ? (
         <div className="space-y-4">
-          <DnsGroup title="A Records" chart={1}>
+          <DnsGroup
+            title="A Records"
+            chart={1}
+            count={records.filter((r) => r.type === "A").length}
+          >
             <DnsRecordList records={records} type="A" showTtls={showTtls} />
           </DnsGroup>
-          <DnsGroup title="AAAA Records" chart={2}>
+          <DnsGroup
+            title="AAAA Records"
+            chart={2}
+            count={records.filter((r) => r.type === "AAAA").length}
+          >
             <DnsRecordList records={records} type="AAAA" showTtls={showTtls} />
           </DnsGroup>
-          <DnsGroup title="MX Records" chart={3}>
+          <DnsGroup
+            title="MX Records"
+            chart={3}
+            count={records.filter((r) => r.type === "MX").length}
+          >
             <DnsRecordList records={records} type="MX" showTtls={showTtls} />
           </DnsGroup>
-          <DnsGroup title="TXT Records" chart={5}>
+          <DnsGroup
+            title="TXT Records"
+            chart={5}
+            count={records.filter((r) => r.type === "TXT").length}
+          >
             <DnsRecordList records={records} type="TXT" showTtls={showTtls} />
           </DnsGroup>
-          <DnsGroup title="NS Records" chart={1}>
+          <DnsGroup
+            title="NS Records"
+            chart={1}
+            count={records.filter((r) => r.type === "NS").length}
+          >
             <DnsRecordList records={records} type="NS" showTtls={showTtls} />
           </DnsGroup>
         </div>

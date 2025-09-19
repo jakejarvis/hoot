@@ -1,0 +1,46 @@
+"use client";
+
+import { Check, Copy } from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+
+interface CopyButtonProps {
+  value: string;
+  label?: string;
+}
+
+export function CopyButton({ value, label }: CopyButtonProps) {
+  const [copied, setCopied] = useState(false);
+  const resetTimerRef = useRef<number | null>(null);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    toast.success("Copied");
+    setCopied(true);
+    if (resetTimerRef.current) {
+      window.clearTimeout(resetTimerRef.current);
+    }
+    resetTimerRef.current = window.setTimeout(() => {
+      setCopied(false);
+      resetTimerRef.current = null;
+    }, 1200);
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="shrink-0 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
+      aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
+      onClick={handleCopy}
+    >
+      {copied ? (
+        <Check className="h-3.5 w-3.5" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+      <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
+    </Button>
+  );
+}
