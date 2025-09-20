@@ -51,7 +51,7 @@ export function DnsRecordList({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <span>Proxied via Cloudflare</span>
+                  <p>Real IP is being concealed using Cloudflare.</p>
                 </TooltipContent>
               </Tooltip>
             ) : undefined
