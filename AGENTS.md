@@ -1,30 +1,34 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `app/` Next.js App Router (RSC-first). Pages like `app/page.tsx`, API routes in `app/api/*` (e.g., `app/api/trpc/[trpc]/route.ts`).
-- `components/` UI building blocks (`ui/`, layout pieces). Component files use kebab-case; exports use PascalCase.
-- `server/` tRPC backend: `routers/` (procedures), `services/` (DNS, RDAP/WHOIS, TLS, headers), `trpc.ts` (init).
-- `lib/` shared utilities (domain parsing, Redis cache, tRPC client), plus `@/` path alias from `tsconfig.json`.
-- `hooks/` React hooks, `public/` static assets, `app/globals.css` Tailwind v4 styles.
+- `app/` hosts the Next.js App Router, primarily server components, with routes like `app/page.tsx` and API handlers under `app/api/*`.
+- `components/` contains reusable UI primitives in kebab-case files while exports stay PascalCase.
+- `server/` holds tRPC routers plus DNS, RDAP/WHOIS, TLS, and header probing services.
+- `lib/` centralizes shared utilities (domain parsing, caching, tRPC client); prefer the `@/...` alias.
+- `hooks/` stores React hooks; `public/` carries static assets; Tailwind v4 styles live in `app/globals.css`.
 
 ## Build, Test, and Development Commands
-- `pnpm dev` Run the local dev server at `http://localhost:3000`.
-- `pnpm build` Production build (Next.js 15, React 19).
-- `pnpm start` Start the built app.
-- `pnpm lint` Lint and type-aware checks via Biome.
-- `pnpm format` Apply formatting fixes (Biome).
+- `pnpm dev` boots the Turbo-ready dev server at `http://localhost:3000`.
+- `pnpm build` generates the production bundle.
+- `pnpm start` serves the compiled app locally for smoke tests.
+- `pnpm lint` runs Biome linting and type-aware checks.
+- `pnpm format` applies Biome formatting fixes; rerun `pnpm lint --apply` if automated patches are acceptable.
+- `pnpm typecheck` executes the TypeScript compiler in no-emit mode.
 
 ## Coding Style & Naming Conventions
-- TypeScript, strict mode on. Indentation: 2 spaces (Biome-enforced).
-- React components: PascalCase exports; client components add `"use client"`.
-- Files/folders: kebab-case (e.g., `domain-report-view.tsx`). Server utilities/procedures use camelCase.
-- Imports prefer `@/...` alias (e.g., `@/server/routers/_app`). Keep modules small and cohesive: UI in `components/`, I/O in `server/services/`.
+- TypeScript everywhere with `strict` options; prefer modules under ~300 LOC for clarity.
+- Indentation is 2 spaces, enforced via Biome.
+- Client components begin with `"use client"`; exports are PascalCase.
+- Files and folders use kebab-case; shared utilities expose named camelCase functions.
+- Use `@/...` imports instead of deep relative paths.
 
 ## Commit & Pull Request Guidelines
-- Commits: concise, imperative subject, sentence case (e.g., "Refactor DomainReportView for clarity"). Group related changes.
-- PRs: include a clear summary, linked issues, and screenshots for UI changes. Note any config/env updates.
-- Before submit: run `pnpm lint`, `pnpm build`, and verify no type errors. Describe user-visible changes and rollout concerns.
+- Commits are single-focus, imperative, sentence case (e.g., "Add RDAP caching layer").
+- Pull requests summarize user impact, link issues, note config/env updates, and attach UI screenshots or terminal output when relevant.
+- Before review, run `pnpm lint`, `pnpm typecheck`, and `pnpm build`; call out any skipped checks.
+- Flag breaking API changes or new dependencies directly in the PR description.
 
 ## Security & Configuration Tips
-- Environment: Upstash Redis optional cache via `KV_REST_API_URL` and `KV_REST_API_TOKEN`. Do not commit secrets; use `.env.local`.
-- External calls: DNS over HTTPS (Cloudflare), RDAP, TLS probing, HTTP headers. Be mindful of rate limits and error handling.
+- Keep secrets in `.env.local`; Upstash credentials require `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
+- External integrations (Cloudflare DoH, RDAP, TLS probes) are rate-limited—cache responses in `lib/cache` and implement retry backoff.
+- Review `server/trpc.ts` to meet auth/context expectations when extending procedures.
