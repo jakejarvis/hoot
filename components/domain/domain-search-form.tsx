@@ -10,6 +10,14 @@ import { Input } from "@/components/ui/input";
 import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 import { Favicon } from "./favicon";
 
+const DEFAULT_SUGGESTIONS = [
+  "google.com",
+  "wikipedia.org",
+  "amazon.com",
+  "github.com",
+  "cloudflare.com",
+];
+
 const domainSchema = z
   .string()
   .transform((v) => normalizeDomainInput(v))
@@ -92,21 +100,35 @@ export function DomainSearchForm({
         </Button>
       </form>
 
-      {showHistory && history.length > 0 && (
+      {showHistory && (
         <div className="mt-3 flex flex-wrap gap-2 justify-center">
-          {history.map((d) => (
-            <Button
-              key={d}
-              variant="secondary"
-              size="sm"
-              onClick={() => router.push(`/${encodeURIComponent(d)}`)}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Favicon domain={d} size={16} className="rounded" />
-                {d}
-              </span>
-            </Button>
-          ))}
+          {history.length > 0
+            ? history.map((d) => (
+                <Button
+                  key={d}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => router.push(`/${encodeURIComponent(d)}`)}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Favicon domain={d} size={16} className="rounded" />
+                    {d}
+                  </span>
+                </Button>
+              ))
+            : DEFAULT_SUGGESTIONS.map((domain) => (
+                <Button
+                  key={domain}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => router.push(`/${encodeURIComponent(domain)}`)}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Favicon domain={domain} size={16} className="rounded" />
+                    {domain}
+                  </span>
+                </Button>
+              ))}
         </div>
       )}
     </>
