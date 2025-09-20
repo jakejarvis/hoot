@@ -1,4 +1,5 @@
 import { getOrSet, ns } from "@/lib/redis";
+import { isCloudflareIpAsync } from "./cloudflare";
 
 export type DnsRecord = {
   type: "A" | "AAAA" | "MX" | "TXT" | "NS";
@@ -6,6 +7,7 @@ export type DnsRecord = {
   value: string;
   ttl?: number;
   priority?: number;
+  isCloudflare?: boolean;
 };
 
 type DnsType = DnsRecord["type"];
@@ -42,23 +44,30 @@ async function resolveType(
   if (!res.ok) throw new Error(`DoH failed: ${res.status}`);
   const json = (await res.json()) as CloudflareDnsJson;
   const ans = json.Answer ?? [];
-  return ans
-    .map((a) => normalizeAnswer(domain, type, a))
-    .filter(Boolean) as DnsRecord[];
+  const normalizedRecords = await Promise.all(
+    ans.map((a) => normalizeAnswer(domain, type, a)),
+  );
+  return normalizedRecords.filter(Boolean) as DnsRecord[];
 }
 
-function normalizeAnswer(
+async function normalizeAnswer(
   _domain: string,
   type: DnsType,
   a: CloudflareAnswer,
-): DnsRecord | undefined {
+): Promise<DnsRecord | undefined> {
   const name = trimDot(a.name);
   const ttl = a.TTL;
   switch (type) {
     case "A":
     case "AAAA":
-    case "NS":
-      return { type, name, value: trimDot(a.data), ttl };
+    case "NS": {
+      const value = trimDot(a.data);
+      const isCloudflare =
+        type === "A" || type === "AAAA"
+          ? await isCloudflareIpAsync(value)
+          : false;
+      return { type, name, value, ttl, isCloudflare };
+    }
     case "TXT":
       return { type, name, value: stripTxtQuotes(a.data), ttl };
     case "MX": {

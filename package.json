@@ -62,6 +62,7 @@
     "framer-motion": "^12.23.16",
     "icojs": "^0.19.5",
     "input-otp": "^1.4.2",
+    "ipaddr.js": "^2.2.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.544.0",
     "next": "15.6.0-canary.17",

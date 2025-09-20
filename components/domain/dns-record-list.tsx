@@ -1,7 +1,13 @@
 "use client";
 
 import React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { DnsRecord } from "@/server/services/dns";
+import { Favicon } from "./favicon";
 import { KeyValue } from "./key-value";
 import { TtlBadge } from "./ttl-badge";
 
@@ -34,6 +40,20 @@ export function DnsRecordList({
           trailing={
             showTtls && typeof r.ttl === "number" ? (
               <TtlBadge ttl={r.ttl} />
+            ) : undefined
+          }
+          suffix={
+            r.isCloudflare ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="p-1">
+                    <Favicon domain="cloudflare.com" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>Proxied via Cloudflare</span>
+                </TooltipContent>
+              </Tooltip>
             ) : undefined
           }
         />
