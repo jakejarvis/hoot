@@ -11,7 +11,9 @@ export function ProviderValue({
 }) {
   return (
     <div className="inline-flex items-center gap-2">
-      {iconDomain ? <Favicon domain={iconDomain} size={16} /> : null}
+      {iconDomain ? (
+        <Favicon domain={iconDomain} size={16} className="rounded" />
+      ) : null}
       <span>{name}</span>
     </div>
   );

@@ -6,6 +6,13 @@ import { head, put } from "@vercel/blob";
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 
 function getSigningSecret(): string {
+  if (
+    process.env.NODE_ENV === "production" &&
+    !process.env.FAVICON_BLOB_SIGNING_SECRET
+  ) {
+    throw new Error("FAVICON_BLOB_SIGNING_SECRET required in production");
+  }
+
   const secret =
     process.env.FAVICON_BLOB_SIGNING_SECRET ||
     process.env.BLOB_READ_WRITE_TOKEN ||
