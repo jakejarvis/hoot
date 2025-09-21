@@ -277,6 +277,11 @@ export const DNS_PROVIDERS: Provider[] = [
     rules: [{ type: "dns", recordType: "NS", value: "cloudflare.com" }],
   },
   {
+    name: "Vercel",
+    domain: "vercel.com",
+    rules: [{ type: "dns", recordType: "NS", value: "vercel-dns.com" }],
+  },
+  {
     name: "DNSimple",
     domain: "dnsimple.com",
     rules: [{ type: "dns", recordType: "NS", value: "dnsimple.com" }],
@@ -493,4 +498,5 @@ export const REGISTRAR_PROVIDERS: RegistrarProvider[] = [
     aliases: ["pdr ltd", "publicdomainregistry.com"],
   },
   { name: "Wix", domain: "wix.com", aliases: ["wix.com ltd"] },
+  { name: "RegistrarSafe", domain: "meta.com", aliases: ["registrarsafe llc"] },
 ];
