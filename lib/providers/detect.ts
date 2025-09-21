@@ -1,14 +1,30 @@
 import { PROVIDERS } from "./catalog";
-import { defaultRegistry } from "./registry";
+import {
+  detectDnsProvider,
+  detectEmailProvider,
+  detectHostingProvider,
+  ProviderCatalog as NewProviderCatalog,
+  mapProviderNameToDomain as newMapProviderNameToDomain,
+} from "./detection";
 import { DNS_RULES, EMAIL_RULES, HOSTING_RULES } from "./rules";
 import type { HostingRule, HttpHeader } from "./types";
 
 export function mapProviderNameToDomain(name: string): string | undefined {
-  // Use the new registry for provider name to domain mapping
-  return defaultRegistry.mapProviderNameToDomain(name);
+  // Try new detection first
+  const newResult = newMapProviderNameToDomain(name);
+  if (newResult) return newResult;
+
+  // Fallback to legacy logic
+  if (!name) return undefined;
+  const n = name.toLowerCase();
+
+  for (const p of PROVIDERS) {
+    if (p.aliases?.some((a) => n.includes(a))) return p.domain;
+  }
+  const direct = PROVIDERS.find((p) => p.name.toLowerCase() === n);
+  return direct?.domain;
 }
 
-// Legacy context type - maintained for backward compatibility
 type DetectorContext = {
   server: string;
   byName: Record<string, string>;
@@ -54,13 +70,11 @@ function hostingRuleMatches(rule: HostingRule, ctx: DetectorContext): boolean {
 export function detectHostingProviderFromHeaders(
   headers: HttpHeader[],
 ): string {
-  // Use new registry-based detection first, fallback to legacy if needed
-  const registryResult = defaultRegistry.detectHostingProvider(headers);
-  if (registryResult !== "Unknown") {
-    return registryResult;
-  }
+  // Try new detection logic first
+  const newResult = detectHostingProvider(headers);
+  if (newResult !== "Unknown") return newResult;
 
-  // Legacy fallback for additional safety
+  // Fallback to legacy logic
   const ctx = toDetectorContext(headers);
   for (const rule of HOSTING_RULES) {
     if (hostingRuleMatches(rule, ctx)) return rule.provider;
@@ -69,13 +83,11 @@ export function detectHostingProviderFromHeaders(
 }
 
 export function detectEmailProviderFromMx(mxHosts: string[]): string {
-  // Use new registry-based detection first, fallback to legacy if needed
-  const registryResult = defaultRegistry.detectEmailProvider(mxHosts);
-  if (registryResult !== "Unknown") {
-    return registryResult;
-  }
+  // Try new detection logic first
+  const newResult = detectEmailProvider(mxHosts);
+  if (newResult !== "Unknown" && !mxHosts.includes(newResult)) return newResult;
 
-  // Legacy fallback for additional safety
+  // Fallback to legacy logic
   const haystack = mxHosts.join(" ").toLowerCase();
   const found = EMAIL_RULES.find((r) =>
     r.mxIncludes.some((s) => haystack.includes(s)),
@@ -84,13 +96,11 @@ export function detectEmailProviderFromMx(mxHosts: string[]): string {
 }
 
 export function detectDnsProviderFromNs(nsHosts: string[]): string {
-  // Use new registry-based detection first, fallback to legacy if needed
-  const registryResult = defaultRegistry.detectDnsProvider(nsHosts);
-  if (registryResult !== "Unknown") {
-    return registryResult;
-  }
+  // Try new detection logic first
+  const newResult = detectDnsProvider(nsHosts);
+  if (newResult !== "Unknown" && !nsHosts.includes(newResult)) return newResult;
 
-  // Legacy fallback for additional safety
+  // Fallback to legacy logic
   const haystack = nsHosts.join(" ").toLowerCase();
   const found = DNS_RULES.find((r) =>
     r.nsIncludes.some((s) => haystack.includes(s)),
@@ -98,16 +108,11 @@ export function detectDnsProviderFromNs(nsHosts: string[]): string {
   return found ?? (nsHosts[0] ? nsHosts[0] : "Unknown");
 }
 
-// Export catalog with new registry access for enhanced functionality
 export const ProviderCatalog = {
   all: PROVIDERS,
   hostingRules: HOSTING_RULES,
   emailRules: EMAIL_RULES,
   dnsRules: DNS_RULES,
-  // New registry-based access
-  registry: defaultRegistry,
+  // New catalog access
+  new: NewProviderCatalog,
 };
-
-// Export the new registry and rule engine for advanced usage
-export { defaultRegistry as ProviderRegistry } from "./registry";
-export { defaultRuleEngine as RuleEngine } from "./rule-engine";
