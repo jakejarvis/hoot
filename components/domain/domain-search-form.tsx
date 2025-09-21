@@ -109,21 +109,24 @@ export function DomainSearchForm({
         </Button>
       </form>
 
-      {showHistory && historyLoaded && (
+      {showHistory && (
         <div className="mt-3 flex flex-wrap gap-2 justify-center">
-          {suggestedDomains.map((domain) => (
-            <Button
-              key={domain}
-              variant="secondary"
-              size="sm"
-              onClick={() => router.push(`/${encodeURIComponent(domain)}`)}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Favicon domain={domain} size={16} className="rounded" />
-                {domain}
-              </span>
-            </Button>
-          ))}
+          {(historyLoaded ? suggestedDomains : DEFAULT_SUGGESTIONS).map(
+            (domain) => (
+              <Button
+                key={domain}
+                variant="secondary"
+                size="sm"
+                className={historyLoaded ? undefined : "invisible"}
+                onClick={() => router.push(`/${encodeURIComponent(domain)}`)}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Favicon domain={domain} size={16} className="rounded" />
+                  {domain}
+                </span>
+              </Button>
+            ),
+          )}
         </div>
       )}
     </>
