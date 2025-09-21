@@ -47,7 +47,11 @@ export function HostingEmailSection({
             value={data.dnsProvider.name}
             leading={
               data.dnsProvider.domain ? (
-                <Favicon domain={data.dnsProvider.domain} size={16} className="rounded" />
+                <Favicon
+                  domain={data.dnsProvider.domain}
+                  size={16}
+                  className="rounded"
+                />
               ) : undefined
             }
           />
@@ -56,7 +60,11 @@ export function HostingEmailSection({
             value={data.hostingProvider.name}
             leading={
               data.hostingProvider.domain ? (
-                <Favicon domain={data.hostingProvider.domain} size={16} className="rounded" />
+                <Favicon
+                  domain={data.hostingProvider.domain}
+                  size={16}
+                  className="rounded"
+                />
               ) : undefined
             }
           />
@@ -65,7 +73,11 @@ export function HostingEmailSection({
             value={data.emailProvider.name}
             leading={
               data.emailProvider.domain ? (
-                <Favicon domain={data.emailProvider.domain} size={16} className="rounded" />
+                <Favicon
+                  domain={data.emailProvider.domain}
+                  size={16}
+                  className="rounded"
+                />
               ) : undefined
             }
           />
