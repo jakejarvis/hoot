@@ -6,6 +6,11 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { equalHostname, formatDate } from "@/lib/format";
 import { SECTION_DEFS } from "./sections-meta";
 
@@ -51,12 +56,19 @@ export function CertificatesSection({
                       ? c.altNames.filter((n) => !equalHostname(n, subjectName))
                       : [];
                     return sans.length > 0 ? (
-                      <span
-                        className="text-[11px] font-mono leading-none text-muted-foreground/80 underline underline-offset-2"
-                        title={sans.join(", ")}
-                      >
-                        +{sans.length}
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="text-[11px] font-mono leading-none text-muted-foreground/80 underline underline-offset-2"
+                            title={sans.join(", ")}
+                          >
+                            +{sans.length}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap">
+                          {sans.join(", ")}
+                        </TooltipContent>
+                      </Tooltip>
                     ) : undefined;
                   })()}
                 />
