@@ -54,7 +54,7 @@ export async function fetchWhois(domain: string): Promise<Whois> {
     if (res.status === 404) {
       const result: Whois = {
         source: "rdap",
-        registrar: { name: "", iconDomain: null },
+        registrar: { name: "", domain: null },
         creationDate: "",
         expirationDate: "",
         registrant: { organization: "", country: "" },

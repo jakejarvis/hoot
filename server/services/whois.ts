@@ -37,7 +37,7 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
     // Treat as unregistered/empty
     const empty: Whois = {
       source: "whois",
-      registrar: { name: "", iconDomain: null },
+      registrar: { name: "", domain: null },
       creationDate: "",
       expirationDate: "",
       registrant: { organization: "", country: "" },
@@ -117,7 +117,7 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
     source: "whois",
     registrar: {
       name: registrar || "",
-      iconDomain: mapProviderNameToDomain(registrar || "") || null,
+      domain: mapProviderNameToDomain(registrar || "") || null,
     },
     creationDate: creationDate || "",
     expirationDate: expirationDate || "",

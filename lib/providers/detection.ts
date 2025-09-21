@@ -142,7 +142,7 @@ export function mapProviderNameToDomain(name: string): string | undefined {
   for (const provider of allProviders) {
     // Check exact name match
     if (provider.name.toLowerCase() === searchName) {
-      return provider.iconDomain;
+      return provider.domain;
     }
 
     // Check aliases
@@ -151,7 +151,7 @@ export function mapProviderNameToDomain(name: string): string | undefined {
         searchName.includes(alias.toLowerCase()),
       )
     ) {
-      return provider.iconDomain;
+      return provider.domain;
     }
   }
 

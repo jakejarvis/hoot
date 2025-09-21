@@ -11,7 +11,7 @@ import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 import { lookupIpMeta } from "./ip";
 
-export type ProviderRef = { name: string; iconDomain: string | null };
+export type ProviderRef = { name: string; domain: string | null };
 
 export type HostingInfo = {
   hostingProvider: ProviderRef;
@@ -94,9 +94,9 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     }
 
     const info = {
-      hostingProvider: { name: hostingName, iconDomain: hostingIconDomain },
-      emailProvider: { name: emailName, iconDomain: emailIconDomain },
-      dnsProvider: { name: dnsName, iconDomain: dnsIconDomain },
+      hostingProvider: { name: hostingName, domain: hostingIconDomain },
+      emailProvider: { name: emailName, domain: emailIconDomain },
+      dnsProvider: { name: dnsName, domain: dnsIconDomain },
       ipAddress: ip,
       geo,
     };

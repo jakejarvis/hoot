@@ -25,7 +25,7 @@ Each provider has metadata and an array of detection rules:
 ```typescript
 interface Provider {
   name: string;           // "Vercel"
-  iconDomain: string;     // "vercel.com" 
+  domain: string;     // "vercel.com" 
   aliases?: string[];     // ["vercel"]
   rules: DetectionRule[]; // Array of rules that identify this provider
 }
@@ -70,7 +70,7 @@ export const HOSTING_PROVIDERS: Provider[] = [
   // existing providers...
   {
     name: "Railway",
-    iconDomain: "railway.app",
+    domain: "railway.app",
     aliases: ["railway"],
     rules: [
       { type: "header", name: "x-railway-id", present: true },

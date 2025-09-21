@@ -23,7 +23,7 @@ export interface Provider {
   /** The canonical name of the provider (e.g., "Vercel") */
   name: string;
   /** The domain used to fetch the provider's icon (e.g., "vercel.com") */
-  iconDomain: string;
+  domain: string;
   /**
    * Aliases or common variations of the provider's name found in records,
    * used for mapping if direct detection fails.
