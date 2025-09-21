@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
       dynamic: 0, // disable client-side router cache for dynamic pages
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "8ubelavjx21gjm2t.public.blob.vercel-storage.com",
+      },
+    ],
+  },
   async rewrites() {
     return [
       {

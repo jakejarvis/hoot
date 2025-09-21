@@ -46,7 +46,11 @@ export function RegistrationSection({
             value={data.registrar.name}
             leading={
               data.registrar.iconDomain ? (
-                <Favicon domain={data.registrar.iconDomain} size={16} />
+                <Favicon
+                  domain={data.registrar.iconDomain}
+                  size={16}
+                  className="rounded"
+                />
               ) : undefined
             }
             suffix={
