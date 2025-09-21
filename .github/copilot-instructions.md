@@ -12,16 +12,16 @@ Hoot is a Next.js web application that provides comprehensive domain analysis in
 - Set up environment variables: `cp .env.example .env.local` (optional for basic development)
 
 ### Essential Commands
-- **Install dependencies**: `pnpm install` -- takes ~12 seconds
-- **Development server**: `pnpm dev` -- starts in ~1.1 seconds at http://localhost:3000. NEVER CANCEL.
-- **Build**: `pnpm build` -- takes ~43 seconds. NEVER CANCEL. Set timeout to 60+ minutes.
+- **Install dependencies**: `pnpm install` -- takes ~11 seconds
+- **Development server**: `pnpm dev` -- starts in ~1.2 seconds at http://localhost:3000. NEVER CANCEL.
+- **Build**: `pnpm build` -- takes ~27-45 seconds. NEVER CANCEL. Set timeout to 60+ minutes.
 - **Type checking**: `pnpm typecheck` -- takes ~7 seconds (has known image import errors, non-blocking)
 - **Linting**: `pnpm lint` -- takes <1 second using Biome
 - **Formatting**: `pnpm format` -- takes <1 second using Biome
 - **Production server**: `pnpm start` -- CURRENTLY BROKEN due to Next.js canary bug with routesManifest.dataRoutes
 
 ### Build and Test Validation
-- **CRITICAL**: NEVER CANCEL build commands. Build takes ~43 seconds but set timeout to 60+ minutes for safety.
+- **CRITICAL**: NEVER CANCEL build commands. Build takes ~27-45 seconds but set timeout to 60+ minutes for safety.
 - Always run `pnpm install` first in a fresh clone
 - Always run `pnpm lint` and `pnpm format` before committing changes
 - Type checking will show errors for missing image types in `components/domain/hosting-map.tsx` - these are non-blocking
@@ -48,6 +48,8 @@ After making changes, always test these user scenarios:
 - Test responsive design on different screen sizes
 - Verify external links in footer open correctly
 - Test error handling with invalid domain names (e.g., "invalid..domain")
+- Verify DNS resolution works with multiple DoH providers
+- Check that Cloudflare IP detection works for CF-hosted domains
 
 ## Repository Structure & Navigation
 
@@ -59,7 +61,7 @@ After making changes, always test these user scenarios:
   - `app/api/favicon/route.ts` - Favicon fetching API
 - **`server/`** - Backend services and tRPC routers
   - `server/routers/` - tRPC procedure definitions
-  - `server/services/` - Core services (DNS, WHOIS, TLS, headers, hosting)
+  - `server/services/` - Core services (DNS with DoH providers, RDAP/WHOIS, TLS, headers, hosting, IP geolocation, Cloudflare detection)
   - `server/analytics/` - PostHog analytics integration
 - **`components/`** - Reusable UI components (kebab-case files, PascalCase exports)
   - `components/domain/` - Domain-specific components
@@ -79,16 +81,24 @@ After making changes, always test these user scenarios:
 ## Core Services & APIs
 
 ### Domain Analysis Services (server/services/)
-- **DNS Resolution** (`dns.ts`) - Resolves A, AAAA, MX, CNAME, TXT, NS records
-- **WHOIS/RDAP** (`rdap.ts`) - Fetches registration information
+- **DNS Resolution** (`dns.ts`) - Resolves A, AAAA, MX, CNAME, TXT, NS records with multiple DoH providers
+- **DoH Providers** (`doh-providers.ts`) - DNS over HTTPS provider configurations (Cloudflare, Google)
+- **WHOIS/RDAP** (`rdap.ts`) - Fetches registration information via RDAP protocol
+- **RDAP Bootstrap** (`rdap-bootstrap.ts`) - IANA RDAP service discovery
+- **RDAP Parser** (`rdap-parser.ts`) - Parses RDAP JSON responses into standardized format
+- **Legacy WHOIS** (`whois.ts`) - Fallback WHOIS queries for non-RDAP domains
 - **TLS Certificates** (`tls.ts`) - Retrieves SSL certificate details
 - **HTTP Headers** (`headers.ts`) - Probes server headers and security info
 - **Hosting Detection** (`hosting.ts`) - Identifies hosting providers and geolocation
+- **Cloudflare Detection** (`cloudflare.ts`) - Detects Cloudflare IPs using official IP ranges
+- **IP Geolocation** (`ip.ts`) - Fetches IP metadata and ownership information
 - **Favicon Service** (`favicon.ts`) - Fetches and processes domain favicons
 
 ### tRPC API Structure
 - **Domain Router** (`server/routers/domain.ts`) - Main domain analysis procedures
 - All procedures use caching via `lib/redis.ts` for performance
+- DNS queries support multiple DoH providers with automatic failover
+- RDAP queries use IANA bootstrap for proper server discovery
 - Error handling and retry logic built into service layer
 
 ## Environment Configuration
@@ -124,6 +134,8 @@ KV_REST_API_URL=your_upstash_url
 - **Error boundaries**: Use React error boundaries for robust error handling  
 - **Caching**: Use `lib/redis.ts` utilities for consistent caching patterns
 - **Type safety**: Leverage tRPC for end-to-end type safety
+- **DNS Resolution**: Use multiple DoH providers with automatic failover
+- **RDAP Protocol**: Prefer RDAP over legacy WHOIS when available
 
 ## Known Issues & Troubleshooting
 
@@ -137,9 +149,11 @@ KV_REST_API_URL=your_upstash_url
 - **Node version warning**: App works with Node 20+ despite preferring 22+
 
 ### Performance Notes
-- DNS queries may take 2-5 seconds depending on domain
-- WHOIS/RDAP queries can take 3-10 seconds
+- DNS queries may take 2-5 seconds depending on domain and DoH provider availability
+- WHOIS/RDAP queries can take 3-10 seconds, with RDAP generally faster than legacy WHOIS
 - TLS certificate fetching typically takes 1-3 seconds
+- IP geolocation lookups add ~1-2 seconds when not cached
+- Cloudflare IP detection uses cached IP ranges updated daily
 - All queries run in parallel for better UX
 
 ## Testing Changes
