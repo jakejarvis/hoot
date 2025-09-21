@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "hoot.sh",
+  title: "Hoot",
   description: "Investigate domains with WHOIS, DNS, SSL, headers, and more.",
 };
 
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased slashed-zero tabular-nums`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased slashed-zero tabular-nums selection:bg-[#6a6a6a] selection:text-white`}
       >
         <ThemeProvider>
           {/* Solid background for light/dark modes */}

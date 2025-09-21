@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Search } from "lucide-react";
+import { Globe, Loader2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
@@ -88,7 +88,7 @@ export function DomainSearchForm({
           Domain
         </label>
         <div className="relative flex-1">
-          <Search
+          <Globe
             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             aria-hidden
           />

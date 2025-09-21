@@ -181,9 +181,48 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+
+    /* Firefox scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: oklch(from var(--primary) l c h / 0.4)
+      oklch(from var(--muted) l c h / 0.2);
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Custom Scrollbars with Frosted Glass Treatment */
+  /* Webkit-based browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: oklch(from var(--muted) l c h / 0.2);
+    backdrop-filter: blur(8px) saturate(1.5);
+    border-radius: 6px;
+    border: 1px solid oklch(from var(--border) l c h / 0.1);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(from var(--primary) l c h / 0.4);
+    backdrop-filter: blur(12px) saturate(1.8);
+    border-radius: 6px;
+    border: 1px solid oklch(from var(--primary) l c h / 0.2);
+    box-shadow: 0 2px 8px oklch(from var(--primary) l c h / 0.1);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(from var(--primary) l c h / 0.6);
+    backdrop-filter: blur(16px) saturate(2);
+    box-shadow: 0 4px 12px oklch(from var(--primary) l c h / 0.2);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: oklch(from var(--primary) l c h / 0.7);
+    backdrop-filter: blur(20px) saturate(2.2);
+  }
+  ::-webkit-scrollbar-corner {
+    background: oklch(from var(--muted) l c h / 0.2);
+    backdrop-filter: blur(8px) saturate(1.5);
   }
 }
 
