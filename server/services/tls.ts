@@ -1,5 +1,6 @@
 import tls from "node:tls";
 import { getOrSet, ns } from "@/lib/redis";
+import { captureServer } from "@/server/analytics/posthog";
 
 export type Certificate = {
   issuer: string;
@@ -12,6 +13,8 @@ export type Certificate = {
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const key = ns("tls", domain.toLowerCase());
   return await getOrSet(key, 12 * 60 * 60, async () => {
+    const startedAt = Date.now();
+    let outcome: "ok" | "timeout" | "error" = "ok";
     const chain = await new Promise<tls.DetailedPeerCertificate[]>(
       (resolve, reject) => {
         const socket = tls.connect(
@@ -39,9 +42,13 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           },
         );
         socket.setTimeout(6000, () => {
+          outcome = "timeout";
           socket.destroy(new Error("TLS timeout"));
         });
-        socket.on("error", reject);
+        socket.on("error", (err) => {
+          outcome = "error";
+          reject(err);
+        });
       },
     );
     const out: Certificate[] = chain.map((c) => ({
@@ -53,6 +60,13 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       validFrom: new Date(c.valid_from).toISOString(),
       validTo: new Date(c.valid_to).toISOString(),
     }));
+
+    await captureServer("tls_probe", {
+      domain,
+      chain_length: out.length,
+      duration_ms: Date.now() - startedAt,
+      outcome,
+    });
 
     return out;
   });

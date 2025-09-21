@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { captureServer } from "@/server/analytics/posthog";
 
 export const runtime = "nodejs";
 export const maxDuration = 10;
@@ -133,9 +134,37 @@ export async function GET(req: Request) {
     url.searchParams.get("size") ?? url.searchParams.get("sz") ?? "",
   );
   const size = clampSize(sizeParam);
+  const startedAt = Date.now();
+  // Attempt to associate events with user via PostHog cookie
+  let distinctId: string | undefined;
+  try {
+    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    if (key) {
+      const cookieName = `ph_${key}_posthog`;
+      const cookieStr = req.headers.get("cookie") ?? "";
+      const m = cookieStr.match(new RegExp(`${cookieName}=([^;]+)`));
+      if (m) {
+        const parsed = JSON.parse(decodeURIComponent(m[1]));
+        if (parsed && typeof parsed.distinct_id === "string") {
+          distinctId = parsed.distinct_id;
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
 
   const registrable = raw ? toRegistrableDomain(raw) : null;
   if (!registrable) {
+    await captureServer(
+      "favicon_fetch",
+      {
+        domain: raw ?? "",
+        valid: false,
+        reason: "invalid_domain",
+      },
+      distinctId,
+    );
     return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
   }
 
@@ -151,7 +180,26 @@ export async function GET(req: Request) {
 
       const png = await convertToPng(buf, contentType, size);
       if (!png) continue;
-
+      const source = (() => {
+        if (src.includes("icons.duckduckgo.com")) return "duckduckgo";
+        if (src.includes("www.google.com/s2/favicons")) return "google_s2";
+        if (src.startsWith("https://")) return "direct_https";
+        if (src.startsWith("http://")) return "direct_http";
+        return "unknown";
+      })();
+      await captureServer(
+        "favicon_fetch",
+        {
+          domain: registrable,
+          size,
+          source,
+          upstream_status: res.status,
+          upstream_content_type: contentType ?? null,
+          duration_ms: Date.now() - startedAt,
+          outcome: "ok",
+        },
+        distinctId,
+      );
       return new NextResponse(png as unknown as BodyInit, {
         status: 200,
         headers: {
@@ -177,6 +225,17 @@ export async function GET(req: Request) {
   })
     .png()
     .toBuffer();
+
+  await captureServer(
+    "favicon_fetch",
+    {
+      domain: registrable,
+      size,
+      outcome: "not_found",
+      duration_ms: Date.now() - startedAt,
+    },
+    distinctId,
+  );
 
   return new NextResponse("Favicon not found", {
     status: 404,

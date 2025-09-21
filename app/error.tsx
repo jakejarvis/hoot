@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import posthog from "posthog-js";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function RootError(props: {
@@ -8,6 +10,10 @@ export default function RootError(props: {
   reset: () => void;
 }) {
   const { error, reset } = props;
+
+  useEffect(() => {
+    posthog.captureException(error);
+  }, [error]);
 
   const isDev = process.env.NODE_ENV !== "production";
 

@@ -66,6 +66,9 @@ export function DomainReportView({
             target="_blank"
             rel="noopener"
             className="flex items-center gap-2"
+            onClick={() =>
+              captureClient("external_domain_link_clicked", { domain })
+            }
           >
             <Favicon domain={domain} size={20} className="rounded" />
             <h2 className="text-xl font-semibold tracking-tight">{domain}</h2>
