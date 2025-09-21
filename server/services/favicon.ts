@@ -1,20 +1,11 @@
 import sharp from "sharp";
-import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
 import { captureServer } from "@/server/analytics/posthog";
 
 const DEFAULT_SIZE = 32;
-const MIN_SIZE = 16;
-const MAX_SIZE = 256;
 const REQUEST_TIMEOUT_MS = 4000;
-const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
-const NEGATIVE_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours for not-found
-// Use a single Redis key for both positive and negative results; this sentinel marks a negative entry
-const NEGATIVE_CACHE_SENTINEL = "!" as const;
 
-export function clampFaviconSize(value: number | null | undefined): number {
-  if (!value || Number.isNaN(value)) return DEFAULT_SIZE;
-  return Math.max(MIN_SIZE, Math.min(MAX_SIZE, Math.round(value)));
-}
+// Legacy Redis-based caching removed; Blob is now the canonical store
 
 function isIcoBuffer(buf: Buffer): boolean {
   return (
@@ -108,63 +99,47 @@ async function convertToPng(
   return null;
 }
 
-function buildSources(domain: string, size: number): string[] {
+function buildSources(domain: string): string[] {
   const enc = encodeURIComponent(domain);
   return [
     `https://icons.duckduckgo.com/ip3/${enc}.ico`,
-    `https://www.google.com/s2/favicons?domain=${enc}&sz=${size}`,
+    `https://www.google.com/s2/favicons?domain=${enc}&sz=${DEFAULT_SIZE}`,
     `https://${domain}/favicon.ico`,
     `http://${domain}/favicon.ico`,
   ];
 }
 
-export async function getFaviconPngForDomain(
-  domain: string,
-  size: number,
-  opts?: { distinctId?: string },
-): Promise<Buffer | null> {
-  const cacheKey = ns("favicon", `${domain}:${size}`);
-  const sources = buildSources(domain, size);
-  const startedAt = Date.now();
+// Legacy getFaviconPngForDomain removed
 
-  // Try cache first
+export async function getOrCreateFaviconBlobUrl(
+  domain: string,
+  opts?: { distinctId?: string },
+): Promise<{ url: string | null }> {
+  const startedAt = Date.now();
+  // 1) Check blob first
   try {
-    const cachedValue = await cacheGet<string>(cacheKey);
-    if (cachedValue) {
-      if (cachedValue === NEGATIVE_CACHE_SENTINEL) {
-        await captureServer(
-          "favicon_fetch",
-          {
-            domain,
-            size,
-            source: "cache_redis",
-            duration_ms: Date.now() - startedAt,
-            outcome: "not_found",
-            cache: "hit_negative",
-          },
-          opts?.distinctId,
-        );
-        return null;
-      }
-      const pngFromCache = Buffer.from(cachedValue, "base64");
+    const existing = await headFaviconBlob(domain, DEFAULT_SIZE);
+    if (existing) {
       await captureServer(
         "favicon_fetch",
         {
           domain,
-          size,
-          source: "cache_redis",
+          size: DEFAULT_SIZE,
+          source: "blob",
           duration_ms: Date.now() - startedAt,
           outcome: "ok",
-          cache: "hit",
+          cache: "hit_blob",
         },
         opts?.distinctId,
       );
-      return pngFromCache;
+      return { url: existing };
     }
   } catch {
-    // ignore cache errors and fall through
+    // ignore and proceed to fetch
   }
 
+  // 2) Fetch/convert via existing pipeline, then upload
+  const sources = buildSources(domain);
   for (const src of sources) {
     try {
       const res = await fetchWithTimeout(src);
@@ -173,68 +148,50 @@ export async function getFaviconPngForDomain(
       const ab = await res.arrayBuffer();
       const buf = Buffer.from(ab);
 
-      const png = await convertToPng(buf, contentType, size);
+      const png = await convertToPng(buf, contentType, DEFAULT_SIZE);
       if (!png) continue;
 
       const source = (() => {
         if (src.includes("icons.duckduckgo.com")) return "duckduckgo";
-        if (src.includes("www.google.com/s2/favicons")) return "google_s2";
+        if (src.includes("www.google.com/s2/favicons")) return "google";
         if (src.startsWith("https://")) return "direct_https";
         if (src.startsWith("http://")) return "direct_http";
         return "unknown";
       })();
 
-      // Attempt to store in cache (base64) for subsequent hits
-      try {
-        await cacheSet<string>(
-          cacheKey,
-          png.toString("base64"),
-          CACHE_TTL_SECONDS,
-        );
-      } catch {
-        // ignore cache errors
-      }
+      const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
 
       await captureServer(
         "favicon_fetch",
         {
           domain,
-          size,
+          size: DEFAULT_SIZE,
           source,
           upstream_status: res.status,
           upstream_content_type: contentType ?? null,
           duration_ms: Date.now() - startedAt,
           outcome: "ok",
-          cache: "store",
+          cache: "store_blob",
         },
         opts?.distinctId,
       );
 
-      return png;
+      return { url };
     } catch {
-      // Try next source
+      // try next source
     }
   }
-  // Store negative cache using the same key and capture analytics
-  try {
-    await cacheSet<string>(
-      cacheKey,
-      NEGATIVE_CACHE_SENTINEL,
-      NEGATIVE_CACHE_TTL_SECONDS,
-    );
-  } catch {
-    // ignore cache errors
-  }
+
   await captureServer(
     "favicon_fetch",
     {
       domain,
-      size,
+      size: DEFAULT_SIZE,
       duration_ms: Date.now() - startedAt,
       outcome: "not_found",
-      cache: "store_negative",
+      cache: "miss",
     },
     opts?.distinctId,
   );
-  return null;
+  return { url: null };
 }

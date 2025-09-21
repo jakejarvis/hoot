@@ -1,4 +1,5 @@
 import { resolveAll } from "../services/dns";
+import { getOrCreateFaviconBlobUrl } from "../services/favicon";
 import { probeHeaders } from "../services/headers";
 import { detectHosting } from "../services/hosting";
 import { fetchWhois } from "../services/rdap";
@@ -14,8 +15,9 @@ export const domainRouter = router({
     getCertificates,
     "Certificate fetch failed",
   ),
-  headers: createDomainProcedure(async (domain: string) => {
-    const res = await probeHeaders(domain);
-    return res.headers;
-  }, "Header probe failed"),
+  headers: createDomainProcedure(probeHeaders, "Header probe failed"),
+  faviconUrl: createDomainProcedure(
+    getOrCreateFaviconBlobUrl,
+    "Favicon fetch failed",
+  ),
 });

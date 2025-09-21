@@ -3,7 +3,7 @@ import { captureServer } from "@/server/analytics/posthog";
 
 export type HttpHeader = { name: string; value: string };
 
-export async function probeHeaders(domain: string) {
+export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const key = ns("headers", domain.toLowerCase());
   return await getOrSet(key, 10 * 60, async () => {
     const url = `https://${domain}/`;
@@ -28,11 +28,7 @@ export async function probeHeaders(domain: string) {
       used_method: res.ok ? "HEAD" : "GET",
       final_url: final.url,
     });
-    return {
-      url: final.url,
-      status: final.status,
-      headers: normalize(headers),
-    };
+    return normalize(headers);
   });
 }
 
