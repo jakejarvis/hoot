@@ -49,10 +49,12 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
 
   return (
     <div className={className}>
-      <h1 className="w-full flex flex-col items-center sm:flex-row sm:items-baseline justify-center gap-y-2 sm:gap-y-0 sm:gap-x-2.5 text-center text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-none">
-        <span className="text-foreground/90">Inspect any domain's</span>
+      <h1 className="w-full flex flex-col items-center sm:flex-row sm:items-baseline justify-center gap-y-2 sm:gap-y-0 text-center text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-none">
+        <span className="text-foreground/90 whitespace-nowrap">
+          Inspect any domain's
+        </span>
         <motion.span
-          className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl bg-muted/70 text-foreground ring-1 ring-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
+          className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 ml-2.5 rounded-lg sm:rounded-xl bg-muted/70 text-foreground ring-1 ring-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
           aria-live="polite"
           aria-atomic="true"
           initial={false}
@@ -95,6 +97,7 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
             {rotatingWords[index]}
           </span>
         </span>
+        .
       </h1>
     </div>
   );

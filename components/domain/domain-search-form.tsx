@@ -14,9 +14,9 @@ import { Favicon } from "./favicon";
 const DEFAULT_SUGGESTIONS = [
   "google.com",
   "wikipedia.org",
-  "amazon.com",
   "github.com",
   "cloudflare.com",
+  "producthunt.com",
 ];
 
 const domainSchema = z
