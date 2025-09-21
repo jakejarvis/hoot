@@ -1,17 +1,16 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
-  detectDnsProviderFromNs,
-  detectEmailProviderFromMx,
-  detectHostingProviderFromHeaders,
-  mapProviderNameToDomain,
-} from "@/lib/providers";
+  detectDnsProvider,
+  detectEmailProvider,
+  detectHostingProvider,
+} from "@/lib/providers/detection";
 import { getOrSet, ns } from "@/lib/redis";
 import { captureServer } from "@/server/analytics/posthog";
 import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 import { lookupIpMeta } from "./ip";
 
-export type ProviderRef = { name: string; iconDomain: string | null };
+export type ProviderRef = { name: string; domain: string | null };
 
 export type HostingInfo = {
   hostingProvider: ProviderRef;
@@ -42,10 +41,10 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     );
 
     // Determine email provider, using "none" when MX is unset
-    let emailName =
+    const email =
       mx.length === 0
-        ? "none"
-        : detectEmailProviderFromMx(mx.map((m) => m.value));
+        ? { name: "none", domain: null }
+        : detectEmailProvider(mx.map((m) => m.value));
 
     const meta = ip
       ? await lookupIpMeta(ip)
@@ -65,18 +64,23 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     // Hosting provider detection with fallback:
     // - If no A record/IP → unset → "none"
     // - Else if unknown → try IP ownership org/ISP
-    let hostingName = detectHostingProviderFromHeaders(headers);
+    const hosting = detectHostingProvider(headers);
+    let hostingName = hosting.name;
+    let hostingIconDomain = hosting.domain;
     if (!ip) {
       hostingName = "none";
+      hostingIconDomain = null;
     } else if (/^unknown$/i.test(hostingName)) {
       if (meta.owner) hostingName = meta.owner;
+      hostingIconDomain = null;
     }
 
-    const hostingIconDomain = mapProviderNameToDomain(hostingName) || null;
-    let emailIconDomain = mapProviderNameToDomain(emailName) || null;
+    let emailName = email.name;
+    let emailIconDomain = email.domain;
     // DNS provider from nameservers
-    let dnsName = detectDnsProviderFromNs(ns.map((n) => n.value));
-    let dnsIconDomain = mapProviderNameToDomain(dnsName) || null;
+    const dnsResult = detectDnsProvider(ns.map((n) => n.value));
+    let dnsName = dnsResult.name;
+    let dnsIconDomain = dnsResult.domain;
 
     // If no known match for email provider, fall back to the root domain of the first MX host
     if (emailName !== "none" && !emailIconDomain && mx[0]?.value) {
@@ -97,9 +101,9 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     }
 
     const info = {
-      hostingProvider: { name: hostingName, iconDomain: hostingIconDomain },
-      emailProvider: { name: emailName, iconDomain: emailIconDomain },
-      dnsProvider: { name: dnsName, iconDomain: dnsIconDomain },
+      hostingProvider: { name: hostingName, domain: hostingIconDomain },
+      emailProvider: { name: emailName, domain: emailIconDomain },
+      dnsProvider: { name: dnsName, domain: dnsIconDomain },
       ipAddress: ip,
       geo,
     };

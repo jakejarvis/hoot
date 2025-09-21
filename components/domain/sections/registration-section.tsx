@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import { SECTION_DEFS } from "./sections-meta";
 
-type Registrar = { name: string; iconDomain: string | null };
+type Registrar = { name: string; domain: string | null };
 type Registrant = { organization: string; country: string; state?: string };
 
 export function RegistrationSection({
@@ -45,9 +45,9 @@ export function RegistrationSection({
             label="Registrar"
             value={data.registrar.name}
             leading={
-              data.registrar.iconDomain ? (
+              data.registrar.domain ? (
                 <Favicon
-                  domain={data.registrar.iconDomain}
+                  domain={data.registrar.domain}
                   size={16}
                   className="rounded"
                 />

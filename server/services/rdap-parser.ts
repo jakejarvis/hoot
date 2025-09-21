@@ -1,8 +1,8 @@
-import { mapProviderNameToDomain } from "@/lib/providers";
+import { resolveRegistrarDomain } from "@/lib/providers/detection";
 
 export type Whois = {
   source?: "rdap" | "whois";
-  registrar: { name: string; iconDomain: string | null };
+  registrar: { name: string; domain: string | null };
   creationDate: string;
   expirationDate: string;
   registrant: { organization: string; country: string; state?: string };
@@ -40,7 +40,7 @@ export function parseRdapResponse(json: RdapJson): Whois {
 
 function extractRegistrarInfo(json: RdapJson): {
   name: string;
-  iconDomain: string | null;
+  domain: string | null;
 } {
   const registrarName =
     json.registrar?.name ??
@@ -49,7 +49,7 @@ function extractRegistrarInfo(json: RdapJson): {
 
   return {
     name: registrarName,
-    iconDomain: mapProviderNameToDomain(registrarName) || null,
+    domain: resolveRegistrarDomain(registrarName) || null,
   };
 }
 

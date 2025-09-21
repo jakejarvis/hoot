@@ -4,15 +4,15 @@ import { Favicon } from "./favicon";
 
 export function ProviderValue({
   name,
-  iconDomain,
+  domain,
 }: {
   name: string;
-  iconDomain: string | null;
+  domain: string | null;
 }) {
   return (
     <div className="inline-flex items-center gap-2">
-      {iconDomain ? (
-        <Favicon domain={iconDomain} size={16} className="rounded" />
+      {domain ? (
+        <Favicon domain={domain} size={16} className="rounded" />
       ) : null}
       <span>{name}</span>
     </div>
