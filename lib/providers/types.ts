@@ -27,3 +27,13 @@ export interface Provider {
   /** An array of rules that, if matched, identify this provider. */
   rules: DetectionRule[];
 }
+
+/** Registrar providers do not use rules; they are matched by partial name */
+export interface RegistrarProvider {
+  /** Canonical registrar display name (e.g., "GoDaddy") */
+  name: string;
+  /** Domain for favicon (e.g., "godaddy.com") */
+  domain: string;
+  /** Additional case-insensitive substrings to match (e.g., ["godaddy inc"]). */
+  aliases?: string[];
+}

@@ -38,7 +38,8 @@ interface Provider {
 import { 
   detectHostingProvider, 
   detectEmailProvider, 
-  detectDnsProvider
+  detectDnsProvider,
+  resolveRegistrarDomain
 } from '@/lib/providers/detection';
 
 // Hosting detection
@@ -58,6 +59,11 @@ console.log(email); // { name: "Google Workspace", domain: "google.com" }
 const nsRecords = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];  
 const dns = detectDnsProvider(nsRecords);
 console.log(dns); // { name: "Cloudflare", domain: "cloudflare.com" }
+
+// Registrar domain resolution (partial match of registrar names)
+const registrarName = 'GoDaddy Inc.';
+const registrarDomain = resolveRegistrarDomain(registrarName);
+console.log(registrarDomain); // "godaddy.com"
 ```
 
 ### Adding New Providers

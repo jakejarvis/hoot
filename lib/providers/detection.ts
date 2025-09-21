@@ -1,5 +1,10 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { DNS_PROVIDERS, EMAIL_PROVIDERS, HOSTING_PROVIDERS } from "./catalog";
+import {
+  DNS_PROVIDERS,
+  EMAIL_PROVIDERS,
+  HOSTING_PROVIDERS,
+  REGISTRAR_PROVIDERS,
+} from "./catalog";
 import type { DetectionRule, HttpHeader, Provider } from "./types";
 
 /**
@@ -136,6 +141,28 @@ export function detectDnsProvider(nsHosts: string[]): ProviderRef {
     return { name: root || first, domain: root || null };
   }
   return { name: "Unknown", domain: null };
+}
+
+/** Resolve registrar domain from a registrar name using partial matching */
+export function resolveRegistrarDomain(registrarName: string): string | null {
+  const name = (registrarName || "").toLowerCase();
+  if (!name) return null;
+
+  for (const reg of REGISTRAR_PROVIDERS) {
+    if (reg.name.toLowerCase() === name) return reg.domain;
+  }
+
+  for (const reg of REGISTRAR_PROVIDERS) {
+    if (name.includes(reg.name.toLowerCase())) return reg.domain;
+  }
+
+  for (const reg of REGISTRAR_PROVIDERS) {
+    if (reg.aliases?.some((a) => name.includes(a.toLowerCase()))) {
+      return reg.domain;
+    }
+  }
+
+  return null;
 }
 
 /**
