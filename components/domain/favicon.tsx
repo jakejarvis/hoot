@@ -2,7 +2,8 @@
 
 import { Globe } from "lucide-react";
 import Image from "next/image";
-import * as React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
 export function Favicon({
@@ -14,14 +15,19 @@ export function Favicon({
   size?: number;
   className?: string;
 }) {
-  const apiUrl = React.useMemo(
-    () => `/api/favicon?domain=${encodeURIComponent(domain)}`,
-    [domain],
-  );
-  const [failedUrl, setFailedUrl] = React.useState<string | null>(null);
-  const failed = failedUrl === apiUrl;
+  const { data, isLoading } = trpc.domain.faviconUrl.useQuery({ domain });
+  const url = data?.url ?? null;
 
-  if (failed) {
+  if (isLoading) {
+    return (
+      <Skeleton
+        className={cn("inline-block bg-input", className)}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
+  if (!isLoading && !url) {
     return (
       <Globe
         className={cn("text-muted-foreground", className)}
@@ -33,13 +39,15 @@ export function Favicon({
 
   return (
     <Image
-      src={apiUrl}
+      src={
+        url ??
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+      }
       alt="Favicon"
       width={size}
       height={size}
       className={className}
       unoptimized
-      onError={() => setFailedUrl(apiUrl)}
     />
   );
 }

@@ -37,9 +37,10 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     const ns = dns.filter((d) => d.type === "NS");
     const ip = a?.value ?? null;
 
-    const headers = await probeHeaders(domain).catch(() => ({
-      headers: [] as { name: string; value: string }[],
-    }));
+    const headers = await probeHeaders(domain).catch(
+      () => [] as { name: string; value: string }[],
+    );
+
     // Determine email provider, using "none" when MX is unset
     let emailName =
       mx.length === 0 ? "none" : detectEmailProvider(mx.map((m) => m.value));
@@ -62,7 +63,7 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
     // Hosting provider detection with fallback:
     // - If no A record/IP → unset → "none"
     // - Else if unknown → try IP ownership org/ISP
-    let hostingName = detectHostingProvider(headers.headers);
+    let hostingName = detectHostingProvider(headers);
     if (!ip) {
       hostingName = "none";
     } else if (/^unknown$/i.test(hostingName)) {
