@@ -50,6 +50,8 @@ After making changes, always test these user scenarios:
 - Test error handling with invalid domain names (e.g., "invalid..domain")
 - Verify DNS resolution works with multiple DoH providers
 - Check that Cloudflare IP detection works for CF-hosted domains
+- Validate provider detection accuracy for hosting, email, and DNS providers
+- Test provider icon display for detected services
 
 ## Repository Structure & Navigation
 
@@ -67,7 +69,7 @@ After making changes, always test these user scenarios:
   - `components/domain/` - Domain-specific components
   - `components/ui/` - Generic UI primitives
 - **`lib/`** - Shared utilities and helpers
-  - `lib/providers/` - Provider detection logic
+  - `lib/providers/` - Comprehensive provider detection system with rule-based matching
   - `lib/redis.ts` - Upstash Redis caching utilities
 - **`hooks/`** - Custom React hooks
 
@@ -77,6 +79,34 @@ After making changes, always test these user scenarios:
 - **`tsconfig.json`** - TypeScript configuration with strict mode
 - **`package.json`** - Dependencies and scripts
 - **`.env.example`** - Environment variable template
+
+## Provider Detection System
+
+### Architecture (`lib/providers/`)
+The provider detection system uses rule-based matching to identify hosting, email, DNS, and registrar providers:
+
+- **`types.ts`** - TypeScript definitions for providers and detection rules
+- **`catalog.ts`** - Combined provider catalog with individual provider lists
+- **`detect.ts`** - Core detection logic and rule matching functions
+- **`rules.ts`** - Detection rules for hosting, email, and DNS providers
+- **Provider Lists**: Separate files for each provider category:
+  - `hosting-providers.ts` - Hosting providers (Vercel, Netlify, Cloudflare, etc.)
+  - `email-providers.ts` - Email providers (Google Workspace, Microsoft 365, etc.)
+  - `dns-providers.ts` - DNS providers (Cloudflare, Route 53, etc.)
+  - `registrar-providers.ts` - Domain registrars (Namecheap, GoDaddy, etc.)
+
+### Detection Methods
+- **Hosting**: Analyzes HTTP headers (Server, X-headers, custom headers)
+- **Email**: Matches MX record hostnames against known patterns
+- **DNS**: Matches NS record hostnames against known patterns
+- **Registrar**: Uses WHOIS/RDAP data for registrar identification
+
+### Rule Types
+- `serverIncludes`: Match substrings in Server header
+- `headerNameStartsWith`: Match header names by prefix
+- `headerExists`: Check for presence of specific headers
+- `headerValueIncludes`: Match substrings in header values
+- `mxIncludes`/`nsIncludes`: Match substrings in MX/NS hostnames
 
 ## Core Services & APIs
 
@@ -136,6 +166,7 @@ KV_REST_API_URL=your_upstash_url
 - **Type safety**: Leverage tRPC for end-to-end type safety
 - **DNS Resolution**: Use multiple DoH providers with automatic failover
 - **RDAP Protocol**: Prefer RDAP over legacy WHOIS when available
+- **Provider Detection**: Use rule-based matching system in `lib/providers/` for consistent provider identification
 
 ## Known Issues & Troubleshooting
 
@@ -187,6 +218,12 @@ components.json      # shadcn/ui config
 hooks/               # Custom React hooks
 instrumentation-client.ts  # PostHog client setup
 lib/                 # Shared utilities
+  providers/         # Provider detection system
+    catalog.ts       # Combined provider catalog
+    detect.ts        # Detection logic
+    rules.ts         # Detection rules
+    types.ts         # TypeScript definitions
+    *-providers.ts   # Provider lists by category
 middleware.ts        # Next.js middleware
 next.config.ts       # Next.js configuration
 package.json         # Dependencies and scripts
