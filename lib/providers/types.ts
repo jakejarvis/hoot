@@ -1,8 +1,3 @@
-/**
- * @fileoverview This file contains the type definitions for the provider
- * detection system.
- */
-
 export type HttpHeader = { name: string; value: string };
 
 /**

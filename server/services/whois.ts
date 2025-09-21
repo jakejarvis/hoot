@@ -1,6 +1,6 @@
 import { firstResult, whoisDomain } from "whoiser";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { mapProviderNameToDomain } from "@/lib/providers";
+import { mapProviderNameToDomain } from "@/lib/providers/detection";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
 import { captureServer } from "@/server/analytics/posthog";
 import type { Whois } from "./rdap-parser";

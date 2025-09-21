@@ -1,9 +1,3 @@
-/**
- * @fileoverview This file contains the new, refactored provider detection logic.
- * It uses the separated provider catalogs to identify hosting, email, and DNS
- * providers based on a set of rules.
- */
-
 import { DNS_PROVIDERS, EMAIL_PROVIDERS, HOSTING_PROVIDERS } from "./catalog";
 import type { DetectionRule, HttpHeader, Provider } from "./types";
 

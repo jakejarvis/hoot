@@ -1,4 +1,4 @@
-import { mapProviderNameToDomain } from "@/lib/providers";
+import { mapProviderNameToDomain } from "@/lib/providers/detection";
 
 export type Whois = {
   source?: "rdap" | "whois";

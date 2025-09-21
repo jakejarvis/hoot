@@ -37,27 +37,27 @@ interface Provider {
 
 ```typescript
 import { 
-  detectHostingProviderFromHeaders, 
-  detectEmailProviderFromMx, 
-  detectDnsProviderFromNs 
-} from '@/lib/providers';
+  detectHostingProvider, 
+  detectEmailProvider, 
+  detectDnsProvider
+} from '@/lib/providers/detection';
 
 // Hosting detection
 const headers = [
   { name: 'server', value: 'vercel' },
   { name: 'x-vercel-id', value: 'abc123' }
 ];
-const hosting = detectHostingProviderFromHeaders(headers);
+const hosting = detectHostingProvider(headers);
 console.log(hosting); // "Vercel"
 
 // Email detection  
 const mxRecords = ['mx1.google.com', 'mx2.google.com'];
-const email = detectEmailProviderFromMx(mxRecords);
+const email = detectEmailProvider(mxRecords);
 console.log(email); // "Google Workspace"
 
 // DNS detection
 const nsRecords = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];  
-const dns = detectDnsProviderFromNs(nsRecords);
+const dns = detectDnsProvider(nsRecords);
 console.log(dns); // "Cloudflare"
 ```
 

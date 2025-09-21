@@ -1,9 +1,3 @@
-/**
- * @fileoverview This file contains the central registry of all known providers,
- * separated by their service category (hosting, DNS, email) to ensure
- * accurate and efficient detection.
- */
-
 import type { Provider } from "./types";
 
 /**
