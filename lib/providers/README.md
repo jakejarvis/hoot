@@ -4,7 +4,7 @@ This system provides extensible and robust provider detection using a clean rule
 
 ## Architecture
 
-The new detection system is built around simple, focused types:
+The detection system is built around simple, focused types:
 
 ### DetectionRule
 
@@ -36,30 +36,34 @@ interface Provider {
 ### Basic Detection
 
 ```typescript
-import { detectHostingProvider, detectEmailProvider, detectDnsProvider } from '@/lib/providers';
+import { 
+  detectHostingProviderFromHeaders, 
+  detectEmailProviderFromMx, 
+  detectDnsProviderFromNs 
+} from '@/lib/providers';
 
 // Hosting detection
 const headers = [
   { name: 'server', value: 'vercel' },
   { name: 'x-vercel-id', value: 'abc123' }
 ];
-const hosting = detectHostingProvider(headers);
+const hosting = detectHostingProviderFromHeaders(headers);
 console.log(hosting); // "Vercel"
 
 // Email detection  
 const mxRecords = ['mx1.google.com', 'mx2.google.com'];
-const email = detectEmailProvider(mxRecords);
+const email = detectEmailProviderFromMx(mxRecords);
 console.log(email); // "Google Workspace"
 
 // DNS detection
 const nsRecords = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];  
-const dns = detectDnsProvider(nsRecords);
+const dns = detectDnsProviderFromNs(nsRecords);
 console.log(dns); // "Cloudflare"
 ```
 
 ### Adding New Providers
 
-Add to the appropriate catalog file (`hosting-providers.ts`, `email-providers.ts`, `dns-providers.ts`):
+Add to the appropriate section in `catalog.ts`:
 
 ```typescript
 export const HOSTING_PROVIDERS: Provider[] = [
@@ -87,7 +91,7 @@ export const HOSTING_PROVIDERS: Provider[] = [
 // Check header value contains substring
 { type: "header", name: "server", value: "vercel" }
 
-// Check header exists (same as present: true)  
+// Check header exists (shorthand - same as present: true)  
 { type: "header", name: "x-vercel-id" }
 ```
 
@@ -101,38 +105,18 @@ export const HOSTING_PROVIDERS: Provider[] = [
 { type: "dns", recordType: "NS", value: "cloudflare.com" }
 ```
 
+## Rule Evaluation
+
+- **Provider-level**: A provider matches if **ANY** of its rules match (OR logic)
+- **Rule-level**: Each rule has specific matching criteria
+- **Fallback**: Returns "Unknown" if no provider matches, or first hostname for DNS/email
+
 ## Benefits
 
 1. **Simple**: Each rule is focused and easy to understand
 2. **Extensible**: Easy to add new rule types and providers
 3. **Maintainable**: Clean separation between providers and detection logic
 4. **Robust**: Unified evaluation prevents inconsistencies
-5. **Backward Compatible**: Legacy detection functions still work
+5. **Fast**: Efficient pre-calculated contexts avoid redundant work
 
-## Migration
-
-The system maintains full backward compatibility:
-
-```typescript
-// These functions work exactly as before
-detectHostingProviderFromHeaders(headers);
-detectEmailProviderFromMx(mxHosts);
-detectDnsProviderFromNs(nsHosts);
-```
-
-New functions are available with cleaner APIs:
-
-```typescript
-// New, cleaner functions
-detectHostingProvider(headers);
-detectEmailProvider(mxHosts);
-detectDnsProvider(nsHosts);
-```
-
-## Rule Evaluation
-
-- **Provider-level**: A provider matches if **ANY** of its rules match (OR logic)
-- **Rule-level**: Each rule has specific matching criteria
-- **Fallback**: System falls back to legacy detection for safety
-
-This approach provides a much cleaner, more maintainable foundation for provider detection while preserving all existing functionality.
+This approach provides a clean, maintainable foundation for provider detection that's easy to understand and extend.

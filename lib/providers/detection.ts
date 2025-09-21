@@ -4,11 +4,7 @@
  * providers based on a set of rules.
  */
 
-import {
-  DNS_PROVIDERS,
-  EMAIL_PROVIDERS,
-  HOSTING_PROVIDERS,
-} from "./new-catalog";
+import { DNS_PROVIDERS, EMAIL_PROVIDERS, HOSTING_PROVIDERS } from "./catalog";
 import type { DetectionRule, HttpHeader, Provider } from "./types";
 
 /**
@@ -157,7 +153,7 @@ export function mapProviderNameToDomain(name: string): string | undefined {
 
     // Check aliases
     if (
-      provider.aliases?.some((alias) =>
+      provider.aliases?.some((alias: string) =>
         searchName.includes(alias.toLowerCase()),
       )
     ) {
