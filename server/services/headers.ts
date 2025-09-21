@@ -1,4 +1,5 @@
 import { getOrSet, ns } from "@/lib/redis";
+import { captureServer } from "@/server/analytics/posthog";
 
 export type HttpHeader = { name: string; value: string };
 
@@ -20,6 +21,12 @@ export async function probeHeaders(domain: string) {
     const headers: HttpHeader[] = [];
     final.headers.forEach((value, name) => {
       headers.push({ name, value });
+    });
+    await captureServer("headers_probe", {
+      domain,
+      status: final.status,
+      used_method: res.ok ? "HEAD" : "GET",
+      final_url: final.url,
     });
     return {
       url: final.url,

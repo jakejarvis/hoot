@@ -6,6 +6,7 @@ import {
   mapProviderNameToDomain,
 } from "@/lib/providers";
 import { getOrSet, ns } from "@/lib/redis";
+import { captureServer } from "@/server/analytics/posthog";
 import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 import { lookupIpMeta } from "./ip";
@@ -94,13 +95,22 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
       }
     }
 
-    return {
+    const info = {
       hostingProvider: { name: hostingName, iconDomain: hostingIconDomain },
       emailProvider: { name: emailName, iconDomain: emailIconDomain },
       dnsProvider: { name: dnsName, iconDomain: dnsIconDomain },
       ipAddress: ip,
       geo,
     };
+    await captureServer("hosting_detected", {
+      domain,
+      hosting: hostingName,
+      email: emailName,
+      dns_provider: dnsName,
+      ip_present: Boolean(ip),
+      geo_country: geo.country || "",
+    });
+    return info;
   });
 }
 

@@ -5,6 +5,7 @@ import { DomainReportFallback } from "@/components/domain/domain-report-fallback
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { captureServer } from "@/server/analytics/posthog";
 import { prefetchWhois } from "@/server/prefetch/domain";
 
 export const experimental_ppr = true;
@@ -39,6 +40,12 @@ export default async function DomainPage({
   if (normalized !== decoded) {
     redirect(`/${encodeURIComponent(normalized)}`);
   }
+
+  // Server-side analytics for SSR entry
+  await captureServer("server_render_domain_page", {
+    domain: normalized,
+    canonicalized: normalized !== decoded,
+  });
 
   const whois = await prefetchWhois(normalized);
 

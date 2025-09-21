@@ -1,4 +1,5 @@
 import { getOrSet, ns } from "@/lib/redis";
+import { captureServer } from "@/server/analytics/posthog";
 import { isCloudflareIpAsync } from "./cloudflare";
 
 export type DnsRecord = {
@@ -15,6 +16,7 @@ const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
 
 export async function resolveAll(domain: string): Promise<DnsRecord[]> {
   const lower = domain.toLowerCase();
+  const startedAt = Date.now();
   const promises = TYPES.map(async (type) => {
     const key = ns("dns", `${lower}:${type}`);
     return await getOrSet<DnsRecord[]>(
@@ -25,7 +27,24 @@ export async function resolveAll(domain: string): Promise<DnsRecord[]> {
     );
   });
   const results = await Promise.all(promises);
-  return results.flat();
+  const flat = results.flat();
+  const counts = TYPES.reduce(
+    (acc, t) => {
+      acc[t] = flat.filter((r) => r.type === t).length;
+      return acc;
+    },
+    { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
+  );
+  const cloudflareIpPresent = flat.some(
+    (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
+  );
+  await captureServer("dns_resolve_all", {
+    domain: lower,
+    duration_ms_total: Date.now() - startedAt,
+    counts,
+    cloudflare_ip_present: cloudflareIpPresent,
+  });
+  return flat;
 }
 
 async function resolveType(

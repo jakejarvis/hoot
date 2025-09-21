@@ -2,6 +2,7 @@ import { firstResult, whoisDomain } from "whoiser";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { mapProviderNameToDomain } from "@/lib/providers";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { captureServer } from "@/server/analytics/posthog";
 import type { Whois } from "./rdap-parser";
 
 /**
@@ -14,8 +15,16 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
 
   const key = ns("reg", registrable.toLowerCase());
   const cached = await cacheGet<Whois>(key);
-  if (cached) return cached;
+  if (cached) {
+    await captureServer("whois_lookup", {
+      domain: registrable,
+      outcome: "cache_hit",
+      cached: true,
+    });
+    return cached;
+  }
 
+  const startedAt = Date.now();
   const results = await whoisDomain(registrable, {
     timeout: 4000,
     follow: 2,
@@ -36,6 +45,12 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
       registered: false,
     };
     await cacheSet(key, empty, 60 * 60);
+    await captureServer("whois_lookup", {
+      domain: registrable,
+      outcome: "empty",
+      cached: false,
+      duration_ms: Date.now() - startedAt,
+    });
     return empty;
   }
 
@@ -116,6 +131,12 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
   };
 
   await cacheSet(key, normalized, registered ? 24 * 60 * 60 : 60 * 60);
+  await captureServer("whois_lookup", {
+    domain: registrable,
+    outcome: "ok",
+    cached: false,
+    duration_ms: Date.now() - startedAt,
+  });
   return normalized;
 }
 

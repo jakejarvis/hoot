@@ -4,6 +4,7 @@ import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { captureClient } from "@/lib/analytics";
 import { DomainLoadingState } from "./domain-loading-state";
 import { DomainUnregisteredState } from "./domain-unregistered-state";
 import { Favicon } from "./favicon";
@@ -34,6 +35,7 @@ export function DomainReportView({
   useDomainHistory(domain, whois.isSuccess, whois.data?.registered ?? false);
 
   const handleExportJson = () => {
+    captureClient("export_json_clicked", { domain });
     exportDomainData(domain, {
       whois: whois.data,
       dns: dns.data,
@@ -51,6 +53,7 @@ export function DomainReportView({
   // Show unregistered state if domain is not registered
   const isUnregistered = whois.isSuccess && whois.data?.registered === false;
   if (isUnregistered) {
+    captureClient("report_unregistered_viewed", { domain });
     return <DomainUnregisteredState domain={domain} />;
   }
 
@@ -103,23 +106,47 @@ export function DomainReportView({
           records={dns.data || null}
           isLoading={dns.isLoading}
           isError={!!dns.isError}
-          onRetry={() => dns.refetch()}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "dns",
+            });
+            dns.refetch();
+          }}
           showTtls={showTtls}
-          onToggleTtls={(v) => setShowTtls(v)}
+          onToggleTtls={(v) => {
+            captureClient("ttl_preference_toggled", {
+              domain,
+              show_ttls: v,
+            });
+            setShowTtls(v);
+          }}
         />
 
         <CertificatesSection
           data={certs.data || null}
           isLoading={certs.isLoading}
           isError={!!certs.isError}
-          onRetry={() => certs.refetch()}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "certificates",
+            });
+            certs.refetch();
+          }}
         />
 
         <HeadersSection
           data={headers.data || null}
           isLoading={headers.isLoading}
           isError={!!headers.isError}
-          onRetry={() => headers.refetch()}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "headers",
+            });
+            headers.refetch();
+          }}
         />
       </Accordion>
     </div>

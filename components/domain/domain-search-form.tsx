@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { captureClient } from "@/lib/analytics";
 import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 import { Favicon } from "./favicon";
 
@@ -57,11 +58,19 @@ export function DomainSearchForm({
     e.preventDefault();
     const parsed = domainSchema.safeParse(value);
     if (!parsed.success) {
-      const issue = parsed.error.issues?.[0];
-      toast.error(issue?.message ?? "Invalid domain");
+      const issue = parsed.error.issues?.[0] as { code?: string } | undefined;
+      captureClient("search_invalid_input", {
+        reason: issue?.code ?? "invalid",
+        value_length: value.length,
+      });
+      toast.error(parsed.error.message ?? "Invalid domain");
       inputRef.current?.focus();
       return;
     }
+    captureClient("search_submitted", {
+      domain: parsed.data,
+      source: "form",
+    });
     setLoading(true);
     router.push(`/${encodeURIComponent(parsed.data)}`);
   }
@@ -118,7 +127,13 @@ export function DomainSearchForm({
                 variant="secondary"
                 size="sm"
                 className={historyLoaded ? undefined : "invisible"}
-                onClick={() => router.push(`/${encodeURIComponent(domain)}`)}
+                onClick={() => {
+                  captureClient("search_suggestion_clicked", {
+                    domain,
+                    source: "suggestion",
+                  });
+                  router.push(`/${encodeURIComponent(domain)}`);
+                }}
               >
                 <span className="inline-flex items-center gap-2">
                   <Favicon domain={domain} size={16} className="rounded" />
