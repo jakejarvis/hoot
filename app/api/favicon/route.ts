@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { captureServer } from "@/server/analytics/posthog";
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
     url.searchParams.get("size") ?? url.searchParams.get("sz") ?? "",
   );
   const size = clampFaviconSize(sizeParam);
-  const startedAt = Date.now();
+
   // Attempt to associate events with user via PostHog cookie
   let distinctId: string | undefined;
   try {
@@ -47,11 +48,34 @@ export async function GET(req: Request) {
       },
       distinctId,
     );
+
     return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
   }
 
   const png = await getFaviconPngForDomain(registrable, size, { distinctId });
   if (png) {
+    const etag = (() => {
+      const hash = createHash("sha256").update(png).digest("base64url");
+      return `"${hash}"`;
+    })();
+
+    const ifNoneMatch = req.headers.get("if-none-match");
+
+    if (ifNoneMatch) {
+      const candidates = ifNoneMatch.split(",").map((s) => s.trim());
+      const matches = candidates.some((c) => c === etag || c === `W/${etag}`);
+
+      if (matches) {
+        return new NextResponse(null, {
+          status: 304,
+          headers: {
+            ETag: etag,
+            "Cache-Control": "public, max-age=604800, s-maxage=604800",
+          },
+        });
+      }
+    }
+
     return new NextResponse(png as unknown as BodyInit, {
       status: 200,
       headers: {
@@ -59,22 +83,12 @@ export async function GET(req: Request) {
         // Cache for a week; allow CDN to keep for a week
         "Cache-Control": "public, max-age=604800, s-maxage=604800",
         "Content-Length": String(png.length),
+        ETag: etag,
       },
     });
   }
 
-  await captureServer(
-    "favicon_fetch",
-    {
-      domain: registrable,
-      size,
-      outcome: "not_found",
-      duration_ms: Date.now() - startedAt,
-    },
-    distinctId,
-  );
-
-  return new NextResponse("Favicon not found", {
+  return new NextResponse(null, {
     status: 404,
   });
 }

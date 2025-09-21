@@ -1,10 +1,15 @@
 import sharp from "sharp";
+import { cacheGet, cacheSet, ns } from "@/lib/redis";
 import { captureServer } from "@/server/analytics/posthog";
 
 const DEFAULT_SIZE = 32;
 const MIN_SIZE = 16;
 const MAX_SIZE = 256;
 const REQUEST_TIMEOUT_MS = 4000;
+const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+const NEGATIVE_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours for not-found
+// Use a single Redis key for both positive and negative results; this sentinel marks a negative entry
+const NEGATIVE_CACHE_SENTINEL = "!" as const;
 
 export function clampFaviconSize(value: number | null | undefined): number {
   if (!value || Number.isNaN(value)) return DEFAULT_SIZE;
@@ -118,8 +123,47 @@ export async function getFaviconPngForDomain(
   size: number,
   opts?: { distinctId?: string },
 ): Promise<Buffer | null> {
+  const cacheKey = ns("favicon", `${domain}:${size}`);
   const sources = buildSources(domain, size);
   const startedAt = Date.now();
+
+  // Try cache first
+  try {
+    const cachedValue = await cacheGet<string>(cacheKey);
+    if (cachedValue) {
+      if (cachedValue === NEGATIVE_CACHE_SENTINEL) {
+        await captureServer(
+          "favicon_fetch",
+          {
+            domain,
+            size,
+            source: "cache_redis",
+            duration_ms: Date.now() - startedAt,
+            outcome: "not_found",
+            cache: "hit_negative",
+          },
+          opts?.distinctId,
+        );
+        return null;
+      }
+      const pngFromCache = Buffer.from(cachedValue, "base64");
+      await captureServer(
+        "favicon_fetch",
+        {
+          domain,
+          size,
+          source: "cache_redis",
+          duration_ms: Date.now() - startedAt,
+          outcome: "ok",
+          cache: "hit",
+        },
+        opts?.distinctId,
+      );
+      return pngFromCache;
+    }
+  } catch {
+    // ignore cache errors and fall through
+  }
 
   for (const src of sources) {
     try {
@@ -140,6 +184,17 @@ export async function getFaviconPngForDomain(
         return "unknown";
       })();
 
+      // Attempt to store in cache (base64) for subsequent hits
+      try {
+        await cacheSet<string>(
+          cacheKey,
+          png.toString("base64"),
+          CACHE_TTL_SECONDS,
+        );
+      } catch {
+        // ignore cache errors
+      }
+
       await captureServer(
         "favicon_fetch",
         {
@@ -150,6 +205,7 @@ export async function getFaviconPngForDomain(
           upstream_content_type: contentType ?? null,
           duration_ms: Date.now() - startedAt,
           outcome: "ok",
+          cache: "store",
         },
         opts?.distinctId,
       );
@@ -159,6 +215,26 @@ export async function getFaviconPngForDomain(
       // Try next source
     }
   }
-
+  // Store negative cache using the same key and capture analytics
+  try {
+    await cacheSet<string>(
+      cacheKey,
+      NEGATIVE_CACHE_SENTINEL,
+      NEGATIVE_CACHE_TTL_SECONDS,
+    );
+  } catch {
+    // ignore cache errors
+  }
+  await captureServer(
+    "favicon_fetch",
+    {
+      domain,
+      size,
+      duration_ms: Date.now() - startedAt,
+      outcome: "not_found",
+      cache: "store_negative",
+    },
+    opts?.distinctId,
+  );
   return null;
 }
