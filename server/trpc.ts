@@ -1,7 +1,10 @@
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 
-export type Context = Record<string, never>;
+export type Context = {
+  posthogDistinctId?: string;
+  posthogSessionId?: string;
+};
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
+import { DomainSsrAnalytics } from "@/components/analytics/domain-ssr-analytics";
 import { DomainReportFallback } from "@/components/domain/domain-report-fallback";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { captureServer } from "@/server/analytics/posthog";
 import { prefetchWhois } from "@/server/prefetch/domain";
 
 export const experimental_ppr = true;
@@ -41,17 +41,18 @@ export default async function DomainPage({
     redirect(`/${encodeURIComponent(normalized)}`);
   }
 
-  // Server-side analytics for SSR entry
-  await captureServer("server_render_domain_page", {
-    domain: normalized,
-    canonicalized: normalized !== decoded,
-  });
+  // Preserve PPR by isolating cookie read & analytics to a dynamic island
 
   const whois = await prefetchWhois(normalized);
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
       <Suspense fallback={<DomainReportFallback />}>
+        {/* Dynamic island: runs on server, reads cookie, captures analytics */}
+        <DomainSsrAnalytics
+          domain={normalized}
+          canonicalized={normalized !== decoded}
+        />
         <DomainReportView
           domain={normalized}
           initialWhois={whois}
