@@ -36,11 +36,18 @@ export function DomainSearchForm({
   const [value, setValue] = React.useState(initialValue);
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    const stored = localStorage.getItem("hoot-history");
-    if (stored) setHistory(JSON.parse(stored));
+    try {
+      const stored = localStorage.getItem("hoot-history");
+      if (stored) setHistory(JSON.parse(stored));
+    } catch {
+      // ignore parse errors
+    } finally {
+      setHistoryLoaded(true);
+    }
   }, []);
 
   // History is now updated post-lookup in DomainReportView after a confirmed registered WHOIS.
@@ -102,7 +109,7 @@ export function DomainSearchForm({
         </Button>
       </form>
 
-      {showHistory && (
+      {showHistory && historyLoaded && (
         <div className="mt-3 flex flex-wrap gap-2 justify-center">
           {suggestedDomains.map((domain) => (
             <Button
