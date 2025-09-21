@@ -1,6 +1,5 @@
 import { firstResult, whoisDomain } from "whoiser";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { mapProviderNameToDomain } from "@/lib/providers/detection";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
 import { captureServer } from "@/server/analytics/posthog";
 import type { Whois } from "./rdap-parser";
@@ -117,7 +116,7 @@ export async function fetchWhoisTcp(domain: string): Promise<Whois> {
     source: "whois",
     registrar: {
       name: registrar || "",
-      domain: mapProviderNameToDomain(registrar || "") || null,
+      domain: null,
     },
     creationDate: creationDate || "",
     expirationDate: expirationDate || "",

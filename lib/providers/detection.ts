@@ -1,3 +1,4 @@
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { DNS_PROVIDERS, EMAIL_PROVIDERS, HOSTING_PROVIDERS } from "./catalog";
 import type { DetectionRule, HttpHeader, Provider } from "./types";
 
@@ -79,7 +80,7 @@ function detectProviderFromList(
   headerContext?: HeaderDetectionContext,
   mxHosts?: string[],
   nsHosts?: string[],
-): string {
+): ProviderRef {
   for (const provider of providers) {
     // A provider matches if ANY of its rules match (OR logic)
     const matches = provider.rules.some((rule) =>
@@ -87,17 +88,19 @@ function detectProviderFromList(
     );
 
     if (matches) {
-      return provider.name;
+      return { name: provider.name, domain: provider.domain };
     }
   }
 
-  return "Unknown";
+  return { name: "Unknown", domain: null };
 }
 
 /**
  * Detect hosting provider from HTTP headers.
  */
-export function detectHostingProvider(headers: HttpHeader[]): string {
+export type ProviderRef = { name: string; domain: string | null };
+
+export function detectHostingProvider(headers: HttpHeader[]): ProviderRef {
   const context = createHeaderContext(headers);
   return detectProviderFromList(HOSTING_PROVIDERS, context);
 }
@@ -105,58 +108,40 @@ export function detectHostingProvider(headers: HttpHeader[]): string {
 /**
  * Detect email provider from MX records.
  */
-export function detectEmailProvider(mxHosts: string[]): string {
-  const result = detectProviderFromList(EMAIL_PROVIDERS, undefined, mxHosts);
-  // Maintain existing fallback behavior
-  return result !== "Unknown" ? result : mxHosts[0] ? mxHosts[0] : "Unknown";
+export function detectEmailProvider(mxHosts: string[]): ProviderRef {
+  const found = detectProviderFromList(EMAIL_PROVIDERS, undefined, mxHosts);
+  if (found.name !== "Unknown") return found;
+  const first = mxHosts[0];
+  if (first) {
+    const root = toRegistrableDomain(first);
+    return { name: root || first, domain: root || null };
+  }
+  return { name: "Unknown", domain: null };
 }
 
 /**
  * Detect DNS provider from NS records.
  */
-export function detectDnsProvider(nsHosts: string[]): string {
-  const result = detectProviderFromList(
+export function detectDnsProvider(nsHosts: string[]): ProviderRef {
+  const found = detectProviderFromList(
     DNS_PROVIDERS,
     undefined,
     undefined,
     nsHosts,
   );
-  // Maintain existing fallback behavior
-  return result !== "Unknown" ? result : nsHosts[0] ? nsHosts[0] : "Unknown";
+  if (found.name !== "Unknown") return found;
+  const first = nsHosts[0];
+  if (first) {
+    const root = toRegistrableDomain(first);
+    return { name: root || first, domain: root || null };
+  }
+  return { name: "Unknown", domain: null };
 }
 
 /**
  * Map provider name to icon domain for favicon display.
  */
-export function mapProviderNameToDomain(name: string): string | undefined {
-  if (!name) return undefined;
-  const searchName = name.toLowerCase();
-
-  // Search all provider lists
-  const allProviders = [
-    ...HOSTING_PROVIDERS,
-    ...EMAIL_PROVIDERS,
-    ...DNS_PROVIDERS,
-  ];
-
-  for (const provider of allProviders) {
-    // Check exact name match
-    if (provider.name.toLowerCase() === searchName) {
-      return provider.domain;
-    }
-
-    // Check aliases
-    if (
-      provider.aliases?.some((alias: string) =>
-        searchName.includes(alias.toLowerCase()),
-      )
-    ) {
-      return provider.domain;
-    }
-  }
-
-  return undefined;
-}
+// mapping helpers removed; detectors now return name+domain directly
 
 // Export provider lists for backward compatibility and access
 export const ProviderCatalog = {

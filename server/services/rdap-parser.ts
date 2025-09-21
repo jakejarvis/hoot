@@ -1,4 +1,4 @@
-import { mapProviderNameToDomain } from "@/lib/providers/detection";
+// mapping removed; registrar domain set to null
 
 export type Whois = {
   source?: "rdap" | "whois";
@@ -49,7 +49,7 @@ function extractRegistrarInfo(json: RdapJson): {
 
   return {
     name: registrarName,
-    domain: mapProviderNameToDomain(registrarName) || null,
+    domain: null,
   };
 }
 

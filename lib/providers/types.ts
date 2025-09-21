@@ -24,11 +24,6 @@ export interface Provider {
   name: string;
   /** The domain used to fetch the provider's icon (e.g., "vercel.com") */
   domain: string;
-  /**
-   * Aliases or common variations of the provider's name found in records,
-   * used for mapping if direct detection fails.
-   */
-  aliases?: string[];
   /** An array of rules that, if matched, identify this provider. */
   rules: DetectionRule[];
 }

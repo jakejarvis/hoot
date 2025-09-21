@@ -26,7 +26,6 @@ Each provider has metadata and an array of detection rules:
 interface Provider {
   name: string;           // "Vercel"
   domain: string;     // "vercel.com" 
-  aliases?: string[];     // ["vercel"]
   rules: DetectionRule[]; // Array of rules that identify this provider
 }
 ```
@@ -48,17 +47,17 @@ const headers = [
   { name: 'x-vercel-id', value: 'abc123' }
 ];
 const hosting = detectHostingProvider(headers);
-console.log(hosting); // "Vercel"
+console.log(hosting); // { name: "Vercel", domain: "vercel.com" }
 
 // Email detection  
 const mxRecords = ['mx1.google.com', 'mx2.google.com'];
 const email = detectEmailProvider(mxRecords);
-console.log(email); // "Google Workspace"
+console.log(email); // { name: "Google Workspace", domain: "google.com" }
 
 // DNS detection
 const nsRecords = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];  
 const dns = detectDnsProvider(nsRecords);
-console.log(dns); // "Cloudflare"
+console.log(dns); // { name: "Cloudflare", domain: "cloudflare.com" }
 ```
 
 ### Adding New Providers
@@ -71,7 +70,6 @@ export const HOSTING_PROVIDERS: Provider[] = [
   {
     name: "Railway",
     domain: "railway.app",
-    aliases: ["railway"],
     rules: [
       { type: "header", name: "x-railway-id", present: true },
       { type: "header", name: "server", value: "railway" }
