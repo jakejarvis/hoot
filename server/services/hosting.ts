@@ -1,3 +1,4 @@
+import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
   detectDnsProvider,
@@ -5,7 +6,6 @@ import {
   detectHostingProvider,
 } from "@/lib/providers/detection";
 import { getOrSet, ns } from "@/lib/redis";
-import { captureServer } from "@/server/analytics/posthog";
 import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 import { lookupIpMeta } from "./ip";

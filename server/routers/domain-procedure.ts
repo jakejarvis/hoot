@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { captureServer } from "@/lib/analytics/server";
 import { normalizeDomainInput } from "@/lib/domain";
 import { isAcceptableDomainInput } from "@/lib/domain-server";
-import { captureServer } from "@/server/analytics/posthog";
 import { publicProcedure } from "../trpc";
 
 export const domainInput = z

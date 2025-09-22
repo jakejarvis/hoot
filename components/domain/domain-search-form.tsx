@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { captureClient } from "@/lib/analytics";
+import { captureClient } from "@/lib/analytics/client";
 import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 import { Favicon } from "./favicon";
 

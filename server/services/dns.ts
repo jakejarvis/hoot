@@ -1,5 +1,5 @@
+import { captureServer } from "@/lib/analytics/server";
 import { getOrSet, ns } from "@/lib/redis";
-import { captureServer } from "@/server/analytics/posthog";
 import { isCloudflareIpAsync } from "./cloudflare";
 import { DOH_PROVIDERS, type DohProvider } from "./doh-providers";
 

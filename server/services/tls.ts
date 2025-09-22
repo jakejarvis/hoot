@@ -1,6 +1,6 @@
 import tls from "node:tls";
+import { captureServer } from "@/lib/analytics/server";
 import { getOrSet, ns } from "@/lib/redis";
-import { captureServer } from "@/server/analytics/posthog";
 
 export type Certificate = {
   issuer: string;

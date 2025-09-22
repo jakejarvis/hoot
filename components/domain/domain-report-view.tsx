@@ -4,7 +4,7 @@ import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { captureClient } from "@/lib/analytics";
+import { captureClient } from "@/lib/analytics/client";
 import { DomainLoadingState } from "./domain-loading-state";
 import { DomainUnregisteredState } from "./domain-unregistered-state";
 import { Favicon } from "./favicon";

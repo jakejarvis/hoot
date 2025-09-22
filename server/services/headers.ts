@@ -1,5 +1,5 @@
+import { captureServer } from "@/lib/analytics/server";
 import { getOrSet, ns } from "@/lib/redis";
-import { captureServer } from "@/server/analytics/posthog";
 
 export type HttpHeader = { name: string; value: string };
 

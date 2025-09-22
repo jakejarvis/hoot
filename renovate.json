@@ -42,8 +42,5 @@
       "rangeStrategy": "pin"
     }
   ],
-  "ignoreDeps": [
-    "@types/node",
-    "lucide-react"
-  ]
+  "ignoreDeps": ["@types/node", "lucide-react"]
 }

@@ -1,6 +1,6 @@
 import sharp from "sharp";
+import { captureServer } from "@/lib/analytics/server";
 import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
-import { captureServer } from "@/server/analytics/posthog";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 4000;

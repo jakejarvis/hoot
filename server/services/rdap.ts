@@ -1,6 +1,6 @@
+import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
-import { captureServer } from "@/server/analytics/posthog";
 import { getRdapBaseForTld } from "./rdap-bootstrap";
 import { parseRdapResponse, type Whois } from "./rdap-parser";
 import { fetchWhoisTcp } from "./whois";
