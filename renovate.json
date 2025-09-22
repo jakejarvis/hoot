@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["📦 dependencies"],
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "matchPackageNames": ["next", "@next/*"],
+      "matchDepTypes": ["dependencies", "devDependencies"],
+      "groupName": "next.js",
+      "followTag": "canary",
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "groupName": "react",
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchPackageNames": ["typescript"],
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchPackageNames": ["biome"],
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchPackageNames": ["node"],
+      "matchDepTypes": ["engines"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["node"],
+      "matchManagers": ["nvm"],
+      "rangeStrategy": "pin"
+    }
+  ],
+  "ignoreDeps": [
+    "@types/node",
+    "lucide-react"
+  ]
+}
