@@ -2,15 +2,31 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { httpBatchStreamLink, loggerLink } from "@trpc/client";
+import {
+  createTRPCClient,
+  httpBatchStreamLink,
+  loggerLink,
+} from "@trpc/client";
 import * as React from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
+import type { AppRouter } from "@/server/routers/_app";
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = React.useState(() => new QueryClient());
+  const [queryClient] = React.useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // With SSR, we usually want to set some default staleTime
+            // above 0 to avoid refetching immediately on the client
+            staleTime: 60 * 1000,
+          },
+        },
+      }),
+  );
   const [trpcClient] = React.useState(() =>
-    trpc.createClient({
+    createTRPCClient<AppRouter>({
       links: [
         loggerLink({
           enabled: (opts) =>
