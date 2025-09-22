@@ -10,6 +10,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="system"
+      storageKey="hoot-theme"
       enableSystem
       disableTransitionOnChange
       {...props}
