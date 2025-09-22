@@ -1,4 +1,5 @@
-import { trpc } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
 import type { Whois } from "@/server/services/rdap-parser";
 
 type UseDomainQueriesOptions = {
@@ -10,36 +11,47 @@ export function useDomainQueries(
   domain: string,
   opts?: UseDomainQueriesOptions,
 ) {
-  const whois = trpc.domain.whois.useQuery(
-    { domain },
-    {
-      enabled: !!domain,
-      initialData: opts?.initialWhois,
-      staleTime: 5 * 60_000,
-    },
+  const trpc = useTRPC();
+  const whois = useQuery(
+    trpc.domain.whois.queryOptions(
+      { domain },
+      {
+        enabled: !!domain,
+        initialData: opts?.initialWhois,
+        staleTime: 5 * 60_000, // 5 minutes
+      },
+    ),
   );
 
   const registered =
     (opts?.initialRegistered ?? whois.data?.registered) === true;
 
-  const dns = trpc.domain.dns.useQuery(
-    { domain },
-    { enabled: !!domain && registered },
+  const dns = useQuery(
+    trpc.domain.dns.queryOptions(
+      { domain },
+      { enabled: !!domain && registered },
+    ),
   );
 
-  const hosting = trpc.domain.hosting.useQuery(
-    { domain },
-    { enabled: !!domain && registered },
+  const hosting = useQuery(
+    trpc.domain.hosting.queryOptions(
+      { domain },
+      { enabled: !!domain && registered },
+    ),
   );
 
-  const certs = trpc.domain.certificates.useQuery(
-    { domain },
-    { enabled: !!domain && registered },
+  const certs = useQuery(
+    trpc.domain.certificates.queryOptions(
+      { domain },
+      { enabled: !!domain && registered },
+    ),
   );
 
-  const headers = trpc.domain.headers.useQuery(
-    { domain },
-    { enabled: !!domain && registered },
+  const headers = useQuery(
+    trpc.domain.headers.queryOptions(
+      { domain },
+      { enabled: !!domain && registered },
+    ),
   );
 
   const allSectionsReady =

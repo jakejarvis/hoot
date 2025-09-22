@@ -9,7 +9,7 @@ import {
 } from "@trpc/client";
 import * as React from "react";
 import superjson from "superjson";
-import { trpc } from "@/lib/trpc/client";
+import { TRPCProvider as Provider } from "@/lib/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
@@ -64,13 +64,13 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <Provider trpcClient={trpcClient} queryClient={queryClient}>
         {children}
         {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )}
-      </QueryClientProvider>
-    </trpc.Provider>
+      </Provider>
+    </QueryClientProvider>
   );
 }

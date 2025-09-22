@@ -1,9 +1,10 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Globe } from "lucide-react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { trpc } from "@/lib/trpc/client";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
 export function Favicon({
@@ -15,7 +16,15 @@ export function Favicon({
   size?: number;
   className?: string;
 }) {
-  const { data, isLoading } = trpc.domain.faviconUrl.useQuery({ domain });
+  const trpc = useTRPC();
+  const { data, isLoading } = useQuery(
+    trpc.domain.faviconUrl.queryOptions(
+      { domain },
+      {
+        staleTime: 30 * 60_000, // 30 minutes
+      },
+    ),
+  );
   const url = data?.url ?? null;
 
   if (isLoading) {
