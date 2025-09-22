@@ -3,7 +3,7 @@ import { HomeHero } from "@/components/home-hero";
 
 export default function Home() {
   return (
-    <div className="container mx-auto min-h-[600px] flex items-center justify-center px-4">
+    <div className="container mx-auto my-auto flex items-center justify-center px-4 py-8">
       <div className="w-full space-y-6">
         <HomeHero />
 

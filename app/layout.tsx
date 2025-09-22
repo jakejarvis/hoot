@@ -42,7 +42,7 @@ export default function RootLayout({
           <TRPCProvider>
             <div className="min-h-svh flex flex-col">
               <AppHeader />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 min-h-0 flex flex-col">{children}</main>
               <AppFooter />
             </div>
           </TRPCProvider>
