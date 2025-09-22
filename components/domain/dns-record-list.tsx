@@ -20,10 +20,18 @@ export function DnsRecordList({
   type: DnsRecord["type"];
   showTtls: boolean;
 }) {
-  const filtered = React.useMemo(
-    () => records.filter((r) => r.type === type),
-    [records, type],
-  );
+  const filtered = React.useMemo(() => {
+    const arr = records.filter((r) => r.type === type);
+    if (type === "MX") {
+      arr.sort((a, b) => {
+        const ap = a.priority ?? Number.MAX_SAFE_INTEGER;
+        const bp = b.priority ?? Number.MAX_SAFE_INTEGER;
+        if (ap !== bp) return ap - bp;
+        return a.value.localeCompare(b.value);
+      });
+    }
+    return arr;
+  }, [records, type]);
 
   return (
     <>
