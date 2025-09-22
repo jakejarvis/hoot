@@ -97,7 +97,7 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
             {rotatingWords[index]}
           </span>
         </span>
-        .
+        <span className="text-foreground/90 whitespace-nowrap hidden sm:inline">.</span>
       </h1>
     </div>
   );
