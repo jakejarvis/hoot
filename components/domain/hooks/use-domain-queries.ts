@@ -18,7 +18,10 @@ export function useDomainQueries(
       {
         enabled: !!domain,
         initialData: opts?.initialWhois,
-        staleTime: 5 * 60_000, // 5 minutes
+        staleTime: 30 * 60_000, // 30 minutes, avoid churn
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
       },
     ),
   );
@@ -29,28 +32,52 @@ export function useDomainQueries(
   const dns = useQuery(
     trpc.domain.dns.queryOptions(
       { domain },
-      { enabled: !!domain && registered },
+      {
+        enabled: !!domain && registered,
+        staleTime: 30 * 60_000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
     ),
   );
 
   const hosting = useQuery(
     trpc.domain.hosting.queryOptions(
       { domain },
-      { enabled: !!domain && registered },
+      {
+        enabled: !!domain && registered,
+        staleTime: 30 * 60_000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
     ),
   );
 
   const certs = useQuery(
     trpc.domain.certificates.queryOptions(
       { domain },
-      { enabled: !!domain && registered },
+      {
+        enabled: !!domain && registered,
+        staleTime: 30 * 60_000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
     ),
   );
 
   const headers = useQuery(
     trpc.domain.headers.queryOptions(
       { domain },
-      { enabled: !!domain && registered },
+      {
+        enabled: !!domain && registered,
+        staleTime: 30 * 60_000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
     ),
   );
 

@@ -20,7 +20,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
           queries: {
             // With SSR, we usually want to set some default staleTime
             // above 0 to avoid refetching immediately on the client
-            staleTime: 60 * 1000,
+            staleTime: 10 * 60 * 1000, // 10 minutes
+            gcTime: 60 * 60 * 1000, // keep cache for 1 hour
+            refetchOnMount: false,
+            refetchOnReconnect: false,
+            refetchOnWindowFocus: false,
           },
         },
       }),

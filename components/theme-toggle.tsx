@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function ModeToggle() {
+export function ThemeToggle() {
   const { theme, setTheme, systemTheme } = useTheme();
   const current = theme === "system" ? systemTheme : theme;
   const isDark = current === "dark";

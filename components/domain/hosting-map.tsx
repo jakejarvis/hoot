@@ -1,9 +1,10 @@
 "use client";
 
+import * as React from "react";
 import MapboxMap, { Marker } from "react-map-gl/mapbox";
 import type { HostingInfo } from "@/server/services/hosting";
 
-export function HostingMap({ hosting }: { hosting: HostingInfo }) {
+function MapInner({ hosting }: { hosting: HostingInfo }) {
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) return null;
 
   const lat = hosting.geo.lat;
@@ -16,8 +17,13 @@ export function HostingMap({ hosting }: { hosting: HostingInfo }) {
       <MapboxMap
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialViewState={{ longitude: lon, latitude: lat, zoom: 5 }}
-        scrollZoom={false}
+        boxZoom={false}
+        doubleClickZoom={false}
         dragRotate={false}
+        keyboard={false}
+        scrollZoom={false}
+        touchPitch={false}
+        touchZoomRotate={false}
         style={{ height: 280, width: "100%" }}
         mapStyle="mapbox://styles/mapbox/standard"
       >
@@ -28,3 +34,9 @@ export function HostingMap({ hosting }: { hosting: HostingInfo }) {
     </div>
   );
 }
+
+export const HostingMap = React.memo(MapInner, (prev, next) => {
+  const p = prev.hosting.geo;
+  const n = next.hosting.geo;
+  return p.lat === n.lat && p.lon === n.lon;
+});

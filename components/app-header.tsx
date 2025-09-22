@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HeaderSearch } from "@/components/domain/header-search";
 import { Logo } from "@/components/logo";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -25,7 +25,7 @@ export function AppHeader() {
         </div>
       )}
       <div className="ml-auto">
-        <ModeToggle />
+        <ThemeToggle />
       </div>
     </header>
   );

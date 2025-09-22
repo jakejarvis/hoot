@@ -9,6 +9,16 @@ import { Skeletons } from "@/components/domain/skeletons";
 import type { HostingInfo } from "@/server/services/hosting";
 import { SECTION_DEFS } from "./sections-meta";
 
+const HostingMap = dynamic(
+  () => import("../hosting-map").then((m) => m.HostingMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] w-full rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10" />
+    ),
+  },
+);
+
 export function HostingEmailSection({
   data,
   isLoading,
@@ -20,15 +30,7 @@ export function HostingEmailSection({
   isError: boolean;
   onRetry: () => void;
 }) {
-  const HostingMap = dynamic(
-    () => import("../hosting-map").then((m) => m.HostingMap),
-    {
-      ssr: false,
-      loading: () => (
-        <div className="h-[280px] w-full rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10" />
-      ),
-    },
-  );
+  // dynamic import hoisted to module scope so the component identity is stable across renders
 
   const Def = SECTION_DEFS.hosting;
   return (
