@@ -58,7 +58,7 @@ export function DomainReportView({
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <Link
@@ -95,14 +95,26 @@ export function DomainReportView({
           data={whois.data || null}
           isLoading={whois.isLoading}
           isError={!!whois.isError}
-          onRetry={() => whois.refetch()}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "whois",
+            });
+            whois.refetch();
+          }}
         />
 
         <HostingEmailSection
           data={hosting.data || null}
           isLoading={hosting.isLoading}
           isError={!!hosting.isError}
-          onRetry={() => hosting.refetch()}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "hosting",
+            });
+            hosting.refetch();
+          }}
         />
 
         <DnsRecordsSection
@@ -155,5 +167,3 @@ export function DomainReportView({
     </div>
   );
 }
-
-// helpers moved to @/lib/format
