@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useTruncation } from "../../hooks/use-truncation";
 import { CopyButton } from "./copy-button";
-import { useTruncation } from "./hooks/use-truncation";
 import { TruncatedValue } from "./truncated-value";
 
 export function KeyValue({

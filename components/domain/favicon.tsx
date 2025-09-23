@@ -18,7 +18,7 @@ export function Favicon({
 }) {
   const trpc = useTRPC();
   const { data, isLoading } = useQuery(
-    trpc.domain.faviconUrl.queryOptions(
+    trpc.domain.favicon.queryOptions(
       { domain },
       {
         staleTime: 30 * 60_000, // 30 minutes

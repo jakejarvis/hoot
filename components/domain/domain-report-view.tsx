@@ -5,18 +5,18 @@ import Link from "next/link";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
+import { useDomainHistory } from "../../hooks/use-domain-history";
+import { useDomainQueries } from "../../hooks/use-domain-queries";
+import { useTtlPreferences } from "../../hooks/use-ttl-preferences";
 import { DomainLoadingState } from "./domain-loading-state";
 import { DomainUnregisteredState } from "./domain-unregistered-state";
+import { exportDomainData } from "./export-data";
 import { Favicon } from "./favicon";
-import { useDomainHistory } from "./hooks/use-domain-history";
-import { useDomainQueries } from "./hooks/use-domain-queries";
-import { useTtlPreferences } from "./hooks/use-ttl-preferences";
 import { CertificatesSection } from "./sections/certificates-section";
 import { DnsRecordsSection } from "./sections/dns-records-section";
 import { HeadersSection } from "./sections/headers-section";
 import { HostingEmailSection } from "./sections/hosting-email-section";
 import { RegistrationSection } from "./sections/registration-section";
-import { exportDomainData } from "./utils/export-data";
 
 export function DomainReportView({
   domain,

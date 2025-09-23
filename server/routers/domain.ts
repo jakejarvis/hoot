@@ -16,7 +16,7 @@ export const domainRouter = router({
     "Certificate fetch failed",
   ),
   headers: createDomainProcedure(probeHeaders, "Header probe failed"),
-  faviconUrl: createDomainProcedure(
+  favicon: createDomainProcedure(
     getOrCreateFaviconBlobUrl,
     "Favicon fetch failed",
   ),

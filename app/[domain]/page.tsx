@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { DomainSsrAnalytics } from "@/components/analytics/domain-ssr-analytics";
 import { DomainReportFallback } from "@/components/domain/domain-report-fallback";
 import { DomainReportView } from "@/components/domain/domain-report-view";
+import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { prefetchWhois } from "@/server/prefetch/domain";
