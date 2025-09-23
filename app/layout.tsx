@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hoot",
+  title: "Hoot — Domain Intelligence Made Easy",
   description: "Investigate domains with WHOIS, DNS, SSL, headers, and more.",
 };
 

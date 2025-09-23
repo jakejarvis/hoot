@@ -21,8 +21,8 @@ export async function generateMetadata({
   const registrable = toRegistrableDomain(normalized);
   if (!registrable) notFound();
   return {
-    title: `${normalized} | Domain report by Hoot`,
-    description: `Investigate ${normalized} with WHOIS, DNS, SSL, headers, and more.`,
+    title: `Domain Report: ${normalized} — Hoot`,
+    description: `Investigate ${normalized}'s WHOIS, DNS, SSL, headers, and more.`,
   };
 }
 
