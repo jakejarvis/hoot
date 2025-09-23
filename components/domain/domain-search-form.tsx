@@ -102,7 +102,7 @@ export function DomainSearchForm({
             aria-describedby="domain-help"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="pl-9 h-12 text-sm"
+            className="pl-9 h-12"
           />
           <span id="domain-help" className="sr-only">
             Enter a domain.
