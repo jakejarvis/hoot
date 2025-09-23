@@ -27,6 +27,7 @@ function MapInner({ hosting }: { hosting: HostingInfo }) {
         touchZoomRotate={false}
         style={{ height: 280, width: "100%" }}
         mapStyle="mapbox://styles/mapbox/standard"
+        reuseMaps
       >
         <Marker longitude={lon} latitude={lat}>
           <div className="h-4 w-4 rounded-full bg-blue-600 ring-2 ring-white shadow-2xl" />
