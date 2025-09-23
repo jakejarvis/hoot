@@ -1,4 +1,4 @@
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SECTION_DEFS } from "./sections/sections-meta";
 
@@ -45,19 +45,17 @@ export function DomainReportFallback() {
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="gap-2 flex items-center">
+                    <div className="gap-2 flex items-center leading-none font-semibold">
                       <span className="text-base">{title}</span>
                     </div>
                     <div className="sr-only">Loading…</div>
                   </div>
-                  <div className="ml-auto flex items-center gap-3 relative">
+                  <div className="ml-auto flex items-center gap-3">
                     {/* Loading status */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       Loading
                     </div>
-                    {/* Chevron to mimic AccordionTrigger */}
-                    <ChevronDown className="text-muted-foreground pointer-events-none size-4 shrink-0 absolute right-[-1rem] top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
               </div>
