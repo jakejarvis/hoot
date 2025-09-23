@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import MapboxMap, { Marker } from "react-map-gl/mapbox";
+import MapboxMap, { Marker, NavigationControl } from "react-map-gl/mapbox";
 import type { HostingInfo } from "@/server/services/hosting";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 function MapInner({ hosting }: { hosting: HostingInfo }) {
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) return null;
@@ -16,7 +17,7 @@ function MapInner({ hosting }: { hosting: HostingInfo }) {
     <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
       <MapboxMap
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{ longitude: lon, latitude: lat, zoom: 5 }}
+        initialViewState={{ longitude: lon, latitude: lat, zoom: 4 }}
         boxZoom={false}
         doubleClickZoom={false}
         dragRotate={false}
@@ -30,6 +31,7 @@ function MapInner({ hosting }: { hosting: HostingInfo }) {
         <Marker longitude={lon} latitude={lat}>
           <div className="h-4 w-4 rounded-full bg-blue-600 ring-2 ring-white shadow-2xl" />
         </Marker>
+        <NavigationControl />
       </MapboxMap>
     </div>
   );
