@@ -102,8 +102,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       tldts:
-        specifier: ^7.0.15
-        version: 7.0.15
+        specifier: ^7.0.16
+        version: 7.0.16
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -2052,11 +2052,11 @@ packages:
   tinyqueue@3.0.0:
     resolution: {integrity: sha512-gRa9gwYU3ECmQYv3lslts5hxuIa90veaEcxDYuu3QGOIAEM2mOZkVHp48ANJuu1CURtRdHKUBY5Lm1tHV+sD4g==}
 
-  tldts-core@7.0.15:
-    resolution: {integrity: sha512-YBkp2VfS9VTRMPNL2PA6PMESmxV1JEVoAr5iBlZnB5JG3KUrWzNCB3yNNkRa2FZkqClaBgfNYCp8PgpYmpjkZw==}
+  tldts-core@7.0.16:
+    resolution: {integrity: sha512-XHhPmHxphLi+LGbH0G/O7dmUH9V65OY20R7vH8gETHsp5AZCjBk9l8sqmRKLaGOxnETU7XNSDUPtewAy/K6jbA==}
 
-  tldts@7.0.15:
-    resolution: {integrity: sha512-heYRCiGLhtI+U/D0V8YM3QRwPfsLJiP+HX+YwiHZTnWzjIKC+ZCxQRYlzvOoTEc6KIP62B1VeAN63diGCng2hg==}
+  tldts@7.0.16:
+    resolution: {integrity: sha512-5bdPHSwbKTeHmXrgecID4Ljff8rQjv7g8zKQPkCozRo2HWWni+p310FSn5ImI+9kWw9kK4lzOB5q/a6iv0IJsw==}
     hasBin: true
 
   to-data-view@1.1.0:
@@ -4025,11 +4025,11 @@ snapshots:
 
   tinyqueue@3.0.0: {}
 
-  tldts-core@7.0.15: {}
+  tldts-core@7.0.16: {}
 
-  tldts@7.0.15:
+  tldts@7.0.16:
     dependencies:
-      tldts-core: 7.0.15
+      tldts-core: 7.0.16
 
   to-data-view@1.1.0: {}
 
