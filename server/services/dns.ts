@@ -105,17 +105,16 @@ async function normalizeAnswer(
   const ttl = a.TTL;
   switch (type) {
     case "A":
-    case "AAAA":
-    case "NS": {
+    case "AAAA": {
       const value = trimDot(a.data);
-      const isCloudflare =
-        type === "A" || type === "AAAA"
-          ? await isCloudflareIpAsync(value)
-          : false;
+      const isCloudflare = await isCloudflareIpAsync(value);
       return { type, name, value, ttl, isCloudflare };
     }
+    case "NS": {
+      return { type, name, value: trimDot(a.data), ttl };
+    }
     case "TXT":
-      return { type, name, value: stripTxtQuotes(a.data), ttl };
+      return { type, name, value: trimQuotes(a.data), ttl };
     case "MX": {
       const [prioStr, ...hostParts] = a.data.split(" ");
       const priority = Number(prioStr);
@@ -134,7 +133,7 @@ async function normalizeAnswer(
 function trimDot(s: string) {
   return s.endsWith(".") ? s.slice(0, -1) : s;
 }
-function stripTxtQuotes(s: string) {
+function trimQuotes(s: string) {
   // Cloudflare may return quoted strings; remove leading/trailing quotes
   return s.replace(/^"|"$/g, "");
 }
