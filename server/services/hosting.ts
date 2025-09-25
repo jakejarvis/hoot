@@ -30,7 +30,7 @@ export type HostingInfo = {
 export async function detectHosting(domain: string): Promise<HostingInfo> {
   const key = ns("hosting", domain.toLowerCase());
   return await getOrSet(key, 24 * 60 * 60, async () => {
-    const dns = await resolveAll(domain);
+    const { records: dns } = await resolveAll(domain);
     const a = dns.find((d) => d.type === "A");
     const mx = dns.filter((d) => d.type === "MX");
     const ns = dns.filter((d) => d.type === "NS");

@@ -65,7 +65,8 @@ export function DomainReportView({
 
   const dnsLoading = dns.isLoading;
   const hasAnyIp =
-    dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
+    dns.data?.records?.some((r) => r.type === "A" || r.type === "AAAA") ??
+    false;
 
   const gateByDns = <T,>(q: { isLoading: boolean; data?: T[] | null }) => {
     if (dnsLoading) {
@@ -141,7 +142,7 @@ export function DomainReportView({
         />
 
         <DnsRecordsSection
-          records={dns.data || null}
+          records={dns.data?.records || null}
           isLoading={dns.isLoading}
           isError={!!dns.isError}
           onRetry={() => {

@@ -56,7 +56,8 @@ export function useDomainQueries(
   );
 
   const hasAnyIp =
-    dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
+    dns.data?.records?.some((r) => r.type === "A" || r.type === "AAAA") ??
+    false;
 
   const certs = useQuery(
     trpc.domain.certificates.queryOptions(

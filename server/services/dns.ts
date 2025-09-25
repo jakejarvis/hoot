@@ -1,7 +1,11 @@
 import { captureServer } from "@/lib/analytics/server";
 import { getOrSet, ns } from "@/lib/redis";
 import { isCloudflareIpAsync } from "./cloudflare";
-import { DOH_PROVIDERS, type DohProvider } from "./doh-providers";
+import {
+  DOH_PROVIDERS,
+  type DohProvider,
+  type DohProviderKey,
+} from "./doh-providers";
 
 export type DnsRecord = {
   type: "A" | "AAAA" | "MX" | "TXT" | "NS";
@@ -15,7 +19,12 @@ export type DnsRecord = {
 type DnsType = DnsRecord["type"];
 const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
 
-export async function resolveAll(domain: string): Promise<DnsRecord[]> {
+export type DnsResolveResult = {
+  records: DnsRecord[];
+  source: DohProviderKey;
+};
+
+export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const lower = domain.toLowerCase();
   const startedAt = Date.now();
   const providers = providerOrderForLookup(lower);
@@ -58,7 +67,7 @@ export async function resolveAll(domain: string): Promise<DnsRecord[]> {
         provider_attempts: attemptIndex + 1,
         duration_ms_by_provider: durationByProvider,
       });
-      return flat;
+      return { records: flat, source: provider.key };
     } catch (err) {
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
