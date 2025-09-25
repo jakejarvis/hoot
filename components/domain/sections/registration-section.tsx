@@ -75,7 +75,7 @@ export function RegistrationSection({
           <KeyValue
             label="Registrant"
             value={formatRegistrant(
-              registrant ?? { organization: "Unknown", country: "" },
+              registrant ?? { organization: "Unavailable", country: "" },
             )}
           />
         </>

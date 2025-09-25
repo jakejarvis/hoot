@@ -1,15 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { HeaderSearch } from "@/components/domain/header-search";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GithubStars } from "./github-stars";
+import { HeaderSearchWrapper } from "./header-search-wrapper";
 
 export function AppHeader() {
-  const pathname = usePathname();
-  const isHome = pathname === "/";
-
   return (
     <header className="sticky top-0 min-h-18 z-40 flex items-center gap-4 px-4 sm:px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       <Link
@@ -19,12 +14,10 @@ export function AppHeader() {
       >
         <Logo className="h-10 w-10" aria-hidden="true" />
       </Link>
-      {!isHome && (
-        <div className="flex-1 flex justify-center">
-          <HeaderSearch />
-        </div>
-      )}
-      <div className="ml-auto">
+      <HeaderSearchWrapper />
+      <div className="ml-auto flex items-center gap-1.5">
+        {/* Server-fetched star count with link */}
+        <GithubStars />
         <ThemeToggle />
       </div>
     </header>
