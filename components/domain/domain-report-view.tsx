@@ -63,6 +63,23 @@ export function DomainReportView({
     return <DomainUnregisteredState domain={domain} />;
   }
 
+  const dnsLoading = dns.isLoading;
+  const hasAnyIp =
+    dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
+
+  const gateByDns = <T,>(q: { isLoading: boolean; data?: T[] | null }) => {
+    if (dnsLoading) {
+      return { isLoading: true, data: null as T[] | null };
+    }
+    if (hasAnyIp) {
+      return { isLoading: q.isLoading, data: (q.data ?? null) as T[] | null };
+    }
+    return { isLoading: false, data: [] as T[] };
+  };
+
+  const certsView = gateByDns(certs);
+  const headersView = gateByDns(headers);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -144,57 +161,31 @@ export function DomainReportView({
           }}
         />
 
-        {(() => {
-          const dnsLoading = dns.isLoading;
-          const hasAnyIp =
-            dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
-          const certsLoading = dnsLoading ? true : certs.isLoading;
-          const certsData = dnsLoading
-            ? null
-            : hasAnyIp
-              ? (certs.data ?? null)
-              : [];
-          return (
-            <CertificatesSection
-              data={certsData}
-              isLoading={certsLoading}
-              isError={!!certs.isError}
-              onRetry={() => {
-                captureClient("section_refetch_clicked", {
-                  domain,
-                  section: "certificates",
-                });
-                certs.refetch();
-              }}
-            />
-          );
-        })()}
+        <CertificatesSection
+          data={certsView.data}
+          isLoading={certsView.isLoading}
+          isError={!!certs.isError}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "certificates",
+            });
+            certs.refetch();
+          }}
+        />
 
-        {(() => {
-          const dnsLoading = dns.isLoading;
-          const hasAnyIp =
-            dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
-          const headersLoading = dnsLoading ? true : headers.isLoading;
-          const headersData = dnsLoading
-            ? null
-            : hasAnyIp
-              ? (headers.data ?? null)
-              : [];
-          return (
-            <HeadersSection
-              data={headersData}
-              isLoading={headersLoading}
-              isError={!!headers.isError}
-              onRetry={() => {
-                captureClient("section_refetch_clicked", {
-                  domain,
-                  section: "headers",
-                });
-                headers.refetch();
-              }}
-            />
-          );
-        })()}
+        <HeadersSection
+          data={headersView.data}
+          isLoading={headersView.isLoading}
+          isError={!!headers.isError}
+          onRetry={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "headers",
+            });
+            headers.refetch();
+          }}
+        />
       </Accordion>
     </div>
   );

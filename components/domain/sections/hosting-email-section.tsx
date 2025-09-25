@@ -85,7 +85,11 @@ export function HostingEmailSection({
           />
           <KeyValue
             label="Location"
-            value={`${data.geo.emoji} ${data.geo.city || data.geo.region || data.geo.country ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}` : ""}`}
+            value={`${data.geo.emoji ? `${data.geo.emoji} ` : ""}${
+              data.geo.city || data.geo.region || data.geo.country
+                ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
+                : ""
+            }`}
           />
           {data.geo.lat != null && data.geo.lon != null ? (
             <div className="mt-2">
