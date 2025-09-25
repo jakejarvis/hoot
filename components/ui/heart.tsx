@@ -7,26 +7,21 @@ interface HeartIconProps extends SVGMotionProps<SVGSVGElement> {
   size?: number;
 }
 
-export const HeartAnimated = ({
-  className,
-  size = 28,
-  ...props
-}: HeartIconProps) => {
+export const HeartAnimated = ({ className, ...props }: HeartIconProps) => {
   return (
     <motion.svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      animate={{ scale: [1, 1.08, 1] }}
+      animate={{ scale: [1, 1.08, 1, 1.08, 1, 1] }}
       transition={{
-        duration: 0.45,
-        repeat: 2,
+        duration: 1.2,
+        repeat: Number.POSITIVE_INFINITY,
+        repeatDelay: 0.8,
       }}
       className={cn(className)}
       {...props}
