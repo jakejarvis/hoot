@@ -55,11 +55,14 @@ export function useDomainQueries(
     ),
   );
 
+  const hasAnyIp =
+    dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
+
   const certs = useQuery(
     trpc.domain.certificates.queryOptions(
       { domain },
       {
-        enabled: !!domain && registered,
+        enabled: !!domain && registered && hasAnyIp,
         staleTime: 30 * 60_000,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -72,7 +75,7 @@ export function useDomainQueries(
     trpc.domain.headers.queryOptions(
       { domain },
       {
-        enabled: !!domain && registered,
+        enabled: !!domain && registered && hasAnyIp,
         staleTime: 30 * 60_000,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,

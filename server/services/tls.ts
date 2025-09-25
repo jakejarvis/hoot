@@ -1,6 +1,6 @@
 import tls from "node:tls";
 import { captureServer } from "@/lib/analytics/server";
-import { getOrSet, ns } from "@/lib/redis";
+import { cacheGet, cacheSet, ns } from "@/lib/redis";
 
 export type Certificate = {
   issuer: string;
@@ -11,10 +11,18 @@ export type Certificate = {
 };
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
-  const key = ns("tls", domain.toLowerCase());
-  return await getOrSet(key, 12 * 60 * 60, async () => {
-    const startedAt = Date.now();
-    let outcome: "ok" | "timeout" | "error" = "ok";
+  const lower = domain.toLowerCase();
+  const key = ns("tls", lower);
+
+  // Cache check
+  const cached = await cacheGet<Certificate[]>(key);
+  if (cached) return cached;
+
+  // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
+
+  const startedAt = Date.now();
+  let outcome: "ok" | "timeout" | "error" = "ok";
+  try {
     const chain = await new Promise<tls.DetailedPeerCertificate[]>(
       (resolve, reject) => {
         const socket = tls.connect(
@@ -51,6 +59,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
         });
       },
     );
+
     const out: Certificate[] = chain.map((c) => ({
       issuer: toName(c.issuer),
       subject: toName(c.subject),
@@ -62,14 +71,26 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     }));
 
     await captureServer("tls_probe", {
-      domain,
+      domain: lower,
       chain_length: out.length,
       duration_ms: Date.now() - startedAt,
       outcome,
     });
 
+    // Cache success for longer; empty chains are still cached briefly
+    await cacheSet(key, out, out.length > 0 ? 12 * 60 * 60 : 10 * 60);
     return out;
-  });
+  } catch (err) {
+    await captureServer("tls_probe", {
+      domain: lower,
+      chain_length: 0,
+      duration_ms: Date.now() - startedAt,
+      outcome,
+      error: String(err),
+    });
+    // Do not treat as fatal; return empty and avoid long-lived negative cache
+    return [];
+  }
 }
 
 function toName(subject: tls.PeerCertificate["subject"] | undefined) {

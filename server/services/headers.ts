@@ -1,35 +1,82 @@
 import { captureServer } from "@/lib/analytics/server";
-import { getOrSet, ns } from "@/lib/redis";
+import { cacheGet, cacheSet, ns } from "@/lib/redis";
 
 export type HttpHeader = { name: string; value: string };
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
-  const key = ns("headers", domain.toLowerCase());
-  return await getOrSet(key, 10 * 60, async () => {
-    const url = `https://${domain}/`;
-    const res = await fetch(url, {
-      method: "HEAD",
-      redirect: "follow" as RequestRedirect,
-    });
-    // Some origins disallow HEAD, fall back to GET
-    const final = res.ok
-      ? res
-      : await fetch(url, {
+  const lower = domain.toLowerCase();
+  const url = `https://${domain}/`;
+  const key = ns("headers", lower);
+
+  const cached = await cacheGet<HttpHeader[]>(key);
+  if (cached) return normalize(cached);
+
+  const REQUEST_TIMEOUT_MS = 5000;
+  try {
+    // Try HEAD first with timeout
+    const headController = new AbortController();
+    const headTimer = setTimeout(
+      () => headController.abort(),
+      REQUEST_TIMEOUT_MS,
+    );
+    let res: Response | null = null;
+    try {
+      res = await fetch(url, {
+        method: "HEAD",
+        redirect: "follow" as RequestRedirect,
+        signal: headController.signal,
+      });
+    } finally {
+      clearTimeout(headTimer);
+    }
+
+    let final: Response | null = res;
+    if (!res || !res.ok) {
+      const getController = new AbortController();
+      const getTimer = setTimeout(
+        () => getController.abort(),
+        REQUEST_TIMEOUT_MS,
+      );
+      try {
+        final = await fetch(url, {
           method: "GET",
           redirect: "follow" as RequestRedirect,
+          signal: getController.signal,
         });
+      } finally {
+        clearTimeout(getTimer);
+      }
+    }
+
+    if (!final) throw new Error("No response");
+
     const headers: HttpHeader[] = [];
     final.headers.forEach((value, name) => {
       headers.push({ name, value });
     });
+    const normalized = normalize(headers);
+
     await captureServer("headers_probe", {
-      domain,
+      domain: lower,
       status: final.status,
-      used_method: res.ok ? "HEAD" : "GET",
+      used_method: res?.ok ? "HEAD" : "GET",
       final_url: final.url,
     });
-    return normalize(headers);
-  });
+
+    // Cache only successful results
+    await cacheSet(key, normalized, 10 * 60);
+    return normalized;
+  } catch (err) {
+    await captureServer("headers_probe", {
+      domain: lower,
+      status: -1,
+      used_method: "ERROR",
+      final_url: url,
+      error: String(err),
+    });
+    // Return empty on failure without caching to avoid long-lived negatives
+    return [];
+  }
 }
 
 function normalize(h: HttpHeader[]): HttpHeader[] {

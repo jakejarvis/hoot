@@ -144,31 +144,57 @@ export function DomainReportView({
           }}
         />
 
-        <CertificatesSection
-          data={certs.data || null}
-          isLoading={certs.isLoading}
-          isError={!!certs.isError}
-          onRetry={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "certificates",
-            });
-            certs.refetch();
-          }}
-        />
+        {(() => {
+          const dnsLoading = dns.isLoading;
+          const hasAnyIp =
+            dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
+          const certsLoading = dnsLoading ? true : certs.isLoading;
+          const certsData = dnsLoading
+            ? null
+            : hasAnyIp
+              ? (certs.data ?? null)
+              : [];
+          return (
+            <CertificatesSection
+              data={certsData}
+              isLoading={certsLoading}
+              isError={!!certs.isError}
+              onRetry={() => {
+                captureClient("section_refetch_clicked", {
+                  domain,
+                  section: "certificates",
+                });
+                certs.refetch();
+              }}
+            />
+          );
+        })()}
 
-        <HeadersSection
-          data={headers.data || null}
-          isLoading={headers.isLoading}
-          isError={!!headers.isError}
-          onRetry={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "headers",
-            });
-            headers.refetch();
-          }}
-        />
+        {(() => {
+          const dnsLoading = dns.isLoading;
+          const hasAnyIp =
+            dns.data?.some((r) => r.type === "A" || r.type === "AAAA") ?? false;
+          const headersLoading = dnsLoading ? true : headers.isLoading;
+          const headersData = dnsLoading
+            ? null
+            : hasAnyIp
+              ? (headers.data ?? null)
+              : [];
+          return (
+            <HeadersSection
+              data={headersData}
+              isLoading={headersLoading}
+              isError={!!headers.isError}
+              onRetry={() => {
+                captureClient("section_refetch_clicked", {
+                  domain,
+                  section: "headers",
+                });
+                headers.refetch();
+              }}
+            />
+          );
+        })()}
       </Accordion>
     </div>
   );
