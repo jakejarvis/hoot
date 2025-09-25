@@ -13,15 +13,14 @@ export const getServerPosthog = (): PostHog | null => {
     return null;
   }
 
-  if (sharedClient) {
-    return sharedClient;
+  if (!sharedClient) {
+    sharedClient = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+      flushAt: 1,
+      flushInterval: 0,
+    });
   }
 
-  sharedClient = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-    host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
-    flushAt: 1,
-    flushInterval: 0,
-  });
   return sharedClient;
 };
 

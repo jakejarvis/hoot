@@ -1,4 +1,5 @@
 onlyBuiltDependencies:
+  - '@posthog/cli'
   - '@tailwindcss/oxide'
   - core-js
   - sharp

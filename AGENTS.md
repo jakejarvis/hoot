@@ -1,29 +1,38 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `app/` hosts the Next.js App Router; default to server components, add `"use client"` only where interaction demands it. Page roots like `app/page.tsx` and API routes in `app/api/*` should stay lean and delegate logic.
-- Reusable UI primitives live in `components/` (kebab-case files, PascalCase exports). Share stateful helpers via `hooks/`, and surface domain utilities from `lib/` using the `@/...` alias to avoid deep relative paths.
-- Backend integrations and tRPC routers belong in `server/`; keep DNS, RDAP/WHOIS, TLS, and header probing services isolated there and reuse caching primitives from `lib/cache`.
-- Static assets sit in `public/`; Tailwind v4 tokens and global styles are managed in `app/globals.css`. Update `instrumentation-client.ts` when adding analytics or observability hooks.
+- `app/` Next.js App Router. Default to server components; keep `app/page.tsx` and `app/api/*` thin and delegate to `server/` or `lib/`.
+- `components/` reusable UI primitives (kebab-case files, PascalCase exports).
+- `hooks/` shared stateful helpers (camelCase named exports).
+- `lib/` domain utilities and caching (`lib/cache`); import via `@/...` aliases.
+- `server/` backend integrations and tRPC routers; isolate DNS, RDAP/WHOIS, TLS, and header probing services.
+- `public/` static assets; Tailwind v4 tokens live in `app/globals.css`. Update `instrumentation-client.ts` when adding analytics.
 
 ## Build, Test, and Development Commands
-- `pnpm dev` starts the turbo-ready dev server at `http://localhost:3000`.
-- `pnpm build` compiles the production bundle; run before deploys.
-- `pnpm start` serves the compiled output for smoke testing.
-- `pnpm lint` runs Biome’s lint + type-aware checks; add `--write` for autofixes.
-- `pnpm format` enforces Biome formatting; `pnpm typecheck` runs `tsc --noEmit` for stricter diagnostics.
+- `pnpm dev` — start dev server at http://localhost:3000.
+- `pnpm build` — compile production bundle.
+- `pnpm start` — serve compiled output for smoke tests.
+- `pnpm lint` — run Biome lint + type-aware checks (`--write` to fix).
+- `pnpm format` — apply Biome formatting.
+- `pnpm typecheck` — run `tsc --noEmit` for stricter diagnostics.
 
 ## Coding Style & Naming Conventions
-- TypeScript is mandatory with `strict` options; keep modules under ~300 LOC and prefer pure functions.
-- Indentation is 2 spaces. Files and folders are kebab-case; exports stay PascalCase; shared helpers use camelCase named exports.
-- Client components must start with `"use client"`. Consolidate shared imports through `@/...` aliases and document non-obvious patterns inline with concise comments when necessary.
+- TypeScript only, `strict` enabled; prefer small, pure modules (≈≤300 LOC).
+- 2-space indentation. Files/folders: kebab-case; exports: PascalCase; helpers: camelCase named exports.
+- Client components must begin with `"use client"`. Consolidate imports via `@/...`. Keep page roots lean.
+
+## Testing Guidelines
+- Prefer Vitest/Jest + React Testing Library. Name tests `*.test.ts(x)` and colocate or place in `tests/`.
+- Focus on `lib/` and `server/` units; add lightweight integration tests for API routes.
+- Add a `pnpm test` script when introducing tests; aim for meaningful coverage on critical paths.
 
 ## Commit & Pull Request Guidelines
-- Commits are single-focus, imperative, sentence case (e.g., `Add RDAP caching layer`). Avoid batching unrelated refactors.
-- PRs must summarize user impact, link issues, flag breaking API or dependency changes, and attach UI screenshots or terminal output when relevant.
-- Call out any skipped checks explicitly and confirm `.env.local` requirements for reviewers.
+- Commits: single-focus, imperative, sentence case (e.g., "Add RDAP caching layer").
+- PRs: describe user impact, link issues, flag breaking changes/deps, and attach screenshots or terminal logs when relevant.
+- Call out skipped checks and confirm `.env.local` requirements for reviewers.
 
 ## Security & Configuration Tips
-- Keep secrets in `.env.local`; Upstash integrations require `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
-- Cache responses for Cloudflare DoH, RDAP, TLS, and header probes via `lib/cache` and apply retry backoff to stay within provider limits.
-- Review `server/trpc.ts` when extending procedures to ensure auth/context expectations remain intact.
+- Keep secrets in `.env.local` (Upstash: `KV_REST_API_URL`, `KV_REST_API_TOKEN`).
+- Cache Cloudflare DoH, RDAP, TLS, and header probes via `lib/cache`; apply retry backoff to respect provider limits.
+- Review `server/trpc.ts` when extending procedures to ensure auth/context remain intact.
+

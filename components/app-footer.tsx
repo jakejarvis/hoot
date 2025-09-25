@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeartAnimated } from "@/components/ui/heart";
+import { HeartAnimated } from "@/components/heart";
 
 export function AppFooter() {
   return (
