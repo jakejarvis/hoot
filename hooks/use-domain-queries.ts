@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import type { DomainRecord } from "rdapper";
 import { useTRPC } from "@/lib/trpc/client";
-import type { Whois } from "@/server/services/rdap-parser";
 
 type UseDomainQueriesOptions = {
-  initialWhois?: Whois;
+  initialRegistration?: DomainRecord;
   initialRegistered?: boolean;
 };
 
@@ -12,12 +12,12 @@ export function useDomainQueries(
   opts?: UseDomainQueriesOptions,
 ) {
   const trpc = useTRPC();
-  const whois = useQuery(
-    trpc.domain.whois.queryOptions(
+  const registration = useQuery(
+    trpc.domain.registration.queryOptions(
       { domain },
       {
         enabled: !!domain,
-        initialData: opts?.initialWhois,
+        initialData: opts?.initialRegistration,
         staleTime: 30 * 60_000, // 30 minutes, avoid churn
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -27,7 +27,7 @@ export function useDomainQueries(
   );
 
   const registered =
-    (opts?.initialRegistered ?? whois.data?.registered) === true;
+    (opts?.initialRegistered ?? registration.data?.isRegistered) === true;
 
   const dns = useQuery(
     trpc.domain.dns.queryOptions(
@@ -82,7 +82,7 @@ export function useDomainQueries(
   );
 
   const allSectionsReady =
-    whois.isSuccess &&
+    registration.isSuccess &&
     registered &&
     dns.isSuccess &&
     hosting.isSuccess &&
@@ -90,7 +90,7 @@ export function useDomainQueries(
     headers.isSuccess;
 
   return {
-    whois,
+    registration,
     dns,
     hosting,
     certs,
