@@ -1,11 +1,12 @@
-import { Heart } from "lucide-react";
 import Link from "next/link";
+import { HeartAnimated } from "@/components/ui/heart";
 
 export function AppFooter() {
   return (
     <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground leading-relaxed [&_a]:text-foreground/85 [&_a]:hover:text-foreground/60 [&_a]:hover:no-underline [&_svg]:inline-block [&_svg]:align-top [&_svg]:mx-[1px] [&_svg]:size-4">
       <p>
-        Made with <Heart className="stroke-destructive fill-destructive" /> and{" "}
+        Made with{" "}
+        <HeartAnimated className="stroke-destructive fill-destructive" /> and{" "}
         <Link href="https://nextjs.org/" target="_blank" rel="noopener">
           {/** biome-ignore lint/a11y/noSvgWithoutTitle: not necessary */}
           <svg
