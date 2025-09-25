@@ -1,5 +1,5 @@
 interface ExportData {
-  whois: unknown;
+  registration: unknown;
   dns: unknown;
   hosting: unknown;
   certificates: unknown;

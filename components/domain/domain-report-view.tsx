@@ -2,6 +2,7 @@
 
 import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import type { DomainRecord } from "rdapper";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
@@ -20,24 +21,28 @@ import { RegistrationSection } from "./sections/registration-section";
 
 export function DomainReportView({
   domain,
-  initialWhois,
+  initialRegistration,
   initialRegistered,
 }: {
   domain: string;
-  initialWhois?: import("@/server/services/rdap-parser").Whois;
+  initialRegistration?: DomainRecord;
   initialRegistered?: boolean;
 }) {
-  const { whois, dns, hosting, certs, headers, allSectionsReady } =
-    useDomainQueries(domain, { initialWhois, initialRegistered });
+  const { registration, dns, hosting, certs, headers, allSectionsReady } =
+    useDomainQueries(domain, { initialRegistration, initialRegistered });
   const { showTtls, setShowTtls } = useTtlPreferences();
 
   // Manage domain history
-  useDomainHistory(domain, whois.isSuccess, whois.data?.registered ?? false);
+  useDomainHistory(
+    domain,
+    registration.isSuccess,
+    registration.data?.isRegistered ?? false,
+  );
 
   const handleExportJson = () => {
     captureClient("export_json_clicked", { domain });
     exportDomainData(domain, {
-      whois: whois.data,
+      registration: registration.data,
       dns: dns.data,
       hosting: hosting.data,
       certificates: certs.data,
@@ -46,12 +51,13 @@ export function DomainReportView({
   };
 
   // Show loading state until WHOIS completes
-  if (whois.isLoading) {
+  if (registration.isLoading) {
     return <DomainLoadingState />;
   }
 
   // Show unregistered state if domain is not registered
-  const isUnregistered = whois.isSuccess && whois.data?.registered === false;
+  const isUnregistered =
+    registration.isSuccess && registration.data?.isRegistered === false;
   if (isUnregistered) {
     captureClient("report_unregistered_viewed", { domain });
     return <DomainUnregisteredState domain={domain} />;
@@ -92,15 +98,15 @@ export function DomainReportView({
 
       <Accordion type="multiple" className="space-y-4">
         <RegistrationSection
-          data={whois.data || null}
-          isLoading={whois.isLoading}
-          isError={!!whois.isError}
+          data={registration.data || null}
+          isLoading={registration.isLoading}
+          isError={!!registration.isError}
           onRetry={() => {
             captureClient("section_refetch_clicked", {
               domain,
-              section: "whois",
+              section: "registration",
             });
-            whois.refetch();
+            registration.refetch();
           }}
         />
 

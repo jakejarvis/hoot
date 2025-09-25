@@ -6,7 +6,7 @@ import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { prefetchWhois } from "@/server/prefetch/domain";
+import { prefetchRegistration } from "@/server/prefetch/domain";
 
 export const experimental_ppr = true;
 
@@ -43,7 +43,7 @@ export default async function DomainPage({
 
   // Preserve PPR by isolating cookie read & analytics to a dynamic island
 
-  const whois = await prefetchWhois(normalized);
+  const registration = await prefetchRegistration(normalized);
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
@@ -55,8 +55,8 @@ export default async function DomainPage({
         />
         <DomainReportView
           domain={normalized}
-          initialWhois={whois}
-          initialRegistered={whois?.registered === true}
+          initialRegistration={registration}
+          initialRegistered={registration?.isRegistered === true}
         />
       </Suspense>
     </div>

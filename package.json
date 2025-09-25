@@ -20,8 +20,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.90.1",
-    "@tanstack/react-query-devtools": "^5.90.1",
+    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "@trpc/client": "^11.5.1",
     "@trpc/server": "^11.5.1",
     "@trpc/tanstack-react-query": "^11.5.1",
@@ -33,16 +33,17 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.23.18",
+    "framer-motion": "^12.23.21",
     "icojs": "^0.19.5",
     "ipaddr.js": "^2.2.0",
     "lucide-react": "^0.544.0",
     "mapbox-gl": "^3.15.0",
-    "next": "15.6.0-canary.20",
+    "next": "15.6.0-canary.28",
     "next-themes": "^0.4.6",
-    "posthog-js": "^1.268.0",
-    "posthog-node": "^5.8.6",
+    "posthog-js": "^1.268.4",
+    "posthog-node": "^5.9.1",
     "radix-ui": "^1.4.3",
+    "rdapper": "^0.1.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-map-gl": "^8.0.4",
@@ -51,10 +52,9 @@
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
-    "tldts": "^7.0.15",
+    "tldts": "^7.0.16",
     "uuid": "^13.0.0",
     "vaul": "^1.1.2",
-    "whoiser": "2.0.0-beta.8",
     "zod": "^4.1.11"
   },
   "devDependencies": {
@@ -65,7 +65,7 @@
     "@types/react-dom": "19.1.9",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "tailwindcss": "^4.1.13",
-    "tw-animate-css": "^1.3.8",
+    "tw-animate-css": "^1.4.0",
     "typescript": "5.9.2"
   },
   "engines": {
