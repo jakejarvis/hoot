@@ -58,7 +58,7 @@ export async function getOrCreateScreenshotBlobUrl(
       throw new Error("puppeteer launcher not configured");
     };
     let launchOptions: Record<string, unknown> = { headless: true };
-    let mode: "chromium" | "puppeteer" = preferChromium
+    let launcherMode: "chromium" | "puppeteer" = preferChromium
       ? "chromium"
       : "puppeteer";
 
@@ -99,24 +99,26 @@ export async function getOrCreateScreenshotBlobUrl(
 
     // First attempt based on platform preference
     try {
-      if (mode === "chromium") await setupChromium();
+      if (launcherMode === "chromium") await setupChromium();
       else await setupPuppeteer();
       // Try launch
 
-      console.debug("[screenshot] launching browser", { mode });
+      console.debug("[screenshot] launching browser", { mode: launcherMode });
       browser = await puppeteerLaunch(launchOptions);
     } catch (firstErr) {
       console.warn("[screenshot] first launch attempt failed", {
-        mode,
+        mode: launcherMode,
         error: (firstErr as Error)?.message,
       });
       // Flip mode and retry once
-      mode = mode === "chromium" ? "puppeteer" : "chromium";
+      launcherMode = launcherMode === "chromium" ? "puppeteer" : "chromium";
       try {
-        if (mode === "chromium") await setupChromium();
+        if (launcherMode === "chromium") await setupChromium();
         else await setupPuppeteer();
 
-        console.debug("[screenshot] retry launching browser", { mode });
+        console.debug("[screenshot] retry launching browser", {
+          mode: launcherMode,
+        });
         browser = await puppeteerLaunch(launchOptions);
       } catch (secondErr) {
         console.error("[screenshot] both launch attempts failed", {
@@ -127,7 +129,7 @@ export async function getOrCreateScreenshotBlobUrl(
       }
     }
 
-    console.debug("[screenshot] browser launched", { mode });
+    console.debug("[screenshot] browser launched", { mode: launcherMode });
 
     const tryUrls = buildHomepageUrls(domain);
     for (const url of tryUrls) {
@@ -174,7 +176,9 @@ export async function getOrCreateScreenshotBlobUrl(
               domain,
               width: VIEWPORT_WIDTH,
               height: VIEWPORT_HEIGHT,
-              source: url.startsWith("https:") ? "direct_https" : "direct_http",
+              source: url.startsWith("https://")
+                ? "direct_https"
+                : "direct_http",
               duration_ms: Date.now() - startedAt,
               outcome: "ok",
               cache: "store_blob",

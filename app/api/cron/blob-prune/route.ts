@@ -33,11 +33,10 @@ function shouldDeletePath(
   return bucketNum <= currentBucket - keep;
 }
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   const secret = getCronSecret();
-  const header =
-    req.headers.get("authorization") || req.headers.get("x-cron-secret");
-  if (!secret || (header !== `Bearer ${secret}` && header !== secret)) {
+  const header = req.headers.get("authorization");
+  if (!secret || header !== `Bearer ${secret}`) {
     return new NextResponse("unauthorized", { status: 401 });
   }
 
@@ -84,5 +83,3 @@ export async function POST(req: Request) {
     errorsCount: errors.length,
   });
 }
-
-export const GET = POST;
