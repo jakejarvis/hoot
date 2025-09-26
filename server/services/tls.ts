@@ -93,7 +93,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   }
 }
 
-function toName(subject: tls.PeerCertificate["subject"] | undefined) {
+export function toName(subject: tls.PeerCertificate["subject"] | undefined) {
   if (!subject) return "";
   const maybeRecord = subject as unknown as Record<string, unknown>;
   const cn =
@@ -105,7 +105,7 @@ function toName(subject: tls.PeerCertificate["subject"] | undefined) {
   return cn ? cn : o ? o : JSON.stringify(subject);
 }
 
-function parseAltNames(subjectAltName: string | undefined): string[] {
+export function parseAltNames(subjectAltName: string | undefined): string[] {
   if (typeof subjectAltName !== "string" || subjectAltName.length === 0) {
     return [];
   }
