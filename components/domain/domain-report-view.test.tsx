@@ -60,6 +60,7 @@ vi.mock("../../hooks/use-domain-queries", () => ({
     },
     certs: { isLoading: false, data: [], isError: false, refetch: vi.fn() },
     headers: { isLoading: false, data: [], isError: false, refetch: vi.fn() },
+    seo: { isLoading: false, data: null, isError: false, refetch: vi.fn() },
     allSectionsReady: true,
   }),
 }));
@@ -82,5 +83,6 @@ describe("DomainReportView", () => {
     expect(screen.getByText("DNS Records")).toBeInTheDocument();
     expect(screen.getByText("SSL Certificates")).toBeInTheDocument();
     expect(screen.getByText("HTTP Headers")).toBeInTheDocument();
+    expect(screen.getByText("SEO & Social")).toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ interface ExportData {
   hosting: unknown;
   certificates: unknown;
   headers: unknown;
+  seo?: unknown;
 }
 
 export function exportDomainData(domain: string, data: ExportData) {

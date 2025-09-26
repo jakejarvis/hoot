@@ -1,6 +1,6 @@
-import { Globe, HardDrive, List, ShieldCheck, User } from "lucide-react";
+import { Globe, HardDrive, List, ShieldCheck, User, Share2 } from "lucide-react";
 
-export type SectionAccent = "blue" | "purple" | "green" | "orange" | "pink";
+export type SectionAccent = "blue" | "purple" | "green" | "orange" | "pink" | "cyan";
 
 export const SECTION_DEFS = {
   registration: {
@@ -37,6 +37,13 @@ export const SECTION_DEFS = {
     Icon: List,
     description: "Server, security, caching",
     help: "Headers include server info and security/caching directives returned by a site.",
+  },
+  seo: {
+    title: "SEO & Social",
+    accent: "cyan" as SectionAccent,
+    Icon: Share2,
+    description: "Meta tags and social previews",
+    help: "Open Graph, Twitter Card, and standard meta tags for social media and SEO.",
   },
 } as const;
 

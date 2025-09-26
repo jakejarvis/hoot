@@ -19,6 +19,7 @@ import { DnsRecordsSection } from "./sections/dns-records-section";
 import { HeadersSection } from "./sections/headers-section";
 import { HostingEmailSection } from "./sections/hosting-email-section";
 import { RegistrationSection } from "./sections/registration-section";
+import { SeoSection } from "./seo/seo-section";
 
 export function DomainReportView({
   domain,
@@ -29,7 +30,7 @@ export function DomainReportView({
   initialRegistration?: DomainRecord;
   initialRegistered?: boolean;
 }) {
-  const { registration, dns, hosting, certs, headers, allSectionsReady } =
+  const { registration, dns, hosting, certs, headers, seo, allSectionsReady } =
     useDomainQueries(domain, { initialRegistration, initialRegistered });
   const { showTtls, setShowTtls } = useTtlPreferences();
 
@@ -48,6 +49,7 @@ export function DomainReportView({
       hosting: hosting.data,
       certificates: certs.data,
       headers: headers.data,
+      seo: seo.data,
     });
   };
 
@@ -81,6 +83,17 @@ export function DomainReportView({
 
   const certsView = gateByDns(certs);
   const headersView = gateByDns(headers);
+
+  // SEO doesn't return an array, so handle it differently
+  const seoView = (() => {
+    if (dnsLoading) {
+      return { isLoading: true, data: null };
+    }
+    if (hasAnyIp) {
+      return { isLoading: seo.isLoading, data: seo.data ?? null };
+    }
+    return { isLoading: false, data: null };
+  })();
 
   return (
     <div className="space-y-4">
@@ -188,6 +201,19 @@ export function DomainReportView({
               section: "headers",
             });
             headers.refetch();
+          }}
+        />
+
+        <SeoSection
+          data={seoView.data}
+          isLoading={seoView.isLoading}
+          isError={!!seo.isError}
+          onRetryAction={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "seo",
+            });
+            seo.refetch();
           }}
         />
       </Accordion>

@@ -85,13 +85,27 @@ export function useDomainQueries(
     ),
   );
 
+  const seo = useQuery(
+    trpc.seo.seo.queryOptions(
+      { domain },
+      {
+        enabled: !!domain && registered && hasAnyIp,
+        staleTime: 30 * 60_000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
+    ),
+  );
+
   const allSectionsReady =
     registration.isSuccess &&
     registered &&
     dns.isSuccess &&
     hosting.isSuccess &&
     certs.isSuccess &&
-    headers.isSuccess;
+    headers.isSuccess &&
+    seo.isSuccess;
 
   return {
     registration,
@@ -99,6 +113,7 @@ export function useDomainQueries(
     hosting,
     certs,
     headers,
+    seo,
     allSectionsReady,
   };
 }

@@ -77,6 +77,11 @@
     oklch(0.96 0.16 350),
     transparent
   );
+  --accent-cyan-glow: radial-gradient(
+    closest-side,
+    oklch(0.94 0.12 200),
+    transparent
+  );
 
   /* DNS badge accent tokens */
   --dns-a: oklch(0.62 0.2 255);
@@ -131,6 +136,11 @@
   --accent-pink-glow: radial-gradient(
     closest-side,
     oklch(0.82 0.16 350),
+    transparent
+  );
+  --accent-cyan-glow: radial-gradient(
+    closest-side,
+    oklch(0.8 0.12 200),
     transparent
   );
 
@@ -230,5 +240,8 @@
   }
   [data-accent="pink"] .accent-glow {
     --section-accent-glow: var(--accent-pink-glow);
+  }
+  [data-accent="cyan"] .accent-glow {
+    --section-accent-glow: var(--accent-cyan-glow);
   }
 }

@@ -32,7 +32,7 @@ export function Section({
   description?: string;
   help?: string;
   icon?: React.ReactNode;
-  accent?: "blue" | "purple" | "green" | "orange" | "pink";
+  accent?: "blue" | "purple" | "green" | "orange" | "pink" | "cyan";
   status?: "loading" | "ready" | "error";
   headerRight?: React.ReactNode;
   children?: React.ReactNode;
