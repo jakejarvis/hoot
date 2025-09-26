@@ -6,13 +6,8 @@ import { ScreenshotTooltip } from "./screenshot-tooltip";
 
 // Mock tooltip primitives to render immediately without portals
 vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({
-    children,
-    ...props
-  }: { children: React.ReactNode } & Record<string, unknown>) => (
-    <div data-slot="tooltip" {...props}>
-      {children}
-    </div>
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-slot="tooltip">{children}</div>
   ),
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
     <button type="button" data-slot="tooltip-trigger">

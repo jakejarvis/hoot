@@ -47,23 +47,87 @@ export async function getOrCreateScreenshotBlobUrl(
   // 2) Attempt to capture
   let browser: import("puppeteer-core").Browser | null = null;
   try {
-    const isVercel = !!process.env.VERCEL_ENV;
-    let puppeteer: typeof import("puppeteer-core") | typeof import("puppeteer");
-    let launchOptions: Record<string, unknown> = { headless: true };
+    const isVercel = !!process.env.VERCEL;
+    const isLinux = process.platform === "linux";
+    const preferChromium = isLinux || isVercel;
 
-    if (isVercel) {
+    type LaunchFn = (
+      options?: Record<string, unknown>,
+    ) => Promise<import("puppeteer-core").Browser>;
+    let puppeteerLaunch: LaunchFn = async () => {
+      throw new Error("puppeteer launcher not configured");
+    };
+    let launchOptions: Record<string, unknown> = { headless: true };
+    let mode: "chromium" | "puppeteer" = preferChromium
+      ? "chromium"
+      : "puppeteer";
+
+    async function setupChromium() {
       const chromium = (await import("@sparticuz/chromium")).default;
-      puppeteer = await import("puppeteer-core");
+      const core = await import("puppeteer-core");
+      puppeteerLaunch = core.launch as unknown as LaunchFn;
       launchOptions = {
         ...launchOptions,
         args: chromium.args,
         executablePath: await chromium.executablePath(),
       };
-    } else {
-      puppeteer = await import("puppeteer");
+
+      console.debug("[screenshot] using chromium", {
+        executablePath: (launchOptions as { executablePath?: unknown })
+          .executablePath,
+      });
     }
 
-    browser = await puppeteer.launch(launchOptions);
+    async function setupPuppeteer() {
+      const full = await import("puppeteer");
+      puppeteerLaunch = (full as unknown as { launch: LaunchFn }).launch;
+      const path = process.env.PUPPETEER_EXECUTABLE_PATH;
+      launchOptions = {
+        ...launchOptions,
+        ...(path ? { executablePath: path } : {}),
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+        ],
+      };
+
+      console.debug("[screenshot] using puppeteer", {
+        executablePath: path || null,
+      });
+    }
+
+    // First attempt based on platform preference
+    try {
+      if (mode === "chromium") await setupChromium();
+      else await setupPuppeteer();
+      // Try launch
+
+      console.debug("[screenshot] launching browser", { mode });
+      browser = await puppeteerLaunch(launchOptions);
+    } catch (firstErr) {
+      console.warn("[screenshot] first launch attempt failed", {
+        mode,
+        error: (firstErr as Error)?.message,
+      });
+      // Flip mode and retry once
+      mode = mode === "chromium" ? "puppeteer" : "chromium";
+      try {
+        if (mode === "chromium") await setupChromium();
+        else await setupPuppeteer();
+
+        console.debug("[screenshot] retry launching browser", { mode });
+        browser = await puppeteerLaunch(launchOptions);
+      } catch (secondErr) {
+        console.error("[screenshot] both launch attempts failed", {
+          first_error: (firstErr as Error)?.message,
+          second_error: (secondErr as Error)?.message,
+        });
+        throw secondErr;
+      }
+    }
+
+    console.debug("[screenshot] browser launched", { mode });
 
     const tryUrls = buildHomepageUrls(domain);
     for (const url of tryUrls) {
@@ -76,10 +140,13 @@ export async function getOrCreateScreenshotBlobUrl(
         });
         await page.setUserAgent(USER_AGENT);
 
+        console.debug("[screenshot] navigating", { url });
         await page.goto(url, {
           waitUntil: "networkidle2",
           timeout: NAV_TIMEOUT_MS,
         });
+
+        console.debug("[screenshot] navigated", { url });
 
         const rawPng: Buffer = (await page.screenshot({
           type: "png",
@@ -98,6 +165,8 @@ export async function getOrCreateScreenshotBlobUrl(
             png,
           );
 
+          console.info("[screenshot] stored blob", { url: storedUrl });
+
           await captureServer(
             "screenshot_capture",
             {
@@ -114,12 +183,22 @@ export async function getOrCreateScreenshotBlobUrl(
 
           return { url: storedUrl };
         }
-      } catch {
+      } catch (err) {
         // try next URL
+
+        console.warn("[screenshot] attempt failed", {
+          url,
+          error: (err as Error)?.message,
+        });
       }
     }
-  } catch {
+  } catch (err) {
     // fallthrough to not_found
+
+    console.error("[screenshot] capture failed", {
+      domain,
+      error: (err as Error)?.message,
+    });
   } finally {
     if (browser) {
       try {
@@ -140,5 +219,7 @@ export async function getOrCreateScreenshotBlobUrl(
     },
     opts?.distinctId,
   );
+
+  console.warn("[screenshot] returning null", { domain });
   return { url: null };
 }
