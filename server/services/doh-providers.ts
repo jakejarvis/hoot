@@ -1,3 +1,4 @@
+import { USER_AGENT } from "./constants";
 export type DnsRecordType = "A" | "AAAA" | "MX" | "TXT" | "NS";
 
 export type DohProviderKey = "cloudflare" | "google";
@@ -10,7 +11,7 @@ export type DohProvider = {
 
 const DEFAULT_HEADERS: Record<string, string> = {
   accept: "application/dns-json",
-  "user-agent": "hoot.sh/0.1 (+https://hoot.sh)",
+  "user-agent": USER_AGENT,
 };
 
 export const DOH_PROVIDERS: DohProvider[] = [

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 
 export function Screenshot({
   domain,
@@ -62,7 +63,11 @@ export function Screenshot({
             alt={`Homepage preview of ${domain}`}
             width={width}
             height={height}
-            className={`rounded-md border h-auto w-full object-cover ${aspectClassName} ${imageClassName ?? ""}`}
+            className={cn(
+              "rounded-md border h-auto w-full object-cover",
+              aspectClassName,
+              imageClassName,
+            )}
             unoptimized
             priority={false}
           />

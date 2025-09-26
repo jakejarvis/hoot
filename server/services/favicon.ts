@@ -1,6 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
 import { convertBufferToSquarePng } from "@/lib/image";
+import { USER_AGENT } from "./constants";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -18,7 +19,7 @@ async function fetchWithTimeout(
       redirect: "follow",
       headers: {
         Accept: "image/avif,image/webp,image/png,image/*;q=0.9,*/*;q=0.8",
-        "User-Agent": "hoot.sh/0.1 (+https://hoot.sh)",
+        "User-Agent": USER_AGENT,
       },
       signal: controller.signal,
       ...init,

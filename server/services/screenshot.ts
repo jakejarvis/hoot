@@ -1,6 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headScreenshotBlob, putScreenshotBlob } from "@/lib/blob";
 import { optimizePngCover } from "@/lib/image";
+import { USER_AGENT } from "./constants";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -73,7 +74,7 @@ export async function getOrCreateScreenshotBlobUrl(
           height: VIEWPORT_HEIGHT,
           deviceScaleFactor: 1,
         });
-        await page.setUserAgent("hoot.sh/0.1 (+https://hoot.sh)");
+        await page.setUserAgent(USER_AGENT);
 
         await page.goto(url, {
           waitUntil: "networkidle2",

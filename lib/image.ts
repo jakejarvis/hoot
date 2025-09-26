@@ -48,11 +48,12 @@ export async function convertBufferToPngCover(
         let chosen: IcoFrame = frames[0];
         chosen = frames.reduce((best: IcoFrame, cur: IcoFrame) => {
           const bw = Number(best?.width ?? 0);
-          const cw = Number(cur?.width ?? 0);
           const bh = Number(best?.height ?? 0);
+          const cw = Number(cur?.width ?? 0);
           const ch = Number(cur?.height ?? 0);
-          const bDelta = Math.abs(Math.max(bw, bh) - Math.max(width, height));
-          const cDelta = Math.abs(Math.max(cw, ch) - Math.max(width, height));
+          // Manhattan distance to target rectangle for better rectangular fit
+          const bDelta = Math.abs(bw - width) + Math.abs(bh - height);
+          const cDelta = Math.abs(cw - width) + Math.abs(ch - height);
           return cDelta < bDelta ? cur : best;
         }, chosen);
 
