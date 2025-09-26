@@ -17,7 +17,6 @@ vi.mock("next/image", () => ({
     width: number;
     height: number;
   }) =>
-    // eslint-disable-next-line jsx-a11y/alt-text
     React.createElement("img", {
       alt,
       src,

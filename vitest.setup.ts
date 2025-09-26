@@ -39,7 +39,6 @@ vi.mock("@/lib/redis", () => __redisImpl);
 declare global {
   // Makes the test helper available in the test environment
   // without polluting production types
-  // eslint-disable-next-line no-var
   var __redisTestHelper: {
     store: Map<string, unknown>;
     reset: () => void;
@@ -51,6 +50,9 @@ globalThis.__redisTestHelper = {
   reset: __redisImpl.reset,
 };
 
+// Note: The unstable_cache mock is intentionally a no-op. We are testing
+// function behavior, not caching semantics. If we need cache behavior,
+// replace this with a tiny in-memory map keyed by args.
 vi.mock("next/cache", () => ({
   unstable_cache: <T extends (...args: unknown[]) => unknown>(
     fn: T,

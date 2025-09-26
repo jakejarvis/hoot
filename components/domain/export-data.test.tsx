@@ -3,11 +3,11 @@ import { exportDomainData } from "./export-data";
 
 describe("exportDomainData", () => {
   it("creates a JSON blob URL and clicks anchor with expected filename", () => {
-    // In jsdom, URL.createObjectURL may not exist; define it when missing
+    // Explicitly mock object URL APIs for predictable behavior
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
       writable: true,
-      value: URL.createObjectURL || vi.fn(),
+      value: vi.fn(),
     });
     const createObjectURL = vi
       .spyOn(URL, "createObjectURL")
@@ -15,7 +15,7 @@ describe("exportDomainData", () => {
     Object.defineProperty(URL, "revokeObjectURL", {
       configurable: true,
       writable: true,
-      value: URL.revokeObjectURL || vi.fn(),
+      value: vi.fn(),
     });
     const revoke = vi
       .spyOn(URL, "revokeObjectURL")

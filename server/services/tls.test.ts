@@ -11,14 +11,9 @@ const tlsMock = vi.hoisted(() => ({
 vi.mock("node:tls", async () => {
   const actual = await vi.importActual<typeof import("node:tls")>("node:tls");
   const mockedConnect = ((...args: unknown[]) => {
-    const listener =
-      typeof args[1] === "function"
-        ? (args[1] as () => void)
-        : typeof args[3] === "function"
-          ? (args[3] as () => void)
-          : typeof args[2] === "function"
-            ? (args[2] as () => void)
-            : undefined;
+    const listener = args.find((a) => typeof a === "function") as
+      | (() => void)
+      | undefined;
     const sock = tlsMock.socketMock as tls.TLSSocket;
     if (tlsMock.callListener) {
       setTimeout(() => listener?.(), 0);
@@ -33,7 +28,7 @@ vi.mock("node:tls", async () => {
 });
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCertificates } from "./tls";
+import { getCertificates, parseAltNames, toName } from "./tls";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -125,27 +120,6 @@ describe("getCertificates", () => {
   });
 });
 
-// Access helpers via require to avoid needing to export; duplicate logic here for unit tests
-const parseAltNames = (subjectAltName: string | undefined): string[] => {
-  if (typeof subjectAltName !== "string" || subjectAltName.length === 0) {
-    return [];
-  }
-  return subjectAltName
-    .split(",")
-    .map((segment) => segment.trim())
-    .map((segment) => {
-      const idx = segment.indexOf(":");
-      if (idx === -1) return ["", segment] as const;
-      const kind = segment.slice(0, idx).trim().toUpperCase();
-      const value = segment.slice(idx + 1).trim();
-      return [kind, value] as const;
-    })
-    .filter(
-      ([kind, value]) => !!value && (kind === "DNS" || kind === "IP ADDRESS"),
-    )
-    .map(([_, value]) => value);
-};
-
 describe("tls helper parsing", () => {
   it("parseAltNames extracts DNS/IP values and ignores others", () => {
     const input = "DNS:example.com, IP Address:1.2.3.4, URI:http://x";
@@ -155,5 +129,15 @@ describe("tls helper parsing", () => {
   it("parseAltNames handles empty/missing", () => {
     expect(parseAltNames(undefined)).toEqual([]);
     expect(parseAltNames("")).toEqual([]);
+  });
+  it("toName prefers CN then O then stringifies", () => {
+    const cnOnly = {
+      CN: "cn.example",
+    } as unknown as tls.PeerCertificate["subject"];
+    const orgOnly = { O: "Org" } as unknown as tls.PeerCertificate["subject"];
+    const other = { X: "Y" } as unknown as tls.PeerCertificate["subject"];
+    expect(toName(cnOnly)).toBe("cn.example");
+    expect(toName(orgOnly)).toBe("Org");
+    expect(toName(other)).toContain("X");
   });
 });
