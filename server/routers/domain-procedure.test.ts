@@ -6,10 +6,6 @@ import type { ZodError } from "zod";
 import { router } from "../trpc";
 import { createDomainProcedure, domainInput } from "./domain-procedure";
 
-vi.mock("@/lib/analytics/server", () => ({
-  captureServer: vi.fn(async () => undefined),
-}));
-
 vi.mock("@/lib/domain", () => ({
   normalizeDomainInput: (s: string) => s.trim().toLowerCase(),
 }));
