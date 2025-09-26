@@ -1,10 +1,14 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
-// Global mock for analytics capture to avoid network/log noise in tests
+// Global mocks for analytics capture to avoid network/log noise in tests
 vi.mock("@/lib/analytics/server", () => ({
   captureServer: vi.fn(async () => undefined),
 }));
+vi.mock("@/lib/analytics/client", () => ({ captureClient: vi.fn() }));
+
+// Make server-only a no-op so we can import server modules in tests
+vi.mock("server-only", () => ({}));
 
 // Global Redis mock to prevent Upstash calls and reduce repetition across tests
 const __redisImpl = vi.hoisted(() => {

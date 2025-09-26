@@ -72,10 +72,6 @@ vi.mock("../../hooks/use-domain-history", () => ({
   useDomainHistory: vi.fn(),
 }));
 
-vi.mock("@/lib/analytics/client", () => ({
-  captureClient: vi.fn(),
-}));
-
 describe("DomainReportView", () => {
   it("renders heading and sections with ready data", () => {
     render(<DomainReportView domain="example.com" />);
