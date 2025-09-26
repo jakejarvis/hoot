@@ -5,6 +5,31 @@ import { head, put } from "@vercel/blob";
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 
+function toPositiveInt(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+export function getFaviconTtlSeconds(): number {
+  return toPositiveInt(process.env.FAVICON_TTL_SECONDS, ONE_WEEK_SECONDS);
+}
+
+export function getScreenshotTtlSeconds(): number {
+  return toPositiveInt(process.env.SCREENSHOT_TTL_SECONDS, ONE_WEEK_SECONDS);
+}
+
+function getBucket(nowMs: number, ttlSeconds: number): number {
+  return Math.floor(nowMs / (ttlSeconds * 1000));
+}
+
+export function getFaviconBucket(nowMs = Date.now()): number {
+  return getBucket(nowMs, getFaviconTtlSeconds());
+}
+
+export function getScreenshotBucket(nowMs = Date.now()): number {
+  return getBucket(nowMs, getScreenshotTtlSeconds());
+}
+
 function getSigningSecret(): string {
   if (
     process.env.NODE_ENV === "production" &&
@@ -21,26 +46,35 @@ function getSigningSecret(): string {
 }
 
 export function computeFaviconBlobPath(domain: string, size: number): string {
-  const input = `${domain}:${size}`;
+  const bucket = getFaviconBucket();
+  const input = `${bucket}:${domain}:${size}`;
   const secret = getSigningSecret();
   const digest = createHmac("sha256", secret).update(input).digest("hex");
   // Avoid leaking domain; path is deterministic but unpredictable without secret
-  return `favicons/${digest}/${size}.png`;
+  return `favicons/${bucket}/${digest}/${size}.png`;
 }
 
 export async function headFaviconBlob(
   domain: string,
   size: number,
 ): Promise<string | null> {
-  const pathname = computeFaviconBlobPath(domain, size);
-  try {
-    const res = await head(pathname, {
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
-    return res?.url ?? null;
-  } catch {
-    return null;
+  const current = getFaviconBucket();
+  const candidates = [current, current - 1];
+  for (const bucket of candidates) {
+    const input = `${bucket}:${domain}:${size}`;
+    const secret = getSigningSecret();
+    const digest = createHmac("sha256", secret).update(input).digest("hex");
+    const pathname = `favicons/${bucket}/${digest}/${size}.png`;
+    try {
+      const res = await head(pathname, {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      if (res?.url) return res.url;
+    } catch {
+      // try next candidate
+    }
   }
+  return null;
 }
 
 export async function putFaviconBlob(
@@ -48,11 +82,15 @@ export async function putFaviconBlob(
   size: number,
   png: Buffer,
 ): Promise<string> {
-  const pathname = computeFaviconBlobPath(domain, size);
+  const bucket = getFaviconBucket();
+  const input = `${bucket}:${domain}:${size}`;
+  const secret = getSigningSecret();
+  const digest = createHmac("sha256", secret).update(input).digest("hex");
+  const pathname = `favicons/${bucket}/${digest}/${size}.png`;
   const res = await put(pathname, png, {
     access: "public",
     contentType: "image/png",
-    cacheControlMaxAge: ONE_WEEK_SECONDS,
+    cacheControlMaxAge: getFaviconTtlSeconds(),
     token: process.env.BLOB_READ_WRITE_TOKEN,
   });
   return res.url;
@@ -65,10 +103,11 @@ export function computeScreenshotBlobPath(
   width: number,
   height: number,
 ): string {
-  const input = `${domain}:${width}x${height}`;
+  const bucket = getScreenshotBucket();
+  const input = `${bucket}:${domain}:${width}x${height}`;
   const secret = getSigningSecret();
   const digest = createHmac("sha256", secret).update(input).digest("hex");
-  return `screenshots/${digest}/${width}x${height}.png`;
+  return `screenshots/${bucket}/${digest}/${width}x${height}.png`;
 }
 
 export async function headScreenshotBlob(
@@ -76,15 +115,23 @@ export async function headScreenshotBlob(
   width: number,
   height: number,
 ): Promise<string | null> {
-  const pathname = computeScreenshotBlobPath(domain, width, height);
-  try {
-    const res = await head(pathname, {
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
-    return res?.url ?? null;
-  } catch {
-    return null;
+  const current = getScreenshotBucket();
+  const candidates = [current, current - 1];
+  for (const bucket of candidates) {
+    const input = `${bucket}:${domain}:${width}x${height}`;
+    const secret = getSigningSecret();
+    const digest = createHmac("sha256", secret).update(input).digest("hex");
+    const pathname = `screenshots/${bucket}/${digest}/${width}x${height}.png`;
+    try {
+      const res = await head(pathname, {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      if (res?.url) return res.url;
+    } catch {
+      // try next candidate
+    }
   }
+  return null;
 }
 
 export async function putScreenshotBlob(
@@ -93,11 +140,15 @@ export async function putScreenshotBlob(
   height: number,
   png: Buffer,
 ): Promise<string> {
-  const pathname = computeScreenshotBlobPath(domain, width, height);
+  const bucket = getScreenshotBucket();
+  const input = `${bucket}:${domain}:${width}x${height}`;
+  const secret = getSigningSecret();
+  const digest = createHmac("sha256", secret).update(input).digest("hex");
+  const pathname = `screenshots/${bucket}/${digest}/${width}x${height}.png`;
   const res = await put(pathname, png, {
     access: "public",
     contentType: "image/png",
-    cacheControlMaxAge: ONE_WEEK_SECONDS,
+    cacheControlMaxAge: getScreenshotTtlSeconds(),
     token: process.env.BLOB_READ_WRITE_TOKEN,
   });
   return res.url;
