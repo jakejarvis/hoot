@@ -51,7 +51,7 @@ describe("RegistrationSection", () => {
         data={record}
         isLoading={false}
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
 
@@ -72,7 +72,7 @@ describe("RegistrationSection", () => {
         data={null}
         isLoading={false}
         isError
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText(/Failed to load WHOIS/i)).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe("RegistrationSection", () => {
         data={null}
         isLoading
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     // skeletons are present via role none; just assert section title appears to ensure render

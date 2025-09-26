@@ -16,14 +16,14 @@ type RegistrantView = { organization: string; country: string; state?: string };
 
 export function RegistrationSection({
   data,
-  isLoading,
+  isLoading: _isLoading,
   isError,
-  onRetry,
+  onRetryAction,
 }: {
   data?: DomainRecord | null;
   isLoading: boolean;
   isError: boolean;
-  onRetry: () => void;
+  onRetryAction: () => void;
 }) {
   const Def = SECTION_DEFS.registration;
   const registrar: RegistrarView | null = data
@@ -42,7 +42,7 @@ export function RegistrationSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isLoading ? "loading" : isError ? "error" : "ready"}
+      status={isError ? "error" : data ? "ready" : "loading"}
     >
       {data ? (
         <>
@@ -80,7 +80,10 @@ export function RegistrationSection({
           />
         </>
       ) : isError ? (
-        <ErrorWithRetry message="Failed to load WHOIS." onRetry={onRetry} />
+        <ErrorWithRetry
+          message="Failed to load WHOIS."
+          onRetry={onRetryAction}
+        />
       ) : (
         <Skeletons count={4} />
       )}

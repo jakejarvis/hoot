@@ -16,9 +16,9 @@ import { SECTION_DEFS } from "./sections-meta";
 
 export function CertificatesSection({
   data,
-  isLoading,
+  isLoading: _isLoading,
   isError,
-  onRetry,
+  onRetryAction,
 }: {
   data?: Array<{
     issuer: string;
@@ -29,7 +29,7 @@ export function CertificatesSection({
   }> | null;
   isLoading: boolean;
   isError: boolean;
-  onRetry: () => void;
+  onRetryAction: () => void;
 }) {
   const Def = SECTION_DEFS.certificates;
   return (
@@ -39,7 +39,7 @@ export function CertificatesSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isLoading ? "loading" : isError ? "error" : "ready"}
+      status={isError ? "error" : data ? "ready" : "loading"}
     >
       {data ? (
         data.map((c, idx) => (
@@ -86,7 +86,7 @@ export function CertificatesSection({
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load certificates."
-          onRetry={onRetry}
+          onRetry={onRetryAction}
         />
       ) : (
         <Skeletons count={1} />

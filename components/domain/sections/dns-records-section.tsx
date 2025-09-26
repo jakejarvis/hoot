@@ -12,18 +12,18 @@ import { SECTION_DEFS } from "./sections-meta";
 
 export function DnsRecordsSection({
   records,
-  isLoading,
+  isLoading: _isLoading,
   isError,
-  onRetry,
+  onRetryAction,
   showTtls,
-  onToggleTtls,
+  onToggleTtlsAction,
 }: {
   records?: DnsRecord[] | null;
   isLoading: boolean;
   isError: boolean;
-  onRetry: () => void;
+  onRetryAction: () => void;
   showTtls: boolean;
-  onToggleTtls: (next: boolean) => void;
+  onToggleTtlsAction: (next: boolean) => void;
 }) {
   const headerRight = (
     <Label
@@ -40,7 +40,7 @@ export function DnsRecordsSection({
         id="show-ttls"
         className="cursor-pointer"
         checked={showTtls}
-        onCheckedChange={(v) => onToggleTtls(v === true)}
+        onCheckedChange={(v) => onToggleTtlsAction(v === true)}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
@@ -61,7 +61,7 @@ export function DnsRecordsSection({
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
       headerRight={headerRight}
-      status={isLoading ? "loading" : isError ? "error" : "ready"}
+      status={isError ? "error" : records ? "ready" : "loading"}
     >
       {records ? (
         <div className="space-y-4">
@@ -102,7 +102,7 @@ export function DnsRecordsSection({
           </DnsGroup>
         </div>
       ) : isError ? (
-        <ErrorWithRetry message="Failed to load DNS." onRetry={onRetry} />
+        <ErrorWithRetry message="Failed to load DNS." onRetry={onRetryAction} />
       ) : (
         <Skeletons count={6} />
       )}

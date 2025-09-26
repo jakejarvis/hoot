@@ -51,7 +51,7 @@ describe("HostingEmailSection", () => {
         data={data}
         isLoading={false}
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText("Cloudflare")).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe("HostingEmailSection", () => {
         data={null}
         isLoading={false}
         isError
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText(/Failed to load hosting/i)).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe("HostingEmailSection", () => {
         data={null}
         isLoading
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getAllByText("Hosting & Email").length).toBeGreaterThan(0);

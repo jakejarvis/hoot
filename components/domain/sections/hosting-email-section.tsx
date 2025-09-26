@@ -21,17 +21,15 @@ const HostingMap = dynamic(
 
 export function HostingEmailSection({
   data,
-  isLoading,
+  isLoading: _isLoading,
   isError,
-  onRetry,
+  onRetryAction,
 }: {
   data?: HostingInfo | null;
   isLoading: boolean;
   isError: boolean;
-  onRetry: () => void;
+  onRetryAction: () => void;
 }) {
-  // dynamic import hoisted to module scope so the component identity is stable across renders
-
   const Def = SECTION_DEFS.hosting;
   return (
     <Section
@@ -40,7 +38,7 @@ export function HostingEmailSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isLoading ? "loading" : isError ? "error" : "ready"}
+      status={isError ? "error" : data ? "ready" : "loading"}
     >
       {data ? (
         <>
@@ -100,7 +98,7 @@ export function HostingEmailSection({
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load hosting details."
-          onRetry={onRetry}
+          onRetry={onRetryAction}
         />
       ) : (
         <Skeletons count={3} />

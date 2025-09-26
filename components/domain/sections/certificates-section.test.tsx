@@ -50,7 +50,7 @@ describe("CertificatesSection", () => {
         data={data}
         isLoading={false}
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText("Issuer")).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe("CertificatesSection", () => {
         data={null}
         isLoading={false}
         isError
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(
@@ -89,7 +89,7 @@ describe("CertificatesSection", () => {
         data={null}
         isLoading
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText("SSL Certificates")).toBeInTheDocument();

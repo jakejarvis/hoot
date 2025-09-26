@@ -8,9 +8,9 @@ import { SECTION_DEFS } from "./sections-meta";
 
 export function HeadersSection({
   data,
-  isLoading,
+  isLoading: _isLoading,
   isError,
-  onRetry,
+  onRetryAction,
 }: {
   data?: Array<
     | { name: string; value: string }
@@ -19,7 +19,7 @@ export function HeadersSection({
   > | null;
   isLoading: boolean;
   isError: boolean;
-  onRetry: () => void;
+  onRetryAction: () => void;
 }) {
   const Def = SECTION_DEFS.headers;
   return (
@@ -29,7 +29,7 @@ export function HeadersSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isLoading ? "loading" : isError ? "error" : "ready"}
+      status={isError ? "error" : data ? "ready" : "loading"}
     >
       {data ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -57,7 +57,10 @@ export function HeadersSection({
           })()}
         </div>
       ) : isError ? (
-        <ErrorWithRetry message="Failed to load headers." onRetry={onRetry} />
+        <ErrorWithRetry
+          message="Failed to load headers."
+          onRetry={onRetryAction}
+        />
       ) : (
         <Skeletons count={4} />
       )}

@@ -46,7 +46,7 @@ describe("HeadersSection", () => {
         data={data}
         isLoading={false}
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText("strict-transport-security")).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe("HeadersSection", () => {
         data={null}
         isLoading={false}
         isError
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText(/Failed to load headers/i)).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe("HeadersSection", () => {
         data={null}
         isLoading
         isError={false}
-        onRetry={() => {}}
+        onRetryAction={() => {}}
       />,
     );
     expect(screen.getByText("HTTP Headers")).toBeInTheDocument();

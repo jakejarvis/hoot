@@ -119,7 +119,7 @@ export function DomainReportView({
           data={registration.data || null}
           isLoading={registration.isLoading}
           isError={!!registration.isError}
-          onRetry={() => {
+          onRetryAction={() => {
             captureClient("section_refetch_clicked", {
               domain,
               section: "registration",
@@ -132,7 +132,7 @@ export function DomainReportView({
           data={hosting.data || null}
           isLoading={hosting.isLoading}
           isError={!!hosting.isError}
-          onRetry={() => {
+          onRetryAction={() => {
             captureClient("section_refetch_clicked", {
               domain,
               section: "hosting",
@@ -145,7 +145,7 @@ export function DomainReportView({
           records={dns.data?.records || null}
           isLoading={dns.isLoading}
           isError={!!dns.isError}
-          onRetry={() => {
+          onRetryAction={() => {
             captureClient("section_refetch_clicked", {
               domain,
               section: "dns",
@@ -153,7 +153,7 @@ export function DomainReportView({
             dns.refetch();
           }}
           showTtls={showTtls}
-          onToggleTtls={(v) => {
+          onToggleTtlsAction={(v) => {
             captureClient("ttl_preference_toggled", {
               domain,
               show_ttls: v,
@@ -166,7 +166,7 @@ export function DomainReportView({
           data={certsView.data}
           isLoading={certsView.isLoading}
           isError={!!certs.isError}
-          onRetry={() => {
+          onRetryAction={() => {
             captureClient("section_refetch_clicked", {
               domain,
               section: "certificates",
@@ -179,7 +179,7 @@ export function DomainReportView({
           data={headersView.data}
           isLoading={headersView.isLoading}
           isError={!!headers.isError}
-          onRetry={() => {
+          onRetryAction={() => {
             captureClient("section_refetch_clicked", {
               domain,
               section: "headers",
