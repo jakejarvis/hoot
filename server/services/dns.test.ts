@@ -74,4 +74,41 @@ describe("resolveAll", () => {
     await expect(resolveAll("example.com")).rejects.toThrow();
     fetchMock.mockRestore();
   });
+
+  it("retries next provider when first fails and succeeds on second", async () => {
+    globalThis.__redisTestHelper?.reset();
+    let call = 0;
+    const fetchMock = vi.spyOn(global, "fetch").mockImplementation(async () => {
+      call += 1;
+      if (call <= 5) {
+        throw new Error("provider1 fail");
+      }
+      // Calls 6..10 correspond to A, AAAA, MX, TXT, NS for second provider
+      const idx = call - 6;
+      switch (idx) {
+        case 0:
+        case 1:
+          return dohAnswer([
+            { name: "example.com.", TTL: 60, data: "1.2.3.4" },
+          ]);
+        case 2:
+          return dohAnswer([
+            { name: "example.com.", TTL: 300, data: "10 aspmx.l.google.com." },
+          ]);
+        case 3:
+          return dohAnswer([
+            { name: "example.com.", TTL: 120, data: '"v=spf1"' },
+          ]);
+        default:
+          return dohAnswer([
+            { name: "example.com.", TTL: 600, data: "ns1.cloudflare.com." },
+          ]);
+      }
+    });
+
+    const out = await resolveAll("example.com");
+    expect(out.records.length).toBeGreaterThan(0);
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(6);
+    fetchMock.mockRestore();
+  });
 });

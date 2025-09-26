@@ -41,6 +41,12 @@ describe("formatTtl", () => {
   it("prints hours and minutes", () => {
     expect(formatTtl(3660)).toBe("1h 1m");
   });
+
+  it("echoes invalid or non-positive TTL", () => {
+    expect(formatTtl(0)).toBe("0s");
+    expect(formatTtl(Number.NaN)).toBe("NaNs");
+    expect(formatTtl(-5)).toBe("-5s");
+  });
 });
 
 describe("equalHostname", () => {

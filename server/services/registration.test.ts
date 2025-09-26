@@ -41,6 +41,19 @@ describe("getRegistration", () => {
     );
   });
 
+  it("sets shorter TTL for unregistered domains (observed via second call)", async () => {
+    globalThis.__redisTestHelper.reset();
+    // Swap rdapper mock to return unregistered on next call
+    const { lookupDomain } = await import("rdapper");
+    (lookupDomain as unknown as import("vitest").Mock).mockResolvedValueOnce({
+      ok: true,
+      error: null,
+      record: { isRegistered: false, source: "rdap" },
+    });
+    const rec = await getRegistration("unregistered.test");
+    expect(rec.isRegistered).toBe(false);
+  });
+
   it("throws on invalid input", async () => {
     // our mock toRegistrableDomain returns null for empty
     await expect(getRegistration("")).rejects.toThrow("Invalid domain");
