@@ -3,7 +3,7 @@ import { captureServer } from "@/lib/analytics/server";
 import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
 
 const DEFAULT_SIZE = 32;
-const REQUEST_TIMEOUT_MS = 4000;
+const REQUEST_TIMEOUT_MS = 1500; // per each method
 
 // Legacy Redis-based caching removed; Blob is now the canonical store
 
