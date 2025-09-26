@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       dynamic: 0, // disable client-side router cache for dynamic pages
     },
   },
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   images: {
     remotePatterns: [
       {

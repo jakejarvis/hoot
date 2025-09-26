@@ -1,21 +1,11 @@
-import sharp from "sharp";
 import { captureServer } from "@/lib/analytics/server";
 import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
+import { convertBufferToSquarePng } from "@/lib/image";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
 
 // Legacy Redis-based caching removed; Blob is now the canonical store
-
-function isIcoBuffer(buf: Buffer): boolean {
-  return (
-    buf.length >= 4 &&
-    buf[0] === 0x00 &&
-    buf[1] === 0x00 &&
-    buf[2] === 0x01 &&
-    buf[3] === 0x00
-  );
-}
 
 async function fetchWithTimeout(
   url: string,
@@ -44,59 +34,7 @@ async function convertToPng(
   contentType: string | null,
   size: number,
 ): Promise<Buffer | null> {
-  try {
-    const img = sharp(input, { failOn: "none" });
-    const pipeline = img
-      .resize(size, size, { fit: "cover" })
-      .png({ compressionLevel: 9 });
-    return await pipeline.toBuffer();
-  } catch {
-    // ignore and try ICO-specific decode if it looks like ICO
-  }
-
-  if (isIcoBuffer(input) || (contentType && /icon/.test(contentType))) {
-    try {
-      type IcoFrame = {
-        width: number;
-        height: number;
-        buffer?: ArrayBuffer;
-        data?: ArrayBuffer;
-      };
-      const mod = (await import("icojs")) as unknown as {
-        parse: (buf: ArrayBuffer, outputType?: string) => Promise<IcoFrame[]>;
-      };
-      const arr = (input.buffer as ArrayBuffer).slice(
-        input.byteOffset,
-        input.byteOffset + input.byteLength,
-      ) as ArrayBuffer;
-      const frames = await mod.parse(arr as ArrayBuffer, "image/png");
-      if (Array.isArray(frames) && frames.length > 0) {
-        let chosen: IcoFrame = frames[0];
-        chosen = frames.reduce((best: IcoFrame, cur: IcoFrame) => {
-          const bw = Number(best?.width ?? 0);
-          const cw = Number(cur?.width ?? 0);
-          const bh = Number(best?.height ?? 0);
-          const ch = Number(cur?.height ?? 0);
-          const bDelta = Math.abs(Math.max(bw, bh) - size);
-          const cDelta = Math.abs(Math.max(cw, ch) - size);
-          return cDelta < bDelta ? cur : best;
-        }, chosen);
-
-        const arrBuf: ArrayBuffer | undefined = chosen.buffer ?? chosen.data;
-        if (arrBuf) {
-          const pngBuf = Buffer.from(arrBuf);
-          return await sharp(pngBuf)
-            .resize(size, size, { fit: "cover" })
-            .png({ compressionLevel: 9 })
-            .toBuffer();
-        }
-      }
-    } catch {
-      // Fall through to null
-    }
-  }
-
-  return null;
+  return convertBufferToSquarePng(input, size, contentType);
 }
 
 function buildSources(domain: string): string[] {

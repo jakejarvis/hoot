@@ -57,3 +57,48 @@ export async function putFaviconBlob(
   });
   return res.url;
 }
+
+// Screenshot blob helpers (same HMAC hashing approach as favicons)
+
+export function computeScreenshotBlobPath(
+  domain: string,
+  width: number,
+  height: number,
+): string {
+  const input = `${domain}:${width}x${height}`;
+  const secret = getSigningSecret();
+  const digest = createHmac("sha256", secret).update(input).digest("hex");
+  return `screenshots/${digest}/${width}x${height}.png`;
+}
+
+export async function headScreenshotBlob(
+  domain: string,
+  width: number,
+  height: number,
+): Promise<string | null> {
+  const pathname = computeScreenshotBlobPath(domain, width, height);
+  try {
+    const res = await head(pathname, {
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
+    return res?.url ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function putScreenshotBlob(
+  domain: string,
+  width: number,
+  height: number,
+  png: Buffer,
+): Promise<string> {
+  const pathname = computeScreenshotBlobPath(domain, width, height);
+  const res = await put(pathname, png, {
+    access: "public",
+    contentType: "image/png",
+    cacheControlMaxAge: ONE_WEEK_SECONDS,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
+  return res.url;
+}
