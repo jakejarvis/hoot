@@ -1,5 +1,6 @@
 import { del, list } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { getFaviconBucket, getScreenshotBucket } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
@@ -41,7 +42,9 @@ export async function POST(req: Request) {
   }
 
   const keep = KEEP_BUCKETS();
-  const nowBucket = Math.floor(Date.now() / (1000 * 60 * 60 * 24 * 7)); // coarse upper bound; exact value not required here
+  // Compute current bucket per kind using the same helpers as blob paths
+  const faviconBucket = getFaviconBucket();
+  const screenshotBucket = getScreenshotBucket();
 
   const deleted: string[] = [];
   const errors: Array<{ path: string; error: string }> = [];
@@ -58,7 +61,10 @@ export async function POST(req: Request) {
       });
       cursor = res.cursor || undefined;
       for (const item of res.blobs) {
-        if (shouldDeletePath(item.pathname, nowBucket, keep)) {
+        const current = prefix.startsWith("favicons/")
+          ? faviconBucket
+          : screenshotBucket;
+        if (shouldDeletePath(item.pathname, current, keep)) {
           try {
             await del(item.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
             deleted.push(item.pathname);
