@@ -47,7 +47,7 @@ export async function getOrCreateScreenshotBlobUrl(
   // 2) Attempt to capture
   let browser: import("puppeteer-core").Browser | null = null;
   try {
-    const isVercel = !!process.env.VERCEL;
+    const isVercel = process.env.VERCEL === "1";
     const isLinux = process.platform === "linux";
     const preferChromium = isLinux || isVercel;
 
