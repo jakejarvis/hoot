@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe("blob utils", () => {
   it("computeFaviconBlobPath is deterministic and secret-dependent", () => {
-    process.env.FAVICON_BLOB_SIGNING_SECRET = "secret-a";
+    process.env.BLOB_SIGNING_SECRET = "secret-a";
     const a1 = computeFaviconBlobPath("example.com", 32);
     const a2 = computeFaviconBlobPath("example.com", 32);
     expect(a1).toBe(a2);
@@ -37,7 +37,7 @@ describe("blob utils", () => {
     const a3 = computeFaviconBlobPath("example.com", 64);
     expect(a3).not.toBe(a1);
 
-    process.env.FAVICON_BLOB_SIGNING_SECRET = "secret-b";
+    process.env.BLOB_SIGNING_SECRET = "secret-b";
     const b1 = computeFaviconBlobPath("example.com", 32);
     expect(b1).not.toBe(a1);
     expect(a1).toMatch(/^favicons\//);

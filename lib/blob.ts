@@ -33,13 +33,13 @@ export function getScreenshotBucket(nowMs = Date.now()): number {
 function getSigningSecret(): string {
   if (
     process.env.NODE_ENV === "production" &&
-    !process.env.FAVICON_BLOB_SIGNING_SECRET
+    !process.env.BLOB_SIGNING_SECRET
   ) {
-    throw new Error("FAVICON_BLOB_SIGNING_SECRET required in production");
+    throw new Error("BLOB_SIGNING_SECRET required in production");
   }
 
   const secret =
-    process.env.FAVICON_BLOB_SIGNING_SECRET ||
+    process.env.BLOB_SIGNING_SECRET ||
     process.env.BLOB_READ_WRITE_TOKEN ||
     "dev-favicon-secret";
   return secret;
