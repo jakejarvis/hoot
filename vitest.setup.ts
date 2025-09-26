@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom";
 
 // Set NODE_ENV for test environment
-process.env.NODE_ENV = "test";
+// biome-ignore lint/suspicious/noExplicitAny: Required for test setup
+(process.env as any).NODE_ENV = "test";
 
 // Mock console to reduce noise in tests if needed
 // You can uncomment these lines if you want to suppress console logs during tests

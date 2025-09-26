@@ -1,51 +1,40 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  detectHostingProvider,
-  detectEmailProvider,
   detectDnsProvider,
+  detectEmailProvider,
+  detectHostingProvider,
   resolveRegistrarDomain,
-  type ProviderRef,
 } from "@/lib/providers/detection";
 import type { HttpHeader } from "@/lib/providers/types";
 
 describe("Provider Detection System", () => {
   describe("detectHostingProvider", () => {
     it("should detect Vercel from server header", () => {
-      const headers: HttpHeader[] = [
-        { name: "server", value: "Vercel" },
-      ];
+      const headers: HttpHeader[] = [{ name: "server", value: "Vercel" }];
       const result = detectHostingProvider(headers);
       expect(result).toEqual({ name: "Vercel", domain: "vercel.com" });
     });
 
     it("should detect Vercel from x-vercel-id header", () => {
-      const headers: HttpHeader[] = [
-        { name: "x-vercel-id", value: "abc123" },
-      ];
+      const headers: HttpHeader[] = [{ name: "x-vercel-id", value: "abc123" }];
       const result = detectHostingProvider(headers);
       expect(result).toEqual({ name: "Vercel", domain: "vercel.com" });
     });
 
     it("should detect Netlify", () => {
-      const headers: HttpHeader[] = [
-        { name: "server", value: "Netlify" },
-      ];
+      const headers: HttpHeader[] = [{ name: "server", value: "Netlify" }];
       const result = detectHostingProvider(headers);
       expect(result).toEqual({ name: "Netlify", domain: "netlify.com" });
     });
 
     it("should detect GitHub Pages", () => {
-      const headers: HttpHeader[] = [
-        { name: "server", value: "GitHub.com" },
-      ];
+      const headers: HttpHeader[] = [{ name: "server", value: "GitHub.com" }];
       const result = detectHostingProvider(headers);
       expect(result).toEqual({ name: "GitHub Pages", domain: "github.com" });
     });
 
     it("should handle case-insensitive header names and values", () => {
-      const headers: HttpHeader[] = [
-        { name: "SERVER", value: "VERCEL" },
-      ];
+      const headers: HttpHeader[] = [{ name: "SERVER", value: "VERCEL" }];
       const result = detectHostingProvider(headers);
       expect(result).toEqual({ name: "Vercel", domain: "vercel.com" });
     });
@@ -77,13 +66,19 @@ describe("Provider Detection System", () => {
     it("should detect Google Workspace from MX records", () => {
       const mxHosts = ["aspmx.l.google.com", "alt1.aspmx.l.google.com"];
       const result = detectEmailProvider(mxHosts);
-      expect(result).toEqual({ name: "Google Workspace", domain: "google.com" });
+      expect(result).toEqual({
+        name: "Google Workspace",
+        domain: "google.com",
+      });
     });
 
     it("should detect Google Workspace from single smtp.google.com", () => {
       const mxHosts = ["smtp.google.com"];
       const result = detectEmailProvider(mxHosts);
-      expect(result).toEqual({ name: "Google Workspace", domain: "google.com" });
+      expect(result).toEqual({
+        name: "Google Workspace",
+        domain: "google.com",
+      });
     });
 
     it("should detect Microsoft 365", () => {
@@ -95,9 +90,9 @@ describe("Provider Detection System", () => {
     it("should return first hostname when no provider matches", () => {
       const mxHosts = ["mx1.custom-provider.com", "mx2.custom-provider.com"];
       const result = detectEmailProvider(mxHosts);
-      expect(result).toEqual({ 
-        name: "custom-provider.com", 
-        domain: "custom-provider.com" 
+      expect(result).toEqual({
+        name: "custom-provider.com",
+        domain: "custom-provider.com",
       });
     });
 
@@ -110,7 +105,10 @@ describe("Provider Detection System", () => {
     it("should handle case-insensitive MX records", () => {
       const mxHosts = ["ASPMX.L.GOOGLE.COM"];
       const result = detectEmailProvider(mxHosts);
-      expect(result).toEqual({ name: "Google Workspace", domain: "google.com" });
+      expect(result).toEqual({
+        name: "Google Workspace",
+        domain: "google.com",
+      });
     });
   });
 
@@ -124,15 +122,18 @@ describe("Provider Detection System", () => {
     it("should detect Amazon Route 53", () => {
       const nsHosts = ["ns-123.awsdns-12.com"];
       const result = detectDnsProvider(nsHosts);
-      expect(result).toEqual({ name: "Amazon Route 53", domain: "aws.amazon.com" });
+      expect(result).toEqual({
+        name: "Amazon Route 53",
+        domain: "aws.amazon.com",
+      });
     });
 
     it("should return first hostname when no provider matches", () => {
       const nsHosts = ["ns1.custom-dns.com", "ns2.custom-dns.com"];
       const result = detectDnsProvider(nsHosts);
-      expect(result).toEqual({ 
-        name: "custom-dns.com", 
-        domain: "custom-dns.com" 
+      expect(result).toEqual({
+        name: "custom-dns.com",
+        domain: "custom-dns.com",
       });
     });
 
@@ -175,6 +176,7 @@ describe("Provider Detection System", () => {
     });
 
     it("should return null for null input", () => {
+      // biome-ignore lint/suspicious/noExplicitAny: Testing invalid input
       const result = resolveRegistrarDomain(null as any);
       expect(result).toBeNull();
     });

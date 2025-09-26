@@ -1,11 +1,13 @@
-import { describe, it, expect } from "vitest";
-import { normalizeDomainInput, isValidDomain } from "@/lib/domain";
+import { describe, expect, it } from "vitest";
+import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 
 describe("Domain Utilities", () => {
   describe("normalizeDomainInput", () => {
     it("should handle simple domain names", () => {
       expect(normalizeDomainInput("example.com")).toBe("example.com");
-      expect(normalizeDomainInput("subdomain.example.com")).toBe("subdomain.example.com");
+      expect(normalizeDomainInput("subdomain.example.com")).toBe(
+        "subdomain.example.com",
+      );
     });
 
     it("should remove www prefix", () => {
@@ -20,19 +22,33 @@ describe("Domain Utilities", () => {
     });
 
     it("should handle URLs with paths, queries, and fragments", () => {
-      expect(normalizeDomainInput("https://example.com/path")).toBe("example.com");
-      expect(normalizeDomainInput("https://example.com/path?query=value")).toBe("example.com");
-      expect(normalizeDomainInput("https://example.com/path#fragment")).toBe("example.com");
-      expect(normalizeDomainInput("https://example.com/path?query=value#fragment")).toBe("example.com");
+      expect(normalizeDomainInput("https://example.com/path")).toBe(
+        "example.com",
+      );
+      expect(normalizeDomainInput("https://example.com/path?query=value")).toBe(
+        "example.com",
+      );
+      expect(normalizeDomainInput("https://example.com/path#fragment")).toBe(
+        "example.com",
+      );
+      expect(
+        normalizeDomainInput("https://example.com/path?query=value#fragment"),
+      ).toBe("example.com");
     });
 
     it("should handle URLs with authentication", () => {
-      expect(normalizeDomainInput("https://user:pass@example.com")).toBe("example.com");
-      expect(normalizeDomainInput("http://username@example.com")).toBe("example.com");
+      expect(normalizeDomainInput("https://user:pass@example.com")).toBe(
+        "example.com",
+      );
+      expect(normalizeDomainInput("http://username@example.com")).toBe(
+        "example.com",
+      );
     });
 
     it("should handle URLs with ports", () => {
-      expect(normalizeDomainInput("https://example.com:8080")).toBe("example.com");
+      expect(normalizeDomainInput("https://example.com:8080")).toBe(
+        "example.com",
+      );
       expect(normalizeDomainInput("example.com:3000")).toBe("example.com");
     });
 
@@ -47,7 +63,11 @@ describe("Domain Utilities", () => {
     });
 
     it("should handle complex URLs", () => {
-      expect(normalizeDomainInput("https://user:pass@www.example.com:8080/path?query=value#fragment")).toBe("example.com");
+      expect(
+        normalizeDomainInput(
+          "https://user:pass@www.example.com:8080/path?query=value#fragment",
+        ),
+      ).toBe("example.com");
     });
 
     it("should handle edge cases", () => {
@@ -62,7 +82,9 @@ describe("Domain Utilities", () => {
     });
 
     it("should handle punycode domains", () => {
-      expect(normalizeDomainInput("xn--fsq.xn--0zwm56d")).toBe("xn--fsq.xn--0zwm56d");
+      expect(normalizeDomainInput("xn--fsq.xn--0zwm56d")).toBe(
+        "xn--fsq.xn--0zwm56d",
+      );
     });
   });
 
@@ -109,11 +131,11 @@ describe("Domain Utilities", () => {
 
     it("should respect length limits", () => {
       // Domain too long (over 253 characters)
-      const longDomain = "a".repeat(250) + ".com";
+      const longDomain = `${"a".repeat(250)}.com`;
       expect(isValidDomain(longDomain)).toBe(false);
-      
+
       // Label too long (over 63 characters)
-      const longLabel = "a".repeat(64) + ".com";
+      const longLabel = `${"a".repeat(64)}.com`;
       expect(isValidDomain(longLabel)).toBe(false);
     });
 

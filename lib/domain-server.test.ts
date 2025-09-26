@@ -1,5 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { toRegistrableDomain, isAcceptableDomainInput } from "@/lib/domain-server";
+import { describe, expect, it } from "vitest";
+import {
+  isAcceptableDomainInput,
+  toRegistrableDomain,
+} from "@/lib/domain-server";
 
 describe("Server Domain Utilities", () => {
   describe("toRegistrableDomain", () => {
@@ -10,19 +13,31 @@ describe("Server Domain Utilities", () => {
 
     it("should extract registrable domain from subdomains", () => {
       expect(toRegistrableDomain("www.example.com")).toBe("example.com");
-      expect(toRegistrableDomain("api.subdomain.example.com")).toBe("example.com");
-      expect(toRegistrableDomain("deep.nested.subdomain.example.co.uk")).toBe("example.co.uk");
+      expect(toRegistrableDomain("api.subdomain.example.com")).toBe(
+        "example.com",
+      );
+      expect(toRegistrableDomain("deep.nested.subdomain.example.co.uk")).toBe(
+        "example.co.uk",
+      );
     });
 
     it("should handle URLs and extract registrable domain", () => {
-      expect(toRegistrableDomain("https://www.example.com/path")).toBe("example.com");
-      expect(toRegistrableDomain("http://api.example.com:8080/api/v1")).toBe("example.com");
-      expect(toRegistrableDomain("https://user:pass@subdomain.example.co.uk/")).toBe("example.co.uk");
+      expect(toRegistrableDomain("https://www.example.com/path")).toBe(
+        "example.com",
+      );
+      expect(toRegistrableDomain("http://api.example.com:8080/api/v1")).toBe(
+        "example.com",
+      );
+      expect(
+        toRegistrableDomain("https://user:pass@subdomain.example.co.uk/"),
+      ).toBe("example.co.uk");
     });
 
     it("should handle case insensitivity", () => {
       expect(toRegistrableDomain("WWW.EXAMPLE.COM")).toBe("example.com");
-      expect(toRegistrableDomain("API.SUBDOMAIN.EXAMPLE.CO.UK")).toBe("example.co.uk");
+      expect(toRegistrableDomain("API.SUBDOMAIN.EXAMPLE.CO.UK")).toBe(
+        "example.co.uk",
+      );
     });
 
     it("should handle public suffixes correctly", () => {
@@ -72,7 +87,9 @@ describe("Server Domain Utilities", () => {
     });
 
     it("should return true for valid URLs", () => {
-      expect(isAcceptableDomainInput("https://www.example.com/path")).toBe(true);
+      expect(isAcceptableDomainInput("https://www.example.com/path")).toBe(
+        true,
+      );
       expect(isAcceptableDomainInput("http://api.example.com:8080")).toBe(true);
     });
 

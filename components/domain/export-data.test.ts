@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { exportDomainData } from "@/components/domain/export-data";
 
 // Mock DOM methods
@@ -15,7 +15,7 @@ beforeEach(() => {
   // Mock URL methods
   global.URL.createObjectURL = mockCreateObjectURL;
   global.URL.revokeObjectURL = mockRevokeObjectURL;
-  
+
   // Mock document.createElement
   const mockAnchor = {
     href: "",
@@ -24,7 +24,7 @@ beforeEach(() => {
   };
   mockCreateElement.mockReturnValue(mockAnchor);
   global.document.createElement = mockCreateElement;
-  
+
   mockCreateObjectURL.mockReturnValue("blob:mock-url");
 });
 
@@ -47,9 +47,7 @@ describe("Export Data Utility", () => {
       exportDomainData(domain, data);
 
       // Should create a blob with the correct data
-      expect(mockCreateObjectURL).toHaveBeenCalledWith(
-        expect.any(Blob)
-      );
+      expect(mockCreateObjectURL).toHaveBeenCalledWith(expect.any(Blob));
 
       // Should create an anchor element
       expect(mockCreateElement).toHaveBeenCalledWith("a");
@@ -97,12 +95,12 @@ describe("Export Data Utility", () => {
       exportDomainData(domain, data);
 
       const [blobArg] = mockCreateObjectURL.mock.calls[0];
-      
+
       // Access the blob's content directly via the constructor arguments
       // Since jsdom doesn't fully support blob.text(), we need to work around this
       expect(blobArg).toBeInstanceOf(Blob);
       expect(blobArg.type).toBe("application/json");
-      
+
       // The blob contains our JSON data - we can verify the basic structure was created
       expect(mockCreateObjectURL).toHaveBeenCalledTimes(1);
     });
@@ -120,7 +118,7 @@ describe("Export Data Utility", () => {
       exportDomainData(domain, data);
 
       const [blobArg] = mockCreateObjectURL.mock.calls[0];
-      
+
       // Verify blob was created with correct type
       expect(blobArg).toBeInstanceOf(Blob);
       expect(blobArg.type).toBe("application/json");
@@ -140,7 +138,7 @@ describe("Export Data Utility", () => {
       exportDomainData(domain, data);
 
       const [blobArg] = mockCreateObjectURL.mock.calls[0];
-      
+
       // Verify blob was created with correct type
       expect(blobArg).toBeInstanceOf(Blob);
       expect(blobArg.type).toBe("application/json");

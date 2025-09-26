@@ -1,12 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { formatDate, formatRegistrant, formatTtl, equalHostname } from "@/lib/format";
+import { describe, expect, it } from "vitest";
+import {
+  equalHostname,
+  formatDate,
+  formatRegistrant,
+  formatTtl,
+} from "@/lib/format";
 
 describe("Format Utilities", () => {
   describe("formatDate", () => {
     it("should format valid ISO date string", () => {
       const iso = "2023-12-01T10:30:00Z";
       const result = formatDate(iso);
-      
+
       // Should be formatted as a locale string (exact format may vary by environment)
       expect(result).toBeTruthy();
       expect(result).not.toBe(iso); // Should be formatted differently
@@ -164,7 +169,9 @@ describe("Format Utilities", () => {
     });
 
     it("should handle special characters", () => {
-      expect(equalHostname("xn--fsq.xn--0zwm56d", "XN--FSQ.XN--0ZWM56D")).toBe(true);
+      expect(equalHostname("xn--fsq.xn--0zwm56d", "XN--FSQ.XN--0ZWM56D")).toBe(
+        true,
+      );
     });
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { cn } from "@/lib/utils";
 
 describe("Utility Functions", () => {
@@ -8,7 +8,9 @@ describe("Utility Functions", () => {
     });
 
     it("should handle conditional classes", () => {
-      expect(cn("class1", true && "class2", false && "class3")).toBe("class1 class2");
+      expect(cn("class1", true && "class2", false && "class3")).toBe(
+        "class1 class2",
+      );
     });
 
     it("should handle empty values", () => {
@@ -24,16 +26,22 @@ describe("Utility Functions", () => {
 
     it("should handle arrays and objects", () => {
       expect(cn(["class1", "class2"])).toBe("class1 class2");
-      expect(cn({ class1: true, class2: false, class3: true })).toBe("class1 class3");
+      expect(cn({ class1: true, class2: false, class3: true })).toBe(
+        "class1 class3",
+      );
     });
 
     it("should handle mixed input types", () => {
-      expect(cn(
-        "base-class", 
-        { "conditional-class": true, "ignored-class": false },
-        ["array-class1", "array-class2"],
-        true && "dynamic-class"
-      )).toBe("base-class conditional-class array-class1 array-class2 dynamic-class");
+      expect(
+        cn(
+          "base-class",
+          { "conditional-class": true, "ignored-class": false },
+          ["array-class1", "array-class2"],
+          true && "dynamic-class",
+        ),
+      ).toBe(
+        "base-class conditional-class array-class1 array-class2 dynamic-class",
+      );
     });
 
     it("should handle empty input", () => {

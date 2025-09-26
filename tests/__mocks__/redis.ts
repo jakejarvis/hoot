@@ -19,5 +19,7 @@ export const resetRedisMocks = () => {
   mockRedisCache.get.mockReset();
   mockRedisCache.set.mockReset();
   mockRedisCache.getOrSet.mockReset();
-  mockRedisCache.ns.mockImplementation((prefix: string, key: string) => `${prefix}:${key}`);
+  mockRedisCache.ns.mockImplementation(
+    (prefix: string, key: string) => `${prefix}:${key}`,
+  );
 };
