@@ -1,0 +1,77 @@
+/* @vitest-environment node */
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { resolveAll } from "./dns";
+
+vi.mock("./cloudflare", () => ({
+  isCloudflareIpAsync: vi.fn(async () => false),
+}));
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  // Clear shared redis mock counters if present
+  globalThis.__redisTestHelper?.reset();
+});
+
+function dohAnswer(
+  answers: Array<{ name: string; TTL: number; data: string }>,
+) {
+  return new Response(JSON.stringify({ Status: 0, Answer: answers }), {
+    status: 200,
+    headers: { "content-type": "application/dns-json" },
+  });
+}
+
+describe("resolveAll", () => {
+  it("normalizes records and returns combined results", async () => {
+    // The code calls DoH for A, AAAA, MX, TXT, NS in parallel and across providers; we just return A for both A and AAAA etc.
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "1.2.3.4" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "1.2.3.4" }]),
+      ) // AAAA
+      .mockResolvedValueOnce(
+        dohAnswer([
+          {
+            name: "example.com.",
+            TTL: 300,
+            data: "10 aspmx.l.google.com.",
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 120, data: '"v=spf1"' }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          {
+            name: "example.com.",
+            TTL: 600,
+            data: "ns1.cloudflare.com.",
+          },
+        ]),
+      );
+
+    const out = await resolveAll("example.com");
+    expect(out.records.length).toBeGreaterThan(0);
+    const hasTxt = out.records.some(
+      (r) => r.type === "TXT" && r.value === "v=spf1",
+    );
+    const hasMx = out.records.some((r) => r.type === "MX" && r.priority === 10);
+    const hasNs = out.records.some(
+      (r) => r.type === "NS" && r.value === "ns1.cloudflare.com",
+    );
+    expect(hasTxt && hasMx && hasNs).toBe(true);
+    fetchMock.mockRestore();
+  });
+
+  it("throws when all providers fail", async () => {
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockRejectedValue(new Error("fail"));
+    await expect(resolveAll("example.com")).rejects.toThrow();
+    fetchMock.mockRestore();
+  });
+});
