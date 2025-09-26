@@ -30,7 +30,7 @@ export function Screenshot({
     trpc.domain.screenshot.queryOptions(
       { domain },
       {
-        staleTime: 30 * 60_000,
+        staleTime: 24 * 60 * 60_000, // 24h in ms
         enabled,
       },
     ),

@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
