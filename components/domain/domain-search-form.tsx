@@ -75,7 +75,14 @@ export function DomainSearchForm({
     router.push(`/${encodeURIComponent(parsed.data)}`);
   }
 
-  const suggestedDomains = history.length > 0 ? history : DEFAULT_SUGGESTIONS;
+  const suggestedDomains = React.useMemo(() => {
+    // Always provide 5 suggestions: recent history first, then defaults, de-duplicated
+    const merged = [
+      ...history,
+      ...DEFAULT_SUGGESTIONS.filter((d) => !history.includes(d)),
+    ];
+    return merged.slice(0, 5);
+  }, [history]);
 
   return (
     <>
