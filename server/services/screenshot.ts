@@ -153,10 +153,11 @@ export async function getOrCreateScreenshotBlobUrl(
           fullPage: false,
         })) as Buffer;
 
-        const png =
-          rawPng && rawPng.length > 0
-            ? await optimizePngCover(rawPng, VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
-            : rawPng;
+        const png = await optimizePngCover(
+          rawPng,
+          VIEWPORT_WIDTH,
+          VIEWPORT_HEIGHT,
+        );
         if (png && png.length > 0) {
           const storedUrl = await putScreenshotBlob(
             domain,

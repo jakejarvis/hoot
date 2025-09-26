@@ -31,7 +31,6 @@ export function ScreenshotTooltip({
         sideOffset={10}
         className="bg-popover text-popover-foreground p-0 border shadow-xl"
         hideArrow
-        forceMount
       >
         <div className="w-[300px] sm:w-[360px] md:w-[420px]">
           <Screenshot
