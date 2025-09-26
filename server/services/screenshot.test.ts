@@ -27,9 +27,9 @@ vi.mock("puppeteer-core", () => ({
   launch: vi.fn(async () => browserMock),
 }));
 
-// Optimize does a simple pass-through for test speed
+// Watermark function does a simple pass-through for test speed
 vi.mock("@/lib/image", () => ({
-  optimizePngCover: vi.fn(async (b: Buffer) => b),
+  addWatermarkToScreenshot: vi.fn(async (b: Buffer) => b),
 }));
 
 import { getOrCreateScreenshotBlobUrl } from "./screenshot";
