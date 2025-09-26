@@ -2,7 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "build": {
     "env": {
-      "ENABLE_EXPERIMENTAL_COREPACK": "1"
+      "ENABLE_EXPERIMENTAL_COREPACK": "1",
+      "PUPPETEER_SKIP_DOWNLOAD": "1"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/blob-prune",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }

@@ -3,6 +3,7 @@ import { getOrCreateFaviconBlobUrl } from "../services/favicon";
 import { probeHeaders } from "../services/headers";
 import { detectHosting } from "../services/hosting";
 import { getRegistration } from "../services/registration";
+import { getOrCreateScreenshotBlobUrl } from "../services/screenshot";
 import { getCertificates } from "../services/tls";
 import { router } from "../trpc";
 import { createDomainProcedure } from "./domain-procedure";
@@ -22,5 +23,9 @@ export const domainRouter = router({
   favicon: createDomainProcedure(
     getOrCreateFaviconBlobUrl,
     "Favicon fetch failed",
+  ),
+  screenshot: createDomainProcedure(
+    getOrCreateScreenshotBlobUrl,
+    "Screenshot capture failed",
   ),
 });

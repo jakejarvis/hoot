@@ -13,6 +13,7 @@ import { DomainLoadingState } from "./domain-loading-state";
 import { DomainUnregisteredState } from "./domain-unregistered-state";
 import { exportDomainData } from "./export-data";
 import { Favicon } from "./favicon";
+import { ScreenshotTooltip } from "./screenshot-tooltip";
 import { CertificatesSection } from "./sections/certificates-section";
 import { DnsRecordsSection } from "./sections/dns-records-section";
 import { HeadersSection } from "./sections/headers-section";
@@ -85,22 +86,24 @@ export function DomainReportView({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Link
-            href={`https://${domain}`}
-            target="_blank"
-            rel="noopener"
-            className="flex items-center gap-2"
-            onClick={() =>
-              captureClient("external_domain_link_clicked", { domain })
-            }
-          >
-            <Favicon domain={domain} size={20} className="rounded" />
-            <h2 className="text-xl font-semibold tracking-tight">{domain}</h2>
-            <ExternalLink
-              className="h-4 w-4 text-muted-foreground/60"
-              aria-hidden="true"
-            />
-          </Link>
+          <ScreenshotTooltip domain={domain}>
+            <Link
+              href={`https://${domain}`}
+              target="_blank"
+              rel="noopener"
+              className="flex items-center gap-2"
+              onClick={() =>
+                captureClient("external_domain_link_clicked", { domain })
+              }
+            >
+              <Favicon domain={domain} size={20} className="rounded" />
+              <h2 className="text-xl font-semibold tracking-tight">{domain}</h2>
+              <ExternalLink
+                className="h-4 w-4 text-muted-foreground/60"
+                aria-hidden="true"
+              />
+            </Link>
+          </ScreenshotTooltip>
         </div>
         <div className="flex items-center gap-2">
           <Button
