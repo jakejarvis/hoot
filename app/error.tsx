@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { RefreshCcw } from "lucide-react";
 import posthog from "posthog-js";
 import { useEffect } from "react";
+import { CreateIssueButton } from "@/components/create-issue-button";
 import { Button } from "@/components/ui/button";
 
 export default function RootError(props: {
@@ -33,16 +34,17 @@ export default function RootError(props: {
             {error.stack}
           </pre>
         ) : null}
-        {!isDev && error?.digest ? (
+        {error?.digest ? (
           <p className="mt-2 text-xs text-muted-foreground">
             Error id: {error.digest}
           </p>
         ) : null}
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <Button onClick={() => reset()}>Try again</Button>
-          <Button variant="ghost" asChild>
-            <Link href="/">Go home</Link>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3">
+          <Button onClick={() => reset()}>
+            <RefreshCcw className="size-4" /> Try again
           </Button>
+
+          <CreateIssueButton variant="outline" error={error} />
         </div>
       </div>
     </div>
