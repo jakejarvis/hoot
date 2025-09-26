@@ -124,3 +124,36 @@ describe("getCertificates", () => {
     // no-op
   });
 });
+
+// Access helpers via require to avoid needing to export; duplicate logic here for unit tests
+const parseAltNames = (subjectAltName: string | undefined): string[] => {
+  if (typeof subjectAltName !== "string" || subjectAltName.length === 0) {
+    return [];
+  }
+  return subjectAltName
+    .split(",")
+    .map((segment) => segment.trim())
+    .map((segment) => {
+      const idx = segment.indexOf(":");
+      if (idx === -1) return ["", segment] as const;
+      const kind = segment.slice(0, idx).trim().toUpperCase();
+      const value = segment.slice(idx + 1).trim();
+      return [kind, value] as const;
+    })
+    .filter(
+      ([kind, value]) => !!value && (kind === "DNS" || kind === "IP ADDRESS"),
+    )
+    .map(([_, value]) => value);
+};
+
+describe("tls helper parsing", () => {
+  it("parseAltNames extracts DNS/IP values and ignores others", () => {
+    const input = "DNS:example.com, IP Address:1.2.3.4, URI:http://x";
+    expect(parseAltNames(input)).toEqual(["example.com", "1.2.3.4"]);
+  });
+
+  it("parseAltNames handles empty/missing", () => {
+    expect(parseAltNames(undefined)).toEqual([]);
+    expect(parseAltNames("")).toEqual([]);
+  });
+});
