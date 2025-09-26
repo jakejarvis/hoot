@@ -38,6 +38,11 @@
     },
     {
       "matchPackageNames": ["node"],
+      "matchManagers": ["github-actions"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["node"],
       "matchManagers": ["nvm"],
       "rangeStrategy": "pin"
     }

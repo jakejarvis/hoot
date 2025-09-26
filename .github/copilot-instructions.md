@@ -98,11 +98,26 @@ The `lib/providers/` directory contains a rule-based provider detection system:
 
 ## Testing Guidelines
 
-- Prefer Vitest/Jest + React Testing Library
-- Name tests `*.test.ts(x)` and colocate or place in `tests/`
-- Focus on `lib/` and `server/` unit tests
-- Add lightweight integration tests for API routes
-- Add `pnpm test` script when introducing tests
+- Runner: **Vitest** with TypeScript and React support (`@vitejs/plugin-react`, `vite-tsconfig-paths`)
+- Environment: **jsdom** by default (set in `vitest.config.ts`), with selective Node tests via `/* @vitest-environment node */`
+- Setup file: `vitest.setup.ts`
+  - Mocks analytics (`@/lib/analytics/{client,server}`)
+  - No-op for `server-only`
+  - Centralized Redis mock using `vi.hoisted` and exposes `global.__redisTestHelper` for `reset()`/assertions
+  - `unstable_cache` is a no-op pass-through (documented as intentional)
+- UI testing patterns
+  - Prefer testing behavior with React Testing Library
+  - Do NOT test `components/ui/*` (shadcn) directly
+  - Mock Radix primitives (Accordion/Tooltip) in section tests to avoid context errors
+  - Mock TRPC/React Query hooks where needed (e.g., `Favicon`)
+- Server testing patterns
+  - Use hoisted ESM mocks (`vi.hoisted`) for modules like `node:tls`
+  - Use unique cache keys/domains to avoid cross-test cache crosstalk
+  - Reset global Redis mock between tests: `global.__redisTestHelper.reset()`
+- Browser API shims (per-test)
+  - Explicitly mock `URL.createObjectURL`/`URL.revokeObjectURL` with `vi.fn()` in tests that need them
+- Commands
+  - `pnpm test` (watch), `pnpm test:run` (CI-friendly), `pnpm test:coverage` (HTML/LCOV)
 
 ## Security & Configuration
 

@@ -22,9 +22,20 @@
 - Client components must begin with `"use client"`. Consolidate imports via `@/...`. Keep page roots lean.
 
 ## Testing Guidelines
-- Prefer Vitest/Jest + React Testing Library. Name tests `*.test.ts(x)` and colocate or place in `tests/`.
-- Focus on `lib/` and `server/` units; add lightweight integration tests for API routes.
-- Add a `pnpm test` script when introducing tests; aim for meaningful coverage on critical paths.
+- Use **Vitest** with React Testing Library; config in `vitest.config.ts`.
+- Global setup in `vitest.setup.ts`:
+  - Mocks analytics clients/servers and `server-only`.
+  - Centralized Redis mock exposed via `global.__redisTestHelper` for consistent state and resets.
+  - `unstable_cache` mocked as a no-op; caching behavior is not under test.
+- UI tests:
+  - Do not add direct tests for `components/ui/*` (shadcn).
+  - Mock Radix primitives (Accordion, Tooltip) when testing domain sections.
+  - Mock TRPC/React Query for components like `Favicon`.
+- Server tests:
+  - Prefer `vi.hoisted` for ESM module mocks (e.g., `node:tls`).
+  - Use unique cache keys/domains; call `global.__redisTestHelper.reset()` in `afterEach`.
+- Browser APIs: Mock `URL.createObjectURL`/`revokeObjectURL` with `vi.fn()` in tests that need them.
+- Commands: `pnpm test`, `pnpm test:run`, `pnpm test:coverage`.
 
 ## Commit & Pull Request Guidelines
 - Commits: single-focus, imperative, sentence case (e.g., "Add RDAP caching layer").
