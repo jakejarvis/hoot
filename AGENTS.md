@@ -30,10 +30,11 @@
 - UI tests:
   - Do not add direct tests for `components/ui/*` (shadcn).
   - Mock Radix primitives (Accordion, Tooltip) when testing domain sections.
-  - Mock TRPC/React Query for components like `Favicon`.
+  - Mock TRPC/React Query for components like `Favicon` and `Screenshot`.
 - Server tests:
   - Prefer `vi.hoisted` for ESM module mocks (e.g., `node:tls`).
   - Use unique cache keys/domains; call `global.__redisTestHelper.reset()` in `afterEach`.
+  - Screenshot service (`server/services/screenshot.ts`) uses hoisted mocks for `puppeteer`/`puppeteer-core` and `@sparticuz/chromium`.
 - Browser APIs: Mock `URL.createObjectURL`/`revokeObjectURL` with `vi.fn()` in tests that need them.
 - Commands: `pnpm test`, `pnpm test:run`, `pnpm test:coverage`.
 
@@ -44,6 +45,8 @@
 
 ## Security & Configuration Tips
 - Keep secrets in `.env.local` (Upstash: `KV_REST_API_URL`, `KV_REST_API_TOKEN`).
+- Blob: `BLOB_SIGNING_SECRET`, `BLOB_READ_WRITE_TOKEN`, `FAVICON_TTL_SECONDS`, `SCREENSHOT_TTL_SECONDS`.
+- Screenshots (Puppeteer): prefer `puppeteer-core` + `@sparticuz/chromium` on Vercel; optional `PUPPETEER_SKIP_DOWNLOAD=1` to avoid full download; `HOOT_USER_AGENT` to override UA; optional `PUPPETEER_EXECUTABLE_PATH` locally.
 - Cache Cloudflare DoH, RDAP, TLS, and header probes via `lib/cache`; apply retry backoff to respect provider limits.
 - Review `server/trpc.ts` when extending procedures to ensure auth/context remain intact.
 

@@ -12,6 +12,7 @@
 - **Comprehensive Reports:** See registration info, hosting & email, DNS records, SSL certificates, and HTTP headers.
 - **Interactive UI:** Expand/collapse sections, copy data, and enjoy beautiful dark mode.
 - **Fast & Private:** Data is fetched live, with caching for speed—no sign-up required.
+- **Favicons & Screenshots:** Extract favicons and capture homepage screenshots, cached on Vercel Blob for quick reuse.
 
 ---
 
@@ -23,7 +24,8 @@
 - **Tailwind CSS v4**
 - **tRPC** API endpoints
 - **Upstash Redis** for caching
-- **Vercel Blob** for favicon storage
+- **Vercel Blob** for favicon & screenshot storage
+- **Puppeteer Core + @sparticuz/chromium** for server-side screenshots (fallback to `puppeteer` locally)
 
 ---
 
@@ -43,7 +45,14 @@
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 3. **(Optional) Configure `.env.local`:**  
-   See `.env.example` for Upstash Redis and Vercel Blob credentials (needed for caching and favicon features).
+   See `.env.example` for Upstash Redis and Vercel Blob credentials (needed for caching and favicon/screenshot features).
+
+   Useful keys:
+   - `BLOB_SIGNING_SECRET` (required in production)
+   - `BLOB_READ_WRITE_TOKEN`
+   - `FAVICON_TTL_SECONDS`, `SCREENSHOT_TTL_SECONDS` (optional TTLs)
+   - `HOOT_USER_AGENT` (optional UA override)
+   - `PUPPETEER_SKIP_DOWNLOAD=1` on Vercel to skip full `puppeteer` download
 
 ---
 
