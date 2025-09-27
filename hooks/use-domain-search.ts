@@ -79,15 +79,17 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
   function submit() {
     const parsed = domainSchema.safeParse(value);
     if (!parsed.success) {
-      const issue =
-        (parsed.error.issues?.[0] as { code?: string } | undefined) ??
-        undefined;
+      const firstIssue = parsed.error.issues?.[0] as
+        | { code?: string; message?: string }
+        | undefined;
       captureClient("search_invalid_input", {
-        reason: issue?.code ?? "invalid",
+        reason: firstIssue?.code ?? "invalid",
         value_length: value.length,
       });
       if (showInvalidToast) {
-        toast.error(parsed.error.message ?? "Invalid domain");
+        const friendlyMessage =
+          firstIssue?.message ?? "Please enter a valid domain.";
+        toast.error(friendlyMessage);
         inputRef.current?.focus();
       }
       return;
