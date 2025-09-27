@@ -1,6 +1,6 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headScreenshotBlob, putScreenshotBlob } from "@/lib/blob";
-import { optimizePngCover } from "@/lib/image";
+import { addWatermarkToScreenshot } from "@/lib/image";
 import { USER_AGENT } from "./constants";
 
 const VIEWPORT_WIDTH = 1200;
@@ -155,7 +155,7 @@ export async function getOrCreateScreenshotBlobUrl(
           fullPage: false,
         })) as Buffer;
 
-        const png = await optimizePngCover(
+        const png = await addWatermarkToScreenshot(
           rawPng,
           VIEWPORT_WIDTH,
           VIEWPORT_HEIGHT,
