@@ -1,7 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
+import { USER_AGENT } from "@/lib/constants";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
-import { USER_AGENT } from "./constants";
 
 type SeoResponse = {
   meta: ReturnType<typeof parseHtmlMeta> | null;

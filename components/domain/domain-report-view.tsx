@@ -22,7 +22,6 @@ import { captureClient } from "@/lib/analytics/client";
 export function DomainReportView({ domain }: { domain: string }) {
   const { registration, dns, hosting, certs, headers, seo } =
     useDomainQueries(domain);
-  // TTLs are always shown now; preference removed
 
   // Manage domain history
   useDomainHistory(
@@ -39,6 +38,7 @@ export function DomainReportView({ domain }: { domain: string }) {
       hosting: hosting.data,
       certificates: certs.data,
       headers: headers.data,
+      seo: seo.data,
     });
   };
 

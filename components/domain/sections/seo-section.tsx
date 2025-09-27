@@ -71,7 +71,7 @@ type SeoResponse = {
 
 export function SeoSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
@@ -81,7 +81,6 @@ export function SeoSection({
   onRetryAction: () => void;
 }) {
   const Def = SECTION_DEFS.seo;
-  const status = isError ? "error" : data ? "ready" : "loading";
 
   const metaTagValues: { label: string; value?: string | null }[] = [
     { label: "Title", value: data?.preview?.title },
@@ -98,7 +97,8 @@ export function SeoSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={status}
+      isLoading={isLoading}
+      isError={isError}
     >
       {data ? (
         <div className="space-y-4">
