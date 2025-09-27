@@ -11,6 +11,7 @@ const nav = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: nav.push }),
   useParams: () => nav.params,
+  usePathname: () => "/x",
 }));
 
 describe("HeaderSearch", () => {
