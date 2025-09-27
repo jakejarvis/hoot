@@ -19,6 +19,7 @@ import { DnsRecordsSection } from "./sections/dns-records-section";
 import { HeadersSection } from "./sections/headers-section";
 import { HostingEmailSection } from "./sections/hosting-email-section";
 import { RegistrationSection } from "./sections/registration-section";
+import { SeoSection } from "./sections/seo-section";
 
 export function DomainReportView({
   domain,
@@ -29,7 +30,7 @@ export function DomainReportView({
   initialRegistration?: DomainRecord;
   initialRegistered?: boolean;
 }) {
-  const { registration, dns, hosting, certs, headers, allSectionsReady } =
+  const { registration, dns, hosting, certs, headers, seo, allSectionsReady } =
     useDomainQueries(domain, { initialRegistration, initialRegistered });
   const { showTtls, setShowTtls } = useTtlPreferences();
 
@@ -69,18 +70,45 @@ export function DomainReportView({
     dns.data?.records?.some((r) => r.type === "A" || r.type === "AAAA") ??
     false;
 
-  const gateByDns = <T,>(q: { isLoading: boolean; data?: T[] | null }) => {
+  function gateByDns<T>(q: { isLoading: boolean; data?: T[] | null }): {
+    isLoading: boolean;
+    data: T[] | null;
+  };
+  function gateByDns<T>(
+    q: { isLoading: boolean; data?: T | null },
+    opts: { single: true },
+  ): { isLoading: boolean; data: T | null };
+  function gateByDns<T>(
+    q: { isLoading: boolean; data?: T[] | T | null },
+    opts?: { single?: boolean },
+  ) {
     if (dnsLoading) {
-      return { isLoading: true, data: null as T[] | null };
+      return { isLoading: true, data: null as unknown } as {
+        isLoading: boolean;
+        data: T[] | T | null;
+      };
     }
     if (hasAnyIp) {
-      return { isLoading: q.isLoading, data: (q.data ?? null) as T[] | null };
+      return {
+        isLoading: q.isLoading,
+        data: (q.data ?? null) as unknown,
+      } as { isLoading: boolean; data: T[] | T | null };
     }
-    return { isLoading: false, data: [] as T[] };
-  };
+    if (opts?.single) {
+      return { isLoading: false, data: null as unknown } as {
+        isLoading: boolean;
+        data: T | null;
+      };
+    }
+    return { isLoading: false, data: [] as unknown } as {
+      isLoading: boolean;
+      data: T[] | null;
+    };
+  }
 
   const certsView = gateByDns(certs);
   const headersView = gateByDns(headers);
+  const seoView = gateByDns(seo, { single: true });
 
   return (
     <div className="space-y-4">
@@ -188,6 +216,19 @@ export function DomainReportView({
               section: "headers",
             });
             headers.refetch();
+          }}
+        />
+
+        <SeoSection
+          data={seoView.data}
+          isLoading={seoView.isLoading}
+          isError={!!seo?.isError}
+          onRetryAction={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "seo",
+            });
+            seo.refetch();
           }}
         />
       </Accordion>
