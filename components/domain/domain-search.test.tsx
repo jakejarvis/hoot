@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DomainSearchForm } from "./domain-search-form";
+import { DomainSearch } from "./domain-search";
 
 const nav = vi.hoisted(() => ({
   push: vi.fn(),
@@ -9,17 +9,22 @@ const nav = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: nav.push }),
+  useParams: () => ({}),
+}));
+
+vi.mock("./domain-suggestions", () => ({
+  DomainSuggestions: () => null,
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
-describe("DomainSearchForm", () => {
+describe("DomainSearch (form variant)", () => {
   beforeEach(() => {
     nav.push.mockClear();
   });
 
   it("submits valid domain and navigates", async () => {
-    render(<DomainSearchForm showHistory={false} />);
+    render(<DomainSearch variant="lg" />);
     await userEvent.type(screen.getByPlaceholderText("hoot.sh"), "example.com");
     await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
     expect(nav.push).toHaveBeenCalledWith("/example.com");
@@ -29,7 +34,7 @@ describe("DomainSearchForm", () => {
     const { toast } = (await import("sonner")) as unknown as {
       toast: { error: (msg: string) => void };
     };
-    render(<DomainSearchForm showHistory={false} />);
+    render(<DomainSearch variant="lg" />);
     await userEvent.type(
       screen.getByPlaceholderText("hoot.sh"),
       "not a domain",

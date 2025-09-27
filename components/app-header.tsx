@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { HeaderSearch } from "./domain/header-search";
 import { GithubStars } from "./github-stars";
-import { HeaderSearchWrapper } from "./header-search-wrapper";
 
 export function AppHeader() {
   return (
@@ -14,7 +14,7 @@ export function AppHeader() {
       >
         <Logo className="h-10 w-10" aria-hidden="true" />
       </Link>
-      <HeaderSearchWrapper />
+      <HeaderSearch />
       <div className="ml-auto flex items-center gap-1.5">
         {/* Server-fetched star count with link */}
         <GithubStars />

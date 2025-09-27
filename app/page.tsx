@@ -1,4 +1,4 @@
-import { DomainSearchForm } from "@/components/domain/domain-search-form";
+import { DomainSearch } from "@/components/domain/domain-search";
 import { HomeHero } from "@/components/home-hero";
 
 export default function Home() {
@@ -8,7 +8,7 @@ export default function Home() {
         <HomeHero />
 
         <div className="w-full max-w-3xl mx-auto">
-          <DomainSearchForm />
+          <DomainSearch variant="lg" />
         </div>
       </div>
     </div>
