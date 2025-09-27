@@ -137,4 +137,36 @@ describe("SeoSection", () => {
     await user.click(screen.getByRole("button", { name: /^allow$/i }));
     expect(screen.queryByText(/admin/)).not.toBeInTheDocument();
   });
+
+  it("has accessible controls and stable rule chip markup", async () => {
+    const user = userEvent.setup();
+    const data = makeData({
+      robotsGroups: [
+        {
+          userAgents: ["*"],
+          rules: [
+            { type: "allow", value: "/" },
+            { type: "disallow", value: "/admin" },
+          ],
+        },
+      ],
+    });
+    render(
+      <SeoSection
+        data={data as unknown as Parameters<typeof SeoSection>[0]["data"]}
+        isLoading={false}
+        isError={false}
+        onRetryAction={() => {}}
+      />,
+    );
+    // Accordion trigger is a button
+    const trigger = screen.getByRole("button", { name: /\* \d+ allow/i });
+    await user.click(trigger);
+    // Copy buttons are present and named
+    const copyBtns = screen.getAllByRole("button", { name: /copy/i });
+    expect(copyBtns.length).toBeGreaterThan(0);
+    // Snapshot
+    const chip = screen.getByText(/allow/i).closest("div");
+    expect(chip).toMatchSnapshot();
+  });
 });
