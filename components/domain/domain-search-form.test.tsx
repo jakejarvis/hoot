@@ -37,4 +37,31 @@ describe("DomainSearchForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
     expect(toast.error).toHaveBeenCalled();
   });
+
+  it("has mobile-friendly input attributes", () => {
+    render(<DomainSearchForm showHistory={false} />);
+    const input = screen.getByPlaceholderText("hoot.sh");
+    
+    expect(input).toHaveAttribute("inputMode", "search");
+    expect(input).toHaveAttribute("autoComplete", "off");
+    expect(input).toHaveAttribute("autoCorrect", "off");
+    expect(input).toHaveAttribute("autoCapitalize", "none");
+    expect(input).toHaveAttribute("spellCheck", "false");
+  });
+
+  it("shows real-time validation feedback", async () => {
+    render(<DomainSearchForm showHistory={false} />);
+    const input = screen.getByPlaceholderText("hoot.sh");
+    
+    // Initially should not show error
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    
+    // Type invalid domain and blur to trigger validation
+    await userEvent.type(input, "invalid domain");
+    await userEvent.tab(); // This triggers onBlur
+    
+    // Should now show validation error
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-describedby", "domain-error");
+  });
 });

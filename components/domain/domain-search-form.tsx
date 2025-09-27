@@ -40,6 +40,17 @@ export function DomainSearchForm({
   const [historyLoaded, setHistoryLoaded] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  // Real-time validation state
+  const [hasInteracted, setHasInteracted] = React.useState(false);
+  const isValidInput = React.useMemo(() => {
+    if (!value.trim()) return true; // Empty is neutral
+    const normalized = normalizeDomainInput(value);
+    return isValidDomain(normalized);
+  }, [value]);
+
+  const showValidationError =
+    hasInteracted && value.trim() !== "" && !isValidInput;
+
   React.useEffect(() => {
     try {
       const stored = localStorage.getItem("hoot-history");
@@ -102,18 +113,32 @@ export function DomainSearchForm({
           <Input
             id="domain"
             ref={inputRef}
-            inputMode="url"
+            inputMode="search"
             autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             placeholder="hoot.sh"
-            aria-invalid={false}
-            aria-describedby="domain-help"
+            aria-invalid={showValidationError}
+            aria-describedby={
+              showValidationError ? "domain-error" : "domain-help"
+            }
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => {
+              setValue(e.target.value);
+              if (!hasInteracted) setHasInteracted(true);
+            }}
+            onBlur={() => setHasInteracted(true)}
             className="pl-9 h-12"
           />
           <span id="domain-help" className="sr-only">
             Enter a domain.
           </span>
+          {showValidationError && (
+            <span id="domain-error" className="sr-only">
+              Please enter a valid domain name.
+            </span>
+          )}
         </div>
         <Button type="submit" disabled={loading} size="lg" className="h-12">
           {loading ? (

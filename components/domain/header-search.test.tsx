@@ -34,4 +34,16 @@ describe("HeaderSearch", () => {
     await userEvent.type(input, "{Enter}");
     expect(nav.push).not.toHaveBeenCalled();
   });
+
+  it("has mobile-friendly input attributes", () => {
+    nav.params = {};
+    render(<HeaderSearch />);
+    const input = screen.getByLabelText(/Search domains/i);
+    
+    expect(input).toHaveAttribute("inputMode", "search");
+    expect(input).toHaveAttribute("autoComplete", "off");
+    expect(input).toHaveAttribute("autoCorrect", "off");
+    expect(input).toHaveAttribute("autoCapitalize", "none");
+    expect(input).toHaveAttribute("spellCheck", "false");
+  });
 });
