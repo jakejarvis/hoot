@@ -1,6 +1,13 @@
 "use client";
 
 import * as React from "react";
+import {
+  DiscordIcon,
+  FacebookIcon,
+  LinkedinIcon,
+  SlackIcon,
+  TwitterIcon,
+} from "@/components/brand-icons";
 import { SocialPreview } from "@/components/social-preview";
 import {
   Accordion,
@@ -13,6 +20,12 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "../copy-button";
 import { KeyValue } from "../key-value";
@@ -114,39 +127,151 @@ export function SeoSection({
 
           <Separator />
 
-          <Tabs defaultValue="x" className="w-full">
-            <TabsList>
-              <TabsTrigger value="x">X</TabsTrigger>
-              <TabsTrigger value="facebook">Facebook</TabsTrigger>
-              <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+          <Tabs
+            defaultValue="x"
+            orientation="vertical"
+            className="w-full flex-row"
+          >
+            <TabsList className="flex-col h-auto">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="x" className="py-3">
+                        <TwitterIcon className="h-4 w-4" aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    X (Twitter)
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="slack" className="py-3">
+                        <SlackIcon className="h-4 w-4" aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    Slack
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="facebook" className="py-3">
+                        <FacebookIcon className="h-4 w-4" aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    Facebook
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="linkedin" className="py-3">
+                        <LinkedinIcon className="h-4 w-4" aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    LinkedIn
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="discord" className="py-3">
+                        <DiscordIcon className="h-4 w-4" aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    Discord
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </TabsList>
-            <TabsContent value="x">
-              <SocialPreview
-                provider="x"
-                title={data.preview?.title || "Preview Title"}
-                description={data.preview?.description || "Preview Description"}
-                image={data.preview?.image || null}
-                url={data.preview?.canonicalUrl || "https://example.com/"}
-              />
-            </TabsContent>
-            <TabsContent value="facebook">
-              <SocialPreview
-                provider="facebook"
-                title={data.preview?.title || "Preview Title"}
-                description={data.preview?.description || "Preview Description"}
-                image={data.preview?.image || null}
-                url={data.preview?.canonicalUrl || "https://example.com/"}
-              />
-            </TabsContent>
-            <TabsContent value="linkedin">
-              <SocialPreview
-                provider="linkedin"
-                title={data.preview?.title || "Preview Title"}
-                description={data.preview?.description || "Preview Description"}
-                image={data.preview?.image || null}
-                url={data.preview?.canonicalUrl || "https://example.com/"}
-              />
-            </TabsContent>
+            <div className="grow text-start">
+              <TabsContent value="x">
+                {data?.preview ? (
+                  <div className="space-y-3">
+                    <SocialPreview
+                      provider="x"
+                      title={data.preview.title ?? "No title"}
+                      description={data.preview.description ?? "No description"}
+                      image={data.preview.image}
+                      url={data.preview.canonicalUrl}
+                      variant="large"
+                    />
+                    <SocialPreview
+                      provider="x"
+                      title={data.preview.title ?? "No title"}
+                      description={data.preview.description ?? "No description"}
+                      image={data.preview.image}
+                      url={data.preview.canonicalUrl}
+                      variant="compact"
+                    />
+                  </div>
+                ) : null}
+              </TabsContent>
+              <TabsContent value="slack">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="slack"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
+              </TabsContent>
+              <TabsContent value="facebook">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="facebook"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
+              </TabsContent>
+              <TabsContent value="linkedin">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="linkedin"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
+              </TabsContent>
+              <TabsContent value="discord">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="discord"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
+              </TabsContent>
+            </div>
           </Tabs>
 
           <Separator />
