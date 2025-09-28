@@ -54,6 +54,13 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
     setValue(derivedInitial);
   }, [derivedInitial]);
 
+  // Reset loading whenever the derived initial value changes due to navigation.
+  // This ensures the header input is re-enabled after route changes, including
+  // invalid or unregistered domains.
+  React.useEffect(() => {
+    setLoading(false);
+  }, []);
+
   // Optional keyboard shortcut to focus the input (e.g., ⌘/Ctrl + K)
   React.useEffect(() => {
     if (!enableShortcut) return;
