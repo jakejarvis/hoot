@@ -141,7 +141,7 @@ describe("SeoSection", () => {
     expect(screen.getByText("SEO & Social")).toBeInTheDocument();
 
     // Tabs and preview content
-    expect(screen.getByText("X")).toBeInTheDocument();
+    expect(screen.getByText("X (Twitter)")).toBeInTheDocument();
     expect(screen.getByText("Facebook")).toBeInTheDocument();
     expect(screen.getByText("LinkedIn")).toBeInTheDocument();
     expect(screen.getByText("Pinterest")).toBeInTheDocument();
@@ -150,10 +150,6 @@ describe("SeoSection", () => {
     expect(screen.getAllByText("Preview Description").length).toBeGreaterThan(
       0,
     );
-
-    // Raw data shows OG fields
-    expect(screen.getByText("OG Site Name")).toBeInTheDocument();
-    expect(screen.getAllByText("Example Site").length).toBeGreaterThan(0);
 
     // Robots summary
     expect(screen.getByText("robots.txt")).toBeInTheDocument();

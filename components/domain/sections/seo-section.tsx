@@ -3,6 +3,12 @@
 import Image from "next/image";
 import * as React from "react";
 import {
+  FacebookIcon,
+  LinkedinIcon,
+  PinterestIcon,
+  TwitterIcon,
+} from "@/components/brand-icons";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -98,12 +104,7 @@ export function SeoSection({
     >
       {data ? (
         <div className="space-y-4">
-          <div className="rounded-xl border bg-background/40 p-3 space-y-2">
-            <div className="text-xs mb-1 text-muted-foreground">
-              Meta overview
-            </div>
-            <RawMeta data={data} />
-          </div>
+          <RawMeta data={data} />
 
           <Separator />
 
@@ -118,12 +119,12 @@ export function SeoSection({
                   <TooltipTrigger asChild>
                     <span>
                       <TabsTrigger value="x" className="py-3">
-                        <XLogo width={16} height={16} aria-hidden="true" />
+                        <TwitterIcon className="h-4 w-4" aria-hidden="true" />
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    X
+                    X (Twitter)
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -132,11 +133,7 @@ export function SeoSection({
                   <TooltipTrigger asChild>
                     <span>
                       <TabsTrigger value="facebook" className="py-3">
-                        <FacebookLogo
-                          width={16}
-                          height={16}
-                          aria-hidden="true"
-                        />
+                        <FacebookIcon className="h-4 w-4" aria-hidden="true" />
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>
@@ -150,11 +147,7 @@ export function SeoSection({
                   <TooltipTrigger asChild>
                     <span>
                       <TabsTrigger value="linkedin" className="py-3">
-                        <LinkedinLogo
-                          width={16}
-                          height={16}
-                          aria-hidden="true"
-                        />
+                        <LinkedinIcon className="h-4 w-4" aria-hidden="true" />
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>
@@ -168,11 +161,7 @@ export function SeoSection({
                   <TooltipTrigger asChild>
                     <span>
                       <TabsTrigger value="pinterest" className="py-3">
-                        <PinterestLogo
-                          width={16}
-                          height={16}
-                          aria-hidden="true"
-                        />
+                        <PinterestIcon className="h-4 w-4" aria-hidden="true" />
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>
@@ -182,7 +171,7 @@ export function SeoSection({
                 </Tooltip>
               </TooltipProvider>
             </TabsList>
-            <div className="grow rounded-md border text-start">
+            <div className="grow text-start">
               <TabsContent value="x">
                 <SocialPreview platform="x" data={data} />
               </TabsContent>
@@ -225,7 +214,7 @@ export function SeoSection({
 }
 
 function SocialPreview({
-  platform,
+  platform: _platform,
   data,
 }: {
   platform: "x" | "facebook" | "linkedin" | "pinterest";
@@ -239,9 +228,6 @@ function SocialPreview({
 
   return (
     <div className="rounded-xl border bg-background/40 p-3">
-      <div className="text-xs mb-2 text-muted-foreground">
-        Preview – {platform.toUpperCase()} (approximate)
-      </div>
       <div className="flex gap-3">
         <div className="w-40 h-24 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
           {img ? (
@@ -271,112 +257,21 @@ function SocialPreview({
   );
 }
 
-// Minimal Pinterest logo to match icon-only tab triggers
-function PinterestLogo(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M10.5 17.5l1-4.5m0 0c2.5 1 5.5-.5 5.5-3s-2-4-4.5-4H11c-1.5 0-2.5 1-2.5 2.5" />
-    </svg>
-  );
-}
-
-// Minimal X (Twitter) glyph
-function XLogo(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...props}
-    >
-      <path d="M4 4l16 16" />
-      <path d="M20 4L4 20" />
-    </svg>
-  );
-}
-
-// Minimal Facebook glyph
-function FacebookLogo(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 8h2" />
-      <path d="M13 8v4h2" />
-      <path d="M13 12v8" />
-    </svg>
-  );
-}
-
-// Minimal LinkedIn glyph
-function LinkedinLogo(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...props}
-    >
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <path d="M8 11v6" />
-      <circle cx="8" cy="8" r="1" />
-      <path d="M12 17v-5" />
-      <path d="M12 12c1-.8 2.5-.8 3.5 0" />
-      <path d="M15.5 12v5" />
-    </svg>
-  );
-}
-
 function RawMeta({ data }: { data: SeoResponse }) {
   const items: { label: string; value?: string | null }[] = [
     { label: "Title", value: data.preview?.title },
     { label: "Description", value: data.preview?.description },
-    { label: "Image", value: data.preview?.image },
     { label: "Canonical", value: data.preview?.canonicalUrl },
-    { label: "OG Title", value: data.meta?.openGraph.title },
-    { label: "OG Description", value: data.meta?.openGraph.description },
-    { label: "OG URL", value: data.meta?.openGraph.url },
-    { label: "OG Site Name", value: data.meta?.openGraph.siteName },
-    { label: "Twitter Title", value: data.meta?.twitter.title },
-    { label: "Twitter Description", value: data.meta?.twitter.description },
-    { label: "Twitter Image", value: data.meta?.twitter.image },
+    { label: "Image", value: data.preview?.image },
     { label: "Robots", value: data.meta?.general.robots },
   ];
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-      {items.map((it) => (
-        <KeyValue
-          key={it.label}
-          label={it.label}
-          value={String(it.value ?? "—")}
-        />
-      ))}
+      {items
+        .filter((it) => it.value != null)
+        .map((it) => (
+          <KeyValue key={it.label} label={it.label} value={String(it.value)} />
+        ))}
     </div>
   );
 }
