@@ -69,4 +69,5 @@ export const SECTION_ORDER: readonly SectionKey[] = [
   "dns",
   "certificates",
   "headers",
+  "seo",
 ] as const;
