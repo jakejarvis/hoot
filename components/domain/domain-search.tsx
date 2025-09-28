@@ -74,9 +74,7 @@ export function DomainSearch({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             className={
-              variant === "lg"
-                ? "pl-9 h-12"
-                : "h-10 sm:h-11 pl-9 pr-14 rounded-xl"
+              variant === "lg" ? "pl-9 h-12" : "h-10 pl-9 sm:pr-14 rounded-xl"
             }
           />
 
