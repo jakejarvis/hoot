@@ -1,7 +1,7 @@
 import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Section } from "./section";
-import { SECTION_DEFS } from "./sections/sections-meta";
+import { SECTION_DEFS, SECTION_ORDER } from "./sections/sections-meta";
 
 export function DomainLoadingState() {
   return (
@@ -17,54 +17,21 @@ export function DomainLoadingState() {
       </div>
 
       <Accordion type="multiple" className="space-y-4">
-        <Section
-          title={SECTION_DEFS.registration.title}
-          description={SECTION_DEFS.registration.description}
-          help={SECTION_DEFS.registration.help}
-          icon={<SECTION_DEFS.registration.Icon className="h-4 w-4" />}
-          accent={SECTION_DEFS.registration.accent}
-          status="loading"
-        />
-        <Section
-          title={SECTION_DEFS.hosting.title}
-          description={SECTION_DEFS.hosting.description}
-          help={SECTION_DEFS.hosting.help}
-          icon={<SECTION_DEFS.hosting.Icon className="h-4 w-4" />}
-          accent={SECTION_DEFS.hosting.accent}
-          status="loading"
-        />
-        <Section
-          title={SECTION_DEFS.dns.title}
-          description={SECTION_DEFS.dns.description}
-          help={SECTION_DEFS.dns.help}
-          icon={<SECTION_DEFS.dns.Icon className="h-4 w-4" />}
-          accent={SECTION_DEFS.dns.accent}
-          status="loading"
-        />
-        <Section
-          title={SECTION_DEFS.certificates.title}
-          description={SECTION_DEFS.certificates.description}
-          help={SECTION_DEFS.certificates.help}
-          icon={<SECTION_DEFS.certificates.Icon className="h-4 w-4" />}
-          accent={SECTION_DEFS.certificates.accent}
-          status="loading"
-        />
-        <Section
-          title={SECTION_DEFS.headers.title}
-          description={SECTION_DEFS.headers.description}
-          help={SECTION_DEFS.headers.help}
-          icon={<SECTION_DEFS.headers.Icon className="h-4 w-4" />}
-          accent={SECTION_DEFS.headers.accent}
-          status="loading"
-        />
-        <Section
-          title={SECTION_DEFS.seo.title}
-          description={SECTION_DEFS.seo.description}
-          help={SECTION_DEFS.seo.help}
-          icon={<SECTION_DEFS.seo.Icon className="h-4 w-4" />}
-          accent={SECTION_DEFS.seo.accent}
-          status="loading"
-        />
+        {SECTION_ORDER.map((key) => {
+          const def = SECTION_DEFS[key];
+          const Icon = def.Icon;
+          return (
+            <Section
+              key={def.title}
+              title={def.title}
+              description={def.description}
+              help={def.help}
+              icon={<Icon className="h-4 w-4" />}
+              accent={def.accent}
+              status="loading"
+            />
+          );
+        })}
       </Accordion>
     </div>
   );

@@ -61,3 +61,12 @@ export const SECTION_DEFS = {
 } as const;
 
 export type SectionKey = keyof typeof SECTION_DEFS;
+
+// Single source of truth for section ordering across loading and fallback UIs
+export const SECTION_ORDER: readonly SectionKey[] = [
+  "registration",
+  "hosting",
+  "dns",
+  "certificates",
+  "headers",
+] as const;
