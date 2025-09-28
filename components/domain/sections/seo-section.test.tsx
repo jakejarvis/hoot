@@ -123,6 +123,7 @@ describe("SeoSection", () => {
         description: "Preview Description",
         image: "https://example.com/preview.png",
         canonicalUrl: "https://example.com/",
+        twitterCardVariant: "large",
       },
       timestamps: { fetchedAt: "2024-01-01T00:00:00.000Z" },
       source: { finalUrl: "https://example.com/page", status: 200 },

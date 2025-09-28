@@ -63,6 +63,7 @@ type SeoResponse = {
     description: string | null;
     image: string | null;
     canonicalUrl: string;
+    twitterCardVariant: "compact" | "large";
   } | null;
   timestamps: { fetchedAt: string };
   source: { finalUrl: string | null; status: number | null };
@@ -203,15 +204,7 @@ export function SeoSection({
                       description={data.preview.description ?? "No description"}
                       image={data.preview.image}
                       url={data.preview.canonicalUrl}
-                      variant="large"
-                    />
-                    <SocialPreview
-                      provider="x"
-                      title={data.preview.title ?? "No title"}
-                      description={data.preview.description ?? "No description"}
-                      image={data.preview.image}
-                      url={data.preview.canonicalUrl}
-                      variant="compact"
+                      variant={data.preview.twitterCardVariant}
                     />
                   </div>
                 ) : null}

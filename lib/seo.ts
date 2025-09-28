@@ -50,6 +50,7 @@ export type SeoPreview = {
   description: string | null;
   image: string | null;
   canonicalUrl: string;
+  twitterCardVariant: "compact" | "large";
 };
 
 export function sanitizeText(input: unknown): string {
@@ -170,7 +171,14 @@ export function selectPreview(
   const image = meta?.openGraph.images?.[0] || meta?.twitter.image || null;
   const canonicalUrl =
     meta?.general.canonical || meta?.openGraph.url || finalUrl;
-  return { title, description, image, canonicalUrl };
+  const twitterCardRaw = meta?.twitter.card?.toLowerCase().trim() ?? "";
+  const twitterCardNormalized = twitterCardRaw.replace(/\s+/g, "_");
+  const twitterCardVariant: "compact" | "large" =
+    twitterCardNormalized === "summary_large_image" ||
+    twitterCardNormalized === "player"
+      ? "large"
+      : "compact";
+  return { title, description, image, canonicalUrl, twitterCardVariant };
 }
 
 export function parseRobotsTxt(text: string): RobotsTxt {
