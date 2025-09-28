@@ -26,8 +26,9 @@ export function useDomainQueries(
     ),
   );
 
+  // Prefer live registration result over initial prop once available
   const registered =
-    (opts?.initialRegistered ?? registration.data?.isRegistered) === true;
+    (registration.data?.isRegistered ?? opts?.initialRegistered) === true;
 
   const dns = useQuery(
     trpc.domain.dns.queryOptions(
@@ -56,8 +57,10 @@ export function useDomainQueries(
   );
 
   const hasAnyIp =
-    dns.data?.records?.some((r) => r.type === "A" || r.type === "AAAA") ??
-    false;
+    dns.data?.records?.some(
+      (r: { type: "A" | "AAAA" | "MX" | "TXT" | "NS" }) =>
+        r.type === "A" || r.type === "AAAA",
+    ) ?? false;
 
   const certs = useQuery(
     trpc.domain.certificates.queryOptions(
@@ -100,11 +103,10 @@ export function useDomainQueries(
 
   const allSectionsReady =
     registration.isSuccess &&
-    registered &&
     dns.isSuccess &&
     hosting.isSuccess &&
-    certs.isSuccess &&
-    headers.isSuccess;
+    // Certificates and headers are only required if any IP exists
+    (hasAnyIp ? certs.isSuccess && headers.isSuccess : true);
 
   return {
     registration,

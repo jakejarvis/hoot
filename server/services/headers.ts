@@ -9,7 +9,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const key = ns("headers", lower);
 
   const cached = await cacheGet<HttpHeader[]>(key);
-  if (cached) return normalize(cached);
+  if (cached !== null) return normalize(cached);
 
   const REQUEST_TIMEOUT_MS = 5000;
   try {
