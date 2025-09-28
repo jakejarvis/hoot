@@ -67,6 +67,7 @@ export function DomainSearch({
             autoCorrect="off"
             autoCapitalize="none"
             spellCheck={false}
+            disabled={loading}
             placeholder={variant === "lg" ? "hoot.sh" : "Search any domain"}
             aria-describedby="domain-help"
             aria-label="Search domains"
@@ -96,7 +97,7 @@ export function DomainSearch({
             Analyze
           </Button>
         ) : (
-          <button type="submit" className="sr-only">
+          <button type="submit" disabled={loading} className="sr-only">
             Search
           </button>
         )}
@@ -104,7 +105,12 @@ export function DomainSearch({
 
       {variant === "lg" && (
         <DomainSuggestions
-          onSelectAction={(d) => navigateToDomain(d, "suggestion")}
+          onSelectAction={(d) => {
+            // Mirror the selected domain in the input so the form
+            // appears submitted while navigation is in-flight.
+            setValue(d);
+            navigateToDomain(d, "suggestion");
+          }}
         />
       )}
     </>

@@ -13,7 +13,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("./domain-suggestions", () => ({
-  DomainSuggestions: () => null,
+  DomainSuggestions: ({
+    onSelectAction,
+  }: {
+    onSelectAction?: (domain: string) => void;
+  }) => (
+    <button type="button" onClick={() => onSelectAction?.("example.com")}>
+      example.com
+    </button>
+  ),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
@@ -28,6 +36,11 @@ describe("DomainSearch (form variant)", () => {
     await userEvent.type(screen.getByPlaceholderText("hoot.sh"), "example.com");
     await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
     expect(nav.push).toHaveBeenCalledWith("/example.com");
+    // Input and button should be disabled while loading/submitting
+    expect(
+      (screen.getByPlaceholderText("hoot.sh") as HTMLInputElement).disabled,
+    ).toBe(true);
+    expect(screen.getByRole("button", { name: /analyze/i })).toBeDisabled();
   });
 
   it("shows error toast for invalid domain", async () => {
@@ -41,5 +54,24 @@ describe("DomainSearch (form variant)", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
     expect(toast.error).toHaveBeenCalled();
+  });
+
+  it("fills input and navigates when a suggestion is clicked", async () => {
+    render(<DomainSearch variant="lg" />);
+    // Click the mocked suggestion button
+    await userEvent.click(
+      screen.getByRole("button", { name: /example\.com/i }),
+    );
+    // Input should reflect the selected domain immediately
+    const input = screen.getByPlaceholderText("hoot.sh") as HTMLInputElement;
+    expect(input.value).toBe("example.com");
+    // Navigation should have been triggered
+    expect(nav.push).toHaveBeenCalledWith("/example.com");
+    // Analyze button should be disabled (loading state)
+    expect(screen.getByRole("button", { name: /analyze/i })).toBeDisabled();
+    // Input should be disabled while loading
+    expect(
+      (screen.getByPlaceholderText("hoot.sh") as HTMLInputElement).disabled,
+    ).toBe(true);
   });
 });
