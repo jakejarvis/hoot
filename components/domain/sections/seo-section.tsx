@@ -13,6 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "../copy-button";
 import { KeyValue } from "../key-value";
@@ -101,25 +107,95 @@ export function SeoSection({
 
           <Separator />
 
-          <Tabs defaultValue="x" className="w-full">
-            <TabsList>
-              <TabsTrigger value="x">X</TabsTrigger>
-              <TabsTrigger value="facebook">Facebook</TabsTrigger>
-              <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-              <TabsTrigger value="pinterest">Pinterest</TabsTrigger>
+          <Tabs
+            defaultValue="x"
+            orientation="vertical"
+            className="w-full flex-row"
+          >
+            <TabsList className="flex-col h-auto">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="x" className="py-3">
+                        <XLogo width={16} height={16} aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    X
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="facebook" className="py-3">
+                        <FacebookLogo
+                          width={16}
+                          height={16}
+                          aria-hidden="true"
+                        />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    Facebook
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="linkedin" className="py-3">
+                        <LinkedinLogo
+                          width={16}
+                          height={16}
+                          aria-hidden="true"
+                        />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    LinkedIn
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="pinterest" className="py-3">
+                        <PinterestLogo
+                          width={16}
+                          height={16}
+                          aria-hidden="true"
+                        />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    Pinterest
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </TabsList>
-            <TabsContent value="x">
-              <SocialPreview platform="x" data={data} />
-            </TabsContent>
-            <TabsContent value="facebook">
-              <SocialPreview platform="facebook" data={data} />
-            </TabsContent>
-            <TabsContent value="linkedin">
-              <SocialPreview platform="linkedin" data={data} />
-            </TabsContent>
-            <TabsContent value="pinterest">
-              <SocialPreview platform="pinterest" data={data} />
-            </TabsContent>
+            <div className="grow rounded-md border text-start">
+              <TabsContent value="x">
+                <SocialPreview platform="x" data={data} />
+              </TabsContent>
+              <TabsContent value="facebook">
+                <SocialPreview platform="facebook" data={data} />
+              </TabsContent>
+              <TabsContent value="linkedin">
+                <SocialPreview platform="linkedin" data={data} />
+              </TabsContent>
+              <TabsContent value="pinterest">
+                <SocialPreview platform="pinterest" data={data} />
+              </TabsContent>
+            </div>
           </Tabs>
 
           <Separator />
@@ -192,6 +268,88 @@ function SocialPreview({
         </div>
       </div>
     </div>
+  );
+}
+
+// Minimal Pinterest logo to match icon-only tab triggers
+function PinterestLogo(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10.5 17.5l1-4.5m0 0c2.5 1 5.5-.5 5.5-3s-2-4-4.5-4H11c-1.5 0-2.5 1-2.5 2.5" />
+    </svg>
+  );
+}
+
+// Minimal X (Twitter) glyph
+function XLogo(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M4 4l16 16" />
+      <path d="M20 4L4 20" />
+    </svg>
+  );
+}
+
+// Minimal Facebook glyph
+function FacebookLogo(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 8h2" />
+      <path d="M13 8v4h2" />
+      <path d="M13 12v8" />
+    </svg>
+  );
+}
+
+// Minimal LinkedIn glyph
+function LinkedinLogo(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M8 11v6" />
+      <circle cx="8" cy="8" r="1" />
+      <path d="M12 17v-5" />
+      <path d="M12 12c1-.8 2.5-.8 3.5 0" />
+      <path d="M15.5 12v5" />
+    </svg>
   );
 }
 
