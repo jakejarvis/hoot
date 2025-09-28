@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HeaderSearch } from "./header-search";
@@ -34,5 +34,20 @@ describe("HeaderSearch", () => {
     const input = screen.getByLabelText(/Search domains/i);
     await userEvent.type(input, "{Enter}");
     expect(nav.push).not.toHaveBeenCalled();
+  });
+
+  it("re-enables the input after navigating to a new route", async () => {
+    nav.params = { domain: "foo.com" };
+    const { rerender } = render(<HeaderSearch />);
+    const input = screen.getByLabelText(/Search domains/i);
+    // Submit to trigger loading state (disables input)
+    await userEvent.type(input, "{Enter}");
+    expect(input).toBeDisabled();
+    // Simulate navigation by changing route params and re-rendering
+    nav.params = { domain: "bar.com" };
+    rerender(<HeaderSearch />);
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Search domains/i)).not.toBeDisabled(),
+    );
   });
 });
