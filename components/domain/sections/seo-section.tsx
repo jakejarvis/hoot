@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { SocialPreview } from "@/components/social-preview";
 import {
   Accordion,
   AccordionContent,
@@ -9,7 +10,9 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "../copy-button";
 import { KeyValue } from "../key-value";
@@ -108,6 +111,45 @@ export function SeoSection({
                 />
               ))}
           </div>
+
+          <Separator />
+
+          <Tabs defaultValue="x" className="w-full">
+            <TabsList>
+              <TabsTrigger value="x">X</TabsTrigger>
+              <TabsTrigger value="facebook">Facebook</TabsTrigger>
+              <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+            </TabsList>
+            <TabsContent value="x">
+              <SocialPreview
+                provider="x"
+                title={data.preview?.title || "Preview Title"}
+                description={data.preview?.description || "Preview Description"}
+                image={data.preview?.image || null}
+                url={data.preview?.canonicalUrl || "https://example.com/"}
+              />
+            </TabsContent>
+            <TabsContent value="facebook">
+              <SocialPreview
+                provider="facebook"
+                title={data.preview?.title || "Preview Title"}
+                description={data.preview?.description || "Preview Description"}
+                image={data.preview?.image || null}
+                url={data.preview?.canonicalUrl || "https://example.com/"}
+              />
+            </TabsContent>
+            <TabsContent value="linkedin">
+              <SocialPreview
+                provider="linkedin"
+                title={data.preview?.title || "Preview Title"}
+                description={data.preview?.description || "Preview Description"}
+                image={data.preview?.image || null}
+                url={data.preview?.canonicalUrl || "https://example.com/"}
+              />
+            </TabsContent>
+          </Tabs>
+
+          <Separator />
 
           <RobotsSummary
             robots={data.robots}

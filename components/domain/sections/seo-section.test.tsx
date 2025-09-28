@@ -148,9 +148,9 @@ describe("SeoSection", () => {
         onRetryAction={() => {}}
       />,
     );
-    expect(screen.getByRole("tab", { name: /x/i })).toBeInTheDocument();
-    expect(screen.getByText(/OG Title/i)).toBeInTheDocument();
-    expect(screen.getByText(/OG Description/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "X" })).toBeInTheDocument();
+    expect(screen.getAllByText(/OG Title/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/OG Description/i)[0]).toBeInTheDocument();
   });
 
   it("renders robots summary with counts and sitemap link", () => {
@@ -163,15 +163,35 @@ describe("SeoSection", () => {
         onRetryAction={() => {}}
       />,
     );
-    expect(screen.getByText(/robots\.txt/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/robots\.txt/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/allows/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /sitemap/i }),
+      screen.queryByRole("link", { name: "sitemap" }),
     ).not.toBeInTheDocument();
     // We show sitemap URL as the link text
     expect(
       screen.getByRole("link", { name: data.robots?.sitemaps[0] as string }),
     ).toBeInTheDocument();
+  });
+
+  it("renders social media tabs and preview content", () => {
+    const data = makeData();
+    render(
+      <SeoSection
+        data={data as unknown as Parameters<typeof SeoSection>[0]["data"]}
+        isLoading={false}
+        isError={false}
+        onRetryAction={() => {}}
+      />,
+    );
+
+    // Tabs and preview content
+    expect(screen.getByText("X")).toBeInTheDocument();
+    expect(screen.getByText("Facebook")).toBeInTheDocument();
+    expect(screen.getByText("LinkedIn")).toBeInTheDocument();
+    // Tabs are mocked to render all contents, so previews repeat across platforms
+    expect(screen.getAllByText("OG Title").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("OG Description").length).toBeGreaterThan(0);
   });
 
   it("filters robots rules by text and type", async () => {
@@ -198,7 +218,9 @@ describe("SeoSection", () => {
     );
 
     // Expand the group
-    const trigger = screen.getByRole("button", { name: /\* \d+ allow/i });
+    const trigger = screen.getByRole("button", {
+      name: "*1 allow · 2 disallow",
+    });
     await user.click(trigger);
 
     // Type filter
