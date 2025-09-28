@@ -57,6 +57,14 @@ export function DomainLoadingState() {
           accent={SECTION_DEFS.headers.accent}
           status="loading"
         />
+        <Section
+          title={SECTION_DEFS.seo.title}
+          description={SECTION_DEFS.seo.description}
+          help={SECTION_DEFS.seo.help}
+          icon={<SECTION_DEFS.seo.Icon className="h-4 w-4" />}
+          accent={SECTION_DEFS.seo.accent}
+          status="loading"
+        />
       </Accordion>
     </div>
   );

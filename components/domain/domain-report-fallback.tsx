@@ -9,6 +9,7 @@ export function DomainReportFallback() {
     SECTION_DEFS.dns,
     SECTION_DEFS.certificates,
     SECTION_DEFS.headers,
+    SECTION_DEFS.seo,
   ];
 
   return (
