@@ -1,12 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import {
+  DiscordIcon,
   FacebookIcon,
   LinkedinIcon,
-  PinterestIcon,
+  SlackIcon,
   TwitterIcon,
 } from "@/components/brand-icons";
+import { SocialPreview } from "@/components/social-preview";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -82,6 +83,14 @@ export function SeoSection({
   const Def = SECTION_DEFS.seo;
   const status = isError ? "error" : data ? "ready" : "loading";
 
+  const metaTagValues: { label: string; value?: string | null }[] = [
+    { label: "Title", value: data?.preview?.title },
+    { label: "Description", value: data?.preview?.description },
+    { label: "Canonical", value: data?.preview?.canonicalUrl },
+    { label: "Image", value: data?.preview?.image },
+    { label: "Robots", value: data?.meta?.general.robots },
+  ];
+
   return (
     <Section
       title={Def.title}
@@ -93,7 +102,17 @@ export function SeoSection({
     >
       {data ? (
         <div className="space-y-4">
-          <RawMeta data={data} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {metaTagValues
+              .filter((tag) => tag.value != null)
+              .map((tag) => (
+                <KeyValue
+                  key={tag.label}
+                  label={tag.label}
+                  value={String(tag.value)}
+                />
+              ))}
+          </div>
 
           <Separator />
 
@@ -114,6 +133,20 @@ export function SeoSection({
                   </TooltipTrigger>
                   <TooltipContent side="right" className="px-2 py-1 text-xs">
                     X (Twitter)
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <TabsTrigger value="slack" className="py-3">
+                        <SlackIcon className="h-4 w-4" aria-hidden="true" />
+                      </TabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="px-2 py-1 text-xs">
+                    Slack
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -149,29 +182,83 @@ export function SeoSection({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
-                      <TabsTrigger value="pinterest" className="py-3">
-                        <PinterestIcon className="h-4 w-4" aria-hidden="true" />
+                      <TabsTrigger value="discord" className="py-3">
+                        <DiscordIcon className="h-4 w-4" aria-hidden="true" />
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    Pinterest
+                    Discord
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </TabsList>
             <div className="grow text-start">
               <TabsContent value="x">
-                <SocialPreview platform="x" data={data} />
+                {data?.preview ? (
+                  <div className="space-y-3">
+                    <SocialPreview
+                      provider="x"
+                      title={data.preview.title ?? "No title"}
+                      description={data.preview.description ?? "No description"}
+                      image={data.preview.image}
+                      url={data.preview.canonicalUrl}
+                      variant="large"
+                    />
+                    <SocialPreview
+                      provider="x"
+                      title={data.preview.title ?? "No title"}
+                      description={data.preview.description ?? "No description"}
+                      image={data.preview.image}
+                      url={data.preview.canonicalUrl}
+                      variant="compact"
+                    />
+                  </div>
+                ) : null}
+              </TabsContent>
+              <TabsContent value="slack">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="slack"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
               </TabsContent>
               <TabsContent value="facebook">
-                <SocialPreview platform="facebook" data={data} />
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="facebook"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
               </TabsContent>
               <TabsContent value="linkedin">
-                <SocialPreview platform="linkedin" data={data} />
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="linkedin"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
               </TabsContent>
-              <TabsContent value="pinterest">
-                <SocialPreview platform="pinterest" data={data} />
+              <TabsContent value="discord">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="discord"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
               </TabsContent>
             </div>
           </Tabs>
@@ -191,69 +278,5 @@ export function SeoSection({
         <Skeleton className="h-40 w-full" />
       )}
     </Section>
-  );
-}
-
-function SocialPreview({
-  platform: _platform,
-  data,
-}: {
-  platform: "x" | "facebook" | "linkedin" | "pinterest";
-  data: SeoResponse;
-}) {
-  const p = data.preview;
-  const title = p?.title || "No title";
-  const desc = p?.description || "No description";
-  const img = p?.image || null;
-  const url = p?.canonicalUrl || data.source.finalUrl || "";
-
-  return (
-    <div className="rounded-xl border bg-background/40 p-3">
-      <div className="flex gap-3">
-        <div className="w-40 h-24 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
-          {img ? (
-            <Image
-              src={img}
-              alt="preview"
-              width={320}
-              height={192}
-              className="w-full h-full object-cover rounded"
-              unoptimized
-            />
-          ) : (
-            <span>No image</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0 space-y-1">
-          <div className="text-sm font-medium truncate">{title}</div>
-          <div className="text-xs text-muted-foreground line-clamp-2">
-            {desc}
-          </div>
-          <div className="text-[10px] text-muted-foreground truncate">
-            {url}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RawMeta({ data }: { data: SeoResponse }) {
-  const items: { label: string; value?: string | null }[] = [
-    { label: "Title", value: data.preview?.title },
-    { label: "Description", value: data.preview?.description },
-    { label: "Canonical", value: data.preview?.canonicalUrl },
-    { label: "Image", value: data.preview?.image },
-    { label: "Robots", value: data.meta?.general.robots },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-      {items
-        .filter((it) => it.value != null)
-        .map((it) => (
-          <KeyValue key={it.label} label={it.label} value={String(it.value)} />
-        ))}
-    </div>
   );
 }
