@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -91,13 +92,21 @@ export function SeoSection({
     >
       {data ? (
         <div className="space-y-4">
+          <div className="rounded-xl border bg-background/40 p-3 space-y-2">
+            <div className="text-xs mb-1 text-muted-foreground">
+              Meta overview
+            </div>
+            <RawMeta data={data} />
+          </div>
+
+          <Separator />
+
           <Tabs defaultValue="x" className="w-full">
             <TabsList>
               <TabsTrigger value="x">X</TabsTrigger>
               <TabsTrigger value="facebook">Facebook</TabsTrigger>
               <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
               <TabsTrigger value="pinterest">Pinterest</TabsTrigger>
-              <TabsTrigger value="raw">Raw Data</TabsTrigger>
             </TabsList>
             <TabsContent value="x">
               <SocialPreview platform="x" data={data} />
@@ -111,10 +120,9 @@ export function SeoSection({
             <TabsContent value="pinterest">
               <SocialPreview platform="pinterest" data={data} />
             </TabsContent>
-            <TabsContent value="raw">
-              <RawMeta data={data} />
-            </TabsContent>
           </Tabs>
+
+          <Separator />
 
           <RobotsSummary
             robots={data.robots}

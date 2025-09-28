@@ -42,6 +42,11 @@ vi.mock("@/components/ui/tabs", () => ({
   ),
 }));
 
+// Mock Separator to a simple hr
+vi.mock("@/components/ui/separator", () => ({
+  Separator: () => <hr data-slot="separator" />,
+}));
+
 // TooltipProvider is used by Section header help
 vi.mock("@/components/ui/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => (
@@ -63,9 +68,10 @@ vi.mock("next/image", () => ({
   __esModule: true,
   // biome-ignore lint/suspicious/noExplicitAny: testing stub
   default: (props: any) => {
+    // biome-ignore lint/correctness/noUnusedVariables: testing stub
     const { unoptimized, loader, fill, ...rest } = props;
     // biome-ignore lint/performance/noImgElement: testing stub
-    return <img {...rest} alt="testing stub" />;
+    return <img alt="testing stub" {...rest} />;
   },
 }));
 
@@ -139,10 +145,11 @@ describe("SeoSection", () => {
     expect(screen.getByText("Facebook")).toBeInTheDocument();
     expect(screen.getByText("LinkedIn")).toBeInTheDocument();
     expect(screen.getByText("Pinterest")).toBeInTheDocument();
-    expect(screen.getByText("Raw Data")).toBeInTheDocument();
     // Tabs are mocked to render all contents, so previews repeat across platforms
     expect(screen.getAllByText("Preview Title").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Preview Description").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Preview Description").length).toBeGreaterThan(
+      0,
+    );
 
     // Raw data shows OG fields
     expect(screen.getByText("OG Site Name")).toBeInTheDocument();
