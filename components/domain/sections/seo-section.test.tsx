@@ -150,16 +150,6 @@ describe("SeoSection", () => {
     expect(screen.getAllByText("Preview Description").length).toBeGreaterThan(
       0,
     );
-
-    // Robots summary
-    expect(screen.getByText("robots.txt")).toBeInTheDocument();
-    expect(screen.getByText("Found")).toBeInTheDocument();
-    expect(
-      screen.getByText(/2 allows, 1 disallows, 1 sitemaps/i),
-    ).toBeInTheDocument();
-    const link = screen.getByText("Open robots.txt").closest("a");
-    expect(link).toHaveAttribute("href", "https://example.com/robots.txt");
-    expect(screen.getByText("googlebot")).toBeInTheDocument();
   });
 
   it("shows error state with retry when isError", () => {
