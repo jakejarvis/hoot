@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DomainSearch } from "./domain-search";
+import { DomainSearch } from "@/components/domain/domain-search";
 
 const nav = vi.hoisted(() => ({
   push: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({}),
 }));
 
-vi.mock("./domain-suggestions", () => ({
+vi.mock("@/components/domain/domain-suggestions", () => ({
   DomainSuggestions: ({
     onSelectAction,
   }: {

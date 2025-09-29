@@ -1,10 +1,7 @@
-import "server-only";
+import { initTRPC } from "@trpc/server";
+import superjson from "superjson";
 
-import type { Context } from "./trpc";
-
-export async function createContext(params?: {
-  req: Request;
-}): Promise<Context> {
+export async function createContext(params?: { req: Request }) {
   const headers = params?.req?.headers ?? new Headers();
   const posthogDistinctId = headers.get("x-posthog-distinct-id") || undefined;
   const posthogSessionId = headers.get("x-posthog-session-id") || undefined;
@@ -33,3 +30,13 @@ export async function createContext(params?: {
     posthogSessionId,
   };
 }
+
+export type Context = Awaited<ReturnType<typeof createContext>>;
+
+const t = initTRPC.context<Context>().create({
+  transformer: superjson,
+});
+
+export const router = t.router;
+export const createCallerFactory = t.createCallerFactory;
+export const publicProcedure = t.procedure;

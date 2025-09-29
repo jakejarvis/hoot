@@ -7,7 +7,8 @@ import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { getQueryClient, trpc } from "@/server/query-client";
+import { getQueryClient } from "@/trpc/query-client";
+import { trpc } from "@/trpc/server";
 
 export const experimental_ppr = true;
 
@@ -42,27 +43,25 @@ export default async function DomainPage({
     redirect(`/${encodeURIComponent(normalized)}`);
   }
 
-  // Preserve PPR by isolating cookie read & analytics to a dynamic island
-
   // Prefetch graph with dependency cascade to flatten waterfalls
   const queryClient = getQueryClient();
   const registration = await queryClient.fetchQuery(
     trpc.domain.registration.queryOptions({ domain: normalized }),
   );
   if (registration?.isRegistered) {
-    queryClient.prefetchQuery(
+    void queryClient.prefetchQuery(
       trpc.domain.favicon.queryOptions({ domain: normalized }),
     );
-    queryClient.prefetchQuery(
+    void queryClient.prefetchQuery(
       trpc.domain.dns.queryOptions({ domain: normalized }),
     );
-    queryClient.prefetchQuery(
+    void queryClient.prefetchQuery(
       trpc.domain.hosting.queryOptions({ domain: normalized }),
     );
-    queryClient.prefetchQuery(
+    void queryClient.prefetchQuery(
       trpc.domain.certificates.queryOptions({ domain: normalized }),
     );
-    queryClient.prefetchQuery(
+    void queryClient.prefetchQuery(
       trpc.domain.headers.queryOptions({ domain: normalized }),
     );
   }

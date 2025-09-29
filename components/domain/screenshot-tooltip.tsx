@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Screenshot } from "@/components/domain/screenshot";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Screenshot } from "./screenshot";
 
 export function ScreenshotTooltip({
   domain,

@@ -1,7 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headScreenshotBlob, putScreenshotBlob } from "@/lib/blob";
+import { USER_AGENT } from "@/lib/constants";
 import { optimizePngCover } from "@/lib/image";
-import { USER_AGENT } from "./constants";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;

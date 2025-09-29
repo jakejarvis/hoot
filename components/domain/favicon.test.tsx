@@ -82,7 +82,7 @@ describe("Favicon", () => {
       isLoading: false,
     });
     render(<Favicon domain="example.com" size={16} />);
-    const img = screen.getByRole("img", { name: /favicon/i });
+    const img = screen.getByRole("img", { name: /icon/i });
     expect(img).toHaveAttribute("src", "https://x/y.png");
   });
 });

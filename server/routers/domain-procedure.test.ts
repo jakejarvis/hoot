@@ -3,7 +3,7 @@
 import { TRPCError } from "@trpc/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ZodError } from "zod";
-import { router } from "../trpc";
+import { router } from "@/trpc/init";
 import { createDomainProcedure, domainInput } from "./domain-procedure";
 
 vi.mock("@/lib/domain", () => ({
@@ -38,7 +38,10 @@ describe("createDomainProcedure", () => {
   it("transforms valid input and calls service", async () => {
     const service = vi.fn(async (d: string) => ({ ok: true, domain: d }));
     const testRouter = router({ test: createDomainProcedure(service, "x") });
-    const caller = testRouter.createCaller({});
+    const caller = testRouter.createCaller({
+      posthogDistinctId: "",
+      posthogSessionId: "",
+    });
     const result = await caller.test({ domain: "  WWW.Example.COM  " });
     expect(service).toHaveBeenCalledWith("www.example.com");
     expect(result).toEqual({ ok: true, domain: "www.example.com" });
@@ -51,7 +54,10 @@ describe("createDomainProcedure", () => {
     const testRouter = router({
       test: createDomainProcedure(service, "Custom error"),
     });
-    const caller = testRouter.createCaller({});
+    const caller = testRouter.createCaller({
+      posthogDistinctId: "",
+      posthogSessionId: "",
+    });
     await expect(caller.test({ domain: "example.com" })).rejects.toBeInstanceOf(
       TRPCError,
     );

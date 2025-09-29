@@ -2,30 +2,23 @@
 
 import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { DomainLoadingState } from "@/components/domain/domain-loading-state";
+import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
+import { exportDomainData } from "@/components/domain/export-data";
+import { Favicon } from "@/components/domain/favicon";
+import { ScreenshotTooltip } from "@/components/domain/screenshot-tooltip";
+import { CertificatesSection } from "@/components/domain/sections/certificates-section";
+import { DnsRecordsSection } from "@/components/domain/sections/dns-records-section";
+import { HeadersSection } from "@/components/domain/sections/headers-section";
+import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
+import { RegistrationSection } from "@/components/domain/sections/registration-section";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { useDomainHistory } from "@/hooks/use-domain-history";
+import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
-import type { Registration } from "@/lib/schemas";
-import { useDomainHistory } from "../../hooks/use-domain-history";
-import { useDomainQueries } from "../../hooks/use-domain-queries";
-import { DomainLoadingState } from "./domain-loading-state";
-import { DomainUnregisteredState } from "./domain-unregistered-state";
-import { exportDomainData } from "./export-data";
-import { Favicon } from "./favicon";
-import { ScreenshotTooltip } from "./screenshot-tooltip";
-import { CertificatesSection } from "./sections/certificates-section";
-import { DnsRecordsSection } from "./sections/dns-records-section";
-import { HeadersSection } from "./sections/headers-section";
-import { HostingEmailSection } from "./sections/hosting-email-section";
-import { RegistrationSection } from "./sections/registration-section";
 
-export function DomainReportView({
-  domain,
-}: {
-  domain: string;
-  initialRegistration?: Registration;
-  initialRegistered?: boolean;
-}) {
+export function DomainReportView({ domain }: { domain: string }) {
   const { registration, dns, hosting, certs, headers } =
     useDomainQueries(domain);
   // TTLs are always shown now; preference removed

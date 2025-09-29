@@ -67,3 +67,23 @@ export const captureServer = async (
   // flush events to posthog in background
   waitUntil(client.shutdown());
 };
+
+export const captureServerException = async (
+  error: Error,
+  properties: Record<string, unknown>,
+  distinctId?: string,
+) => {
+  const client = getServerPosthog();
+  if (!client) {
+    return;
+  }
+
+  client.captureException(
+    error,
+    distinctId || (await getDistinctId()) || "server",
+    properties,
+  );
+
+  // flush events to posthog in background
+  waitUntil(client.shutdown());
+};

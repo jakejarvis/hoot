@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { DomainSearch } from "./domain-search";
+import { DomainSearch } from "@/components/domain/domain-search";
 
 export function HeaderSearch() {
   const pathname = usePathname();

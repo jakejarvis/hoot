@@ -3,7 +3,7 @@ import { z } from "zod";
 import { captureServer } from "@/lib/analytics/server";
 import { normalizeDomainInput } from "@/lib/domain";
 import { isAcceptableDomainInput } from "@/lib/domain-server";
-import { publicProcedure } from "../trpc";
+import { publicProcedure } from "@/trpc/init";
 
 export const domainInput = z
   .object({ domain: z.string().min(1) })

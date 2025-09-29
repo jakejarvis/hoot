@@ -1,12 +1,11 @@
 "use client";
 
 import { Globe, Loader2, Search as SearchIcon } from "lucide-react";
-
+import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 import { cn } from "@/lib/utils";
-import { DomainSuggestions } from "./domain-suggestions";
 
 export type DomainSearchVariant = "sm" | "lg";
 
