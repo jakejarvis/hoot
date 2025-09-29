@@ -7,8 +7,10 @@ import { CertificateSchema } from "./tls";
 
 export const DomainExportSchema = z.object({
   domain: z.string(),
-  exportedAt: z.string(), // ISO 8601
   registration: RegistrationSchema.omit({
+    domain: true,
+    unicodeName: true,
+    punycodeName: true,
     fetchedAt: true,
     warnings: true,
     registrarProvider: true,

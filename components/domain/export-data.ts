@@ -6,7 +6,6 @@ export function exportDomainData(
 ) {
   const payload = DomainExportSchema.parse({
     domain,
-    exportedAt: new Date().toISOString(),
     ...data,
   });
 
