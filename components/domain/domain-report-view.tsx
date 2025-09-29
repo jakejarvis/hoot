@@ -2,10 +2,10 @@
 
 import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import type { DomainRecord } from "rdapper";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
+import type { RegistrationWithProvider } from "@/lib/schemas";
 import { useDomainHistory } from "../../hooks/use-domain-history";
 import { useDomainQueries } from "../../hooks/use-domain-queries";
 import { useTtlPreferences } from "../../hooks/use-ttl-preferences";
@@ -26,7 +26,7 @@ export function DomainReportView({
   initialRegistered,
 }: {
   domain: string;
-  initialRegistration?: DomainRecord;
+  initialRegistration?: RegistrationWithProvider;
   initialRegistered?: boolean;
 }) {
   const { registration, dns, hosting, certs, headers, allSectionsReady } =

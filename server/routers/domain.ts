@@ -3,7 +3,6 @@ import {
   DnsResolveResultSchema,
   HostingInfoSchema,
   HttpHeadersSchema,
-  RegistrationWithProviderSchema,
 } from "@/lib/schemas";
 import { resolveAll } from "../services/dns";
 import { getOrCreateFaviconBlobUrl } from "../services/favicon";
@@ -19,7 +18,8 @@ export const domainRouter = router({
   registration: createDomainProcedure(
     getRegistration,
     "Registration lookup failed",
-    RegistrationWithProviderSchema,
+    // Do not narrow output type for registration; we return full DomainRecord shape.
+    undefined,
   ),
   dns: createDomainProcedure(
     resolveAll,

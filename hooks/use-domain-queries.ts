@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import type { DomainRecord } from "rdapper";
+import type { RegistrationWithProvider } from "@/lib/schemas";
 import { useTRPC } from "@/lib/trpc/client";
 
 type UseDomainQueriesOptions = {
-  initialRegistration?: DomainRecord;
+  initialRegistration?: RegistrationWithProvider;
   initialRegistered?: boolean;
 };
 
