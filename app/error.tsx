@@ -41,7 +41,8 @@ export default function RootError(props: {
         ) : null}
         <div className="mt-6 flex flex-col items-center justify-center gap-3">
           <Button onClick={() => reset()}>
-            <RefreshCcw className="size-4" /> Try again
+            <RefreshCcw />
+            Try again
           </Button>
 
           <CreateIssueButton variant="outline" error={error} />
