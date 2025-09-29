@@ -8,7 +8,6 @@ import { captureClient } from "@/lib/analytics/client";
 import type { Registration } from "@/lib/schemas";
 import { useDomainHistory } from "../../hooks/use-domain-history";
 import { useDomainQueries } from "../../hooks/use-domain-queries";
-import { useTtlPreferences } from "../../hooks/use-ttl-preferences";
 import { DomainLoadingState } from "./domain-loading-state";
 import { DomainUnregisteredState } from "./domain-unregistered-state";
 import { exportDomainData } from "./export-data";
@@ -29,7 +28,7 @@ export function DomainReportView({
 }) {
   const { registration, dns, hosting, certs, headers } =
     useDomainQueries(domain);
-  const { showTtls, setShowTtls } = useTtlPreferences();
+  // TTLs are always shown now; preference removed
 
   // Manage domain history
   useDomainHistory(
@@ -129,14 +128,6 @@ export function DomainReportView({
               section: "dns",
             });
             dns.refetch();
-          }}
-          showTtls={showTtls}
-          onToggleTtlsAction={(v) => {
-            captureClient("ttl_preference_toggled", {
-              domain,
-              show_ttls: v,
-            });
-            setShowTtls(v);
           }}
         />
 

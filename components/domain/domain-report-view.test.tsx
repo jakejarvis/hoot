@@ -63,10 +63,6 @@ vi.mock("../../hooks/use-domain-queries", () => ({
   }),
 }));
 
-vi.mock("../../hooks/use-ttl-preferences", () => ({
-  useTtlPreferences: () => ({ showTtls: true, setShowTtls: vi.fn() }),
-}));
-
 vi.mock("../../hooks/use-domain-history", () => ({
   useDomainHistory: vi.fn(),
 }));

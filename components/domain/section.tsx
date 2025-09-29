@@ -23,7 +23,7 @@ export function Section({
   description,
   help,
   icon,
-  accent,
+  accent = "slate",
   isLoading,
   isError,
   headerRight,
@@ -33,7 +33,7 @@ export function Section({
   description?: string;
   help?: string;
   icon?: React.ReactNode;
-  accent?: "blue" | "purple" | "green" | "orange" | "pink";
+  accent?: "blue" | "purple" | "green" | "orange" | "pink" | "slate";
   isLoading?: boolean;
   isError?: boolean;
   headerRight?: React.ReactNode;
