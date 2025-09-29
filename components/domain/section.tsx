@@ -38,7 +38,7 @@ export function Section({
   children?: React.ReactNode;
 }) {
   return (
-    <AccordionItem value={title} className="border-none group">
+    <AccordionItem value={title} className="border-none">
       <Card
         className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-2xl shadow-black/10"
         data-accent={accent}
@@ -53,7 +53,7 @@ export function Section({
         />
         <div className="relative">
           <AccordionTrigger
-            className={cn("px-5 py-4 group")}
+            className={cn("px-5 py-4 hover:no-underline no-underline")}
             disabled={isError || isLoading}
           >
             <div className="flex w-full items-center gap-3 text-left">
