@@ -3,13 +3,12 @@
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
 import type { HttpHeader } from "@/server/services/headers";
 import { SECTION_DEFS } from "./sections-meta";
 
 export function HeadersSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
@@ -26,9 +25,10 @@ export function HeadersSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {data ? (
+      {isLoading ? null : data ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {(() => {
             const important = new Set([
@@ -58,9 +58,7 @@ export function HeadersSection({
           message="Failed to load headers."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={4} />
-      )}
+      ) : null}
     </Section>
   );
 }

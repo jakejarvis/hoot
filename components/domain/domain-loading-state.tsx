@@ -28,7 +28,7 @@ export function DomainLoadingState() {
               help={def.help}
               icon={<Icon className="h-4 w-4" />}
               accent={def.accent}
-              status="loading"
+              isLoading
             />
           );
         })}

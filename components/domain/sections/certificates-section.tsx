@@ -6,7 +6,6 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +18,7 @@ import { SECTION_DEFS } from "./sections-meta";
 
 export function CertificatesSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
@@ -36,9 +35,10 @@ export function CertificatesSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {data ? (
+      {isLoading ? null : data ? (
         data.map((c, idx) => (
           <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
             <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
@@ -119,9 +119,7 @@ export function CertificatesSection({
           message="Failed to load certificates."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={1} />
-      )}
+      ) : null}
     </Section>
   );
 }

@@ -24,7 +24,8 @@ export function Section({
   help,
   icon,
   accent,
-  status,
+  isLoading,
+  isError,
   headerRight,
   children,
 }: {
@@ -33,10 +34,16 @@ export function Section({
   help?: string;
   icon?: React.ReactNode;
   accent?: "blue" | "purple" | "green" | "orange" | "pink";
-  status?: "loading" | "ready" | "error";
+  isLoading?: boolean;
+  isError?: boolean;
   headerRight?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const status: "loading" | "ready" | "error" = isError
+    ? "error"
+    : isLoading
+      ? "loading"
+      : "ready";
   return (
     <AccordionItem value={title} className="border-none group">
       <Card
