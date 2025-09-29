@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNowStrict } from "date-fns";
-import React from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type RelativeExpiryProps = {
@@ -21,12 +21,10 @@ export function RelativeExpiry({
   warnDays = 30,
   className,
 }: RelativeExpiryProps) {
-  const [text, setText] = React.useState<string | null>(null);
-  const [status, setStatus] = React.useState<"danger" | "warn" | "ok" | null>(
-    null,
-  );
+  const [text, setText] = useState<string | null>(null);
+  const [status, setStatus] = useState<"danger" | "warn" | "ok" | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       const target = new Date(to);
       const now = new Date();

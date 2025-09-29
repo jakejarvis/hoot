@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import React from "react";
+import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DomainSuggestions } from "./domain-suggestions";
 
@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("./favicon", () => ({
   Favicon: ({ domain }: { domain: string }) =>
-    React.createElement("span", {
+    createElement("span", {
       "data-slot": "favicon",
       "data-domain": domain,
     }),

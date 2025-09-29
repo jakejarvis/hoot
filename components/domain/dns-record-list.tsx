@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useMemo } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -20,7 +20,7 @@ export function DnsRecordList({
   type: DnsRecord["type"];
   showTtls: boolean;
 }) {
-  const filtered = React.useMemo(() => {
+  const filtered = useMemo(() => {
     const arr = records.filter((r) => r.type === type);
     if (type === "MX") {
       arr.sort((a, b) => {

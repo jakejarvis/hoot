@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import React from "react";
+import { createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TruncatedValue } from "./truncated-value";
 
@@ -29,7 +29,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 
 describe("TruncatedValue", () => {
   it("hides tooltip content when not truncated", () => {
-    const ref = React.createRef<HTMLSpanElement | null>();
+    const ref = createRef<HTMLSpanElement | null>();
     render(
       <TruncatedValue
         value="Example Value"
@@ -45,7 +45,7 @@ describe("TruncatedValue", () => {
   });
 
   it("shows tooltip content when truncated", () => {
-    const ref = React.createRef<HTMLSpanElement | null>();
+    const ref = createRef<HTMLSpanElement | null>();
     render(
       <TruncatedValue
         value="A very long example value"

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { memo } from "react";
 import MapboxMap, { Marker, NavigationControl } from "react-map-gl/mapbox";
 import type { HostingInfo } from "@/server/services/hosting";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -38,7 +38,7 @@ function MapInner({ hosting }: { hosting: HostingInfo }) {
   );
 }
 
-export const HostingMap = React.memo(MapInner, (prev, next) => {
+export const HostingMap = memo(MapInner, (prev, next) => {
   const p = prev.hosting.geo;
   const n = next.hosting.geo;
   return p.lat === n.lat && p.lon === n.lon;

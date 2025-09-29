@@ -1,5 +1,3 @@
-import * as React from "react";
-
 type DnsGroupColor =
   | "slate"
   | "blue"
@@ -22,7 +20,7 @@ export function DnsGroup({
   chart?: 1 | 2 | 3 | 4 | 5;
   count?: number;
 }) {
-  const actualCount = count ?? React.Children.count(children);
+  const actualCount = count ?? (Array.isArray(children) ? children.length : 1);
   if (actualCount === 0) return null;
   const chartVar =
     chart === 1

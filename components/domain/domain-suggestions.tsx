@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
 import { Favicon } from "./favicon";
@@ -27,10 +27,10 @@ export function DomainSuggestions({
 }) {
   const router = useRouter();
 
-  const [history, setHistory] = React.useState<string[]>([]);
-  const [historyLoaded, setHistoryLoaded] = React.useState(false);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       const stored = localStorage.getItem("hoot-history");
       if (stored) setHistory(JSON.parse(stored));
@@ -41,7 +41,7 @@ export function DomainSuggestions({
     }
   }, []);
 
-  const suggestions = React.useMemo(() => {
+  const suggestions = useMemo(() => {
     const merged = [
       ...history,
       ...DEFAULT_SUGGESTIONS.filter((d) => !history.includes(d)),
