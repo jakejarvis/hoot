@@ -51,6 +51,9 @@ export default async function DomainPage({
   );
   if (registration?.isRegistered) {
     queryClient.prefetchQuery(
+      trpc.domain.favicon.queryOptions({ domain: normalized }),
+    );
+    queryClient.prefetchQuery(
       trpc.domain.dns.queryOptions({ domain: normalized }),
     );
     queryClient.prefetchQuery(
