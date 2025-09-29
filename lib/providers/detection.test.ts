@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  detectCertificateAuthority,
   detectDnsProvider,
   detectEmailProvider,
   detectHostingProvider,
@@ -31,5 +32,17 @@ describe("provider detection", () => {
 
   it("resolves registrar domain from aliases", () => {
     expect(resolveRegistrarDomain("GoDaddy Inc.")).toBe("godaddy.com");
+  });
+
+  it("detects CA from issuer string (Let's Encrypt)", () => {
+    const res = detectCertificateAuthority("Let's Encrypt R3");
+    expect(res.name).toBe("Let's Encrypt");
+    expect(res.domain).toBe("letsencrypt.org");
+  });
+
+  it("detects CA from issuer string (Let's Encrypt R10)", () => {
+    const res = detectCertificateAuthority("R10");
+    expect(res.name).toBe("Let's Encrypt");
+    expect(res.domain).toBe("letsencrypt.org");
   });
 });

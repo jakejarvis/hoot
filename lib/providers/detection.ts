@@ -1,5 +1,6 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
+  CA_PROVIDERS,
   DNS_PROVIDERS,
   EMAIL_PROVIDERS,
   HOSTING_PROVIDERS,
@@ -71,6 +72,8 @@ function evaluateRule(
       const searchValue = rule.value.toLowerCase();
       return hosts.some((host) => host.toLowerCase().includes(searchValue));
     }
+
+    // no issuer rule here; CA detection is alias-based and decoupled
 
     default:
       return false;
@@ -175,5 +178,31 @@ export const ProviderCatalog = {
   hosting: HOSTING_PROVIDERS,
   email: EMAIL_PROVIDERS,
   dns: DNS_PROVIDERS,
-  all: [...HOSTING_PROVIDERS, ...EMAIL_PROVIDERS, ...DNS_PROVIDERS],
+  ca: CA_PROVIDERS,
+  all: [
+    ...HOSTING_PROVIDERS,
+    ...EMAIL_PROVIDERS,
+    ...DNS_PROVIDERS,
+    ...CA_PROVIDERS,
+  ],
 };
+
+/** Detect certificate authority from an issuer string */
+export function detectCertificateAuthority(issuer: string): ProviderRef {
+  const name = (issuer || "").toLowerCase();
+  if (!name) return { name: "Unknown", domain: null };
+  for (const ca of CA_PROVIDERS) {
+    if (ca.name.toLowerCase() === name)
+      return { name: ca.name, domain: ca.domain };
+  }
+  for (const ca of CA_PROVIDERS) {
+    if (name.includes(ca.name.toLowerCase()))
+      return { name: ca.name, domain: ca.domain };
+  }
+  for (const ca of CA_PROVIDERS) {
+    if (ca.aliases?.some((a) => name.includes(a.toLowerCase()))) {
+      return { name: ca.name, domain: ca.domain };
+    }
+  }
+  return { name: "Unknown", domain: null };
+}
