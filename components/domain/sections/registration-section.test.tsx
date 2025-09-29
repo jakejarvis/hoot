@@ -51,7 +51,7 @@ describe("RegistrationSection", () => {
           {
             ...record,
             registrarProvider: { name: "GoDaddy", domain: "godaddy.com" },
-          } as unknown as import("@/server/services/registration").RegistrationWithProvider
+          } as unknown as import("@/lib/schemas").RegistrationWithProvider
         }
         isLoading={false}
         isError={false}
