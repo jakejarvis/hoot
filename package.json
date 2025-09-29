@@ -50,7 +50,7 @@
     "posthog-node": "^5.9.1",
     "puppeteer-core": "^24.22.3",
     "radix-ui": "^1.4.3",
-    "rdapper": "^0.1.1",
+    "rdapper": "^0.2.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-map-gl": "^8.0.4",
