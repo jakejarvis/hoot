@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import React from "react";
+import { createElement } from "react";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Screenshot } from "./screenshot";
@@ -17,7 +17,7 @@ vi.mock("next/image", () => ({
     width: number;
     height: number;
   }) =>
-    React.createElement("img", {
+    createElement("img", {
       alt,
       src,
       width,

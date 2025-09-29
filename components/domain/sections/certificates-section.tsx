@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown } from "lucide-react";
-import React from "react";
+import { Fragment } from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -40,7 +40,7 @@ export function CertificatesSection({
     >
       {data ? (
         data.map((c, idx) => (
-          <React.Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
+          <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
             <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <KeyValue
@@ -112,7 +112,7 @@ export function CertificatesSection({
                 <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
               </div>
             )}
-          </React.Fragment>
+          </Fragment>
         ))
       ) : isError ? (
         <ErrorWithRetry

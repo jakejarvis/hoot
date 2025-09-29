@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import * as React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { captureClient } from "@/lib/analytics/client";
@@ -38,7 +38,7 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
   const router = useRouter();
   const params = useParams<{ domain?: string }>();
 
-  const derivedInitial = React.useMemo(() => {
+  const derivedInitial = useMemo(() => {
     if (prefillFromRoute) {
       const raw = params?.domain ? decodeURIComponent(params.domain) : "";
       return normalizeDomainInput(raw);
@@ -46,11 +46,11 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
     return normalizeDomainInput(initialValue);
   }, [prefillFromRoute, params?.domain, initialValue]);
 
-  const [value, setValue] = React.useState<string>(derivedInitial);
-  const [loading, setLoading] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [value, setValue] = useState<string>(derivedInitial);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setValue(derivedInitial);
 
     // Also reset loading on navigation so inputs/buttons re-enable in header variant
@@ -58,7 +58,7 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
   }, [derivedInitial]);
 
   // Optional keyboard shortcut to focus the input (e.g., ⌘/Ctrl + K)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!enableShortcut) return;
     function onKey(e: KeyboardEvent) {
       if (

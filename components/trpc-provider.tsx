@@ -7,13 +7,13 @@ import {
   httpBatchStreamLink,
   loggerLink,
 } from "@trpc/client";
-import * as React from "react";
+import { useState } from "react";
 import superjson from "superjson";
 import { TRPCProvider as Provider } from "@/lib/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = React.useState(
+  const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
@@ -29,7 +29,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         },
       }),
   );
-  const [trpcClient] = React.useState(() =>
+  const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [
         loggerLink({

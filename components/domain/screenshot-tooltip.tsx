@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -15,8 +15,8 @@ export function ScreenshotTooltip({
   domain: string;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [hasOpened, setHasOpened] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
 
   return (
     <Tooltip
