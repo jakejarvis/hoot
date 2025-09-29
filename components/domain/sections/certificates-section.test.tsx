@@ -34,6 +34,21 @@ vi.mock("@/components/ui/accordion", () => ({
   ),
 }));
 
+vi.mock("@/components/domain/favicon", () => ({
+  Favicon: ({ domain }: { domain: string }) => (
+    <div data-slot="favicon" data-domain={domain} />
+  ),
+}));
+
+vi.mock("@/lib/providers/detection", async () => ({
+  detectCertificateAuthority: (issuer: string) => {
+    if (/let's encrypt/i.test(issuer)) {
+      return { name: "Let's Encrypt", domain: "letsencrypt.org" };
+    }
+    return { name: "Unknown", domain: null };
+  },
+}));
+
 describe("CertificatesSection", () => {
   it("renders certificate fields and SAN count tooltip", () => {
     const data = [
@@ -67,6 +82,14 @@ describe("CertificatesSection", () => {
     ).toBe(true);
     // SAN count excludes subject equal altName
     expect(screen.getByText("+1")).toBeInTheDocument();
+    // shows CA annotation (may appear in value, tooltip, and suffix)
+    expect(screen.getAllByText("Let's Encrypt").length).toBeGreaterThan(0);
+    // shows CA favicon for issuer
+    expect(
+      document.querySelector(
+        '[data-slot="favicon"][data-domain="letsencrypt.org"]',
+      ),
+    ).not.toBeNull();
   });
 
   it("shows error state", () => {

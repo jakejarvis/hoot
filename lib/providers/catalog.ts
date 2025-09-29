@@ -1,4 +1,8 @@
-import type { Provider, RegistrarProvider } from "./types";
+import type {
+  CertificateAuthorityProvider,
+  Provider,
+  RegistrarProvider,
+} from "./types";
 
 /**
  * A registry of known hosting providers. The detection algorithm will iterate
@@ -499,4 +503,64 @@ export const REGISTRAR_PROVIDERS: RegistrarProvider[] = [
   },
   { name: "Wix", domain: "wix.com", aliases: ["wix.com ltd"] },
   { name: "RegistrarSafe", domain: "meta.com", aliases: ["registrarsafe llc"] },
+];
+
+/**
+ * Certificate Authorities registry. Matches against issuer strings.
+ */
+export const CA_PROVIDERS: CertificateAuthorityProvider[] = [
+  {
+    name: "Let's Encrypt",
+    domain: "letsencrypt.org",
+    aliases: [
+      "let's encrypt",
+      "lets encrypt",
+      "isrg",
+      // legacy intermediates
+      "r3",
+      "r4",
+      "e1",
+      "e2",
+      // 2024+ intermediates per LE announcement
+      "r10",
+      "r11",
+      "r12",
+      "r13",
+      "r14",
+      "e5",
+      "e6",
+      "e7",
+      "e8",
+    ],
+  },
+  { name: "ZeroSSL", domain: "zerossl.com", aliases: ["zerossl"] },
+  {
+    name: "DigiCert",
+    domain: "digicert.com",
+    aliases: ["digicert", "baltimore cybertrust", "thawte"],
+  },
+  {
+    name: "Google Trust Services",
+    domain: "pki.goog",
+    aliases: ["google trust services", "gts"],
+  },
+  { name: "GoDaddy", domain: "godaddy.com", aliases: ["godaddy", "starfield"] },
+  {
+    name: "Sectigo (Comodo)",
+    domain: "sectigo.com",
+    aliases: ["sectigo", "comodo", "usertrust", "aaa"],
+  },
+  { name: "GlobalSign", domain: "globalsign.com", aliases: ["globalsign"] },
+  { name: "GeoTrust", domain: "geotrust.com", aliases: ["geotrust"] },
+  { name: "Entrust", domain: "entrust.com", aliases: ["entrust"] },
+  {
+    name: "Amazon Trust Services",
+    domain: "amazontrust.com",
+    aliases: ["amazon trust", "amazon"],
+  },
+  {
+    name: "Cloudflare",
+    domain: "cloudflare.com",
+    aliases: ["cloudflare inc ecc ca", "cloudflare inc rsa ca", "cloudflare"],
+  },
 ];

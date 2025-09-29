@@ -37,3 +37,13 @@ export interface RegistrarProvider {
   /** Additional case-insensitive substrings to match (e.g., ["godaddy inc"]). */
   aliases?: string[];
 }
+
+/** Certificate Authority providers matched via aliases in issuer strings */
+export interface CertificateAuthorityProvider {
+  /** Canonical CA display name (e.g., "Let's Encrypt") */
+  name: string;
+  /** Domain for favicon (e.g., "letsencrypt.org") */
+  domain: string;
+  /** Case-insensitive substrings or tokens present in issuer, e.g. ["isrg", "r3"] */
+  aliases?: string[];
+}
