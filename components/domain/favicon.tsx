@@ -21,7 +21,11 @@ export function Favicon({
     trpc.domain.favicon.queryOptions(
       { domain },
       {
-        staleTime: 30 * 60_000, // 30 minutes
+        staleTime: 60 * 60_000, // 1 hour
+        placeholderData: (prev) => prev,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
       },
     ),
   );
