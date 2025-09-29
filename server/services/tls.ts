@@ -1,5 +1,9 @@
 import tls from "node:tls";
 import { captureServer } from "@/lib/analytics/server";
+import {
+  detectCertificateAuthority,
+  type ProviderRef,
+} from "@/lib/providers/detection";
 import { cacheGet, cacheSet, ns } from "@/lib/redis";
 
 export type Certificate = {
@@ -8,6 +12,7 @@ export type Certificate = {
   altNames: string[];
   validFrom: string;
   validTo: string;
+  caProvider: ProviderRef;
 };
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
@@ -60,15 +65,19 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       },
     );
 
-    const out: Certificate[] = chain.map((c) => ({
-      issuer: toName(c.issuer),
-      subject: toName(c.subject),
-      altNames: parseAltNames(
-        (c as Partial<{ subjectaltname: string }>).subjectaltname,
-      ),
-      validFrom: new Date(c.valid_from).toISOString(),
-      validTo: new Date(c.valid_to).toISOString(),
-    }));
+    const out: Certificate[] = chain.map((c) => {
+      const issuerName = toName(c.issuer);
+      return {
+        issuer: issuerName,
+        subject: toName(c.subject),
+        altNames: parseAltNames(
+          (c as Partial<{ subjectaltname: string }>).subjectaltname,
+        ),
+        validFrom: new Date(c.valid_from).toISOString(),
+        validTo: new Date(c.valid_to).toISOString(),
+        caProvider: detectCertificateAuthority(issuerName),
+      };
+    });
 
     await captureServer("tls_probe", {
       domain: lower,

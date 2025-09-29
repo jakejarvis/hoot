@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { equalHostname, formatDate } from "@/lib/format";
-import { detectCertificateAuthority } from "@/lib/providers/detection";
+import type { Certificate } from "@/server/services/tls";
 import { SECTION_DEFS } from "./sections-meta";
 
 // Client-only relative expiry hint to avoid hydration mismatch
@@ -58,13 +58,7 @@ export function CertificatesSection({
   isError,
   onRetryAction,
 }: {
-  data?: Array<{
-    issuer: string;
-    subject: string;
-    altNames?: string[];
-    validFrom: string;
-    validTo: string;
-  }> | null;
+  data?: Certificate[] | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
@@ -84,31 +78,26 @@ export function CertificatesSection({
           <React.Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
             <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {(() => {
-                  const ca = detectCertificateAuthority(c.issuer);
-                  return (
-                    <KeyValue
-                      label="Issuer"
-                      value={c.issuer}
-                      leading={
-                        ca.domain ? (
-                          <Favicon
-                            domain={ca.domain}
-                            size={16}
-                            className="rounded"
-                          />
-                        ) : undefined
-                      }
-                      suffix={
-                        ca.name && ca.name !== "Unknown" ? (
-                          <span className="text-[11px] text-muted-foreground">
-                            {ca.name}
-                          </span>
-                        ) : undefined
-                      }
-                    />
-                  );
-                })()}
+                <KeyValue
+                  label="Issuer"
+                  value={c.issuer}
+                  leading={
+                    c.caProvider?.domain ? (
+                      <Favicon
+                        domain={c.caProvider.domain}
+                        size={16}
+                        className="rounded"
+                      />
+                    ) : undefined
+                  }
+                  suffix={
+                    c.caProvider?.name && c.caProvider.name !== "Unknown" ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        {c.caProvider.name}
+                      </span>
+                    ) : undefined
+                  }
+                />
 
                 <KeyValue
                   label="Subject"

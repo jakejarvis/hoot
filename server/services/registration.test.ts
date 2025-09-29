@@ -36,6 +36,7 @@ describe("getRegistration", () => {
     globalThis.__redisTestHelper.reset();
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
+    expect(rec.registrarProvider?.name).toBe("GoDaddy");
     expect(globalThis.__redisTestHelper.store.has("reg:example.com")).toBe(
       true,
     );

@@ -4,6 +4,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
+import type { HttpHeader } from "@/server/services/headers";
 import { SECTION_DEFS } from "./sections-meta";
 
 export function HeadersSection({
@@ -12,11 +13,7 @@ export function HeadersSection({
   isError,
   onRetryAction,
 }: {
-  data?: Array<
-    | { name: string; value: string }
-    | { name: string; value: string | number }
-    | { name: string; value: string | null }
-  > | null;
+  data?: HttpHeader[] | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
