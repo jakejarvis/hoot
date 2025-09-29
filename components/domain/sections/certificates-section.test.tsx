@@ -40,15 +40,6 @@ vi.mock("@/components/domain/favicon", () => ({
   ),
 }));
 
-vi.mock("@/lib/providers/detection", async () => ({
-  detectCertificateAuthority: (issuer: string) => {
-    if (/let's encrypt/i.test(issuer)) {
-      return { name: "Let's Encrypt", domain: "letsencrypt.org" };
-    }
-    return { name: "Unknown", domain: null };
-  },
-}));
-
 describe("CertificatesSection", () => {
   it("renders certificate fields and SAN count tooltip", () => {
     const data = [
@@ -58,6 +49,7 @@ describe("CertificatesSection", () => {
         altNames: ["*.example.com", "example.com"],
         validFrom: "2024-01-01T00:00:00.000Z",
         validTo: "2025-01-01T00:00:00.000Z",
+        caProvider: { name: "Let's Encrypt", domain: "letsencrypt.org" },
       },
     ];
     render(

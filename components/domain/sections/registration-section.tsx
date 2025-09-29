@@ -8,10 +8,9 @@ import { Section } from "@/components/domain/section";
 import { Skeletons } from "@/components/domain/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
-import { resolveRegistrarDomain } from "@/lib/providers/detection";
+import type { RegistrationWithProvider } from "@/server/services/registration";
 import { SECTION_DEFS } from "./sections-meta";
 
-type RegistrarView = { name: string; domain: string | null };
 type RegistrantView = { organization: string; country: string; state?: string };
 
 export function RegistrationSection({
@@ -20,18 +19,13 @@ export function RegistrationSection({
   isError,
   onRetryAction,
 }: {
-  data?: DomainRecord | null;
+  data?: RegistrationWithProvider | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
 }) {
   const Def = SECTION_DEFS.registration;
-  const registrar: RegistrarView | null = data
-    ? {
-        name: (data.registrar?.name || "").trim() || "Unknown",
-        domain: deriveRegistrarDomain(data),
-      }
-    : null;
+  const registrar = data?.registrarProvider ?? null;
   const registrant: RegistrantView | null = data
     ? extractRegistrantView(data)
     : null;
@@ -89,17 +83,6 @@ export function RegistrationSection({
       )}
     </Section>
   );
-}
-
-function deriveRegistrarDomain(record: DomainRecord): string | null {
-  const url = record.registrar?.url;
-  if (url) {
-    try {
-      const host = new URL(url).hostname;
-      return host || null;
-    } catch {}
-  }
-  return resolveRegistrarDomain(record.registrar?.name || "");
 }
 
 function extractRegistrantView(record: DomainRecord): RegistrantView | null {

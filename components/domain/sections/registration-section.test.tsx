@@ -48,7 +48,12 @@ describe("RegistrationSection", () => {
 
     render(
       <RegistrationSection
-        data={record}
+        data={
+          {
+            ...record,
+            registrarProvider: { name: "GoDaddy", domain: "godaddy.com" },
+          } as unknown as import("@/server/services/registration").RegistrationWithProvider
+        }
         isLoading={false}
         isError={false}
         onRetryAction={() => {}}
