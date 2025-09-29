@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { KeyValue } from "./key-value";
 
-vi.mock("./copy-button", () => ({
+vi.mock("@/components/domain/copy-button", () => ({
   CopyButton: ({ value }: { value: string }) => (
     <button type="button" onClick={() => navigator.clipboard.writeText(value)}>
       Copy

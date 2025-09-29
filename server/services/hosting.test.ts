@@ -5,20 +5,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { detectHosting } from "./hosting";
 
 // Mocks for dependencies used by detectHosting
-vi.mock("./dns", () => ({
+vi.mock("@/server/services/dns", () => ({
   resolveAll: vi.fn(async (_domain: string) => ({
     records: [],
     source: "mock",
   })),
 }));
 
-vi.mock("./headers", () => ({
+vi.mock("@/server/services/headers", () => ({
   probeHeaders: vi.fn(
     async (_domain: string) => [] as { name: string; value: string }[],
   ),
 }));
 
-vi.mock("./ip", () => ({
+vi.mock("@/server/services/ip", () => ({
   lookupIpMeta: vi.fn(async (_ip: string) => ({
     geo: {
       city: "",
@@ -40,9 +40,9 @@ afterEach(() => {
 describe("detectHosting", () => {
   it("returns known providers when signals match (Vercel/Google/Cloudflare)", async () => {
     // Arrange
-    const { resolveAll } = await import("./dns");
-    const { probeHeaders } = await import("./headers");
-    const { lookupIpMeta } = await import("./ip");
+    const { resolveAll } = await import("@/server/services/dns");
+    const { probeHeaders } = await import("@/server/services/headers");
+    const { lookupIpMeta } = await import("@/server/services/ip");
 
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [

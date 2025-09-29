@@ -3,24 +3,24 @@ import {
   DnsResolveResultSchema,
   HostingSchema,
   HttpHeadersSchema,
+  RegistrationSchema,
 } from "@/lib/schemas";
-import { resolveAll } from "../services/dns";
-import { getOrCreateFaviconBlobUrl } from "../services/favicon";
-import { probeHeaders } from "../services/headers";
-import { detectHosting } from "../services/hosting";
-import { getRegistration } from "../services/registration";
-import { getOrCreateScreenshotBlobUrl } from "../services/screenshot";
-import { getSeo } from "../services/seo";
-import { getCertificates } from "../services/tls";
-import { router } from "../trpc";
-import { createDomainProcedure } from "./domain-procedure";
+import { createDomainProcedure } from "@/server/routers/domain-procedure";
+import { resolveAll } from "@/server/services/dns";
+import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";
+import { probeHeaders } from "@/server/services/headers";
+import { detectHosting } from "@/server/services/hosting";
+import { getRegistration } from "@/server/services/registration";
+import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
+import { getSeo } from "@/server/services/seo";
+import { getCertificates } from "@/server/services/tls";
+import { router } from "@/trpc/init";
 
 export const domainRouter = router({
   registration: createDomainProcedure(
     getRegistration,
     "Registration lookup failed",
-    // Do not narrow output type for registration; we return full DomainRecord shape.
-    undefined,
+    RegistrationSchema,
   ),
   dns: createDomainProcedure(
     resolveAll,

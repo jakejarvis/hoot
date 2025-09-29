@@ -1,6 +1,9 @@
 import { Info, Loader2 } from "lucide-react";
+import {
+  SECTION_DEFS,
+  SECTION_ORDER,
+} from "@/components/domain/sections/sections-meta";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SECTION_DEFS, SECTION_ORDER } from "./sections/sections-meta";
 
 export function DomainReportFallback() {
   return (

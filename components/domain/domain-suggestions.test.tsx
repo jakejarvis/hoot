@@ -2,13 +2,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DomainSuggestions } from "./domain-suggestions";
+import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-vi.mock("./favicon", () => ({
+vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) =>
     createElement("span", {
       "data-slot": "favicon",

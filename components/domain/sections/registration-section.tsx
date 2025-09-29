@@ -3,12 +3,12 @@
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
+import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
-import { RelativeExpiry } from "../relative-expiry";
-import { SECTION_DEFS } from "./sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
 

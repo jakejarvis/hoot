@@ -1,4 +1,4 @@
-import { USER_AGENT } from "./constants";
+import { USER_AGENT } from "@/lib/constants";
 export type DnsRecordType = "A" | "AAAA" | "MX" | "TXT" | "NS";
 
 export type DohProviderKey = "cloudflare" | "google";

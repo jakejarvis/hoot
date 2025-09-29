@@ -2,17 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Favicon } from "@/components/domain/favicon";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
-import { Favicon } from "./favicon";
-
-const DEFAULT_SUGGESTIONS = [
-  "google.com",
-  "wikipedia.org",
-  "github.com",
-  "cloudflare.com",
-  "producthunt.com",
-];
+import { DEFAULT_SUGGESTIONS } from "@/lib/constants";
 
 export function DomainSuggestions({
   onSelectAction,

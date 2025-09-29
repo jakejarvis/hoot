@@ -5,11 +5,11 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
+import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import type { Hosting } from "@/lib/schemas";
-import { SECTION_DEFS } from "./sections-meta";
 
 const HostingMap = dynamic(
-  () => import("../hosting-map").then((m) => m.HostingMap),
+  () => import("@/components/domain/hosting-map").then((m) => m.HostingMap),
   {
     ssr: false,
     loading: () => (

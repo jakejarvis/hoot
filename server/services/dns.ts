@@ -5,8 +5,11 @@ import {
   DnsRecordSchema,
   type DnsResolveResult,
 } from "@/lib/schemas";
-import { isCloudflareIpAsync } from "./cloudflare";
-import { DOH_PROVIDERS, type DohProvider } from "./doh-providers";
+import { isCloudflareIpAsync } from "@/server/services/cloudflare";
+import {
+  DOH_PROVIDERS,
+  type DohProvider,
+} from "@/server/services/doh-providers";
 
 type DnsType = DnsRecord["type"];
 const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];

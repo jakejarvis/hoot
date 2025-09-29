@@ -1,4 +1,4 @@
-import { Info, Loader2 } from "lucide-react";
+import { AlertCircle, Info, Loader2 } from "lucide-react";
 import {
   AccordionContent,
   AccordionItem,
@@ -26,7 +26,6 @@ export function Section({
   accent = "slate",
   isLoading,
   isError,
-  headerRight,
   children,
 }: {
   title: string;
@@ -36,14 +35,8 @@ export function Section({
   accent?: "blue" | "purple" | "green" | "orange" | "pink" | "cyan" | "slate";
   isLoading?: boolean;
   isError?: boolean;
-  headerRight?: React.ReactNode;
   children?: React.ReactNode;
 }) {
-  const status: "loading" | "ready" | "error" = isError
-    ? "error"
-    : isLoading
-      ? "loading"
-      : "ready";
   return (
     <AccordionItem value={title} className="border-none group">
       <Card
@@ -60,8 +53,8 @@ export function Section({
         />
         <div className="relative">
           <AccordionTrigger
-            className={cn("px-5 py-4 hover:no-underline no-underline group")}
-            disabled={status !== "ready"}
+            className={cn("px-5 py-4 group")}
+            disabled={isError || isLoading}
           >
             <div className="flex w-full items-center gap-3 text-left">
               {icon && (
@@ -98,27 +91,23 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                {status && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {status === "loading" && (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Loading
-                      </>
-                    )}
-                    {status === "error" && (
-                      <span className="text-destructive">Error</span>
-                    )}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {isLoading && (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Loading</span>
+                    </>
+                  )}
+                  {isError && (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
+                      <span>Error</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </AccordionTrigger>
-          {headerRight && (
-            <div className="absolute right-16 top-1/2 -translate-y-1/2 hidden group-data-[state=open]:flex z-10">
-              {headerRight}
-            </div>
-          )}
         </div>
         <AccordionContent>
           {children && (

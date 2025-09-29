@@ -1,9 +1,9 @@
 "use client";
 
+import { CopyButton } from "@/components/domain/copy-button";
+import { TruncatedValue } from "@/components/domain/truncated-value";
+import { useTruncation } from "@/hooks/use-truncation";
 import { cn } from "@/lib/utils";
-import { useTruncation } from "../../hooks/use-truncation";
-import { CopyButton } from "./copy-button";
-import { TruncatedValue } from "./truncated-value";
 
 export function KeyValue({
   label,

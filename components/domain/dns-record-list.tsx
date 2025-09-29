@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
+import { Favicon } from "@/components/domain/favicon";
+import { KeyValue } from "@/components/domain/key-value";
+import { TtlBadge } from "@/components/domain/ttl-badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { DnsRecord } from "@/lib/schemas";
-import { Favicon } from "./favicon";
-import { KeyValue } from "./key-value";
-import { TtlBadge } from "./ttl-badge";
 
 export function DnsRecordList({
   records,

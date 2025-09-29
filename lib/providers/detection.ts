@@ -1,17 +1,17 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
-import type {
-  DetectionRule,
-  HostingProvider,
-  HttpHeader,
-  ProviderRef,
-} from "@/lib/schemas";
 import {
   CA_PROVIDERS,
   DNS_PROVIDERS,
   EMAIL_PROVIDERS,
   HOSTING_PROVIDERS,
   REGISTRAR_PROVIDERS,
-} from "./catalog";
+} from "@/lib/providers/catalog";
+import type {
+  DetectionRule,
+  HostingProvider,
+  HttpHeader,
+  ProviderRef,
+} from "@/lib/schemas";
 
 /**
  * A context object for header-based detection, pre-calculating values to

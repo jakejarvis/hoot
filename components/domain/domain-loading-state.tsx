@@ -1,7 +1,10 @@
+import { Section } from "@/components/domain/section";
+import {
+  SECTION_DEFS,
+  SECTION_ORDER,
+} from "@/components/domain/sections/sections-meta";
 import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Section } from "./section";
-import { SECTION_DEFS, SECTION_ORDER } from "./sections/sections-meta";
 
 export function DomainLoadingState() {
   return (

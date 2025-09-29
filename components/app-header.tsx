@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { HeaderSearch } from "@/components/domain/header-search";
+import { GithubStars } from "@/components/github-stars";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { HeaderSearch } from "./domain/header-search";
-import { GithubStars } from "./github-stars";
 
 export function AppHeader() {
   return (

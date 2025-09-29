@@ -4,8 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/components/theme-provider";
-import { TRPCProvider } from "@/components/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
 
 const geistSans = Geist({

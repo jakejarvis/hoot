@@ -7,9 +7,9 @@ import {
 } from "@/lib/providers/detection";
 import { getOrSetZod, ns } from "@/lib/redis";
 import { type Hosting, HostingSchema } from "@/lib/schemas";
-import { resolveAll } from "./dns";
-import { probeHeaders } from "./headers";
-import { lookupIpMeta } from "./ip";
+import { resolveAll } from "@/server/services/dns";
+import { probeHeaders } from "@/server/services/headers";
+import { lookupIpMeta } from "@/server/services/ip";
 
 export async function detectHosting(domain: string): Promise<Hosting> {
   const key = ns("hosting", domain.toLowerCase());
