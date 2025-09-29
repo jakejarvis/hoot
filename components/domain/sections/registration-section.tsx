@@ -9,6 +9,7 @@ import { Skeletons } from "@/components/domain/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { RegistrationWithProvider } from "@/server/services/registration";
+import { RelativeExpiry } from "../relative-expiry";
 import { SECTION_DEFS } from "./sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
@@ -65,6 +66,16 @@ export function RegistrationSection({
           <KeyValue
             label="Expires"
             value={formatDate(data.expirationDate || "")}
+            suffix={
+              data.expirationDate ? (
+                <RelativeExpiry
+                  to={data.expirationDate}
+                  dangerDays={30}
+                  warnDays={60}
+                  className="text-[11px]"
+                />
+              ) : null
+            }
           />
           <KeyValue
             label="Registrant"
