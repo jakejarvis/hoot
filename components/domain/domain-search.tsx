@@ -62,6 +62,7 @@ export function DomainSearch({
           <Input
             id="domain"
             ref={inputRef}
+            autoFocus={variant === "lg"}
             inputMode="url"
             autoComplete="off"
             autoCorrect="off"
