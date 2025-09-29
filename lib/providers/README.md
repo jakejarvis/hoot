@@ -39,6 +39,7 @@ import {
   detectHostingProvider, 
   detectEmailProvider, 
   detectDnsProvider,
+  detectCertificateAuthority,
   resolveRegistrarDomain
 } from '@/lib/providers/detection';
 
@@ -59,6 +60,10 @@ console.log(email); // { name: "Google Workspace", domain: "google.com" }
 const nsRecords = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];  
 const dns = detectDnsProvider(nsRecords);
 console.log(dns); // { name: "Cloudflare", domain: "cloudflare.com" }
+
+// Certificate Authority detection (alias matching against issuer string)
+const ca = detectCertificateAuthority("Let's Encrypt R3");
+console.log(ca); // { name: "Let's Encrypt", domain: "letsencrypt.org" }
 
 // Registrar domain resolution (partial match of registrar names)
 const registrarName = 'GoDaddy Inc.';
@@ -107,6 +112,18 @@ export const HOSTING_PROVIDERS: Provider[] = [
 
 // Check NS record contains substring
 { type: "dns", recordType: "NS", value: "cloudflare.com" }
+```
+
+### Certificate Authorities
+
+Modeled via a dedicated provider type with alias matching (no DetectionRule):
+
+```ts
+interface CertificateAuthorityProvider {
+  name: string;        // "Let's Encrypt"
+  domain: string;      // "letsencrypt.org"
+  aliases?: string[];  // ["isrg", "r3", "lets encrypt"]
+}
 ```
 
 ## Rule Evaluation
