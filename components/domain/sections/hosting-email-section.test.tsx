@@ -44,7 +44,7 @@ describe("HostingEmailSection", () => {
         lon: null,
         emoji: null,
       },
-    } as unknown as import("@/server/services/hosting").HostingInfo;
+    } as unknown as import("@/lib/schemas").Hosting;
     render(
       <HostingEmailSection
         data={data}

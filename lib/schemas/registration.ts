@@ -1,19 +1,122 @@
-import type { DomainRecord } from "rdapper";
 import { z } from "zod";
+import { ProviderRefSchema } from "./provider";
 
+/** Registrar providers do not use rules; they are matched by partial name */
 export const RegistrarProviderSchema = z.object({
+  /** Canonical registrar display name (e.g., "GoDaddy") */
   name: z.string(),
-  domain: z.string().nullable(),
+  /** Domain for favicon (e.g., "godaddy.com") */
+  domain: z.string(),
+  /** Additional case-insensitive substrings to match (e.g., ["godaddy inc"]). */
+  aliases: z.array(z.string()).optional(),
 });
 
-export const RegistrationWithProviderSchema = z
-  .object({
-    isRegistered: z.boolean(),
-    registrar: z.any().optional(),
-    registrarProvider: RegistrarProviderSchema.optional(),
-    source: z.any().optional(),
-  })
-  .passthrough();
+// typed from rdapper
+// https://chatgpt.com/s/t_68daacac17b88191b9dda5c878327209
+export const RegistrationSchema = z.object({
+  domain: z.string(),
+  tld: z.string(),
+  isRegistered: z.boolean(),
+  isIDN: z.boolean().optional(),
+  unicodeName: z.string().optional(),
+  punycodeName: z.string().optional(),
+  registry: z.string().optional(),
 
-export type RegistrationWithProvider = DomainRecord &
-  z.infer<typeof RegistrationWithProviderSchema>;
+  registrar: z
+    .object({
+      name: z.string().optional(),
+      ianaId: z.string().optional(),
+      url: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+    })
+    .optional(),
+
+  reseller: z.string().optional(),
+
+  statuses: z
+    .array(
+      z.object({
+        status: z.string(),
+        description: z.string().optional(),
+        raw: z.string().optional(),
+      }),
+    )
+    .optional(),
+
+  creationDate: z.string().optional(),
+  updatedDate: z.string().optional(),
+  expirationDate: z.string().optional(),
+  deletionDate: z.string().optional(),
+
+  transferLock: z.boolean().optional(),
+
+  dnssec: z
+    .object({
+      enabled: z.boolean(),
+      dsRecords: z
+        .array(
+          z.object({
+            keyTag: z.number().optional(),
+            algorithm: z.number().optional(),
+            digestType: z.number().optional(),
+            digest: z.string().optional(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+
+  nameservers: z
+    .array(
+      z.object({
+        host: z.string(),
+        ipv4: z.array(z.string()).optional(),
+        ipv6: z.array(z.string()).optional(),
+      }),
+    )
+    .optional(),
+
+  contacts: z
+    .array(
+      z.object({
+        type: z.enum([
+          "registrant",
+          "admin",
+          "tech",
+          "billing",
+          "abuse",
+          "registrar",
+          "reseller",
+          "unknown",
+        ]),
+        name: z.string().optional(),
+        organization: z.string().optional(),
+        email: z.union([z.string(), z.array(z.string())]).optional(),
+        phone: z.union([z.string(), z.array(z.string())]).optional(),
+        fax: z.union([z.string(), z.array(z.string())]).optional(),
+        street: z.array(z.string()).optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        postalCode: z.string().optional(),
+        country: z.string().optional(),
+        countryCode: z.string().optional(),
+      }),
+    )
+    .optional(),
+
+  whoisServer: z.string().optional(),
+  rdapServers: z.array(z.string()).optional(),
+  rawRdap: z.unknown().optional(),
+  rawWhois: z.string().optional(),
+
+  source: z.enum(["rdap", "whois"]),
+  fetchedAt: z.string(), // ISO 8601
+
+  warnings: z.array(z.string()).optional(),
+
+  registrarProvider: ProviderRefSchema,
+});
+
+export type RegistrarProvider = z.infer<typeof RegistrarProviderSchema>;
+export type Registration = z.infer<typeof RegistrationSchema>;

@@ -3,25 +3,18 @@ import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { resolveRegistrarDomain } from "@/lib/providers/detection";
 import { getOrSetZod, ns } from "@/lib/redis";
-import {
-  type RegistrationWithProvider,
-  RegistrationWithProviderSchema,
-} from "@/lib/schemas";
+import { type Registration, RegistrationSchema } from "@/lib/schemas";
 
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
 // Type exported from schemas; keep alias for local file consumers if any
 
-export async function getRegistration(
-  domain: string,
-): Promise<RegistrationWithProvider> {
+export async function getRegistration(domain: string): Promise<Registration> {
   const registrable = toRegistrableDomain(domain);
   if (!registrable) throw new Error("Invalid domain");
 
   const key = ns("reg", registrable.toLowerCase());
-  const schema =
-    RegistrationWithProviderSchema as unknown as import("zod").ZodType<RegistrationWithProvider>;
 
   const startedAt = Date.now();
   const { ok, record, error } = await lookupDomain(registrable, {
@@ -52,20 +45,19 @@ export async function getRegistration(
     registrarDomain = resolveRegistrarDomain(registrarName);
   }
 
-  const withProvider: RegistrationWithProvider = {
+  const withProvider: Registration = {
     ...record,
-    registrar: record.registrar,
     registrarProvider: {
       name: registrarName.trim() || "Unknown",
       domain: registrarDomain,
     },
   };
 
-  await getOrSetZod<RegistrationWithProvider>(
+  await getOrSetZod<Registration>(
     key,
     ttl,
     async () => withProvider,
-    schema,
+    RegistrationSchema,
   );
   await captureServer("registration_lookup", {
     domain: registrable,

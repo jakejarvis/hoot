@@ -43,7 +43,7 @@ describe("RegistrationSection", () => {
           state: "CA",
         },
       ],
-    } as unknown as import("rdapper").DomainRecord;
+    } as unknown as import("@/lib/schemas").Registration;
 
     render(
       <RegistrationSection
@@ -51,7 +51,7 @@ describe("RegistrationSection", () => {
           {
             ...record,
             registrarProvider: { name: "GoDaddy", domain: "godaddy.com" },
-          } as unknown as import("@/lib/schemas").RegistrationWithProvider
+          } as unknown as import("@/lib/schemas").Registration
         }
         isLoading={false}
         isError={false}

@@ -6,17 +6,15 @@ import {
   detectHostingProvider,
 } from "@/lib/providers/detection";
 import { getOrSetZod, ns } from "@/lib/redis";
-import { type HostingInfo, HostingInfoSchema } from "@/lib/schemas";
+import { type Hosting, HostingSchema } from "@/lib/schemas";
 import { resolveAll } from "./dns";
 import { probeHeaders } from "./headers";
 import { lookupIpMeta } from "./ip";
 
-export type { HostingInfo };
-
-export async function detectHosting(domain: string): Promise<HostingInfo> {
+export async function detectHosting(domain: string): Promise<Hosting> {
   const key = ns("hosting", domain.toLowerCase());
-  const schema = HostingInfoSchema;
-  return await getOrSetZod<HostingInfo>(
+  const schema = HostingSchema;
+  return await getOrSetZod<Hosting>(
     key,
     24 * 60 * 60,
     async () => {
@@ -90,7 +88,7 @@ export async function detectHosting(domain: string): Promise<HostingInfo> {
         }
       }
 
-      const info: HostingInfo = {
+      const info: Hosting = {
         hostingProvider: { name: hostingName, domain: hostingIconDomain },
         emailProvider: { name: emailName, domain: emailIconDomain },
         dnsProvider: { name: dnsName, domain: dnsIconDomain },

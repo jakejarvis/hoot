@@ -1,14 +1,14 @@
 import type {
   CertificateAuthorityProvider,
-  Provider,
+  HostingProvider,
   RegistrarProvider,
-} from "./types";
+} from "@/lib/schemas";
 
 /**
  * A registry of known hosting providers. The detection algorithm will iterate
  * through this list to identify the hosting provider from HTTP headers.
  */
-export const HOSTING_PROVIDERS: Provider[] = [
+export const HOSTING_PROVIDERS: HostingProvider[] = [
   {
     name: "Vercel",
     domain: "vercel.com",
@@ -154,7 +154,7 @@ export const HOSTING_PROVIDERS: Provider[] = [
  * A registry of known email providers. The detection algorithm will iterate
  * through this list to identify the email provider from MX records.
  */
-export const EMAIL_PROVIDERS: Provider[] = [
+export const EMAIL_PROVIDERS: HostingProvider[] = [
   // Google now supports a single MX as well as the legacy multi-MX set.
   {
     name: "Google Workspace",
@@ -274,7 +274,7 @@ export const EMAIL_PROVIDERS: Provider[] = [
  * A registry of known DNS providers. The detection algorithm will iterate
  * through this list to identify the DNS provider from NS records.
  */
-export const DNS_PROVIDERS: Provider[] = [
+export const DNS_PROVIDERS: HostingProvider[] = [
   {
     name: "Cloudflare",
     domain: "cloudflare.com",

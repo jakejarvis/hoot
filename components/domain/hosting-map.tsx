@@ -2,10 +2,10 @@
 
 import { memo } from "react";
 import MapboxMap, { Marker, NavigationControl } from "react-map-gl/mapbox";
-import type { HostingInfo } from "@/lib/schemas";
+import type { Hosting } from "@/lib/schemas";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-function MapInner({ hosting }: { hosting: HostingInfo }) {
+function MapInner({ hosting }: { hosting: Hosting }) {
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) return null;
 
   const lat = hosting.geo.lat;

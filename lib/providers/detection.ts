@@ -1,5 +1,10 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
-import type { HttpHeader, ProviderRef } from "@/lib/schemas";
+import type {
+  DetectionRule,
+  HostingProvider,
+  HttpHeader,
+  ProviderRef,
+} from "@/lib/schemas";
 import {
   CA_PROVIDERS,
   DNS_PROVIDERS,
@@ -7,7 +12,6 @@ import {
   HOSTING_PROVIDERS,
   REGISTRAR_PROVIDERS,
 } from "./catalog";
-import type { DetectionRule, Provider } from "./types";
 
 /**
  * A context object for header-based detection, pre-calculating values to
@@ -74,8 +78,6 @@ function evaluateRule(
       return hosts.some((host) => host.toLowerCase().includes(searchValue));
     }
 
-    // no issuer rule here; CA detection is alias-based and decoupled
-
     default:
       return false;
   }
@@ -85,7 +87,7 @@ function evaluateRule(
  * Detect a provider from a list of providers using the provided context.
  */
 function detectProviderFromList(
-  providers: Provider[],
+  providers: HostingProvider[],
   headerContext?: HeaderDetectionContext,
   mxHosts?: string[],
   nsHosts?: string[],
@@ -166,25 +168,6 @@ export function resolveRegistrarDomain(registrarName: string): string | null {
 
   return null;
 }
-
-/**
- * Map provider name to icon domain for favicon display.
- */
-// mapping helpers removed; detectors now return name+domain directly
-
-// Export provider lists for backward compatibility and access
-export const ProviderCatalog = {
-  hosting: HOSTING_PROVIDERS,
-  email: EMAIL_PROVIDERS,
-  dns: DNS_PROVIDERS,
-  ca: CA_PROVIDERS,
-  all: [
-    ...HOSTING_PROVIDERS,
-    ...EMAIL_PROVIDERS,
-    ...DNS_PROVIDERS,
-    ...CA_PROVIDERS,
-  ],
-};
 
 /** Detect certificate authority from an issuer string */
 export function detectCertificateAuthority(issuer: string): ProviderRef {
