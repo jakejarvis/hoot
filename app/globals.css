@@ -24,6 +24,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-indigo: var(--accent-indigo);
+  --color-accent-green: var(--accent-green);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-slate: var(--accent-slate);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -51,45 +58,43 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
 
+  /* DNS badge accent tokens */
+  --accent-blue: oklch(0.62 0.2 255);
+  --accent-indigo: oklch(0.6 0.19 275);
+  --accent-green: oklch(0.7 0.16 150);
+  --accent-purple: oklch(0.68 0.19 310);
+  --accent-orange: oklch(0.78 0.17 70);
+  --accent-cyan: oklch(0.64 0.16 195);
+  --accent-slate: oklch(0.86 0.01 56.37);
+
   /* Section accent glow (light) */
-  --accent-blue-glow: radial-gradient(
-    closest-side,
-    oklch(0.94 0.1 230),
-    transparent
-  );
-  --accent-cyan-glow: radial-gradient(
-    closest-side,
-    oklch(0.92 0.12 200),
-    transparent
-  );
-  --accent-purple-glow: radial-gradient(
+  --glow-blue: radial-gradient(closest-side, oklch(0.94 0.1 230), transparent);
+  --glow-purple: radial-gradient(
     closest-side,
     oklch(0.96 0.1 310),
     transparent
   );
-  --accent-green-glow: radial-gradient(
+  --glow-green: radial-gradient(
     closest-side,
     oklch(0.96 0.09 160),
     transparent
   );
-  --accent-orange-glow: radial-gradient(
+  --glow-orange: radial-gradient(
     closest-side,
     oklch(0.96 0.12 60),
     transparent
   );
-  --accent-pink-glow: radial-gradient(
+  --glow-pink: radial-gradient(closest-side, oklch(0.96 0.16 350), transparent);
+  --glow-slate: radial-gradient(
     closest-side,
-    oklch(0.96 0.16 350),
+    oklch(0.86 0.01 56.37),
     transparent
   );
-
-  /* DNS badge accent tokens */
-  --dns-a: oklch(0.62 0.2 255);
-  --dns-aaaa: oklch(0.6 0.19 275);
-  --dns-mx: oklch(0.7 0.16 150);
-  --dns-cname: oklch(0.68 0.19 310);
-  --dns-txt: oklch(0.78 0.17 70);
-  --dns-ns: oklch(0.64 0.16 195);
+  --glow-cyan: radial-gradient(
+    closest-side,
+    oklch(0.92 0.12 200),
+    transparent
+  );
 }
 
 .dark {
@@ -112,45 +117,43 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
 
+  /* DNS badge accent tokens (dark) */
+  --accent-blue: oklch(0.72 0.16 255);
+  --accent-indigo: oklch(0.7 0.16 275);
+  --accent-green: oklch(0.82 0.14 150);
+  --accent-purple: oklch(0.8 0.16 310);
+  --accent-orange: oklch(0.86 0.14 70);
+  --accent-cyan: oklch(0.78 0.12 195);
+  --accent-slate: oklch(0.7 0.01 56.26);
+
   /* Section accent glow (dark) */
-  --accent-blue-glow: radial-gradient(
-    closest-side,
-    oklch(0.82 0.08 230),
-    transparent
-  );
-  --accent-cyan-glow: radial-gradient(
-    closest-side,
-    oklch(0.8 0.12 200),
-    transparent
-  );
-  --accent-purple-glow: radial-gradient(
+  --glow-blue: radial-gradient(closest-side, oklch(0.82 0.08 230), transparent);
+  --glow-purple: radial-gradient(
     closest-side,
     oklch(0.78 0.1 310),
     transparent
   );
-  --accent-green-glow: radial-gradient(
+  --glow-green: radial-gradient(
     closest-side,
     oklch(0.86 0.09 160),
     transparent
   );
-  --accent-orange-glow: radial-gradient(
+  --glow-orange: radial-gradient(
     closest-side,
     oklch(0.86 0.12 60),
     transparent
   );
-  --accent-pink-glow: radial-gradient(
+  --glow-pink: radial-gradient(closest-side, oklch(0.82 0.16 350), transparent);
+  --glow-slate: radial-gradient(
     closest-side,
-    oklch(0.82 0.16 350),
+    oklch(0.7 0.01 56.26),
     transparent
   );
-
-  /* DNS badge accent tokens (dark) */
-  --dns-a: oklch(0.72 0.16 255);
-  --dns-aaaa: oklch(0.7 0.16 275);
-  --dns-mx: oklch(0.82 0.14 150);
-  --dns-cname: oklch(0.8 0.16 310);
-  --dns-txt: oklch(0.86 0.14 70);
-  --dns-ns: oklch(0.78 0.12 195);
+  --glow-cyan: radial-gradient(
+    closest-side,
+    oklch(0.8 0.12 200),
+    transparent
+  );
 }
 
 @layer base {
@@ -202,46 +205,29 @@
 }
 
 @layer utilities {
-  .accent-glow-blue {
-    background: radial-gradient(
-      closest-side,
-      oklch(0.82 0.08 230),
-      transparent
-    );
-  }
-  .accent-glow-purple {
-    background: radial-gradient(closest-side, oklch(0.78 0.1 310), transparent);
-  }
-  .accent-glow-green {
-    background: radial-gradient(
-      closest-side,
-      oklch(0.86 0.09 160),
-      transparent
-    );
-  }
-  .accent-glow-orange {
-    background: radial-gradient(closest-side, oklch(0.86 0.12 60), transparent);
-  }
   /* Variable-driven accent glow */
   .accent-glow {
-    background: var(--section-accent-glow, var(--accent-blue-glow));
+    background: var(--section-accent-glow, var(--glow-slate));
   }
   [data-accent="blue"] .accent-glow {
-    --section-accent-glow: var(--accent-blue-glow);
+    --section-accent-glow: var(--glow-blue);
   }
   [data-accent="purple"] .accent-glow {
-    --section-accent-glow: var(--accent-purple-glow);
+    --section-accent-glow: var(--glow-purple);
   }
   [data-accent="green"] .accent-glow {
-    --section-accent-glow: var(--accent-green-glow);
+    --section-accent-glow: var(--glow-green);
   }
   [data-accent="orange"] .accent-glow {
-    --section-accent-glow: var(--accent-orange-glow);
+    --section-accent-glow: var(--glow-orange);
   }
   [data-accent="pink"] .accent-glow {
-    --section-accent-glow: var(--accent-pink-glow);
+    --section-accent-glow: var(--glow-pink);
+  }
+  [data-accent="slate"] .accent-glow {
+    --section-accent-glow: var(--glow-slate);
   }
   [data-accent="cyan"] .accent-glow {
-    --section-accent-glow: var(--accent-cyan-glow);
+    --section-accent-glow: var(--glow-cyan);
   }
 }

@@ -14,11 +14,9 @@ import { TtlBadge } from "./ttl-badge";
 export function DnsRecordList({
   records,
   type,
-  showTtls,
 }: {
   records: DnsRecord[];
   type: DnsRecord["type"];
-  showTtls: boolean;
 }) {
   const filtered = useMemo(() => {
     const arr = records.filter((r) => r.type === type);
@@ -46,9 +44,7 @@ export function DnsRecordList({
           value={r.value}
           copyable
           trailing={
-            showTtls && typeof r.ttl === "number" ? (
-              <TtlBadge ttl={r.ttl} />
-            ) : undefined
+            typeof r.ttl === "number" ? <TtlBadge ttl={r.ttl} /> : undefined
           }
           suffix={
             r.isCloudflare ? (

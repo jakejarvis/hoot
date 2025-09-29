@@ -54,8 +54,6 @@ describe("DnsRecordsSection", () => {
         isLoading={false}
         isError={false}
         onRetryAction={() => {}}
-        showTtls={false}
-        onToggleTtlsAction={() => {}}
       />,
     );
 
@@ -72,8 +70,6 @@ describe("DnsRecordsSection", () => {
         isLoading={false}
         isError
         onRetryAction={() => {}}
-        showTtls={false}
-        onToggleTtlsAction={() => {}}
       />,
     );
     expect(screen.getByText(/Failed to load DNS/i)).toBeInTheDocument();
@@ -84,8 +80,6 @@ describe("DnsRecordsSection", () => {
         isLoading
         isError={false}
         onRetryAction={() => {}}
-        showTtls={false}
-        onToggleTtlsAction={() => {}}
       />,
     );
     expect(screen.getAllByText("DNS Records").length).toBeGreaterThan(0);

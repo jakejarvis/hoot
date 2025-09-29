@@ -20,7 +20,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 describe("DnsRecordList", () => {
-  it("sorts MX by priority and renders TTL badges when enabled", () => {
+  it("sorts MX by priority and renders TTL badges", () => {
     const records = [
       {
         type: "MX",
@@ -45,7 +45,7 @@ describe("DnsRecordList", () => {
       },
     ] as unknown as import("@/lib/schemas").DnsRecord[];
 
-    render(<DnsRecordList records={records} type="MX" showTtls />);
+    render(<DnsRecordList records={records} type="MX" />);
 
     const items = Array.from(
       document.querySelectorAll("span.truncate.flex-1.min-w-0.block"),
@@ -65,7 +65,7 @@ describe("DnsRecordList", () => {
       { type: "A", name: "", value: "1.2.3.4", ttl: 60, isCloudflare: true },
     ] as unknown as import("@/lib/schemas").DnsRecord[];
 
-    render(<DnsRecordList records={records} type="A" showTtls={false} />);
+    render(<DnsRecordList records={records} type="A" />);
     expect(screen.getByText(/icon:cloudflare.com/i)).toBeInTheDocument();
   });
 });
