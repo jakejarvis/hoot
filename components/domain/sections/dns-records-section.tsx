@@ -6,7 +6,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Section } from "@/components/domain/section";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import type { DnsRecord } from "@/server/services/dns";
+import type { DnsRecord } from "@/lib/schemas";
 import { SECTION_DEFS } from "./sections-meta";
 
 export function DnsRecordsSection({

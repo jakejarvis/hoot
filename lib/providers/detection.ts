@@ -1,4 +1,5 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
+import type { HttpHeader, ProviderRef } from "@/lib/schemas";
 import {
   CA_PROVIDERS,
   DNS_PROVIDERS,
@@ -6,7 +7,7 @@ import {
   HOSTING_PROVIDERS,
   REGISTRAR_PROVIDERS,
 } from "./catalog";
-import type { DetectionRule, HttpHeader, Provider } from "./types";
+import type { DetectionRule, Provider } from "./types";
 
 /**
  * A context object for header-based detection, pre-calculating values to
@@ -106,8 +107,6 @@ function detectProviderFromList(
 /**
  * Detect hosting provider from HTTP headers.
  */
-export type ProviderRef = { name: string; domain: string | null };
-
 export function detectHostingProvider(headers: HttpHeader[]): ProviderRef {
   const context = createHeaderContext(headers);
   return detectProviderFromList(HOSTING_PROVIDERS, context);

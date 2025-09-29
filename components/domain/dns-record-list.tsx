@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { DnsRecord } from "@/server/services/dns";
+import type { DnsRecord } from "@/lib/schemas";
 import { Favicon } from "./favicon";
 import { KeyValue } from "./key-value";
 import { TtlBadge } from "./ttl-badge";

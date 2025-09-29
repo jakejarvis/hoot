@@ -1,15 +1,15 @@
 import { captureServer } from "@/lib/analytics/server";
-import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { getOrSetZod, ns } from "@/lib/redis";
+import { type HttpHeader, HttpHeadersSchema } from "@/lib/schemas";
 
-export type HttpHeader = { name: string; value: string };
+export type { HttpHeader };
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const lower = domain.toLowerCase();
   const url = `https://${domain}/`;
   const key = ns("headers", lower);
 
-  const cached = await cacheGet<HttpHeader[]>(key);
-  if (cached !== null) return normalize(cached);
+  const schema = HttpHeadersSchema;
 
   const REQUEST_TIMEOUT_MS = 5000;
   try {
@@ -63,9 +63,12 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       final_url: final.url,
     });
 
-    // Cache only successful results
-    await cacheSet(key, normalized, 10 * 60);
-    return normalized;
+    return await getOrSetZod<HttpHeader[]>(
+      key,
+      10 * 60,
+      async () => normalized,
+      schema,
+    );
   } catch (err) {
     await captureServer("headers_probe", {
       domain: lower,

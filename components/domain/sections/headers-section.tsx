@@ -3,7 +3,7 @@
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import type { HttpHeader } from "@/server/services/headers";
+import type { HttpHeader } from "@/lib/schemas";
 import { SECTION_DEFS } from "./sections-meta";
 
 export function HeadersSection({

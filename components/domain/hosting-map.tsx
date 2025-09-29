@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import MapboxMap, { Marker, NavigationControl } from "react-map-gl/mapbox";
-import type { HostingInfo } from "@/server/services/hosting";
+import type { HostingInfo } from "@/lib/schemas";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 function MapInner({ hosting }: { hosting: HostingInfo }) {

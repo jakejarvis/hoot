@@ -16,49 +16,50 @@ export const domainInput = z
 export function createDomainProcedure<T>(
   serviceFunction: (domain: string) => Promise<T>,
   errorMessage: string,
+  outputSchema?: import("zod").ZodType<T>,
 ) {
-  return publicProcedure
-    .input(domainInput)
-    .query(async ({ input, path, ctx }) => {
-      const startedAt = Date.now();
-      const serviceName = path?.split(".").pop() ?? "unknown";
-      try {
-        const result = await serviceFunction(input.domain);
-        const durationMs = Date.now() - startedAt;
-        await captureServer(
-          "trpc_domain_service_call",
-          {
-            service: serviceName,
-            domain: input.domain,
-            duration_ms: durationMs,
-            success: true,
-            ...(ctx.posthogSessionId
-              ? { $session_id: ctx.posthogSessionId }
-              : {}),
-          },
-          ctx.posthogDistinctId,
-        );
-        return result;
-      } catch (_err) {
-        const durationMs = Date.now() - startedAt;
-        await captureServer(
-          "trpc_domain_service_call",
-          {
-            service: serviceName,
-            domain: input.domain,
-            duration_ms: durationMs,
-            success: false,
-            error_code: "INTERNAL_SERVER_ERROR",
-            ...(ctx.posthogSessionId
-              ? { $session_id: ctx.posthogSessionId }
-              : {}),
-          },
-          ctx.posthogDistinctId,
-        );
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: errorMessage,
-        });
-      }
-    });
+  const base = publicProcedure.input(domainInput);
+  const proc = outputSchema ? base.output(outputSchema) : base;
+  return proc.query(async ({ input, path, ctx }) => {
+    const startedAt = Date.now();
+    const serviceName = path?.split(".").pop() ?? "unknown";
+    try {
+      const result = await serviceFunction(input.domain);
+      const durationMs = Date.now() - startedAt;
+      await captureServer(
+        "trpc_domain_service_call",
+        {
+          service: serviceName,
+          domain: input.domain,
+          duration_ms: durationMs,
+          success: true,
+          ...(ctx.posthogSessionId
+            ? { $session_id: ctx.posthogSessionId }
+            : {}),
+        },
+        ctx.posthogDistinctId,
+      );
+      return result as T;
+    } catch (_err) {
+      const durationMs = Date.now() - startedAt;
+      await captureServer(
+        "trpc_domain_service_call",
+        {
+          service: serviceName,
+          domain: input.domain,
+          duration_ms: durationMs,
+          success: false,
+          error_code: "INTERNAL_SERVER_ERROR",
+          ...(ctx.posthogSessionId
+            ? { $session_id: ctx.posthogSessionId }
+            : {}),
+        },
+        ctx.posthogDistinctId,
+      );
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: errorMessage,
+      });
+    }
+  });
 }
