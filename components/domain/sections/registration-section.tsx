@@ -5,7 +5,6 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { RegistrationWithProvider } from "@/server/services/registration";
@@ -16,7 +15,7 @@ type RegistrantView = { organization: string; country: string; state?: string };
 
 export function RegistrationSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
@@ -37,9 +36,10 @@ export function RegistrationSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {data ? (
+      {isLoading ? null : data ? (
         <>
           <KeyValue
             label="Registrar"
@@ -89,9 +89,7 @@ export function RegistrationSection({
           message="Failed to load WHOIS."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={4} />
-      )}
+      ) : null}
     </Section>
   );
 }

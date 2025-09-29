@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SECTION_DEFS, SECTION_ORDER } from "./sections/sections-meta";
 
@@ -19,7 +19,7 @@ export function DomainReportFallback() {
       {/* Sections matching Section header visuals */}
       <div className="space-y-4">
         {SECTION_ORDER.map((key) => {
-          const { title, accent, Icon } = SECTION_DEFS[key];
+          const { title, accent, Icon, help } = SECTION_DEFS[key];
           return (
             <div
               key={title}
@@ -34,13 +34,24 @@ export function DomainReportFallback() {
               <div className="relative">
                 {/* Header row */}
                 <div className="px-5 py-4">
-                  <div className="flex w-full items-center gap-3 text-left">
+                  <div className="flex w-full items-center gap-3 text-left opacity-50">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="gap-2 flex items-center leading-none font-semibold">
                         <span className="text-base">{title}</span>
+                        {help ? (
+                          <span
+                            role="img"
+                            aria-label={`More info about ${title}`}
+                          >
+                            <Info
+                              className="h-3.5 w-3.5 opacity-60"
+                              aria-hidden
+                            />
+                          </span>
+                        ) : null}
                       </div>
                       <div className="sr-only">Loading…</div>
                     </div>

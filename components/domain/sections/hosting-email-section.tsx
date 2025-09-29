@@ -5,7 +5,6 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
 import type { HostingInfo } from "@/server/services/hosting";
 import { SECTION_DEFS } from "./sections-meta";
 
@@ -21,7 +20,7 @@ const HostingMap = dynamic(
 
 export function HostingEmailSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
@@ -38,9 +37,10 @@ export function HostingEmailSection({
       help={Def.help}
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {data ? (
+      {isLoading ? null : data ? (
         <>
           <KeyValue
             label="DNS"
@@ -100,9 +100,7 @@ export function HostingEmailSection({
           message="Failed to load hosting details."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={3} />
-      )}
+      ) : null}
     </Section>
   );
 }

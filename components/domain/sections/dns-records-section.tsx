@@ -4,7 +4,6 @@ import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { DnsRecord } from "@/server/services/dns";
@@ -12,7 +11,7 @@ import { SECTION_DEFS } from "./sections-meta";
 
 export function DnsRecordsSection({
   records,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
   showTtls,
@@ -61,9 +60,10 @@ export function DnsRecordsSection({
       icon={<Def.Icon className="h-4 w-4" />}
       accent={Def.accent}
       headerRight={headerRight}
-      status={isError ? "error" : records ? "ready" : "loading"}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {records ? (
+      {isLoading ? null : records ? (
         <div className="space-y-4">
           <DnsGroup
             title="A Records"
@@ -103,9 +103,7 @@ export function DnsRecordsSection({
         </div>
       ) : isError ? (
         <ErrorWithRetry message="Failed to load DNS." onRetry={onRetryAction} />
-      ) : (
-        <Skeletons count={6} />
-      )}
+      ) : null}
     </Section>
   );
 }

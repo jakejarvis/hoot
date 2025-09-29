@@ -47,12 +47,12 @@ export default async function DomainPage({
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
+      {/* Dynamic island: runs on server, reads cookie, captures analytics */}
+      <DomainSsrAnalytics
+        domain={normalized}
+        canonicalized={normalized !== decoded}
+      />
       <Suspense fallback={<DomainReportFallback />}>
-        {/* Dynamic island: runs on server, reads cookie, captures analytics */}
-        <DomainSsrAnalytics
-          domain={normalized}
-          canonicalized={normalized !== decoded}
-        />
         <DomainReportView
           domain={normalized}
           initialRegistration={registration}
