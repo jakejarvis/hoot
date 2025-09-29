@@ -7,7 +7,7 @@ import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
-import type { RegistrationWithProvider } from "@/server/services/registration";
+import type { RegistrationWithProvider } from "@/lib/schemas";
 import { RelativeExpiry } from "../relative-expiry";
 import { SECTION_DEFS } from "./sections-meta";
 

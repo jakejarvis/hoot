@@ -1,27 +1,16 @@
 import tls from "node:tls";
 import { captureServer } from "@/lib/analytics/server";
-import {
-  detectCertificateAuthority,
-  type ProviderRef,
-} from "@/lib/providers/detection";
-import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { detectCertificateAuthority } from "@/lib/providers/detection";
+import { getOrSetZod, ns } from "@/lib/redis";
+import { type Certificate, CertificatesSchema } from "@/lib/schemas";
 
-export type Certificate = {
-  issuer: string;
-  subject: string;
-  altNames: string[];
-  validFrom: string;
-  validTo: string;
-  caProvider: ProviderRef;
-};
+export type { Certificate };
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
   const key = ns("tls", lower);
 
-  // Cache check
-  const cached = await cacheGet<Certificate[]>(key);
-  if (cached) return cached;
+  const schema = CertificatesSchema;
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
 
@@ -86,9 +75,12 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       outcome,
     });
 
-    // Cache success for longer; empty chains are still cached briefly
-    await cacheSet(key, out, out.length > 0 ? 12 * 60 * 60 : 10 * 60);
-    return out;
+    return await getOrSetZod<Certificate[]>(
+      key,
+      (val) => (val.length > 0 ? 12 * 60 * 60 : 10 * 60),
+      async () => out,
+      schema,
+    );
   } catch (err) {
     await captureServer("tls_probe", {
       domain: lower,

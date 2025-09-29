@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { equalHostname, formatDate } from "@/lib/format";
-import type { Certificate } from "@/server/services/tls";
+import type { Certificate } from "@/lib/schemas";
 import { RelativeExpiry } from "../relative-expiry";
 import { SECTION_DEFS } from "./sections-meta";
 

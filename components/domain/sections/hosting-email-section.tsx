@@ -5,7 +5,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import type { HostingInfo } from "@/server/services/hosting";
+import type { HostingInfo } from "@/lib/schemas";
 import { SECTION_DEFS } from "./sections-meta";
 
 const HostingMap = dynamic(

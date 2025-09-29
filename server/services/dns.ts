@@ -1,28 +1,17 @@
 import { captureServer } from "@/lib/analytics/server";
-import { getOrSet, ns } from "@/lib/redis";
-import { isCloudflareIpAsync } from "./cloudflare";
+import { getOrSetZod, ns } from "@/lib/redis";
 import {
-  DOH_PROVIDERS,
-  type DohProvider,
-  type DohProviderKey,
-} from "./doh-providers";
+  type DnsRecord,
+  DnsRecordSchema,
+  type DnsResolveResult,
+} from "@/lib/schemas";
+import { isCloudflareIpAsync } from "./cloudflare";
+import { DOH_PROVIDERS, type DohProvider } from "./doh-providers";
 
-export type DnsRecord = {
-  type: "A" | "AAAA" | "MX" | "TXT" | "NS";
-  name: string;
-  value: string;
-  ttl?: number;
-  priority?: number;
-  isCloudflare?: boolean;
-};
+export type { DnsRecord, DnsResolveResult };
 
 type DnsType = DnsRecord["type"];
 const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
-
-export type DnsResolveResult = {
-  records: DnsRecord[];
-  source: DohProviderKey;
-};
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const lower = domain.toLowerCase();
@@ -38,10 +27,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const results = await Promise.all(
         TYPES.map(async (type) => {
           const key = ns("dns", `${lower}:${type}:${provider.key}`);
-          return await getOrSet<DnsRecord[]>(
+          return await getOrSetZod<DnsRecord[]>(
             key,
             5 * 60,
             async () => await resolveTypeWithProvider(domain, type, provider),
+            DnsRecordSchema.array(),
           );
         }),
       );
@@ -67,7 +57,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         provider_attempts: attemptIndex + 1,
         duration_ms_by_provider: durationByProvider,
       });
-      return { records: flat, source: provider.key };
+      return { records: flat, source: provider.key } as DnsResolveResult;
     } catch (err) {
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
