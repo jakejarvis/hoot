@@ -1,6 +1,5 @@
 "use client";
 
-import { formatDistanceToNowStrict } from "date-fns";
 import { ArrowDown } from "lucide-react";
 import React from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
@@ -15,42 +14,8 @@ import {
 } from "@/components/ui/tooltip";
 import { equalHostname, formatDate } from "@/lib/format";
 import type { Certificate } from "@/server/services/tls";
+import { RelativeExpiry } from "../relative-expiry";
 import { SECTION_DEFS } from "./sections-meta";
-
-// Client-only relative expiry hint to avoid hydration mismatch
-function ValidToSuffix({ validTo }: { validTo: string }) {
-  const [text, setText] = React.useState<string | null>(null);
-  const [status, setStatus] = React.useState<"danger" | "warn" | "ok" | null>(
-    null,
-  );
-
-  React.useEffect(() => {
-    try {
-      const target = new Date(validTo);
-      const now = new Date();
-      const rel = formatDistanceToNowStrict(target, { addSuffix: true });
-      const ms = target.getTime() - now.getTime();
-      const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
-      let s: "danger" | "warn" | "ok" = "ok";
-      if (days <= 7) s = "danger";
-      else if (days <= 30) s = "warn";
-      setText(rel);
-      setStatus(s);
-    } catch {
-      // ignore
-    }
-  }, [validTo]);
-
-  if (!text) return null;
-  const colorClass =
-    status === "danger"
-      ? "text-red-600 dark:text-red-400"
-      : status === "warn"
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-muted-foreground";
-
-  return <span className={`text-[11px] ${colorClass}`}>({text})</span>;
-}
 
 export function CertificatesSection({
   data,
@@ -130,7 +95,14 @@ export function CertificatesSection({
                 <KeyValue
                   label="Valid to"
                   value={formatDate(c.validTo)}
-                  suffix={<ValidToSuffix validTo={c.validTo} />}
+                  suffix={
+                    <RelativeExpiry
+                      to={c.validTo}
+                      dangerDays={7}
+                      warnDays={30}
+                      className="text-[11px]"
+                    />
+                  }
                 />
               </div>
             </div>
