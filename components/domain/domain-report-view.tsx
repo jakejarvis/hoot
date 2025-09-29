@@ -22,15 +22,13 @@ import { RegistrationSection } from "./sections/registration-section";
 
 export function DomainReportView({
   domain,
-  initialRegistration,
-  initialRegistered,
 }: {
   domain: string;
   initialRegistration?: RegistrationWithProvider;
   initialRegistered?: boolean;
 }) {
-  const { registration, dns, hosting, certs, headers, allSectionsReady } =
-    useDomainQueries(domain, { initialRegistration, initialRegistered });
+  const { registration, dns, hosting, certs, headers } =
+    useDomainQueries(domain);
   const { showTtls, setShowTtls } = useTtlPreferences();
 
   // Manage domain history
@@ -64,24 +62,6 @@ export function DomainReportView({
     return <DomainUnregisteredState domain={domain} />;
   }
 
-  const dnsLoading = dns.isLoading;
-  const hasAnyIp =
-    dns.data?.records?.some((r) => r.type === "A" || r.type === "AAAA") ??
-    false;
-
-  const gateByDns = <T,>(q: { isLoading: boolean; data?: T[] | null }) => {
-    if (dnsLoading) {
-      return { isLoading: true, data: null as T[] | null };
-    }
-    if (hasAnyIp) {
-      return { isLoading: q.isLoading, data: (q.data ?? null) as T[] | null };
-    }
-    return { isLoading: false, data: [] as T[] };
-  };
-
-  const certsView = gateByDns(certs);
-  const headersView = gateByDns(headers);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -106,12 +86,7 @@ export function DomainReportView({
           </ScreenshotTooltip>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportJson}
-            disabled={!allSectionsReady}
-          >
+          <Button variant="outline" size="sm" onClick={handleExportJson}>
             <Download className="h-4 w-4" /> Export JSON
           </Button>
         </div>
@@ -166,8 +141,8 @@ export function DomainReportView({
         />
 
         <CertificatesSection
-          data={certsView.data}
-          isLoading={certsView.isLoading}
+          data={certs.data || null}
+          isLoading={certs.isLoading}
           isError={!!certs.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -179,8 +154,8 @@ export function DomainReportView({
         />
 
         <HeadersSection
-          data={headersView.data}
-          isLoading={headersView.isLoading}
+          data={headers.data || null}
+          isLoading={headers.isLoading}
           isError={!!headers.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {

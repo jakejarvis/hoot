@@ -44,11 +44,25 @@ export default async function DomainPage({
 
   // Preserve PPR by isolating cookie read & analytics to a dynamic island
 
-  // Prefetch registration on the server into TanStack Query cache
+  // Prefetch graph with dependency cascade to flatten waterfalls
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
+  const registration = await queryClient.fetchQuery(
     trpc.domain.registration.queryOptions({ domain: normalized }),
   );
+  if (registration?.isRegistered) {
+    queryClient.prefetchQuery(
+      trpc.domain.dns.queryOptions({ domain: normalized }),
+    );
+    queryClient.prefetchQuery(
+      trpc.domain.hosting.queryOptions({ domain: normalized }),
+    );
+    queryClient.prefetchQuery(
+      trpc.domain.certificates.queryOptions({ domain: normalized }),
+    );
+    queryClient.prefetchQuery(
+      trpc.domain.headers.queryOptions({ domain: normalized }),
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
