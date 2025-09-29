@@ -33,12 +33,16 @@ describe("DomainSearch (form variant)", () => {
 
   it("submits valid domain and navigates", async () => {
     render(<DomainSearch variant="lg" />);
-    await userEvent.type(screen.getByPlaceholderText("hoot.sh"), "example.com");
+    await userEvent.type(
+      screen.getByLabelText(/Search any domain/i),
+      "example.com",
+    );
     await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
     expect(nav.push).toHaveBeenCalledWith("/example.com");
     // Input and button should be disabled while loading/submitting
     expect(
-      (screen.getByPlaceholderText("hoot.sh") as HTMLInputElement).disabled,
+      (screen.getByLabelText(/Search any domain/i) as HTMLInputElement)
+        .disabled,
     ).toBe(true);
     expect(screen.getByRole("button", { name: /analyze/i })).toBeDisabled();
   });
@@ -49,7 +53,7 @@ describe("DomainSearch (form variant)", () => {
     };
     render(<DomainSearch variant="lg" />);
     await userEvent.type(
-      screen.getByPlaceholderText("hoot.sh"),
+      screen.getByLabelText(/Search any domain/i),
       "not a domain",
     );
     await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
@@ -63,7 +67,9 @@ describe("DomainSearch (form variant)", () => {
       screen.getByRole("button", { name: /example\.com/i }),
     );
     // Input should reflect the selected domain immediately
-    const input = screen.getByPlaceholderText("hoot.sh") as HTMLInputElement;
+    const input = screen.getByLabelText(
+      /Search any domain/i,
+    ) as HTMLInputElement;
     expect(input.value).toBe("example.com");
     // Navigation should have been triggered
     expect(nav.push).toHaveBeenCalledWith("/example.com");
@@ -71,7 +77,8 @@ describe("DomainSearch (form variant)", () => {
     expect(screen.getByRole("button", { name: /analyze/i })).toBeDisabled();
     // Input should be disabled while loading
     expect(
-      (screen.getByPlaceholderText("hoot.sh") as HTMLInputElement).disabled,
+      (screen.getByLabelText(/Search any domain/i) as HTMLInputElement)
+        .disabled,
     ).toBe(true);
   });
 });

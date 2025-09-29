@@ -23,7 +23,7 @@ export function DomainReportFallback() {
           return (
             <div
               key={title}
-              className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]"
+              className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-2xl shadow-black/10"
               data-accent={accent}
             >
               {/* Accent glow */}

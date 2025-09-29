@@ -5,6 +5,7 @@ import { Globe, Loader2, Search as SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDomainSearch } from "@/hooks/use-domain-search";
+import { cn } from "@/lib/utils";
 import { DomainSuggestions } from "./domain-suggestions";
 
 export type DomainSearchVariant = "sm" | "lg";
@@ -70,13 +71,13 @@ export function DomainSearch({
             spellCheck={false}
             disabled={loading}
             placeholder={variant === "lg" ? "hoot.sh" : "Search any domain"}
-            aria-describedby="domain-help"
-            aria-label="Search domains"
+            aria-label="Search any domain"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className={
-              variant === "lg" ? "pl-9 h-12" : "h-10 pl-9 sm:pr-14 rounded-xl"
-            }
+            className={cn(
+              "pl-9",
+              variant === "lg" ? "h-12" : "h-10 sm:pr-14 rounded-xl",
+            )}
           />
 
           {variant === "sm" && (

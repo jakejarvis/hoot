@@ -22,7 +22,7 @@ describe("HeaderSearch", () => {
   it("prefills normalized domain from params and navigates on Enter", async () => {
     nav.params = { domain: "Sub.Example.COM" };
     render(<HeaderSearch />);
-    const input = screen.getByLabelText(/Search domains/i);
+    const input = screen.getByLabelText(/Search any domain/i);
     expect(input).toHaveValue("sub.example.com");
     await userEvent.type(input, "{Enter}");
     expect(nav.push).toHaveBeenCalledWith("/sub.example.com");
@@ -31,7 +31,7 @@ describe("HeaderSearch", () => {
   it("does nothing on invalid domain", async () => {
     nav.params = { domain: "invalid domain" } as { domain: string };
     render(<HeaderSearch />);
-    const input = screen.getByLabelText(/Search domains/i);
+    const input = screen.getByLabelText(/Search any domain/i);
     await userEvent.type(input, "{Enter}");
     expect(nav.push).not.toHaveBeenCalled();
   });
@@ -39,7 +39,7 @@ describe("HeaderSearch", () => {
   it("re-enables the input after navigating to a new route", async () => {
     nav.params = { domain: "foo.com" };
     const { rerender } = render(<HeaderSearch />);
-    const input = screen.getByLabelText(/Search domains/i);
+    const input = screen.getByLabelText(/Search any domain/i);
     // Submit to trigger loading state (disables input)
     await userEvent.type(input, "{Enter}");
     expect(input).toBeDisabled();
@@ -47,7 +47,7 @@ describe("HeaderSearch", () => {
     nav.params = { domain: "bar.com" };
     rerender(<HeaderSearch />);
     await waitFor(() =>
-      expect(screen.getByLabelText(/Search domains/i)).not.toBeDisabled(),
+      expect(screen.getByLabelText(/Search any domain/i)).not.toBeDisabled(),
     );
   });
 });
