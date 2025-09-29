@@ -46,7 +46,7 @@ describe("DnsRecordsSection", () => {
       { type: "MX", name: "mx", value: "mx.example.com", priority: 10 },
       { type: "TXT", name: "txt", value: "v=spf1" },
       { type: "NS", name: "ns", value: "ns1.example.com" },
-    ] as unknown as import("@/server/services/dns").DnsRecord[];
+    ] as unknown as import("@/lib/schemas").DnsRecord[];
 
     render(
       <DnsRecordsSection

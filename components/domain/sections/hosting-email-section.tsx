@@ -5,7 +5,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import type { HostingInfo } from "@/lib/schemas";
+import type { Hosting } from "@/lib/schemas";
 import { SECTION_DEFS } from "./sections-meta";
 
 const HostingMap = dynamic(
@@ -24,7 +24,7 @@ export function HostingEmailSection({
   isError,
   onRetryAction,
 }: {
-  data?: HostingInfo | null;
+  data?: Hosting | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;

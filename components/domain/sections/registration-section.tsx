@@ -1,13 +1,12 @@
 "use client";
 
-import type { DomainRecord } from "rdapper";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
-import type { RegistrationWithProvider } from "@/lib/schemas";
+import type { Registration } from "@/lib/schemas";
 import { RelativeExpiry } from "../relative-expiry";
 import { SECTION_DEFS } from "./sections-meta";
 
@@ -19,7 +18,7 @@ export function RegistrationSection({
   isError,
   onRetryAction,
 }: {
-  data?: RegistrationWithProvider | null;
+  data?: Registration | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
@@ -94,7 +93,7 @@ export function RegistrationSection({
   );
 }
 
-function extractRegistrantView(record: DomainRecord): RegistrantView | null {
+function extractRegistrantView(record: Registration): RegistrantView | null {
   const registrant = record.contacts?.find((c) => c.type === "registrant");
   if (!registrant) return null;
   const organization =

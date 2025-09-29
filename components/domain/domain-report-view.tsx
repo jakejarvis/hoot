@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
-import type { RegistrationWithProvider } from "@/lib/schemas";
+import type { Registration } from "@/lib/schemas";
 import { useDomainHistory } from "../../hooks/use-domain-history";
 import { useDomainQueries } from "../../hooks/use-domain-queries";
 import { useTtlPreferences } from "../../hooks/use-ttl-preferences";
@@ -24,7 +24,7 @@ export function DomainReportView({
   domain,
 }: {
   domain: string;
-  initialRegistration?: RegistrationWithProvider;
+  initialRegistration?: Registration;
   initialRegistered?: boolean;
 }) {
   const { registration, dns, hosting, certs, headers } =

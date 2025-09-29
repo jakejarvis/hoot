@@ -4,8 +4,6 @@ import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { getOrSetZod, ns } from "@/lib/redis";
 import { type Certificate, CertificatesSchema } from "@/lib/schemas";
 
-export type { Certificate };
-
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
   const key = ns("tls", lower);

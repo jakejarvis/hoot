@@ -1,7 +1,7 @@
 import {
   CertificatesSchema,
   DnsResolveResultSchema,
-  HostingInfoSchema,
+  HostingSchema,
   HttpHeadersSchema,
 } from "@/lib/schemas";
 import { resolveAll } from "../services/dns";
@@ -29,7 +29,7 @@ export const domainRouter = router({
   hosting: createDomainProcedure(
     detectHosting,
     "Hosting detection failed",
-    HostingInfoSchema,
+    HostingSchema,
   ),
   certificates: createDomainProcedure(
     getCertificates,

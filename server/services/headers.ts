@@ -2,8 +2,6 @@ import { captureServer } from "@/lib/analytics/server";
 import { getOrSetZod, ns } from "@/lib/redis";
 import { type HttpHeader, HttpHeadersSchema } from "@/lib/schemas";
 
-export type { HttpHeader };
-
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const lower = domain.toLowerCase();
   const url = `https://${domain}/`;

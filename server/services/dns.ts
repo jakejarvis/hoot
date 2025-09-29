@@ -8,8 +8,6 @@ import {
 import { isCloudflareIpAsync } from "./cloudflare";
 import { DOH_PROVIDERS, type DohProvider } from "./doh-providers";
 
-export type { DnsRecord, DnsResolveResult };
-
 type DnsType = DnsRecord["type"];
 const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
 
