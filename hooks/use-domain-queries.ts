@@ -3,6 +3,7 @@ import type { RegistrationWithProvider } from "@/lib/schemas";
 import { useTRPC } from "@/lib/trpc/client";
 
 type UseDomainQueriesOptions = {
+  // kept for backwards compat; not used when we hydrate via TanStack
   initialRegistration?: RegistrationWithProvider;
   initialRegistered?: boolean;
 };
@@ -17,6 +18,7 @@ export function useDomainQueries(
       { domain },
       {
         enabled: !!domain,
+        // If hydrated on the server, data is present; otherwise this gracefully fetches on client
         initialData: opts?.initialRegistration,
         staleTime: 30 * 60_000, // 30 minutes, avoid churn
         refetchOnWindowFocus: false,
