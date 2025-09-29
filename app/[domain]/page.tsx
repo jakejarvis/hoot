@@ -1,3 +1,4 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -6,7 +7,7 @@ import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { prefetchRegistration } from "@/server/prefetch/domain";
+import { getQueryClient, trpc } from "@/server/query-client";
 
 export const experimental_ppr = true;
 
@@ -43,7 +44,11 @@ export default async function DomainPage({
 
   // Preserve PPR by isolating cookie read & analytics to a dynamic island
 
-  const registration = await prefetchRegistration(normalized);
+  // Prefetch registration on the server into TanStack Query cache
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(
+    trpc.domain.registration.queryOptions({ domain: normalized }),
+  );
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
@@ -52,13 +57,11 @@ export default async function DomainPage({
         domain={normalized}
         canonicalized={normalized !== decoded}
       />
-      <Suspense fallback={<DomainReportFallback />}>
-        <DomainReportView
-          domain={normalized}
-          initialRegistration={registration}
-          initialRegistered={registration?.isRegistered === true}
-        />
-      </Suspense>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <Suspense fallback={<DomainReportFallback />}>
+          <DomainReportView domain={normalized} />
+        </Suspense>
+      </HydrationBoundary>
     </div>
   );
 }
