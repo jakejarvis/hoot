@@ -8,25 +8,19 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  reactCompiler: true,
+  images: {
+    unoptimized: true,
+  },
   experimental: {
     ppr: "incremental",
-    reactCompiler: true,
     inlineCss: true,
     staleTimes: {
       dynamic: 0, // disable client-side router cache for dynamic pages
     },
   },
-  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
-  images: {
-    unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "8ubelavjx21gjm2t.public.blob.vercel-storage.com",
-      },
-    ],
-  },
-  async rewrites() {
+  rewrites: async () => {
     return [
       {
         source: "/_ingest/static/:path*",
@@ -38,7 +32,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
 };
 
