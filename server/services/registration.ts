@@ -37,7 +37,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   let registrarDomain: string | null = null;
   try {
     if (record.registrar?.url) {
-      registrarDomain = new URL(record.registrar?.url).hostname || null;
+      registrarDomain = new URL(record.registrar.url).hostname || null;
     }
   } catch {}
   if (!registrarDomain) {
