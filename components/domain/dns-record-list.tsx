@@ -42,7 +42,6 @@ export function DnsRecordList({
               : undefined
           }
           value={r.value}
-          copyable
           trailing={
             typeof r.ttl === "number" ? <TtlBadge ttl={r.ttl} /> : undefined
           }
