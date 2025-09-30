@@ -19,7 +19,7 @@ describe("provider detection", () => {
   });
 
   it("detects email from MX (Google)", () => {
-    const res = detectEmailProvider(["aspmx.l.google.com"]);
+    const res = detectEmailProvider(["aspmx.l.google.com."]);
     expect(res.name).toBe("Google Workspace");
     expect(res.domain).toBe("google.com");
   });

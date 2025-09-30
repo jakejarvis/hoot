@@ -1,77 +1,53 @@
 # Provider Detection System
 
-This system provides extensible and robust provider detection using a clean rule-based approach.
+This system provides extensible and robust provider detection using a declarative JSON-serializable logic AST with AND/OR/NOT composition over domain primitives.
 
 ## Architecture
 
-The detection system is built around simple, focused types:
+### Logic AST
 
-### DetectionRule
+```ts
+type HeaderEquals = { kind: "headerEquals"; name: string; value: string };
+type HeaderIncludes = { kind: "headerIncludes"; name: string; substr: string };
+type HeaderPresent = { kind: "headerPresent"; name: string };
+type MxSuffix = { kind: "mxSuffix"; suffix: string };
+type NsSuffix = { kind: "nsSuffix"; suffix: string };
+type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
 
-Each rule is specific and focused:
-
-```typescript
-type DetectionRule =
-  // HTTP header matching
-  | { type: "header"; name: string; value?: string; present?: boolean }
-  // DNS record matching  
-  | { type: "dns"; recordType: "MX" | "NS"; value: string };
+type Logic =
+  | { all: Logic[] }
+  | { any: Logic[] }
+  | { not: Logic }
+  | HeaderEquals
+  | HeaderIncludes
+  | HeaderPresent
+  | MxSuffix
+  | NsSuffix
+  | IssuerIncludes;
 ```
 
-### Provider
+### Evaluator
 
-Each provider has metadata and an array of detection rules:
+See `evalRule` in `lib/providers/detection.ts`.
 
-```typescript
-interface Provider {
-  name: string;           // "Vercel"
-  domain: string;     // "vercel.com" 
-  rules: DetectionRule[]; // Array of rules that identify this provider
-}
+### Provider Catalog
+
+Providers are defined with a single `rule` per provider and a `category`:
+
+```ts
+type Provider = { name: string; domain: string; category: "hosting"|"email"|"dns"|"ca"; rule: Logic };
 ```
 
 ## Usage
 
-### Basic Detection
+```ts
+import { detectHostingProvider, detectEmailProvider, detectDnsProvider, detectCertificateAuthority, resolveRegistrarDomain } from '@/lib/providers/detection';
 
-```typescript
-import { 
-  detectHostingProvider, 
-  detectEmailProvider, 
-  detectDnsProvider,
-  detectCertificateAuthority,
-  resolveRegistrarDomain
-} from '@/lib/providers/detection';
-
-// Hosting detection
-const headers = [
-  { name: 'server', value: 'vercel' },
-  { name: 'x-vercel-id', value: 'abc123' }
-];
-const hosting = detectHostingProvider(headers);
-console.log(hosting); // { name: "Vercel", domain: "vercel.com" }
-
-// Email detection  
-const mxRecords = ['mx1.google.com', 'mx2.google.com'];
-const email = detectEmailProvider(mxRecords);
-console.log(email); // { name: "Google Workspace", domain: "google.com" }
-
-// DNS detection
-const nsRecords = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];  
-const dns = detectDnsProvider(nsRecords);
-console.log(dns); // { name: "Cloudflare", domain: "cloudflare.com" }
-
-// Certificate Authority detection (alias matching against issuer string)
+const hosting = detectHostingProvider([{ name: 'server', value: 'Vercel' }]);
+const email = detectEmailProvider(['aspmx.l.google.com.']);
+const dns = detectDnsProvider(['ns1.cloudflare.com']);
 const ca = detectCertificateAuthority("Let's Encrypt R3");
-console.log(ca); // { name: "Let's Encrypt", domain: "letsencrypt.org" }
-
-// Registrar domain resolution (partial match of registrar names)
-const registrarName = 'GoDaddy Inc.';
-const registrarDomain = resolveRegistrarDomain(registrarName);
-console.log(registrarDomain); // "godaddy.com"
 ```
-
-### Adding New Providers
 
 Add to the appropriate section in `catalog.ts`:
 

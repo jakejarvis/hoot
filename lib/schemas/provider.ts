@@ -1,26 +1,54 @@
 import { z } from "zod";
 
-/**
- * Zod schema for provider detection rules
- */
-export const DetectionRuleSchema = z.union([
-  z.object({
-    type: z.literal("header"),
-    name: z.string(),
-    value: z.string().optional(),
-    present: z.boolean().optional(),
-  }),
-  z.object({
-    type: z.literal("dns"),
-    recordType: z.enum(["MX", "NS"]),
-    value: z.string(),
-  }),
-]);
+// Primitive checks
+export type HeaderEquals = {
+  kind: "headerEquals";
+  name: string;
+  value: string;
+};
+export type HeaderIncludes = {
+  kind: "headerIncludes";
+  name: string;
+  substr: string;
+};
+export type HeaderPresent = { kind: "headerPresent"; name: string };
+
+export type MxSuffix = { kind: "mxSuffix"; suffix: string };
+export type NsSuffix = { kind: "nsSuffix"; suffix: string };
+export type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
+
+// Compose with logic
+export type Logic =
+  | { all: Logic[] }
+  | { any: Logic[] }
+  | { not: Logic }
+  | HeaderEquals
+  | HeaderIncludes
+  | HeaderPresent
+  | MxSuffix
+  | NsSuffix
+  | IssuerIncludes;
+
+// What the evaluator receives
+export interface DetectionContext {
+  headers: Record<string, string>; // normalized lowercased names
+  mx: string[]; // lowercased FQDNs
+  ns: string[]; // lowercased FQDNs
+  issuer?: string; // lowercased certificate issuer string
+}
+
+export type ProviderCategory = "hosting" | "email" | "dns" | "ca";
+
+export type Provider = {
+  name: string;
+  domain: string;
+  rule: Logic;
+  category: ProviderCategory;
+};
 
 export const ProviderRefSchema = z.object({
   name: z.string(),
   domain: z.string().nullable(),
 });
 
-export type DetectionRule = z.infer<typeof DetectionRuleSchema>;
 export type ProviderRef = z.infer<typeof ProviderRefSchema>;
