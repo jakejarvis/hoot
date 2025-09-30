@@ -36,7 +36,7 @@ export function CopyButton({ value, label }: CopyButtonProps) {
     <Button
       variant="outline"
       size="sm"
-      className="shrink-0 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
+      className="shrink-0 border-black/15 bg-background/50 backdrop-blur dark:border-white/10"
       aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
       onClick={handleCopy}
     >

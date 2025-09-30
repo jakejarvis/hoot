@@ -69,7 +69,7 @@ export function DomainReportView({ domain }: { domain: string }) {
               }
             >
               <Favicon domain={domain} size={20} className="rounded" />
-              <h2 className="text-xl font-semibold tracking-tight">{domain}</h2>
+              <h2 className="font-semibold text-xl tracking-tight">{domain}</h2>
               <ExternalLink
                 className="size-3.5 text-muted-foreground/60"
                 aria-hidden="true"

@@ -41,20 +41,20 @@ export function Section({
   return (
     <AccordionItem value={title} className="border-none">
       <Card
-        className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-2xl shadow-black/10"
+        className="relative overflow-hidden rounded-3xl border border-black/10 bg-background/60 py-0 shadow-2xl shadow-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 dark:border-white/10"
         data-accent={accent}
       >
         {/* Accent glow */}
         <div
           aria-hidden
           className={cn(
-            "pointer-events-none absolute -inset-x-8 -top-8 h-24 blur-2xl opacity-30",
+            "-inset-x-8 -top-8 pointer-events-none absolute h-24 opacity-30 blur-2xl",
             "accent-glow",
           )}
         />
         <div className="relative">
           <AccordionTrigger
-            className={cn("px-5 py-4 hover:no-underline no-underline")}
+            className={cn("px-5 py-4 no-underline hover:no-underline")}
             disabled={isError || isLoading}
           >
             <div className="flex w-full items-center gap-3 text-left">
@@ -63,8 +63,8 @@ export function Section({
                   <Icon className="h-4 w-4" />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <CardTitle className="gap-2 flex items-center">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="flex items-center gap-2">
                   <span className="text-base">{title}</span>
                   {help && (
                     <TooltipProvider>
@@ -92,7 +92,7 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs">
                   {isLoading && (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -112,7 +112,7 @@ export function Section({
         </div>
         <AccordionContent>
           {children && (
-            <CardContent className="pt-0 px-5 pb-5 space-y-3">
+            <CardContent className="space-y-3 px-5 pt-0 pb-5">
               {children}
             </CardContent>
           )}

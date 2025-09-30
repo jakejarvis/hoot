@@ -33,7 +33,7 @@ export function DomainSearch({
         aria-label="Domain search"
         className={
           variant === "lg"
-            ? "relative flex items-center gap-2 rounded-xl border bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 shadow-sm"
+            ? "relative flex items-center gap-2 rounded-xl border bg-background/60 p-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60"
             : undefined
         }
         onSubmit={(e) => {
@@ -50,13 +50,13 @@ export function DomainSearch({
         <div className="relative flex-1">
           {variant === "lg" ? (
             <Globe
-              className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+              className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground"
               aria-hidden
             />
           ) : (
             <SearchIcon
               aria-hidden
-              className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+              className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground"
             />
           )}
           <Input
@@ -75,12 +75,12 @@ export function DomainSearch({
             onChange={(e) => setValue(e.target.value)}
             className={cn(
               "pl-9",
-              variant === "lg" ? "h-12" : "h-10 sm:pr-14 rounded-xl",
+              variant === "lg" ? "h-12" : "h-10 rounded-xl sm:pr-14",
             )}
           />
 
           {variant === "sm" && (
-            <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none rounded-md border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground invisible sm:visible">
+            <kbd className="-translate-y-1/2 pointer-events-none invisible absolute top-1/2 right-2 select-none rounded-md border bg-muted px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground sm:visible">
               ⌘ K
             </kbd>
           )}

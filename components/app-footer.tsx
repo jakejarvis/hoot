@@ -3,10 +3,10 @@ import { HeartAnimated } from "@/components/heart";
 
 export function AppFooter() {
   return (
-    <footer className="px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground leading-relaxed [&_a]:text-foreground/85 [&_a]:hover:text-foreground/60 [&_a]:hover:no-underline [&_svg]:inline-block [&_svg]:align-text-bottom [&_svg]:px-[1px] [&_svg]:size-4">
+    <footer className="px-4 py-6 text-center text-muted-foreground text-xs leading-relaxed sm:px-6 [&_a]:text-foreground/85 [&_a]:hover:text-foreground/60 [&_a]:hover:no-underline [&_svg]:inline-block [&_svg]:size-4 [&_svg]:px-[1px] [&_svg]:align-text-bottom">
       <p>
         Made with{" "}
-        <HeartAnimated className="stroke-destructive fill-destructive" /> and{" "}
+        <HeartAnimated className="fill-destructive stroke-destructive" /> and{" "}
         <Link href="https://nextjs.org/" target="_blank" rel="noopener">
           <svg
             xmlns="http://www.w3.org/2000/svg"

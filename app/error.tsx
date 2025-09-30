@@ -21,7 +21,7 @@ export default function RootError(props: {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-semibold text-2xl tracking-tight">
           Something went wrong
         </h1>
         <p className="mt-2 text-muted-foreground">
@@ -35,7 +35,7 @@ export default function RootError(props: {
           </pre>
         ) : null}
         {error?.digest ? (
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-muted-foreground text-xs">
             Error id: {error.digest}
           </p>
         ) : null}

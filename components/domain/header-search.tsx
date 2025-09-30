@@ -9,7 +9,7 @@ export function HeaderSearch() {
   if (isHome) return null;
 
   return (
-    <div className="flex-1 flex justify-center">
+    <div className="flex flex-1 justify-center">
       <div className="w-full max-w-2xl">
         <DomainSearch variant="sm" />
       </div>

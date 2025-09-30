@@ -14,7 +14,7 @@ function MapInner({ hosting }: { hosting: Hosting }) {
   if (lat == null || lon == null) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
+    <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
       <MapboxMap
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialViewState={{ longitude: lon, latitude: lat, zoom: 4 }}
@@ -30,7 +30,7 @@ function MapInner({ hosting }: { hosting: Hosting }) {
         reuseMaps
       >
         <Marker longitude={lon} latitude={lat}>
-          <div className="h-4 w-4 rounded-full bg-blue-600 ring-2 ring-white shadow-2xl" />
+          <div className="h-4 w-4 rounded-full bg-blue-600 shadow-2xl ring-2 ring-white" />
         </Marker>
         <NavigationControl />
       </MapboxMap>

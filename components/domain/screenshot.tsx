@@ -44,10 +44,10 @@ export function Screenshot({
       {loading && (
         <div className="p-2">
           <div
-            className={`w-full ${aspectClassName} rounded-md border bg-muted/50 flex items-center justify-center`}
+            className={`w-full ${aspectClassName} flex items-center justify-center rounded-md border bg-muted/50`}
           >
             <div
-              className="flex items-center gap-2 text-xs text-muted-foreground"
+              className="flex items-center gap-2 text-muted-foreground text-xs"
               aria-live="polite"
             >
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -64,7 +64,7 @@ export function Screenshot({
             width={width}
             height={height}
             className={cn(
-              "rounded-md border h-auto w-full object-cover",
+              "h-auto w-full rounded-md border object-cover",
               aspectClassName,
               imageClassName,
             )}
@@ -79,7 +79,7 @@ export function Screenshot({
         </div>
       )}
       {!loading && !url && (
-        <div className="p-4 text-xs text-muted-foreground">
+        <div className="p-4 text-muted-foreground text-xs">
           Unable to generate a preview.
         </div>
       )}

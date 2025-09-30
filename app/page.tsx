@@ -29,7 +29,7 @@ export default async function Home() {
         <div className="w-full space-y-6">
           <HomeHero />
 
-          <div className="w-full max-w-3xl mx-auto">
+          <div className="mx-auto w-full max-w-3xl">
             <DomainSearch variant="lg" />
           </div>
         </div>

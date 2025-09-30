@@ -15,7 +15,7 @@ export function TtlBadge({ ttl }: { ttl: number }) {
       <TooltipTrigger asChild>
         <Badge
           variant="outline"
-          className="text-muted-foreground text-[11px] cursor-default"
+          className="cursor-default text-[11px] text-muted-foreground"
         >
           <ClockFading />
           {formatTtl(ttl)}

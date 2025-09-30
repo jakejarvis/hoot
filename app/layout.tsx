@@ -31,17 +31,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased slashed-zero tabular-nums selection:bg-[#6a6a6a] selection:text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} slashed-zero tabular-nums antialiased selection:bg-[#6a6a6a] selection:text-white`}
       >
         <ThemeProvider>
           {/* Solid background for light/dark modes */}
-          <div aria-hidden className="fixed inset-0 -z-10 bg-background" />
+          <div aria-hidden className="-z-10 fixed inset-0 bg-background" />
 
           {/* App Shell */}
           <TRPCProvider>
-            <div className="isolate min-h-svh flex flex-col">
+            <div className="isolate flex min-h-svh flex-col">
               <AppHeader />
-              <main className="flex-1 min-h-0 flex flex-col">{children}</main>
+              <main className="flex min-h-0 flex-1 flex-col">{children}</main>
               <AppFooter />
             </div>
           </TRPCProvider>

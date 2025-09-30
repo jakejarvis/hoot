@@ -24,11 +24,11 @@ export function DnsGroup({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <div className="text-[11px] uppercase tracking-[0.08em] text-foreground/70 dark:text-foreground/80">
+        <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
           {title}
         </div>
         <span
-          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full text-[10px] px-1.5`}
+          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]`}
           style={
             {
               color: `var(--accent-${color})`,
@@ -39,7 +39,7 @@ export function DnsGroup({
           {actualCount}
         </span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{children}</div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{children}</div>
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function ScreenshotTooltip({
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
         sideOffset={10}
-        className="bg-popover text-popover-foreground p-0 border shadow-xl"
+        className="border bg-popover p-0 text-popover-foreground shadow-xl"
         hideArrow
       >
         <div className="w-[300px] sm:w-[360px] md:w-[420px]">

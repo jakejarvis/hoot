@@ -11,17 +11,17 @@ export function DomainUnregisteredState({
 }: DomainUnregisteredStateProps) {
   return (
     <div
-      className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 rounded-3xl border border-black/10 dark:border-white/10 shadow-2xl shadow-black/10 p-8 text-center"
+      className="relative overflow-hidden rounded-3xl border border-black/10 bg-background/60 p-8 text-center shadow-2xl shadow-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 dark:border-white/10"
       data-accent="pink"
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -inset-x-16 -top-16 h-40 blur-3xl opacity-40 accent-glow"
+        className="-inset-x-16 -top-16 pointer-events-none absolute h-40 accent-glow opacity-40 blur-3xl"
       />
-      <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+      <h2 className="font-semibold text-2xl tracking-tight sm:text-3xl">
         {domain}
       </h2>
-      <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+      <p className="mt-2 text-muted-foreground text-sm sm:text-base">
         appears to be unregistered.
       </p>
       <div className="mt-5 flex justify-center">

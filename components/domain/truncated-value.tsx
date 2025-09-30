@@ -23,9 +23,9 @@ export function TruncatedValue({
   valueRef,
 }: TruncatedValueProps) {
   const content = (
-    <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-1.5 min-w-0 truncate">
+    <div className="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-foreground/95 leading-[1.2]">
       {leading}
-      <span ref={valueRef} className="truncate flex-1 min-w-0 block">
+      <span ref={valueRef} className="block min-w-0 flex-1 truncate">
         {value}
       </span>
     </div>
@@ -33,13 +33,13 @@ export function TruncatedValue({
 
   if (suffix) {
     return (
-      <div className="flex items-center gap-[6px] min-w-0">
+      <div className="flex min-w-0 items-center gap-[6px]">
         <Tooltip>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent
             className={cn(
               isTruncated
-                ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
+                ? "max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]"
                 : "hidden",
             )}
           >
@@ -57,7 +57,7 @@ export function TruncatedValue({
       <TooltipContent
         className={cn(
           isTruncated
-            ? "max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap"
+            ? "max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]"
             : "hidden",
         )}
       >
