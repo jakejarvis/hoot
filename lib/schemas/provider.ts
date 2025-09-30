@@ -12,7 +12,6 @@ export type HeaderIncludes = {
   substr: string;
 };
 export type HeaderPresent = { kind: "headerPresent"; name: string };
-
 export type MxSuffix = { kind: "mxSuffix"; suffix: string };
 export type NsSuffix = { kind: "nsSuffix"; suffix: string };
 export type IssuerIncludes = { kind: "issuerIncludes"; substr: string };

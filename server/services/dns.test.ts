@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveAll } from "./dns";
 
-vi.mock("@/server/services/cloudflare", () => ({
+vi.mock("@/lib/cloudflare", () => ({
   isCloudflareIpAsync: vi.fn(async () => false),
 }));
 

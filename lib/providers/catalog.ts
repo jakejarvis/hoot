@@ -4,7 +4,9 @@ import type { Provider } from "@/lib/schemas";
  * A registry of known hosting providers. The detection algorithm will iterate
  * through this list to identify the hosting provider from HTTP headers.
  */
-export const HOSTING_PROVIDERS: Provider[] = [
+export const HOSTING_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "hosting" }
+> = [
   {
     name: "Vercel",
     domain: "vercel.com",
@@ -190,7 +192,9 @@ export const HOSTING_PROVIDERS: Provider[] = [
  * A registry of known email providers. The detection algorithm will iterate
  * through this list to identify the email provider from MX records.
  */
-export const EMAIL_PROVIDERS: Provider[] = [
+export const EMAIL_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "email" }
+> = [
   {
     name: "Google Workspace",
     domain: "google.com",
@@ -338,7 +342,9 @@ export const EMAIL_PROVIDERS: Provider[] = [
  * A registry of known DNS providers. The detection algorithm will iterate
  * through this list to identify the DNS provider from NS records.
  */
-export const DNS_PROVIDERS: Provider[] = [
+export const DNS_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "dns" }
+> = [
   {
     name: "Cloudflare",
     domain: "cloudflare.com",
@@ -496,7 +502,9 @@ export const DNS_PROVIDERS: Provider[] = [
 ];
 
 /** Registrar providers registry for WHOIS/RDAP partial name matching */
-export const REGISTRAR_PROVIDERS: Provider[] = [
+export const REGISTRAR_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "registrar" }
+> = [
   {
     name: "GoDaddy",
     domain: "godaddy.com",
@@ -728,7 +736,9 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
 /**
  * Certificate Authorities registry. Matches against issuer strings.
  */
-export const CA_PROVIDERS: Provider[] = [
+export const CA_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "ca" }
+> = [
   {
     name: "Let's Encrypt",
     domain: "letsencrypt.org",

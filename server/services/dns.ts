@@ -1,18 +1,19 @@
 import { captureServer } from "@/lib/analytics/server";
+import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { getOrSetZod, ns } from "@/lib/redis";
 import {
   type DnsRecord,
   DnsRecordSchema,
   type DnsResolveResult,
+  type DnsSource,
+  type DnsType,
+  DnsTypeSchema,
 } from "@/lib/schemas";
-import { isCloudflareIpAsync } from "@/server/services/cloudflare";
 
-export type DnsRecordType = "A" | "AAAA" | "MX" | "TXT" | "NS";
-export type DohProviderKey = "cloudflare" | "google";
 export type DohProvider = {
-  key: DohProviderKey;
-  buildUrl: (domain: string, type: DnsRecordType) => URL;
+  key: DnsSource;
+  buildUrl: (domain: string, type: DnsType) => URL;
   headers?: Record<string, string>;
 };
 
@@ -44,9 +45,6 @@ export const DOH_PROVIDERS: DohProvider[] = [
   },
 ];
 
-type DnsType = DnsRecord["type"];
-const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
-
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const lower = domain.toLowerCase();
   const startedAt = Date.now();
@@ -59,7 +57,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const attemptStart = Date.now();
     try {
       const results = await Promise.all(
-        TYPES.map(async (type) => {
+        DnsTypeSchema.options.map(async (type) => {
           const key = ns("dns", `${lower}:${type}:${provider.key}`);
           return await getOrSetZod<DnsRecord[]>(
             key,
@@ -72,7 +70,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const flat = results.flat();
       durationByProvider[provider.key] = Date.now() - attemptStart;
 
-      const counts = TYPES.reduce(
+      const counts = DnsTypeSchema.options.reduce(
         (acc, t) => {
           acc[t] = flat.filter((r) => r.type === t).length;
           return acc;
