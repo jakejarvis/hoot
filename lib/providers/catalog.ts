@@ -23,6 +23,16 @@ export const HOSTING_PROVIDERS: Provider[] = [
     rule: { kind: "headerIncludes", name: "x-powered-by", substr: "wp engine" },
   },
   {
+    name: "WordPress VIP",
+    domain: "wpvip.com",
+    category: "hosting",
+    rule: {
+      kind: "headerIncludes",
+      name: "x-powered-by",
+      substr: "wordpress vip",
+    },
+  },
+  {
     name: "WordPress.com",
     domain: "wordpress.com",
     category: "hosting",
@@ -116,17 +126,6 @@ export const HOSTING_PROVIDERS: Provider[] = [
     rule: { kind: "headerPresent", name: "x-wix-request-id" },
   },
   {
-    name: "Cloudflare",
-    domain: "cloudflare.com",
-    category: "hosting",
-    rule: {
-      all: [
-        { kind: "headerEquals", name: "server", value: "cloudflare" },
-        { kind: "headerPresent", name: "cf-ray" },
-      ],
-    },
-  },
-  {
     name: "Azure Front Door",
     domain: "azure.microsoft.com",
     category: "hosting",
@@ -175,13 +174,14 @@ export const HOSTING_PROVIDERS: Provider[] = [
     rule: { kind: "headerPresent", name: "x-kinsta-cache" },
   },
   {
-    name: "WordPress VIP",
-    domain: "wpvip.com",
+    name: "Cloudflare",
+    domain: "cloudflare.com",
     category: "hosting",
     rule: {
-      kind: "headerIncludes",
-      name: "x-powered-by",
-      substr: "wordpress vip",
+      all: [
+        { kind: "headerEquals", name: "server", value: "cloudflare" },
+        { kind: "headerPresent", name: "cf-ray" },
+      ],
     },
   },
 ];
@@ -212,7 +212,12 @@ export const EMAIL_PROVIDERS: Provider[] = [
     name: "Zoho",
     domain: "zoho.com",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "mx.zoho.com" },
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mx.zoho.com" },
+        { kind: "mxSuffix", suffix: "mx.zoho.eu" },
+      ],
+    },
   },
   {
     name: "Proton",
@@ -230,7 +235,12 @@ export const EMAIL_PROVIDERS: Provider[] = [
     name: "Cloudflare Email Routing",
     domain: "cloudflare.com",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "mx.cloudflare.net" },
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mx.cloudflare.net" },
+        { kind: "mxSuffix", suffix: "inbound.cf-emailsecurity.net" },
+      ],
+    },
   },
   {
     name: "Yahoo Mail",
@@ -304,23 +314,23 @@ export const EMAIL_PROVIDERS: Provider[] = [
     category: "email",
     rule: { kind: "mxSuffix", suffix: "pphosted.com" },
   },
-  {
-    name: "Amazon WorkMail",
-    domain: "aws.amazon.com",
-    category: "email",
-    rule: { kind: "mxSuffix", suffix: "inbound-smtp." },
-  },
+  // {
+  //   name: "Amazon WorkMail",
+  //   domain: "aws.amazon.com",
+  //   category: "email",
+  //   rule: { kind: "mxSuffix", suffix: "inbound-smtp." },
+  // },
   {
     name: "Titan Email",
     domain: "titan.email",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "mx1.titan.email" },
+    rule: { kind: "mxSuffix", suffix: "titan.email" },
   },
   {
     name: "IONOS Mail",
     domain: "ionos.com",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "mx00.ionos.com" },
+    rule: { kind: "mxSuffix", suffix: "ionos.com" },
   },
 ];
 
@@ -345,7 +355,13 @@ export const DNS_PROVIDERS: Provider[] = [
     name: "DNSimple",
     domain: "dnsimple.com",
     category: "dns",
-    rule: { kind: "nsSuffix", suffix: "dnsimple.com" },
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "dnsimple.com" },
+        { kind: "nsSuffix", suffix: "dnsimple-edge.net" },
+        { kind: "nsSuffix", suffix: "dnsimple-edge.org" },
+      ],
+    },
   },
   {
     name: "WordPress.com",
@@ -392,12 +408,7 @@ export const DNS_PROVIDERS: Provider[] = [
     name: "Google Cloud DNS",
     domain: "cloud.google.com",
     category: "dns",
-    rule: {
-      any: [
-        { kind: "nsSuffix", suffix: "googledomains.com" },
-        { kind: "nsSuffix", suffix: "ns-cloud" },
-      ],
-    },
+    rule: { kind: "nsSuffix", suffix: "googledomains.com" },
   },
   {
     name: "Hurricane Electric",
@@ -429,7 +440,7 @@ export const DNS_PROVIDERS: Provider[] = [
     },
   },
   {
-    name: "IONOS",
+    name: "1&1 IONOS",
     domain: "ionos.com",
     category: "dns",
     rule: {
@@ -492,7 +503,6 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "godaddy" },
         { kind: "registrarIncludes", substr: "godaddy" },
         { kind: "registrarIncludes", substr: "go daddy" },
         { kind: "registrarIncludes", substr: "wild west domains" },
@@ -503,24 +513,14 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "Namecheap",
     domain: "namecheap.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "namecheap" },
-        { kind: "registrarIncludes", substr: "namecheap" },
-        { kind: "registrarIncludes", substr: "namecheap, inc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "namecheap" },
   },
   {
     name: "Squarespace",
     domain: "squarespace.domains",
     category: "registrar",
     rule: {
-      any: [
-        { kind: "registrarEquals", value: "squarespace" },
-        { kind: "registrarIncludes", substr: "squarespace domains llc" },
-        { kind: "registrarIncludes", substr: "squarespace domains ii llc" },
-      ],
+      any: [{ kind: "registrarIncludes", substr: "squarespace" }],
     },
   },
   // Keep Google LLC for rare legacy WHOIS text, but do not alias to MarkMonitor (separate registrar).
@@ -528,36 +528,19 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "Google",
     domain: "google.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "google" },
-        { kind: "registrarIncludes", substr: "google llc" },
-        { kind: "registrarIncludes", substr: "google inc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "google" },
   },
   {
     name: "Cloudflare",
     domain: "cloudflare.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "cloudflare" },
-        { kind: "registrarIncludes", substr: "cloudflare, inc" },
-        { kind: "registrarIncludes", substr: "cloudflare inc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "cloudflare" },
   },
   {
     name: "Gandi",
     domain: "gandi.net",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "gandi" },
-        { kind: "registrarIncludes", substr: "gandi sas" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "gandi" },
   },
   {
     name: "Tucows",
@@ -565,8 +548,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "tucows" },
-        { kind: "registrarIncludes", substr: "tucows domains inc" },
+        { kind: "registrarIncludes", substr: "tucows" },
         { kind: "registrarIncludes", substr: "hover" },
       ],
     },
@@ -577,9 +559,9 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "ovhcloud" },
-        { kind: "registrarIncludes", substr: "ovh sas" },
+        { kind: "registrarIncludes", substr: "ovhcloud" },
         { kind: "registrarIncludes", substr: "ovhgroup" },
+        { kind: "registrarIncludes", substr: "ovh sas" },
       ],
     },
   },
@@ -590,9 +572,8 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     rule: {
       any: [
         { kind: "registrarIncludes", substr: "1&1" },
-        { kind: "registrarIncludes", substr: "ionos se" },
+        { kind: "registrarIncludes", substr: "ionos" },
         { kind: "registrarIncludes", substr: "united internet" },
-        { kind: "registrarEquals", value: "ionos" },
       ],
     },
   },
@@ -602,9 +583,10 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "name.com" },
+        { kind: "registrarIncludes", substr: "name.com" },
         { kind: "registrarIncludes", substr: "rightside" },
-        { kind: "registrarIncludes", substr: "donuts inc" },
+        { kind: "registrarIncludes", substr: "afilias" },
+        { kind: "registrarIncludes", substr: "donuts" },
         { kind: "registrarIncludes", substr: "identity digital" },
       ],
     },
@@ -613,23 +595,13 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "Dynadot",
     domain: "dynadot.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "dynadot" },
-        { kind: "registrarIncludes", substr: "dynadot llc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "dynadot" },
   },
   {
     name: "Porkbun",
     domain: "porkbun.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "porkbun" },
-        { kind: "registrarIncludes", substr: "porkbun llc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "porkbun" },
   },
   {
     name: "Alibaba Cloud",
@@ -637,8 +609,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "alibaba" },
-        { kind: "registrarIncludes", substr: "alibaba cloud computing ltd" },
+        { kind: "registrarIncludes", substr: "alibaba" },
         { kind: "registrarIncludes", substr: "aliyun" },
       ],
     },
@@ -647,12 +618,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "Enom",
     domain: "enom.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "enom" },
-        { kind: "registrarIncludes", substr: "enom, llc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "enom" },
   },
   {
     name: "GMO Internet",
@@ -660,9 +626,8 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "gmo internet" },
+        { kind: "registrarIncludes", substr: "gmo internet" },
         { kind: "registrarIncludes", substr: "onamae" },
-        { kind: "registrarIncludes", substr: "gmo internet group" },
       ],
     },
   },
@@ -672,9 +637,9 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "network solutions" },
-        { kind: "registrarIncludes", substr: "networksolutions inc" },
-        { kind: "registrarIncludes", substr: "networksolutions llc" },
+        { kind: "registrarIncludes", substr: "network solutions" },
+        { kind: "registrarIncludes", substr: "networksolutions" },
+        { kind: "registrarIncludes", substr: "web.com" },
       ],
     },
   },
@@ -684,7 +649,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "register.com" },
+        { kind: "registrarIncludes", substr: "register.com" },
         { kind: "registrarIncludes", substr: "register, inc" },
         { kind: "registrarIncludes", substr: "register inc" },
       ],
@@ -696,9 +661,8 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "automattic" },
+        { kind: "registrarIncludes", substr: "automattic" },
         { kind: "registrarIncludes", substr: "wordpress.com" },
-        { kind: "registrarIncludes", substr: "wordpress vip" },
       ],
     },
   },
@@ -706,13 +670,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "MarkMonitor",
     domain: "markmonitor.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "markmonitor" },
-        { kind: "registrarIncludes", substr: "markmonitor inc" },
-        { kind: "registrarIncludes", substr: "markmonitor, inc." },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "markmonitor" },
   },
   {
     name: "CSC Corporate Domains",
@@ -720,8 +678,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "csc corporate domains" },
-        { kind: "registrarIncludes", substr: "csc corporate domains" },
+        { kind: "registrarIncludes", substr: "csc corporate" },
         { kind: "registrarIncludes", substr: "csc global" },
       ],
     },
@@ -730,13 +687,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "Ascio",
     domain: "ascio.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "ascio" },
-        { kind: "registrarIncludes", substr: "ascio technologies" },
-        { kind: "registrarIncludes", substr: "ascio technologies, inc." },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "ascio" },
   },
   {
     name: "Key-Systems",
@@ -744,8 +695,7 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "key-systems" },
-        { kind: "registrarIncludes", substr: "key-systems gmbh" },
+        { kind: "registrarIncludes", substr: "key-systems" },
         { kind: "registrarIncludes", substr: "rrpproxy" },
       ],
     },
@@ -756,9 +706,8 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     category: "registrar",
     rule: {
       any: [
-        { kind: "registrarEquals", value: "publicdomainregistry" },
+        { kind: "registrarIncludes", substr: "publicdomainregistry" },
         { kind: "registrarIncludes", substr: "pdr ltd" },
-        { kind: "registrarIncludes", substr: "publicdomainregistry.com" },
       ],
     },
   },
@@ -766,23 +715,13 @@ export const REGISTRAR_PROVIDERS: Provider[] = [
     name: "Wix",
     domain: "wix.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "wix" },
-        { kind: "registrarIncludes", substr: "wix.com ltd" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "wix" },
   },
   {
     name: "RegistrarSafe",
     domain: "meta.com",
     category: "registrar",
-    rule: {
-      any: [
-        { kind: "registrarEquals", value: "registrarsafe" },
-        { kind: "registrarIncludes", substr: "registrarsafe llc" },
-      ],
-    },
+    rule: { kind: "registrarIncludes", substr: "registrarsafe" },
   },
 ];
 
@@ -799,19 +738,19 @@ export const CA_PROVIDERS: Provider[] = [
         { kind: "issuerIncludes", substr: "let's encrypt" },
         { kind: "issuerIncludes", substr: "lets encrypt" },
         { kind: "issuerIncludes", substr: "isrg" },
-        { kind: "issuerIncludes", substr: "r3" },
-        { kind: "issuerIncludes", substr: "r4" },
-        { kind: "issuerIncludes", substr: "e1" },
-        { kind: "issuerIncludes", substr: "e2" },
-        { kind: "issuerIncludes", substr: "r10" },
-        { kind: "issuerIncludes", substr: "r11" },
-        { kind: "issuerIncludes", substr: "r12" },
-        { kind: "issuerIncludes", substr: "r13" },
-        { kind: "issuerIncludes", substr: "r14" },
-        { kind: "issuerIncludes", substr: "e5" },
-        { kind: "issuerIncludes", substr: "e6" },
-        { kind: "issuerIncludes", substr: "e7" },
-        { kind: "issuerIncludes", substr: "e8" },
+        { kind: "issuerEquals", value: "r3" },
+        { kind: "issuerEquals", value: "r4" },
+        { kind: "issuerEquals", value: "e1" },
+        { kind: "issuerEquals", value: "e2" },
+        { kind: "issuerEquals", value: "r10" },
+        { kind: "issuerEquals", value: "r11" },
+        { kind: "issuerEquals", value: "r12" },
+        { kind: "issuerEquals", value: "r13" },
+        { kind: "issuerEquals", value: "r14" },
+        { kind: "issuerEquals", value: "e5" },
+        { kind: "issuerEquals", value: "e6" },
+        { kind: "issuerEquals", value: "e7" },
+        { kind: "issuerEquals", value: "e8" },
       ],
     },
   },
@@ -850,8 +789,8 @@ export const CA_PROVIDERS: Provider[] = [
     category: "ca",
     rule: {
       any: [
-        { kind: "issuerIncludes", substr: "godaddy" },
-        { kind: "issuerIncludes", substr: "starfield" },
+        { kind: "issuerEquals", value: "godaddy" },
+        { kind: "issuerEquals", value: "starfield" },
       ],
     },
   },
@@ -890,23 +829,12 @@ export const CA_PROVIDERS: Provider[] = [
     name: "Amazon Trust Services",
     domain: "amazontrust.com",
     category: "ca",
-    rule: {
-      any: [
-        { kind: "issuerIncludes", substr: "amazon trust" },
-        { kind: "issuerIncludes", substr: "amazon" },
-      ],
-    },
+    rule: { kind: "issuerIncludes", substr: "amazon" },
   },
   {
     name: "Cloudflare",
     domain: "cloudflare.com",
     category: "ca",
-    rule: {
-      any: [
-        { kind: "issuerIncludes", substr: "cloudflare inc ecc ca" },
-        { kind: "issuerIncludes", substr: "cloudflare inc rsa ca" },
-        { kind: "issuerIncludes", substr: "cloudflare" },
-      ],
-    },
+    rule: { kind: "issuerIncludes", substr: "cloudflare" },
   },
 ];
