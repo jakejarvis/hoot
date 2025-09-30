@@ -35,16 +35,18 @@ export async function getRegistration(domain: string): Promise<Registration> {
   const ttl = record.isRegistered ? 24 * 60 * 60 : 60 * 60;
   let registrarName = (record.registrar?.name || "").toString();
   let registrarDomain: string | null = null;
+  const det = detectRegistrar(registrarName);
+  if (det.name !== "Unknown") {
+    registrarName = det.name;
+  }
+  if (det.domain) {
+    registrarDomain = det.domain;
+  }
   try {
-    if (record.registrar?.url) {
+    if (!registrarDomain && record.registrar?.url) {
       registrarDomain = new URL(record.registrar.url).hostname || null;
     }
   } catch {}
-  if (!registrarDomain) {
-    const det = detectRegistrar(registrarName);
-    registrarName = det.name;
-    registrarDomain = det.domain;
-  }
 
   const withProvider: Registration = {
     ...record,
