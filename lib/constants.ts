@@ -6,5 +6,5 @@ export const DEFAULT_SUGGESTIONS = [
   "wikipedia.org",
   "github.com",
   "cloudflare.com",
-  "producthunt.com",
+  "jarv.is",
 ];
