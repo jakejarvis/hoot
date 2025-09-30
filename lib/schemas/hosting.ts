@@ -5,7 +5,6 @@ export const HostingSchema = z.object({
   hostingProvider: ProviderRefSchema,
   emailProvider: ProviderRefSchema,
   dnsProvider: ProviderRefSchema,
-  ipAddress: z.string().nullable(),
   geo: z.object({
     city: z.string(),
     region: z.string(),

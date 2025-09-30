@@ -44,7 +44,6 @@ vi.mock("@/hooks/use-domain-queries", () => ({
         dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
         hostingProvider: { name: "Vercel", domain: "vercel.com" },
         emailProvider: { name: "Google Workspace", domain: "google.com" },
-        ipAddress: null,
         geo: {
           city: "",
           region: "",

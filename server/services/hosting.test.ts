@@ -89,7 +89,6 @@ describe("detectHosting", () => {
     expect(result.emailProvider.domain).toBe("google.com");
     expect(result.dnsProvider.name).toBe("Cloudflare");
     expect(result.dnsProvider.domain).toBe("cloudflare.com");
-    expect(result.ipAddress).toBe("1.2.3.4");
     expect(result.geo.country).toBe("US");
   });
 

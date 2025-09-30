@@ -28,12 +28,6 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         () => [] as { name: string; value: string }[],
       );
 
-      // Determine email provider, using "none" when MX is unset
-      const email =
-        mx.length === 0
-          ? { name: "none", domain: null }
-          : detectEmailProvider(mx.map((m) => m.value));
-
       const meta = ip
         ? await lookupIpMeta(ip)
         : {
@@ -53,6 +47,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       // - If no A record/IP → unset → "none"
       // - Else if unknown → try IP ownership org/ISP
       const hosting = detectHostingProvider(headers);
+
       let hostingName = hosting.name;
       let hostingIconDomain = hosting.domain;
       if (!ip) {
@@ -63,8 +58,14 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         hostingIconDomain = null;
       }
 
+      // Determine email provider, using "none" when MX is unset
+      const email =
+        mx.length === 0
+          ? { name: "none", domain: null }
+          : detectEmailProvider(mx.map((m) => m.value));
       let emailName = email.name;
       let emailIconDomain = email.domain;
+
       // DNS provider from nameservers
       const dnsResult = detectDnsProvider(ns.map((n) => n.value));
       let dnsName = dnsResult.name;
@@ -92,7 +93,6 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         hostingProvider: { name: hostingName, domain: hostingIconDomain },
         emailProvider: { name: emailName, domain: emailIconDomain },
         dnsProvider: { name: dnsName, domain: dnsIconDomain },
-        ipAddress: ip,
         geo,
       };
       await captureServer("hosting_detected", {
@@ -108,5 +108,3 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     schema,
   );
 }
-
-// moved to ./ip
