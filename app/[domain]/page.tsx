@@ -6,7 +6,10 @@ import { DomainReportFallback } from "@/components/domain/domain-report-fallback
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
-import { toRegistrableDomain } from "@/lib/domain-server";
+import {
+  isBlacklistedDomainLike,
+  toRegistrableDomain,
+} from "@/lib/domain-server";
 import { getQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 
@@ -20,8 +23,11 @@ export async function generateMetadata({
   const { domain: raw } = await params;
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
-  const registrable = toRegistrableDomain(normalized);
-  if (!registrable) notFound();
+
+  const isBlacklisted = isBlacklistedDomainLike(normalized);
+  const isRegistrable = toRegistrableDomain(normalized);
+  if (!isRegistrable || isBlacklisted) notFound();
+
   return {
     title: `Domain Report: ${normalized} — Hoot`,
     description: `Investigate ${normalized}'s WHOIS, DNS, SSL, headers, and more.`,
@@ -36,8 +42,11 @@ export default async function DomainPage({
   const { domain: raw } = await params;
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
-  const registrable = toRegistrableDomain(normalized);
-  if (!registrable) notFound();
+
+  const isBlacklisted = isBlacklistedDomainLike(normalized);
+  const isRegistrable = toRegistrableDomain(normalized);
+  if (!isRegistrable || isBlacklisted) notFound();
+
   // Canonicalize URL to the normalized domain
   if (normalized !== decoded) {
     redirect(`/${encodeURIComponent(normalized)}`);

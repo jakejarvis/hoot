@@ -1,6 +1,10 @@
 /* @vitest-environment node */
 import { describe, expect, it } from "vitest";
-import { isAcceptableDomainInput, toRegistrableDomain } from "./domain-server";
+import {
+  isAcceptableDomainInput,
+  isBlacklistedDomainLike,
+  toRegistrableDomain,
+} from "./domain-server";
 
 describe("toRegistrableDomain", () => {
   it("reduces subdomains to eTLD+1", () => {
@@ -24,5 +28,22 @@ describe("isAcceptableDomainInput", () => {
     expect(isAcceptableDomainInput("sub.EXAMPLE.com")).toBe(true);
     expect(isAcceptableDomainInput("localhost")).toBe(false);
     expect(isAcceptableDomainInput("256.256.256.256")).toBe(false);
+  });
+});
+
+describe("isBlacklistedDomainLike", () => {
+  it("returns true for common sourcemap-like suffixes", () => {
+    expect(isBlacklistedDomainLike("styles.css.map")).toBe(true);
+    expect(isBlacklistedDomainLike("app.js.map")).toBe(true);
+    expect(isBlacklistedDomainLike("foo.ts.map")).toBe(true);
+    expect(isBlacklistedDomainLike("bundle.mjs.map")).toBe(true);
+    expect(isBlacklistedDomainLike("bundle.cjs.map")).toBe(true);
+  });
+
+  it("returns false for normal domains and non-sourcemap assets", () => {
+    expect(isBlacklistedDomainLike("example.com")).toBe(false);
+    expect(isBlacklistedDomainLike("example.org")).toBe(false);
+    expect(isBlacklistedDomainLike("file.css")).toBe(false);
+    expect(isBlacklistedDomainLike("file.map")).toBe(false);
   });
 });

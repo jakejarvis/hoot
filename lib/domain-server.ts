@@ -2,6 +2,7 @@
 // Note: Do not import this file in client components.
 
 import { parse } from "tldts";
+import { BLACKLISTED_SUFFIXES } from "./constants";
 
 /**
  * Normalize arbitrary input (domain or URL) to its registrable domain (eTLD+1).
@@ -27,4 +28,22 @@ export function toRegistrableDomain(input: string): string | null {
  */
 export function isAcceptableDomainInput(input: string): boolean {
   return toRegistrableDomain(input) !== null;
+}
+
+/**
+ * Returns true when the provided input looks like a blacklisted file-like path
+ * or when its final label (TLD-like) is in our blacklist. This protects the
+ * domain route from accidentally attempting lookups for 404 asset paths like
+ * ".css.map".
+ */
+export function isBlacklistedDomainLike(input: string): boolean {
+  const value = (input ?? "").trim().toLowerCase();
+  if (value === "") return false;
+
+  // Shortcut: exact suffixes such as ".css.map" that frequently appear
+  for (const suffix of BLACKLISTED_SUFFIXES) {
+    if (value.endsWith(suffix)) return true;
+  }
+
+  return false;
 }

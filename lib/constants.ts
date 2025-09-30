@@ -8,3 +8,15 @@ export const DEFAULT_SUGGESTIONS = [
   "cloudflare.com",
   "jarv.is",
 ];
+
+// File-like suffixes and extensions that should not be treated as TLDs/domains
+// This is an allowlist of obvious web asset extensions and build artifacts
+// that commonly appear in 404s (e.g., sourcemaps) and should be ignored.
+export const BLACKLISTED_SUFFIXES: readonly string[] = [
+  // https://fuckyougoogle.zip essentially.
+  ".css.map",
+  ".js.map",
+  ".ts.map",
+  ".mjs.map",
+  ".cjs.map",
+];
