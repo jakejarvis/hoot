@@ -7,7 +7,7 @@ import { trpc } from "@/trpc/server";
 
 export const experimental_ppr = true;
 
-export default async function Home() {
+export default function Home() {
   const queryClient = getQueryClient();
 
   DEFAULT_SUGGESTIONS.forEach((domain) => {
