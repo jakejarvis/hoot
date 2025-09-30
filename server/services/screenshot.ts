@@ -13,7 +13,6 @@ function buildHomepageUrls(domain: string): string[] {
 
 export async function getOrCreateScreenshotBlobUrl(
   domain: string,
-  opts?: { distinctId?: string },
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
 
@@ -25,19 +24,15 @@ export async function getOrCreateScreenshotBlobUrl(
       VIEWPORT_HEIGHT,
     );
     if (existing) {
-      await captureServer(
-        "screenshot_capture",
-        {
-          domain,
-          width: VIEWPORT_WIDTH,
-          height: VIEWPORT_HEIGHT,
-          source: "blob",
-          duration_ms: Date.now() - startedAt,
-          outcome: "ok",
-          cache: "hit_blob",
-        },
-        opts?.distinctId,
-      );
+      await captureServer("screenshot_capture", {
+        domain,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        source: "blob",
+        duration_ms: Date.now() - startedAt,
+        outcome: "ok",
+        cache: "hit_blob",
+      });
       return { url: existing };
     }
   } catch {
@@ -170,21 +165,15 @@ export async function getOrCreateScreenshotBlobUrl(
 
           console.info("[screenshot] stored blob", { url: storedUrl });
 
-          await captureServer(
-            "screenshot_capture",
-            {
-              domain,
-              width: VIEWPORT_WIDTH,
-              height: VIEWPORT_HEIGHT,
-              source: url.startsWith("https://")
-                ? "direct_https"
-                : "direct_http",
-              duration_ms: Date.now() - startedAt,
-              outcome: "ok",
-              cache: "store_blob",
-            },
-            opts?.distinctId,
-          );
+          await captureServer("screenshot_capture", {
+            domain,
+            width: VIEWPORT_WIDTH,
+            height: VIEWPORT_HEIGHT,
+            source: url.startsWith("https://") ? "direct_https" : "direct_http",
+            duration_ms: Date.now() - startedAt,
+            outcome: "ok",
+            cache: "store_blob",
+          });
 
           return { url: storedUrl };
         }
@@ -212,18 +201,14 @@ export async function getOrCreateScreenshotBlobUrl(
     }
   }
 
-  await captureServer(
-    "screenshot_capture",
-    {
-      domain,
-      width: VIEWPORT_WIDTH,
-      height: VIEWPORT_HEIGHT,
-      duration_ms: Date.now() - startedAt,
-      outcome: "not_found",
-      cache: "miss",
-    },
-    opts?.distinctId,
-  );
+  await captureServer("screenshot_capture", {
+    domain,
+    width: VIEWPORT_WIDTH,
+    height: VIEWPORT_HEIGHT,
+    duration_ms: Date.now() - startedAt,
+    outcome: "not_found",
+    cache: "miss",
+  });
 
   console.warn("[screenshot] returning null", { domain });
   return { url: null };

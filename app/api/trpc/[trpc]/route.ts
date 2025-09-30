@@ -1,5 +1,4 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { captureServerException } from "@/lib/analytics/server";
 import { appRouter } from "@/server/routers/_app";
 import { createContext } from "@/trpc/init";
 
@@ -10,23 +9,14 @@ const handler = (req: Request) =>
     endpoint: "/api/trpc",
     req,
     router: appRouter,
-    createContext: () => createContext({ req }),
-    onError: ({ path, error, type, input }) => {
+    createContext,
+    onError: ({ path, error }) => {
       // Development logging
       if (process.env.NODE_ENV === "development") {
         console.error(
           `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`,
         );
       }
-
-      // Track all tRPC errors with PostHog
-      captureServerException(error, {
-        context: "trpc_error",
-        procedure_type: type,
-        procedure_path: path,
-        input: input,
-        error_code: error.code,
-      });
     },
   });
 
