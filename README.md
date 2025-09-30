@@ -18,14 +18,18 @@
 
 ## 🛠️ Tech Stack
 
-- **Next.js 15** with Turbopack
+- **Next.js 15** (App Router)
 - **React 19**
 - **TypeScript**
 - **Tailwind CSS v4**
 - **tRPC** API endpoints
 - **Upstash Redis** for caching
 - **Vercel Blob** for favicon & screenshot storage
-- **Puppeteer Core + @sparticuz/chromium** for server-side screenshots (fallback to `puppeteer` locally)
+- **rdapper** for RDAP registration lookups with WHOIS fallback
+- **Puppeteer** for server-side screenshots
+- **Mapbox** for embedded IP geolocation maps
+- **PostHog** for product analytics
+- **Biome** linting and formatting
 
 ---
 
@@ -56,6 +60,8 @@
 
 ---
 
-## 🙋‍♂️ About
+## 📜 License
 
-Made with ❤️ by [@jakejarvis](https://github.com/jakejarvis). [Licensed under MIT.](LICENSE) Owl logo by Jordy Matsuoka from Noun Project (CC BY 3.0).
+[MIT](LICENSE)
+
+Owl logo by [Jordy Madueño](https://thenounproject.com/creator/jordymadueno/) from [Noun Project](https://thenounproject.com/) (CC BY 3.0).

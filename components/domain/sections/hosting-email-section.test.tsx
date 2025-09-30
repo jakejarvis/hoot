@@ -35,7 +35,6 @@ describe("HostingEmailSection", () => {
       dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
       hostingProvider: { name: "Vercel", domain: "vercel.com" },
       emailProvider: { name: "Google Workspace", domain: "google.com" },
-      ipAddress: "1.2.3.4",
       geo: {
         city: "",
         region: "",

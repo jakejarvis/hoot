@@ -4,7 +4,7 @@ import {
   detectDnsProvider,
   detectEmailProvider,
   detectHostingProvider,
-  resolveRegistrarDomain,
+  detectRegistrar,
 } from "./detection";
 
 describe("provider detection", () => {
@@ -19,7 +19,7 @@ describe("provider detection", () => {
   });
 
   it("detects email from MX (Google)", () => {
-    const res = detectEmailProvider(["aspmx.l.google.com"]);
+    const res = detectEmailProvider(["aspmx.l.google.com."]);
     expect(res.name).toBe("Google Workspace");
     expect(res.domain).toBe("google.com");
   });
@@ -30,8 +30,9 @@ describe("provider detection", () => {
     expect(res.domain).toBe("cloudflare.com");
   });
 
-  it("resolves registrar domain from aliases", () => {
-    expect(resolveRegistrarDomain("GoDaddy Inc.")).toBe("godaddy.com");
+  it("detects registrar from name (GoDaddy)", () => {
+    const res = detectRegistrar("GoDaddy Inc.");
+    expect(res.domain).toBe("godaddy.com");
   });
 
   it("detects CA from issuer string (Let's Encrypt)", () => {

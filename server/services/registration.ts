@@ -1,7 +1,7 @@
 import { lookupDomain } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { resolveRegistrarDomain } from "@/lib/providers/detection";
+import { detectRegistrar } from "@/lib/providers/detection";
 import { getOrSetZod, ns } from "@/lib/redis";
 import { type Registration, RegistrationSchema } from "@/lib/schemas";
 
@@ -33,16 +33,17 @@ export async function getRegistration(domain: string): Promise<Registration> {
   }
 
   const ttl = record.isRegistered ? 24 * 60 * 60 : 60 * 60;
-  const registrarName = (record.registrar?.name || "").toString();
-  const registrarUrl = (record.registrar?.url || "").toString();
+  let registrarName = (record.registrar?.name || "").toString();
   let registrarDomain: string | null = null;
   try {
-    if (registrarUrl) {
-      registrarDomain = new URL(registrarUrl).hostname || null;
+    if (record.registrar?.url) {
+      registrarDomain = new URL(record.registrar.url).hostname || null;
     }
   } catch {}
   if (!registrarDomain) {
-    registrarDomain = resolveRegistrarDomain(registrarName);
+    const det = detectRegistrar(registrarName);
+    registrarName = det.name;
+    registrarDomain = det.domain;
   }
 
   const withProvider: Registration = {
