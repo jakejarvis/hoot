@@ -64,6 +64,9 @@ export default async function DomainPage({
     void queryClient.prefetchQuery(
       trpc.domain.headers.queryOptions({ domain: normalized }),
     );
+    void queryClient.prefetchQuery(
+      trpc.domain.seo.queryOptions({ domain: normalized }),
+    );
   }
 
   return (

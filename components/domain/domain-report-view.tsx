@@ -12,6 +12,7 @@ import { DnsRecordsSection } from "@/components/domain/sections/dns-records-sect
 import { HeadersSection } from "@/components/domain/sections/headers-section";
 import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
 import { RegistrationSection } from "@/components/domain/sections/registration-section";
+import { SeoSection } from "@/components/domain/sections/seo-section";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { useDomainHistory } from "@/hooks/use-domain-history";
@@ -19,9 +20,8 @@ import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
 
 export function DomainReportView({ domain }: { domain: string }) {
-  const { registration, dns, hosting, certs, headers } =
+  const { registration, dns, hosting, certs, headers, seo } =
     useDomainQueries(domain);
-  // TTLs are always shown now; preference removed
 
   // Manage domain history
   useDomainHistory(
@@ -38,6 +38,7 @@ export function DomainReportView({ domain }: { domain: string }) {
       hosting: hosting.data,
       certificates: certs.data,
       headers: headers.data,
+      seo: seo.data,
     });
   };
 
@@ -148,6 +149,19 @@ export function DomainReportView({ domain }: { domain: string }) {
               section: "headers",
             });
             headers.refetch();
+          }}
+        />
+
+        <SeoSection
+          data={seo.data || null}
+          isLoading={seo.isLoading}
+          isError={!!seo.isError}
+          onRetryAction={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "seo",
+            });
+            seo.refetch();
           }}
         />
       </Accordion>

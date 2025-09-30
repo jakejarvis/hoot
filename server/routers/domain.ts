@@ -12,6 +12,7 @@ import { probeHeaders } from "@/server/services/headers";
 import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
+import { getSeo } from "@/server/services/seo";
 import { getCertificates } from "@/server/services/tls";
 import { router } from "@/trpc/init";
 
@@ -41,6 +42,7 @@ export const domainRouter = router({
     "Header probe failed",
     HttpHeadersSchema,
   ),
+  seo: createDomainProcedure(getSeo, "SEO analysis failed"),
   favicon: createDomainProcedure(
     getOrCreateFaviconBlobUrl,
     "Favicon fetch failed",
