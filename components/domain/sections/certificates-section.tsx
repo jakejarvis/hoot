@@ -71,7 +71,7 @@ export function CertificatesSection({
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span
-                            className="text-[11px] font-mono leading-none text-muted-foreground/80 underline underline-offset-2"
+                            className="text-[11px] font-mono leading-none text-muted-foreground/80 underline underline-offset-2 select-none"
                             title={sans.join(", ")}
                           >
                             +{sans.length}

@@ -33,7 +33,7 @@ export async function GithubStars() {
         href="https://github.com/jakejarvis/hoot"
         target="_blank"
         rel="noopener"
-        className="group inline-flex items-center gap-2 transition-colors"
+        className="group inline-flex items-center gap-2 transition-colors select-none"
         aria-label="Open GitHub repository"
       >
         <svg
