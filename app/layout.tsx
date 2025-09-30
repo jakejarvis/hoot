@@ -39,7 +39,7 @@ export default function RootLayout({
 
           {/* App Shell */}
           <TRPCProvider>
-            <div className="min-h-svh flex flex-col">
+            <div className="isolate min-h-svh flex flex-col">
               <AppHeader />
               <main className="flex-1 min-h-0 flex flex-col">{children}</main>
               <AppFooter />

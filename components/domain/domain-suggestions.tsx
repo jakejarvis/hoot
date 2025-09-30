@@ -6,6 +6,7 @@ import { Favicon } from "@/components/domain/favicon";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
 import { DEFAULT_SUGGESTIONS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 export function DomainSuggestions({
   onSelectAction,
@@ -54,19 +55,14 @@ export function DomainSuggestions({
     router.push(`/${encodeURIComponent(domain)}`);
   }
 
-  const wrapperClasses =
-    "mt-3 flex flex-wrap gap-2 justify-center" +
-    (className ? ` ${className}` : "");
-  const invisibleClass = historyLoaded ? undefined : "invisible";
-
   return (
-    <div className={wrapperClasses}>
+    <div className={cn("mt-3 flex flex-wrap gap-2 justify-center", className)}>
       {(historyLoaded ? suggestions : DEFAULT_SUGGESTIONS).map((domain) => (
         <Button
           key={domain}
           variant="secondary"
           size="sm"
-          className={invisibleClass}
+          className={historyLoaded ? "visible" : "invisible"}
           onClick={() => handleClick(domain)}
         >
           <span className="inline-flex items-center gap-2">
@@ -78,5 +74,3 @@ export function DomainSuggestions({
     </div>
   );
 }
-
-export const __DEFAULT_SUGGESTIONS = DEFAULT_SUGGESTIONS;
