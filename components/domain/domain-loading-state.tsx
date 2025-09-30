@@ -1,10 +1,7 @@
 import { Section } from "@/components/domain/section";
-import {
-  SECTION_DEFS,
-  SECTION_ORDER,
-} from "@/components/domain/sections/sections-meta";
 import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SECTION_DEFS, SECTION_ORDER } from "@/lib/sections-meta";
 
 export function DomainLoadingState() {
   return (
@@ -20,21 +17,9 @@ export function DomainLoadingState() {
       </div>
 
       <Accordion type="multiple" className="space-y-4">
-        {SECTION_ORDER.map((key) => {
-          const def = SECTION_DEFS[key];
-          const Icon = def.Icon;
-          return (
-            <Section
-              key={def.title}
-              title={def.title}
-              description={def.description}
-              help={def.help}
-              icon={<Icon className="h-4 w-4" />}
-              accent={def.accent}
-              isLoading
-            />
-          );
-        })}
+        {SECTION_ORDER.map((key) => (
+          <Section {...SECTION_DEFS[key]} key={key} isLoading />
+        ))}
       </Accordion>
     </div>
   );

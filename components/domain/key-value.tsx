@@ -27,7 +27,7 @@ export function KeyValue({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 rounded-2xl border bg-background/40 backdrop-blur-lg px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] min-w-0",
+        "flex items-center justify-between gap-4 h-16 rounded-2xl border bg-background/40 backdrop-blur-lg px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] min-w-0",
         highlight
           ? "border-purple-500/20 dark:border-purple-500/20 bg-purple-500/5 shadow-[inset_0_1px_0_rgba(168,85,247,0.18)]"
           : "border-black/10 dark:border-white/10",

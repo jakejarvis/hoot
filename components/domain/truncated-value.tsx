@@ -23,7 +23,7 @@ export function TruncatedValue({
   valueRef,
 }: TruncatedValueProps) {
   const content = (
-    <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-[5px] min-w-0 truncate">
+    <div className="text-[13px] leading-[1.2] text-foreground/95 flex items-center gap-1.5 min-w-0 truncate">
       {leading}
       <span ref={valueRef} className="truncate flex-1 min-w-0 block">
         {value}

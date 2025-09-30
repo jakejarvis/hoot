@@ -4,8 +4,8 @@ import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Section } from "@/components/domain/section";
-import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import type { DnsRecord } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function DnsRecordsSection({
   records,
@@ -18,17 +18,8 @@ export function DnsRecordsSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.dns;
   return (
-    <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
-      isError={isError}
-      isLoading={isLoading}
-    >
+    <Section {...SECTION_DEFS.dns} isError={isError} isLoading={isLoading}>
       {isLoading ? null : records ? (
         <div className="space-y-4">
           <DnsGroup

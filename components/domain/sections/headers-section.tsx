@@ -3,8 +3,8 @@
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import type { HttpHeader } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function HeadersSection({
   data,
@@ -17,17 +17,8 @@ export function HeadersSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.headers;
   return (
-    <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
-      isError={isError}
-      isLoading={isLoading}
-    >
+    <Section {...SECTION_DEFS.headers} isError={isError} isLoading={isLoading}>
       {isLoading ? null : data ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {(() => {

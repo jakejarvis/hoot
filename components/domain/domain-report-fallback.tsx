@@ -1,9 +1,6 @@
 import { Info, Loader2 } from "lucide-react";
-import {
-  SECTION_DEFS,
-  SECTION_ORDER,
-} from "@/components/domain/sections/sections-meta";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SECTION_DEFS, SECTION_ORDER } from "@/lib/sections-meta";
 
 export function DomainReportFallback() {
   return (
@@ -22,7 +19,7 @@ export function DomainReportFallback() {
       {/* Sections matching Section header visuals */}
       <div className="space-y-4">
         {SECTION_ORDER.map((key) => {
-          const { title, accent, Icon, help } = SECTION_DEFS[key];
+          const { title, accent, icon: Icon, help } = SECTION_DEFS[key];
           return (
             <div
               key={title}

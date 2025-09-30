@@ -7,7 +7,6 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { equalHostname, formatDate } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function CertificatesSection({
   data,
@@ -27,14 +27,9 @@ export function CertificatesSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.certificates;
   return (
     <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
+      {...SECTION_DEFS.certificates}
       isError={isError}
       isLoading={isLoading}
     >

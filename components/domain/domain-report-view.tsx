@@ -71,7 +71,7 @@ export function DomainReportView({ domain }: { domain: string }) {
               <Favicon domain={domain} size={20} className="rounded" />
               <h2 className="text-xl font-semibold tracking-tight">{domain}</h2>
               <ExternalLink
-                className="h-4 w-4 text-muted-foreground/60"
+                className="size-3.5 text-muted-foreground/60"
                 aria-hidden="true"
               />
             </Link>
@@ -79,7 +79,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         </div>
         <div>
           <Button variant="outline" size="sm" onClick={handleExportJson}>
-            <Download className="h-4 w-4" />
+            <Download />
             Export JSON
           </Button>
         </div>

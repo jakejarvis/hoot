@@ -50,13 +50,13 @@ export function DomainSearch({
         <div className="relative flex-1">
           {variant === "lg" ? (
             <Globe
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
               aria-hidden
             />
           ) : (
             <SearchIcon
               aria-hidden
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
             />
           )}
           <Input
@@ -89,9 +89,9 @@ export function DomainSearch({
         {variant === "lg" ? (
           <Button type="submit" disabled={loading} size="lg" className="h-12">
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
-              <SearchIcon className="h-4 w-4" />
+              <SearchIcon className="size-4" />
             )}
             Analyze
           </Button>

@@ -5,8 +5,8 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import type { Hosting } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 const HostingMap = dynamic(
   () => import("@/components/domain/hosting-map").then((m) => m.HostingMap),
@@ -29,17 +29,8 @@ export function HostingEmailSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.hosting;
   return (
-    <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
-      isError={isError}
-      isLoading={isLoading}
-    >
+    <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
       {isLoading ? null : data ? (
         <>
           <KeyValue

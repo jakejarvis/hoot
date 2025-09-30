@@ -5,10 +5,10 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { SECTION_DEFS } from "@/components/domain/sections/sections-meta";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
 
@@ -23,18 +23,13 @@ export function RegistrationSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.registration;
   const registrar = data?.registrarProvider ?? null;
   const registrant: RegistrantView | null = data
     ? extractRegistrantView(data)
     : null;
   return (
     <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
+      {...SECTION_DEFS.registration}
       isError={isError}
       isLoading={isLoading}
     >

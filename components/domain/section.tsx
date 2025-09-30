@@ -31,12 +31,13 @@ export function Section({
   title: string;
   description?: string;
   help?: string;
-  icon?: React.ReactNode;
+  icon?: React.ElementType;
   accent?: "blue" | "purple" | "green" | "orange" | "pink" | "slate";
   isLoading?: boolean;
   isError?: boolean;
   children?: React.ReactNode;
 }) {
+  const Icon = icon;
   return (
     <AccordionItem value={title} className="border-none">
       <Card
@@ -57,9 +58,9 @@ export function Section({
             disabled={isError || isLoading}
           >
             <div className="flex w-full items-center gap-3 text-left">
-              {icon && (
+              {Icon && (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
-                  {icon}
+                  <Icon className="h-4 w-4" />
                 </div>
               )}
               <div className="flex-1 min-w-0">

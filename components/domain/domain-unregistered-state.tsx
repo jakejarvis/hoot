@@ -32,7 +32,7 @@ export function DomainUnregisteredState({
             rel="noopener"
             aria-label="Register this domain"
           >
-            <ShoppingBasket className="h-4 w-4" />
+            <ShoppingBasket />
             Until now?
           </Link>
         </Button>
