@@ -16,6 +16,9 @@ export type HeaderPresent = { kind: "headerPresent"; name: string };
 export type MxSuffix = { kind: "mxSuffix"; suffix: string };
 export type NsSuffix = { kind: "nsSuffix"; suffix: string };
 export type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
+export type IssuerEquals = { kind: "issuerEquals"; value: string };
+export type RegistrarEquals = { kind: "registrarEquals"; value: string };
+export type RegistrarIncludes = { kind: "registrarIncludes"; substr: string };
 
 // Compose with logic
 export type Logic =
@@ -27,7 +30,10 @@ export type Logic =
   | HeaderPresent
   | MxSuffix
   | NsSuffix
-  | IssuerIncludes;
+  | IssuerIncludes
+  | IssuerEquals
+  | RegistrarEquals
+  | RegistrarIncludes;
 
 // What the evaluator receives
 export interface DetectionContext {
@@ -35,9 +41,10 @@ export interface DetectionContext {
   mx: string[]; // lowercased FQDNs
   ns: string[]; // lowercased FQDNs
   issuer?: string; // lowercased certificate issuer string
+  registrar?: string; // from WHOIS/RDAP, normalized lowercase
 }
 
-export type ProviderCategory = "hosting" | "email" | "dns" | "ca";
+export type ProviderCategory = "hosting" | "email" | "dns" | "ca" | "registrar";
 
 export type Provider = {
   name: string;

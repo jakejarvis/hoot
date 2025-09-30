@@ -1,16 +1,6 @@
 import { z } from "zod";
 import { ProviderRefSchema } from "./provider";
 
-/** Registrar providers do not use rules; they are matched by partial name */
-export const RegistrarProviderSchema = z.object({
-  /** Canonical registrar display name (e.g., "GoDaddy") */
-  name: z.string(),
-  /** Domain for favicon (e.g., "godaddy.com") */
-  domain: z.string(),
-  /** Additional case-insensitive substrings to match (e.g., ["godaddy inc"]). */
-  aliases: z.array(z.string()).optional(),
-});
-
 // typed from rdapper
 // https://chatgpt.com/s/t_68daacac17b88191b9dda5c878327209
 export const RegistrationSchema = z.object({
@@ -118,5 +108,4 @@ export const RegistrationSchema = z.object({
   registrarProvider: ProviderRefSchema,
 });
 
-export type RegistrarProvider = z.infer<typeof RegistrarProviderSchema>;
 export type Registration = z.infer<typeof RegistrationSchema>;

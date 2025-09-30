@@ -13,6 +13,7 @@ type HeaderPresent = { kind: "headerPresent"; name: string };
 type MxSuffix = { kind: "mxSuffix"; suffix: string };
 type NsSuffix = { kind: "nsSuffix"; suffix: string };
 type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
+type IssuerEquals = { kind: "issuerEquals"; value: string };
 
 type Logic =
   | { all: Logic[] }
@@ -24,6 +25,7 @@ type Logic =
   | MxSuffix
   | NsSuffix
   | IssuerIncludes;
+  | IssuerEquals;
 ```
 
 ### Evaluator
@@ -47,6 +49,7 @@ const hosting = detectHostingProvider([{ name: 'server', value: 'Vercel' }]);
 const email = detectEmailProvider(['aspmx.l.google.com.']);
 const dns = detectDnsProvider(['ns1.cloudflare.com']);
 const ca = detectCertificateAuthority("Let's Encrypt R3");
+// DetectionContext also supports registrar (normalized lowercase) for future rules
 ```
 
 Add to the appropriate section in `catalog.ts`:

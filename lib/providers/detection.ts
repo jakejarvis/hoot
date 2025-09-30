@@ -47,7 +47,7 @@ function createHeaderContext(headers: HttpHeader[]): HeaderDetectionContext {
 export function evalRule(rule: Logic, ctx: DetectionContext): boolean {
   const get = (name: string) => ctx.headers[name.toLowerCase()];
   const anyDns = (arr: string[], suf: string) =>
-    arr.some((h) => h === suf || h.endsWith("." + suf));
+    arr.some((h) => h === suf || h.endsWith(`.${suf}`));
 
   if ("all" in rule) return rule.all.every((r) => evalRule(r, ctx));
   if ("any" in rule) return rule.any.some((r) => evalRule(r, ctx));
@@ -77,8 +77,19 @@ export function evalRule(rule: Logic, ctx: DetectionContext): boolean {
     case "nsSuffix": {
       return anyDns(ctx.ns, rule.suffix.toLowerCase());
     }
+    case "issuerEquals": {
+      return !!ctx.issuer && ctx.issuer === rule.value.toLowerCase();
+    }
     case "issuerIncludes": {
       return !!ctx.issuer?.includes(rule.substr.toLowerCase());
+    }
+    case "registrarEquals": {
+      return !!ctx.registrar && ctx.registrar === rule.value.toLowerCase();
+    }
+    case "registrarIncludes": {
+      return (
+        !!ctx.registrar && ctx.registrar.includes(rule.substr.toLowerCase())
+      );
     }
   }
 }
@@ -152,26 +163,21 @@ export function detectDnsProvider(nsHosts: string[]): ProviderRef {
   return { name: "Unknown", domain: null };
 }
 
-/** Resolve registrar domain from a registrar name using partial matching */
-export function resolveRegistrarDomain(registrarName: string): string | null {
+/** Detect registrar provider from registrar name */
+export function detectRegistrar(registrarName: string): ProviderRef {
   const name = (registrarName || "").toLowerCase();
-  if (!name) return null;
-
+  if (!name) return { name: "Unknown", domain: null };
+  const ctx: DetectionContext = {
+    headers: {},
+    mx: [],
+    ns: [],
+    issuer: undefined,
+    registrar: name,
+  };
   for (const reg of REGISTRAR_PROVIDERS) {
-    if (reg.name.toLowerCase() === name) return reg.domain;
+    if (evalRule(reg.rule, ctx)) return { name: reg.name, domain: reg.domain };
   }
-
-  for (const reg of REGISTRAR_PROVIDERS) {
-    if (name.includes(reg.name.toLowerCase())) return reg.domain;
-  }
-
-  for (const reg of REGISTRAR_PROVIDERS) {
-    if (reg.aliases?.some((a) => name.includes(a.toLowerCase()))) {
-      return reg.domain;
-    }
-  }
-
-  return null;
+  return { name: "Unknown", domain: null };
 }
 
 /** Detect certificate authority from an issuer string */

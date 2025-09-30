@@ -1,4 +1,4 @@
-import type { Provider, RegistrarProvider } from "@/lib/schemas";
+import type { Provider } from "@/lib/schemas";
 
 /**
  * A registry of known hosting providers. The detection algorithm will iterate
@@ -485,109 +485,305 @@ export const DNS_PROVIDERS: Provider[] = [
 ];
 
 /** Registrar providers registry for WHOIS/RDAP partial name matching */
-export const REGISTRAR_PROVIDERS: RegistrarProvider[] = [
+export const REGISTRAR_PROVIDERS: Provider[] = [
   {
     name: "GoDaddy",
     domain: "godaddy.com",
-    aliases: ["godaddy inc", "go daddy", "wild west domains"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "godaddy" },
+        { kind: "registrarIncludes", substr: "godaddy" },
+        { kind: "registrarIncludes", substr: "go daddy" },
+        { kind: "registrarIncludes", substr: "wild west domains" },
+      ],
+    },
   },
   {
     name: "Namecheap",
     domain: "namecheap.com",
-    aliases: ["namecheap, inc", "namecheap inc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "namecheap" },
+        { kind: "registrarIncludes", substr: "namecheap" },
+        { kind: "registrarIncludes", substr: "namecheap, inc" },
+      ],
+    },
   },
   {
     name: "Squarespace",
     domain: "squarespace.domains",
-    aliases: ["squarespace domains llc", "squarespace domains ii llc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "squarespace" },
+        { kind: "registrarIncludes", substr: "squarespace domains llc" },
+        { kind: "registrarIncludes", substr: "squarespace domains ii llc" },
+      ],
+    },
   },
   // Keep Google LLC for rare legacy WHOIS text, but do not alias to MarkMonitor (separate registrar).
   {
     name: "Google",
     domain: "google.com",
-    aliases: ["google llc", "google inc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "google" },
+        { kind: "registrarIncludes", substr: "google llc" },
+        { kind: "registrarIncludes", substr: "google inc" },
+      ],
+    },
   },
   {
     name: "Cloudflare",
     domain: "cloudflare.com",
-    aliases: ["cloudflare, inc", "cloudflare inc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "cloudflare" },
+        { kind: "registrarIncludes", substr: "cloudflare, inc" },
+        { kind: "registrarIncludes", substr: "cloudflare inc" },
+      ],
+    },
   },
-  { name: "Gandi", domain: "gandi.net", aliases: ["gandi sas", "gandi sas"] },
+  {
+    name: "Gandi",
+    domain: "gandi.net",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "gandi" },
+        { kind: "registrarIncludes", substr: "gandi sas" },
+      ],
+    },
+  },
   {
     name: "Tucows",
     domain: "tucows.com",
-    aliases: ["tucows domains inc", "hover"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "tucows" },
+        { kind: "registrarIncludes", substr: "tucows domains inc" },
+        { kind: "registrarIncludes", substr: "hover" },
+      ],
+    },
   },
   {
     name: "OVHcloud",
     domain: "ovhcloud.com",
-    aliases: ["ovh sas", "ovhgroup"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "ovhcloud" },
+        { kind: "registrarIncludes", substr: "ovh sas" },
+        { kind: "registrarIncludes", substr: "ovhgroup" },
+      ],
+    },
   },
   {
     name: "1&1 IONOS",
     domain: "ionos.com",
-    aliases: ["1&1", "ionos se", "united internet"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "1&1" },
+        { kind: "registrarIncludes", substr: "ionos se" },
+        { kind: "registrarIncludes", substr: "united internet" },
+        { kind: "registrarEquals", value: "ionos" },
+      ],
+    },
   },
   {
     name: "Name.com",
     domain: "name.com",
-    aliases: ["rightside", "donuts inc", "identity digital"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "name.com" },
+        { kind: "registrarIncludes", substr: "rightside" },
+        { kind: "registrarIncludes", substr: "donuts inc" },
+        { kind: "registrarIncludes", substr: "identity digital" },
+      ],
+    },
   },
-  { name: "Dynadot", domain: "dynadot.com", aliases: ["dynadot llc"] },
-  { name: "Porkbun", domain: "porkbun.com", aliases: ["porkbun llc"] },
+  {
+    name: "Dynadot",
+    domain: "dynadot.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "dynadot" },
+        { kind: "registrarIncludes", substr: "dynadot llc" },
+      ],
+    },
+  },
+  {
+    name: "Porkbun",
+    domain: "porkbun.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "porkbun" },
+        { kind: "registrarIncludes", substr: "porkbun llc" },
+      ],
+    },
+  },
   {
     name: "Alibaba Cloud",
     domain: "alibaba.com",
-    aliases: ["alibaba cloud computing ltd", "aliyun"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "alibaba" },
+        { kind: "registrarIncludes", substr: "alibaba cloud computing ltd" },
+        { kind: "registrarIncludes", substr: "aliyun" },
+      ],
+    },
   },
-  { name: "Enom", domain: "enom.com", aliases: ["enom, llc"] },
+  {
+    name: "Enom",
+    domain: "enom.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "enom" },
+        { kind: "registrarIncludes", substr: "enom, llc" },
+      ],
+    },
+  },
   {
     name: "GMO Internet",
     domain: "gmo.jp",
-    aliases: ["onamae", "gmo internet group"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "gmo internet" },
+        { kind: "registrarIncludes", substr: "onamae" },
+        { kind: "registrarIncludes", substr: "gmo internet group" },
+      ],
+    },
   },
   {
     name: "Network Solutions",
     domain: "networksolutions.com",
-    aliases: ["networksolutions inc", "networksolutions llc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "network solutions" },
+        { kind: "registrarIncludes", substr: "networksolutions inc" },
+        { kind: "registrarIncludes", substr: "networksolutions llc" },
+      ],
+    },
   },
   {
     name: "Register.com",
     domain: "register.com",
-    aliases: ["register, inc", "register inc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "register.com" },
+        { kind: "registrarIncludes", substr: "register, inc" },
+        { kind: "registrarIncludes", substr: "register inc" },
+      ],
+    },
   },
   {
     name: "Automattic",
     domain: "wordpress.com",
-    aliases: ["wordpress.com", "wordpress vip"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "automattic" },
+        { kind: "registrarIncludes", substr: "wordpress.com" },
+        { kind: "registrarIncludes", substr: "wordpress vip" },
+      ],
+    },
   },
   {
     name: "MarkMonitor",
     domain: "markmonitor.com",
-    aliases: ["markmonitor inc", "markmonitor, inc."],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "markmonitor" },
+        { kind: "registrarIncludes", substr: "markmonitor inc" },
+        { kind: "registrarIncludes", substr: "markmonitor, inc." },
+      ],
+    },
   },
   {
     name: "CSC Corporate Domains",
     domain: "cscdbs.com",
-    aliases: ["csc corporate domains", "csc global"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "csc corporate domains" },
+        { kind: "registrarIncludes", substr: "csc corporate domains" },
+        { kind: "registrarIncludes", substr: "csc global" },
+      ],
+    },
   },
   {
     name: "Ascio",
     domain: "ascio.com",
-    aliases: ["ascio technologies", "ascio technologies, inc."],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "ascio" },
+        { kind: "registrarIncludes", substr: "ascio technologies" },
+        { kind: "registrarIncludes", substr: "ascio technologies, inc." },
+      ],
+    },
   },
   {
     name: "Key-Systems",
     domain: "key-systems.net",
-    aliases: ["key-systems gmbh", "rrpproxy"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "key-systems" },
+        { kind: "registrarIncludes", substr: "key-systems gmbh" },
+        { kind: "registrarIncludes", substr: "rrpproxy" },
+      ],
+    },
   },
   {
     name: "PublicDomainRegistry (PDR)",
     domain: "publicdomainregistry.com",
-    aliases: ["pdr ltd", "publicdomainregistry.com"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "publicdomainregistry" },
+        { kind: "registrarIncludes", substr: "pdr ltd" },
+        { kind: "registrarIncludes", substr: "publicdomainregistry.com" },
+      ],
+    },
   },
-  { name: "Wix", domain: "wix.com", aliases: ["wix.com ltd"] },
-  { name: "RegistrarSafe", domain: "meta.com", aliases: ["registrarsafe llc"] },
+  {
+    name: "Wix",
+    domain: "wix.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "wix" },
+        { kind: "registrarIncludes", substr: "wix.com ltd" },
+      ],
+    },
+  },
+  {
+    name: "RegistrarSafe",
+    domain: "meta.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarEquals", value: "registrarsafe" },
+        { kind: "registrarIncludes", substr: "registrarsafe llc" },
+      ],
+    },
+  },
 ];
 
 /**

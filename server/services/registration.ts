@@ -1,7 +1,7 @@
 import { lookupDomain } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { resolveRegistrarDomain } from "@/lib/providers/detection";
+import { detectRegistrar } from "@/lib/providers/detection";
 import { getOrSetZod, ns } from "@/lib/redis";
 import { type Registration, RegistrationSchema } from "@/lib/schemas";
 
@@ -42,7 +42,8 @@ export async function getRegistration(domain: string): Promise<Registration> {
     }
   } catch {}
   if (!registrarDomain) {
-    registrarDomain = resolveRegistrarDomain(registrarName);
+    const det = detectRegistrar(registrarName);
+    registrarDomain = det.domain;
   }
 
   const withProvider: Registration = {
