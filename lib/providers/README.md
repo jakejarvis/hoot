@@ -12,8 +12,10 @@ type HeaderIncludes = { kind: "headerIncludes"; name: string; substr: string };
 type HeaderPresent = { kind: "headerPresent"; name: string };
 type MxSuffix = { kind: "mxSuffix"; suffix: string };
 type NsSuffix = { kind: "nsSuffix"; suffix: string };
-type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
 type IssuerEquals = { kind: "issuerEquals"; value: string };
+type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
+type RegistrarEquals = { kind: "registrarEquals"; value: string };
+type RegistrarIncludes = { kind: "registrarIncludes"; substr: string };
 
 type Logic =
   | { all: Logic[] }
@@ -24,8 +26,22 @@ type Logic =
   | HeaderPresent
   | MxSuffix
   | NsSuffix
-  | IssuerIncludes;
-  | IssuerEquals;
+  | IssuerEquals
+  | IssuerIncludes
+  | RegistrarEquals
+  | RegistrarIncludes;
+```
+
+DetectionContext passed to the evaluator:
+
+```ts
+interface DetectionContext {
+  headers: Record<string, string>; // normalized lowercased names
+  mx: string[];                    // lowercased FQDNs (no trailing dot)
+  ns: string[];                    // lowercased FQDNs (no trailing dot)
+  issuer?: string;                 // lowercased certificate issuer string
+  registrar?: string;              // lowercased registrar name from WHOIS/RDAP
+}
 ```
 
 ### Evaluator
@@ -37,19 +53,30 @@ See `evalRule` in `lib/providers/detection.ts`.
 Providers are defined with a single `rule` per provider and a `category`:
 
 ```ts
-type Provider = { name: string; domain: string; category: "hosting"|"email"|"dns"|"ca"; rule: Logic };
+type Provider = {
+  name: string;
+  domain: string;
+  category: "hosting" | "email" | "dns" | "ca" | "registrar";
+  rule: Logic;
+};
 ```
 
 ## Usage
 
 ```ts
-import { detectHostingProvider, detectEmailProvider, detectDnsProvider, detectCertificateAuthority, resolveRegistrarDomain } from '@/lib/providers/detection';
+import {
+  detectHostingProvider,
+  detectEmailProvider,
+  detectDnsProvider,
+  detectCertificateAuthority,
+  detectRegistrar,
+} from '@/lib/providers/detection';
 
 const hosting = detectHostingProvider([{ name: 'server', value: 'Vercel' }]);
 const email = detectEmailProvider(['aspmx.l.google.com.']);
 const dns = detectDnsProvider(['ns1.cloudflare.com']);
 const ca = detectCertificateAuthority("Let's Encrypt R3");
-// DetectionContext also supports registrar (normalized lowercase) for future rules
+const registrar = detectRegistrar('GoDaddy Inc.');
 ```
 
 Add to the appropriate section in `catalog.ts`:
@@ -60,56 +87,53 @@ export const HOSTING_PROVIDERS: Provider[] = [
   {
     name: "Railway",
     domain: "railway.app",
-    rules: [
-      { type: "header", name: "x-railway-id", present: true },
-      { type: "header", name: "server", value: "railway" }
-    ],
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerPresent", name: "x-railway-id" },
+        { kind: "headerEquals", name: "server", value: "railway" },
+      ],
+    },
   },
 ];
 ```
 
 ## Rule Types
 
-### Header Rules
-
-```typescript
-// Check if header exists
-{ type: "header", name: "cf-ray", present: true }
-
-// Check header value contains substring
-{ type: "header", name: "server", value: "vercel" }
-
-// Check header exists (shorthand - same as present: true)  
-{ type: "header", name: "x-vercel-id" }
-```
-
-### DNS Rules
-
-```typescript
-// Check MX record contains substring
-{ type: "dns", recordType: "MX", value: "google.com" }
-
-// Check NS record contains substring
-{ type: "dns", recordType: "NS", value: "cloudflare.com" }
-```
-
-### Certificate Authorities
-
-Modeled via a dedicated provider type with alias matching (no DetectionRule):
+### Header primitives
 
 ```ts
-interface CertificateAuthorityProvider {
-  name: string;        // "Let's Encrypt"
-  domain: string;      // "letsencrypt.org"
-  aliases?: string[];  // ["isrg", "r3", "lets encrypt"]
-}
+{ kind: "headerPresent", name: "cf-ray" }
+{ kind: "headerEquals", name: "server", value: "vercel" }
+{ kind: "headerIncludes", name: "server", substr: "cloud" }
+```
+
+### DNS primitives
+
+```ts
+{ kind: "mxSuffix", suffix: "aspmx.l.google.com" }
+{ kind: "nsSuffix", suffix: "cloudflare.com" }
+```
+
+### Certificate Authority primitives
+
+```ts
+{ kind: "issuerIncludes", substr: "let's encrypt" }
+{ kind: "issuerEquals", value: "isrg r3" }
+```
+
+### Registrar primitives
+
+```ts
+{ kind: "registrarIncludes", substr: "godaddy inc" }
+{ kind: "registrarEquals", value: "namecheap" }
 ```
 
 ## Rule Evaluation
 
-- **Provider-level**: A provider matches if **ANY** of its rules match (OR logic)
-- **Rule-level**: Each rule has specific matching criteria
-- **Fallback**: Returns "Unknown" if no provider matches, or first hostname for DNS/email
+- **Provider-level**: Evaluate the provider's single `rule` with `evalRule`. Compose complex logic using `{ all | any | not }`.
+- **Rule primitives**: Header, DNS, issuer, and registrar primitives match against normalized context values.
+- **Fallbacks**: Returns "Unknown" if no provider matches; DNS/Email fall back to the registrable domain of the first record when unknown.
 
 ## Benefits
 
