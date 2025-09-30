@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Globe } from "lucide-react";
 import Image from "next/image";
-import { useId } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -18,61 +17,45 @@ export function Favicon({
   className?: string;
 }) {
   const trpc = useTRPC();
-  const { data, isLoading } = useQuery(
+  const { data, isPending } = useQuery(
     trpc.domain.favicon.queryOptions(
       { domain },
       {
         staleTime: 60 * 60_000, // 1 hour
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );
-  const url = data?.url ?? null;
 
-  const compId = useId();
-
-  if (isLoading) {
+  if (isPending) {
     return (
-      <span>
-        <Skeleton
-          className={cn("inline-block bg-input", className)}
-          style={{ width: size, height: size }}
-          key={`favicon-${compId}`}
-          id={`favicon-${compId}`}
-        />
-      </span>
+      <Skeleton
+        className={cn("bg-input", className)}
+        style={{ width: size, height: size }}
+      />
     );
   }
 
-  if (!url) {
+  if (!data?.url) {
     return (
-      <span>
-        <Globe
-          className={cn("inline-block text-muted-foreground", className)}
-          width={size}
-          height={size}
-          key={`favicon-${compId}`}
-          id={`favicon-${compId}`}
-        />
-      </span>
+      <Globe
+        className={cn("text-muted-foreground", className)}
+        width={size}
+        height={size}
+      />
     );
   }
 
   return (
-    <span>
-      <Image
-        src={url}
-        alt={`${domain} icon`}
-        width={size}
-        height={size}
-        className={className}
-        unoptimized
-        key={`favicon-${compId}`}
-        id={`favicon-${compId}`}
-      />
-    </span>
+    <Image
+      src={data.url}
+      alt={`${domain} icon`}
+      width={size}
+      height={size}
+      className={className}
+      loading="lazy"
+      unoptimized
+      suppressHydrationWarning
+    />
   );
 }

@@ -59,7 +59,7 @@ describe("Favicon", () => {
   it("shows Skeleton while loading", () => {
     (useQuery as unknown as Mock).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     });
     render(<Favicon domain="example.com" size={16} />);
     const skeletons = document.querySelectorAll('[data-slot="skeleton"]');

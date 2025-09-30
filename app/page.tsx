@@ -7,14 +7,21 @@ import { trpc } from "@/trpc/server";
 
 export const experimental_ppr = true;
 
-export default function Home() {
+export default async function Home() {
   const queryClient = getQueryClient();
 
-  DEFAULT_SUGGESTIONS.forEach((domain) => {
-    void queryClient.prefetchQuery(
-      trpc.domain.favicon.queryOptions({ domain }),
-    );
-  });
+  await Promise.all(
+    DEFAULT_SUGGESTIONS.map((domain) =>
+      queryClient.prefetchQuery(
+        trpc.domain.favicon.queryOptions(
+          { domain },
+          {
+            staleTime: 60 * 60_000, // 1 hour
+          },
+        ),
+      ),
+    ),
+  );
 
   return (
     <div className="container mx-auto my-auto flex items-center justify-center px-4 py-8">
