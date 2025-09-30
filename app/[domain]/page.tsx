@@ -48,23 +48,36 @@ export default async function DomainPage({
   const registration = await queryClient.fetchQuery(
     trpc.domain.registration.queryOptions({ domain: normalized }),
   );
-  if (registration?.isRegistered) {
-    void queryClient.prefetchQuery(
-      trpc.domain.favicon.queryOptions({ domain: normalized }),
-    );
-    void queryClient.prefetchQuery(
-      trpc.domain.dns.queryOptions({ domain: normalized }),
-    );
-    void queryClient.prefetchQuery(
-      trpc.domain.hosting.queryOptions({ domain: normalized }),
-    );
-    void queryClient.prefetchQuery(
-      trpc.domain.certificates.queryOptions({ domain: normalized }),
-    );
-    void queryClient.prefetchQuery(
-      trpc.domain.headers.queryOptions({ domain: normalized }),
-    );
-  }
+  void queryClient.prefetchQuery(
+    trpc.domain.favicon.queryOptions(
+      { domain: normalized },
+      { enabled: registration?.isRegistered },
+    ),
+  );
+  void queryClient.prefetchQuery(
+    trpc.domain.dns.queryOptions(
+      { domain: normalized },
+      { enabled: registration?.isRegistered },
+    ),
+  );
+  void queryClient.prefetchQuery(
+    trpc.domain.hosting.queryOptions(
+      { domain: normalized },
+      { enabled: registration?.isRegistered },
+    ),
+  );
+  void queryClient.prefetchQuery(
+    trpc.domain.certificates.queryOptions(
+      { domain: normalized },
+      { enabled: registration?.isRegistered },
+    ),
+  );
+  void queryClient.prefetchQuery(
+    trpc.domain.headers.queryOptions(
+      { domain: normalized },
+      { enabled: registration?.isRegistered },
+    ),
+  );
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6">
@@ -73,6 +86,7 @@ export default async function DomainPage({
         domain={normalized}
         canonicalized={normalized !== decoded}
       />
+
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<DomainReportFallback />}>
           <DomainReportView domain={normalized} />
