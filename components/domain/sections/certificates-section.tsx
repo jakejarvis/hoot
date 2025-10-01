@@ -70,10 +70,7 @@ export function CertificatesSection({
                     return sans.length > 0 ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span
-                            className="select-none font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2"
-                            title={sans.join(", ")}
-                          >
+                          <span className="select-none font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
                             +{sans.length}
                           </span>
                         </TooltipTrigger>
