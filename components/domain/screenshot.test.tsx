@@ -86,8 +86,6 @@ describe("Screenshot", () => {
       isFetching: false,
     });
     render(<Screenshot domain="example.com" />);
-    expect(
-      screen.getByText(/unable to generate a preview/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/unable to generate/i)).toBeInTheDocument();
   });
 });

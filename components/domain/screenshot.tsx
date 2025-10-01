@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { CircleX, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -41,22 +41,7 @@ export function Screenshot({
 
   return (
     <div className={className}>
-      {loading && (
-        <div className="p-2">
-          <div
-            className={`w-full ${aspectClassName} flex items-center justify-center rounded-md border bg-muted/50`}
-          >
-            <div
-              className="flex items-center gap-2 text-muted-foreground text-xs"
-              aria-live="polite"
-            >
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Loading screenshot...</span>
-            </div>
-          </div>
-        </div>
-      )}
-      {!loading && url && (
+      {url ? (
         <div className="p-2">
           <Image
             src={url}
@@ -77,10 +62,28 @@ export function Screenshot({
             </div>
           ) : null}
         </div>
-      )}
-      {!loading && !url && (
-        <div className="p-4 text-muted-foreground text-xs">
-          Unable to generate a preview.
+      ) : (
+        <div className="p-2">
+          <div
+            className={`w-full ${aspectClassName} flex items-center justify-center rounded-md border bg-muted/50`}
+          >
+            <div
+              className="flex items-center gap-2 text-muted-foreground text-xs"
+              aria-live="polite"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Loading screenshot...</span>
+                </>
+              ) : (
+                <>
+                  <CircleX className="h-4 w-4" />
+                  <span>Unable to generate a screenshot.</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
