@@ -45,6 +45,17 @@ export const HOSTING_PROVIDERS: Array<
     },
   },
   {
+    name: "Shopify",
+    domain: "shopify.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerIncludes", name: "powered-by", substr: "shopify" },
+        { kind: "headerPresent", name: "x-shopid" },
+      ],
+    },
+  },
+  {
     name: "Amazon S3",
     domain: "aws.amazon.com",
     category: "hosting",
@@ -75,27 +86,15 @@ export const HOSTING_PROVIDERS: Array<
     rule: { kind: "headerIncludes", name: "server", substr: "fly/" },
   },
   {
-    name: "Akamai",
-    domain: "akamai.com",
-    category: "hosting",
-    rule: { kind: "headerEquals", name: "server", value: "akamaighost" },
-  },
-  {
-    name: "Amazon CloudFront",
-    domain: "aws.amazon.com",
-    category: "hosting",
-    rule: {
-      all: [
-        { kind: "headerEquals", name: "server", value: "cloudfront" },
-        { kind: "headerPresent", name: "x-amz-cf-id" },
-      ],
-    },
-  },
-  {
     name: "Heroku",
     domain: "heroku.com",
     category: "hosting",
-    rule: { kind: "headerEquals", name: "server", value: "vegur" },
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "vegur" },
+        { kind: "headerEquals", name: "server", value: "heroku" },
+      ],
+    },
   },
   {
     name: "Render",
@@ -107,13 +106,7 @@ export const HOSTING_PROVIDERS: Array<
     name: "Squarespace",
     domain: "squarespace.com",
     category: "hosting",
-    rule: { kind: "headerPresent", name: "x-contextid" },
-  },
-  {
-    name: "Shopify",
-    domain: "shopify.com",
-    category: "hosting",
-    rule: { kind: "headerPresent", name: "x-shopify-stage" },
+    rule: { kind: "headerEquals", name: "server", value: "squarespace" },
   },
   {
     name: "Webflow",
@@ -132,6 +125,19 @@ export const HOSTING_PROVIDERS: Array<
     domain: "azure.microsoft.com",
     category: "hosting",
     rule: { kind: "headerPresent", name: "x-azure-ref" },
+  },
+  {
+    name: "Google Cloud",
+    domain: "cloud.google.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "google frontend" },
+        { kind: "headerEquals", name: "server", value: "esf" },
+        { kind: "headerEquals", name: "server", value: "gws" },
+        { kind: "headerIncludes", name: "via", substr: "1.1 google" },
+      ],
+    },
   },
   {
     name: "Google Cloud Storage",
@@ -155,7 +161,13 @@ export const HOSTING_PROVIDERS: Array<
     name: "Pantheon",
     domain: "pantheon.io",
     category: "hosting",
-    rule: { kind: "headerPresent", name: "x-pantheon-site" },
+    rule: {
+      any: [
+        { kind: "headerPresent", name: "x-pantheon-site" },
+        { kind: "headerPresent", name: "x-pantheon-styx-hostname" },
+        { kind: "headerPresent", name: "x-styx-req-id" },
+      ],
+    },
   },
   {
     name: "Sucuri",
@@ -174,6 +186,54 @@ export const HOSTING_PROVIDERS: Array<
     domain: "kinsta.com",
     category: "hosting",
     rule: { kind: "headerPresent", name: "x-kinsta-cache" },
+  },
+  {
+    name: "Bunny.net",
+    domain: "bunny.net",
+    category: "hosting",
+    rule: {
+      all: [
+        { kind: "headerPresent", name: "cdn-cache" },
+        { kind: "headerPresent", name: "perma-cache" },
+      ],
+    },
+  },
+  {
+    name: "Fastly",
+    domain: "fastly.com",
+    category: "hosting",
+    rule: {
+      all: [
+        { kind: "headerPresent", name: "x-served-by" },
+        { kind: "headerPresent", name: "x-cache" },
+        { kind: "headerPresent", name: "x-timer" },
+      ],
+    },
+  },
+  {
+    name: "Akamai",
+    domain: "akamai.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "akamaighost" },
+        { kind: "headerPresent", name: "x-akamai-transformed" },
+        { kind: "headerPresent", name: "x-akamai-request-id" },
+        { kind: "headerPresent", name: "akamai-request-bc" },
+        { kind: "headerPresent", name: "akamai-grn" },
+      ],
+    },
+  },
+  {
+    name: "Amazon CloudFront",
+    domain: "aws.amazon.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "cloudfront" },
+        { kind: "headerPresent", name: "x-amz-cf-id" },
+      ],
+    },
   },
   {
     name: "Cloudflare",
@@ -203,6 +263,7 @@ export const EMAIL_PROVIDERS: Array<
       any: [
         { kind: "mxSuffix", suffix: "smtp.google.com" },
         { kind: "mxSuffix", suffix: "aspmx.l.google.com" },
+        { kind: "mxSuffix", suffix: "googlemail.com" },
       ],
     },
   },
@@ -280,7 +341,12 @@ export const EMAIL_PROVIDERS: Array<
     name: "iCloud Mail",
     domain: "icloud.com",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "mail.icloud.com" },
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mail.icloud.com" },
+        { kind: "mxSuffix", suffix: "apple.com" },
+      ],
+    },
   },
   {
     name: "Mailgun",
@@ -335,6 +401,18 @@ export const EMAIL_PROVIDERS: Array<
     domain: "ionos.com",
     category: "email",
     rule: { kind: "mxSuffix", suffix: "ionos.com" },
+  },
+  {
+    name: "Mimecast",
+    domain: "mimecast.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mimecast.com" },
+  },
+  {
+    name: "GoDaddy",
+    domain: "godaddy.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "secureserver.net" },
   },
 ];
 
@@ -414,7 +492,12 @@ export const DNS_PROVIDERS: Array<
     name: "Google Cloud DNS",
     domain: "cloud.google.com",
     category: "dns",
-    rule: { kind: "nsSuffix", suffix: "googledomains.com" },
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "googledomains.com" },
+        { kind: "nsSuffix", suffix: "google.com" },
+      ],
+    },
   },
   {
     name: "Hurricane Electric",
@@ -499,6 +582,59 @@ export const DNS_PROVIDERS: Array<
     category: "dns",
     rule: { kind: "nsSuffix", suffix: "registrar-servers.com" },
   },
+  {
+    name: "Akamai Edge DNS",
+    domain: "akamai.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "akam.net" },
+  },
+  {
+    name: "UltraDNS (Vercara)",
+    domain: "vercara.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "ultradns.net" },
+        { kind: "nsSuffix", suffix: "ultradns.org" },
+        { kind: "nsSuffix", suffix: "ultradns.com" },
+        { kind: "nsSuffix", suffix: "ultradns.biz" },
+      ],
+    },
+  },
+  {
+    name: "Porkbun DNS",
+    domain: "porkbun.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "porkbun.com" },
+  },
+  {
+    name: "AliDNS / HiChina",
+    domain: "alibabacloud.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "hichina.com" },
+        { kind: "nsSuffix", suffix: "alidns.com" },
+      ],
+    },
+  },
+  {
+    name: "DNSPod",
+    domain: "dnspod.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "dnspod.net" },
+  },
+  {
+    name: "Network Solutions",
+    domain: "networksolutions.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "worldnic.com" },
+        { kind: "nsSuffix", suffix: "register.com" },
+      ],
+    },
+  },
 ];
 
 /** Registrar providers registry for WHOIS/RDAP partial name matching */
@@ -543,6 +679,24 @@ export const REGISTRAR_PROVIDERS: Array<
     domain: "cloudflare.com",
     category: "registrar",
     rule: { kind: "registrarIncludes", substr: "cloudflare" },
+  },
+  {
+    name: "Amazon Route 53",
+    domain: "aws.amazon.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "amazon" },
+  },
+  {
+    name: "Sav.com",
+    domain: "sav.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "sav" },
+  },
+  {
+    name: "1API",
+    domain: "1api.net",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "1api" },
   },
   {
     name: "Gandi",
@@ -640,6 +794,23 @@ export const REGISTRAR_PROVIDERS: Array<
     },
   },
   {
+    name: "Openprovider (Registrar.eu)",
+    domain: "openprovider.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "hosting concepts" },
+        { kind: "registrarIncludes", substr: "registrar.eu" },
+      ],
+    },
+  },
+  {
+    name: "EuroDNS",
+    domain: "eurodns.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "eurodns" },
+  },
+  {
     name: "Network Solutions",
     domain: "networksolutions.com",
     category: "registrar",
@@ -731,6 +902,17 @@ export const REGISTRAR_PROVIDERS: Array<
     category: "registrar",
     rule: { kind: "registrarIncludes", substr: "registrarsafe" },
   },
+  {
+    name: "Com Laude",
+    domain: "comlaude.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "nom-iq" },
+        { kind: "registrarIncludes", substr: "comlaude" },
+      ],
+    },
+  },
 ];
 
 /**
@@ -748,37 +930,27 @@ export const CA_PROVIDERS: Array<
         { kind: "issuerIncludes", substr: "let's encrypt" },
         { kind: "issuerIncludes", substr: "lets encrypt" },
         { kind: "issuerIncludes", substr: "isrg" },
-        { kind: "issuerEquals", value: "r3" },
-        { kind: "issuerEquals", value: "r4" },
+        // https://letsencrypt.org/certificates/
         { kind: "issuerEquals", value: "e1" },
         { kind: "issuerEquals", value: "e2" },
+        { kind: "issuerEquals", value: "e5" },
+        { kind: "issuerEquals", value: "e6" },
+        { kind: "issuerEquals", value: "e7" },
+        { kind: "issuerEquals", value: "e8" },
+        { kind: "issuerEquals", value: "e9" },
+        { kind: "issuerEquals", value: "r3" },
+        { kind: "issuerEquals", value: "r4" },
         { kind: "issuerEquals", value: "r10" },
         { kind: "issuerEquals", value: "r11" },
         { kind: "issuerEquals", value: "r12" },
         { kind: "issuerEquals", value: "r13" },
         { kind: "issuerEquals", value: "r14" },
-        { kind: "issuerEquals", value: "e5" },
-        { kind: "issuerEquals", value: "e6" },
-        { kind: "issuerEquals", value: "e7" },
-        { kind: "issuerEquals", value: "e8" },
-      ],
-    },
-  },
-  {
-    name: "ZeroSSL",
-    domain: "zerossl.com",
-    category: "ca",
-    rule: { kind: "issuerIncludes", substr: "zerossl" },
-  },
-  {
-    name: "DigiCert",
-    domain: "digicert.com",
-    category: "ca",
-    rule: {
-      any: [
-        { kind: "issuerIncludes", substr: "digicert" },
-        { kind: "issuerIncludes", substr: "baltimore cybertrust" },
-        { kind: "issuerIncludes", substr: "thawte" },
+        { kind: "issuerEquals", value: "ye1" },
+        { kind: "issuerEquals", value: "ye2" },
+        { kind: "issuerEquals", value: "ye3" },
+        { kind: "issuerEquals", value: "yr1" },
+        { kind: "issuerEquals", value: "yr2" },
+        { kind: "issuerEquals", value: "yr3" },
       ],
     },
   },
@@ -790,6 +962,40 @@ export const CA_PROVIDERS: Array<
       any: [
         { kind: "issuerIncludes", substr: "google trust services" },
         { kind: "issuerIncludes", substr: "gts" },
+        // https://pki.goog/repository/
+        { kind: "issuerEquals", value: "wr1" },
+        { kind: "issuerEquals", value: "wr2" },
+        { kind: "issuerEquals", value: "wr3" },
+        { kind: "issuerEquals", value: "wr4" },
+        { kind: "issuerEquals", value: "wr5" },
+        { kind: "issuerEquals", value: "we1" },
+        { kind: "issuerEquals", value: "we2" },
+        { kind: "issuerEquals", value: "we3" },
+        { kind: "issuerEquals", value: "we4" },
+        { kind: "issuerEquals", value: "we5" },
+      ],
+    },
+  },
+  {
+    name: "ZeroSSL",
+    domain: "zerossl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "zerossl" },
+  },
+  {
+    name: "Thawte (DigiCert)",
+    domain: "thawte.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "thawte" },
+  },
+  {
+    name: "DigiCert",
+    domain: "digicert.com",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "digicert" },
+        { kind: "issuerIncludes", substr: "baltimore cybertrust" },
       ],
     },
   },
@@ -799,8 +1005,9 @@ export const CA_PROVIDERS: Array<
     category: "ca",
     rule: {
       any: [
-        { kind: "issuerEquals", value: "godaddy" },
-        { kind: "issuerEquals", value: "starfield" },
+        { kind: "issuerIncludes", substr: "godaddy" },
+        { kind: "issuerIncludes", substr: "go daddy" },
+        { kind: "issuerIncludes", substr: "starfield" },
       ],
     },
   },
@@ -840,6 +1047,65 @@ export const CA_PROVIDERS: Array<
     domain: "amazontrust.com",
     category: "ca",
     rule: { kind: "issuerIncludes", substr: "amazon" },
+  },
+  {
+    name: "SSL.com",
+    domain: "ssl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "ssl.com" },
+  },
+  {
+    name: "Buypass",
+    domain: "buypass.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "buypass" },
+  },
+  {
+    name: "HARICA",
+    domain: "harica.gr",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "harica" },
+  },
+  {
+    name: "Actalis",
+    domain: "actalis.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "actalis" },
+  },
+  {
+    name: "TrustAsia",
+    domain: "trustasia.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "trustasia" },
+  },
+  {
+    name: "D-TRUST",
+    domain: "d-trust.net",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "d-trust" },
+  },
+  {
+    name: "TWCA",
+    domain: "twca.com.tw",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "twca" },
+        { kind: "issuerIncludes", substr: "taiwan-ca" },
+      ],
+    },
+  },
+  {
+    name: "SwissSign",
+    domain: "swisssign.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "swisssign" },
+  },
+  {
+    name: "RapidSSL",
+    domain: "rapidssl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "rapidssl" },
   },
   {
     name: "Cloudflare",
