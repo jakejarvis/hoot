@@ -1,4 +1,5 @@
 import { AlertCircle, Info, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   AccordionContent,
   AccordionItem,
@@ -38,6 +39,17 @@ export function Section({
   children?: React.ReactNode;
 }) {
   const Icon = icon;
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+  const disabled = isHydrated ? Boolean(isError || isLoading) : false;
+  const slug = title
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+  const triggerId = `accordion-trigger-${slug}`;
+  const contentId = `accordion-content-${slug}`;
   return (
     <AccordionItem value={title} className="border-none">
       <Card
@@ -55,7 +67,9 @@ export function Section({
         <div className="relative">
           <AccordionTrigger
             className={cn("px-5 py-4 no-underline hover:no-underline")}
-            disabled={isError || isLoading}
+            disabled={disabled}
+            id={triggerId}
+            aria-controls={contentId}
           >
             <div className="flex w-full items-center gap-3 text-left">
               {Icon && (
@@ -92,25 +106,27 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  {isLoading && (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Loading</span>
-                    </>
-                  )}
-                  {isError && (
-                    <>
-                      <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
-                      <span>Error</span>
-                    </>
-                  )}
-                </div>
+                <span style={{ display: "contents" }} suppressHydrationWarning>
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                    {isHydrated && isLoading && (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Loading</span>
+                      </>
+                    )}
+                    {isHydrated && isError && (
+                      <>
+                        <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
+                        <span>Error</span>
+                      </>
+                    )}
+                  </div>
+                </span>
               </div>
             </div>
           </AccordionTrigger>
         </div>
-        <AccordionContent>
+        <AccordionContent id={contentId} aria-labelledby={triggerId}>
           {children && (
             <CardContent className="space-y-3 px-5 pt-0 pb-5">
               {children}

@@ -9,7 +9,13 @@ import { cn } from "@/lib/utils";
 function Accordion({
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
-  return <AccordionPrimitive.Root data-slot="accordion" {...props} />;
+  return (
+    <AccordionPrimitive.Root
+      data-slot="accordion"
+      suppressHydrationWarning
+      {...props}
+    />
+  );
 }
 
 function AccordionItem({
