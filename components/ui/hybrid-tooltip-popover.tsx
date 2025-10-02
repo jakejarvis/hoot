@@ -31,6 +31,10 @@ type HybridRootProps = {
   forceMode?: "tooltip" | "popover";
 };
 
+const HybridModeContext = React.createContext<
+  { mode: "tooltip" | "popover" } | undefined
+>(undefined);
+
 function Hybrid({
   open,
   defaultOpen,
@@ -46,17 +50,20 @@ function Hybrid({
     return isCoarse === true;
   }, [forceMode, isCoarse]);
 
-  if (shouldUsePopover) {
-    return (
-      <Popover open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-        {children}
-      </Popover>
-    );
-  }
+  const mode: "tooltip" | "popover" = shouldUsePopover ? "popover" : "tooltip";
+
   return (
-    <Tooltip open={open} onOpenChange={onOpenChange}>
-      {children}
-    </Tooltip>
+    <HybridModeContext.Provider value={{ mode }}>
+      {mode === "popover" ? (
+        <Popover open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+          {children}
+        </Popover>
+      ) : (
+        <Tooltip open={open} onOpenChange={onOpenChange}>
+          {children}
+        </Tooltip>
+      )}
+    </HybridModeContext.Provider>
   );
 }
 
@@ -65,15 +72,21 @@ type TriggerProps = React.ComponentProps<typeof BaseTooltipTrigger> &
     forceMode?: "tooltip" | "popover";
   };
 
-function HybridTrigger({ forceMode, ...props }: TriggerProps) {
-  const isCoarse = useIsCoarsePointer();
-  const shouldUsePopover = forceMode
-    ? forceMode === "popover"
-    : isCoarse === true;
-  if (shouldUsePopover) {
+function HybridTrigger({ forceMode: _ignored, ...props }: TriggerProps) {
+  const ctx = React.useContext(HybridModeContext);
+  if (ctx?.mode === "popover") {
     return <BasePopoverTrigger {...props} />;
   }
-  return <BaseTooltipTrigger {...props} />;
+  if (ctx?.mode === "tooltip") {
+    return <BaseTooltipTrigger {...props} />;
+  }
+  // Fallback if used outside root
+  const isCoarse = useIsCoarsePointer();
+  return isCoarse === true ? (
+    <BasePopoverTrigger {...props} />
+  ) : (
+    <BaseTooltipTrigger {...props} />
+  );
 }
 
 type ContentProps = (CommonContentProps &
@@ -83,15 +96,21 @@ type ContentProps = (CommonContentProps &
   hideArrow?: boolean;
 };
 
-function HybridContent({ forceMode, hideArrow, ...props }: ContentProps) {
-  const isCoarse = useIsCoarsePointer();
-  const shouldUsePopover = forceMode
-    ? forceMode === "popover"
-    : isCoarse === true;
-  if (shouldUsePopover) {
+function HybridContent({ forceMode: _ignored, hideArrow, ...props }: ContentProps) {
+  const ctx = React.useContext(HybridModeContext);
+  if (ctx?.mode === "popover") {
     return <BasePopoverContent {...props} />;
   }
-  return <BaseTooltipContent hideArrow={hideArrow} {...props} />;
+  if (ctx?.mode === "tooltip") {
+    return <BaseTooltipContent hideArrow={hideArrow} {...props} />;
+  }
+  // Fallback if used outside root
+  const isCoarse = useIsCoarsePointer();
+  return isCoarse === true ? (
+    <BasePopoverContent {...props} />
+  ) : (
+    <BaseTooltipContent hideArrow={hideArrow} {...props} />
+  );
 }
 
 export {

@@ -12,11 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  HybridTooltipPopover as Hybrid,
+  HybridTooltipPopoverContent as HybridContent,
+  HybridTooltipPopoverTrigger as HybridTrigger,
+} from "@/components/ui/hybrid-tooltip-popover";
 import { cn } from "@/lib/utils";
 
 export function Section({
@@ -81,22 +80,20 @@ export function Section({
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-base">{title}</span>
                   {help && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            role="img"
-                            aria-label={`More info about ${title}`}
-                          >
-                            <Info
-                              className="h-3.5 w-3.5 opacity-60"
-                              aria-hidden
-                            />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>{help}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Hybrid>
+                      <HybridTrigger asChild>
+                        <span
+                          role="img"
+                          aria-label={`More info about ${title}`}
+                        >
+                          <Info
+                            className="h-3.5 w-3.5 opacity-60"
+                            aria-hidden
+                          />
+                        </span>
+                      </HybridTrigger>
+                      <HybridContent>{help}</HybridContent>
+                    </Hybrid>
                   )}
                 </CardTitle>
                 {(description || help) && (
