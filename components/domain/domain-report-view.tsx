@@ -85,7 +85,11 @@ export function DomainReportView({ domain }: { domain: string }) {
         </div>
       </div>
 
-      <Accordion type="multiple" className="space-y-4">
+      <Accordion
+        type="multiple"
+        className="space-y-4"
+        defaultValue={["registration"]}
+      >
         <RegistrationSection
           data={registration.data || null}
           isLoading={registration.isLoading}

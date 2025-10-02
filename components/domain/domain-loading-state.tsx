@@ -16,7 +16,11 @@ export function DomainLoadingState() {
         </div>
       </div>
 
-      <Accordion type="multiple" className="space-y-4">
+      <Accordion
+        type="multiple"
+        className="space-y-4"
+        defaultValue={["registration"]}
+      >
         {SECTION_ORDER.map((key) => (
           <Section {...SECTION_DEFS[key]} key={key} isLoading />
         ))}
