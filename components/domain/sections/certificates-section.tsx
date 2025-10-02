@@ -101,7 +101,7 @@ export function CertificatesSection({
                       to={c.validTo}
                       dangerDays={7}
                       warnDays={30}
-                      className="text-[11px]"
+                      className="flex items-center text-[11px] leading-none"
                     />
                   }
                 />

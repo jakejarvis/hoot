@@ -74,7 +74,7 @@ export function RegistrationSection({
                   to={data.expirationDate}
                   dangerDays={30}
                   warnDays={60}
-                  className="text-[11px]"
+                  className="flex items-center text-[11px] leading-none"
                 />
               ) : null
             }
