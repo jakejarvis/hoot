@@ -1,6 +1,13 @@
+import { UTCDate } from "@date-fns/utc";
+import { format } from "date-fns";
+
 export function formatDate(iso: string) {
   try {
-    return new Date(iso).toLocaleString();
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const utc = new UTCDate(d);
+    // Example: Oct. 2, 2025 18:45:05 UTC
+    return format(utc, "MMM. d, yyyy HH:mm:ss 'UTC'");
   } catch {
     return iso;
   }
