@@ -1,5 +1,4 @@
 import { AlertCircle, Info, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -36,10 +35,7 @@ export function Section({
   children?: React.ReactNode;
 }) {
   const Icon = icon;
-  const [isHydrated, setIsHydrated] = useState(false);
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  // Loading/Error adornments reflect props only; avoid client-only hydration gates
   const computedSlug = (slug ?? title)
     .toLowerCase()
     .replace(/\s+/g, "-")
@@ -104,22 +100,20 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <span style={{ display: "contents" }} suppressHydrationWarning>
-                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                    {isHydrated && isLoading && (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Loading</span>
-                      </>
-                    )}
-                    {isHydrated && isError && (
-                      <>
-                        <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
-                        <span>Error</span>
-                      </>
-                    )}
-                  </div>
-                </span>
+                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                  {isLoading && (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Loading</span>
+                    </>
+                  )}
+                  {isError && (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
+                      <span>Error</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>

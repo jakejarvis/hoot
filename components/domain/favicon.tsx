@@ -22,50 +22,46 @@ export function Favicon({
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
   const { data, isPending } = useQuery(
     trpc.domain.favicon.queryOptions(
       { domain },
       {
         staleTime: 60 * 60_000, // 1 hour
         placeholderData: (prev) => prev,
+        enabled: isHydrated,
       },
     ),
   );
 
-  let child = null;
   if (!isHydrated || isPending) {
-    child = (
+    return (
       <Skeleton
         className={cn("bg-input", className)}
         style={{ width: size, height: size }}
       />
     );
-  } else if (!data?.url) {
-    child = (
+  }
+
+  if (!data?.url) {
+    return (
       <Globe
         className={cn("text-muted-foreground", className)}
         width={size}
         height={size}
       />
     );
-  } else {
-    child = (
-      <Image
-        src={data.url}
-        alt={`${domain} icon`}
-        width={size}
-        height={size}
-        className={className}
-        loading="lazy"
-        unoptimized
-        suppressHydrationWarning
-      />
-    );
   }
 
   return (
-    <span style={{ display: "contents" }} suppressHydrationWarning>
-      {child}
-    </span>
+    <Image
+      src={data.url}
+      alt={`${domain} icon`}
+      width={size}
+      height={size}
+      className={className}
+      loading="lazy"
+      unoptimized
+    />
   );
 }

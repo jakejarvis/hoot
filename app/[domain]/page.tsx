@@ -1,8 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
-import { DomainReportFallback } from "@/components/domain/domain-report-fallback";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
@@ -52,40 +50,10 @@ export default async function DomainPage({
     redirect(`/${encodeURIComponent(normalized)}`);
   }
 
-  // Prefetch graph with dependency cascade to flatten waterfalls
+  // Minimal prefetch: registration only, let sections stream progressively
   const queryClient = getQueryClient();
-  const registration = await queryClient.fetchQuery(
+  await queryClient.prefetchQuery(
     trpc.domain.registration.queryOptions({ domain: normalized }),
-  );
-  void queryClient.prefetchQuery(
-    trpc.domain.favicon.queryOptions(
-      { domain: normalized },
-      { enabled: registration?.isRegistered },
-    ),
-  );
-  void queryClient.prefetchQuery(
-    trpc.domain.dns.queryOptions(
-      { domain: normalized },
-      { enabled: registration?.isRegistered },
-    ),
-  );
-  void queryClient.prefetchQuery(
-    trpc.domain.hosting.queryOptions(
-      { domain: normalized },
-      { enabled: registration?.isRegistered },
-    ),
-  );
-  void queryClient.prefetchQuery(
-    trpc.domain.certificates.queryOptions(
-      { domain: normalized },
-      { enabled: registration?.isRegistered },
-    ),
-  );
-  void queryClient.prefetchQuery(
-    trpc.domain.headers.queryOptions(
-      { domain: normalized },
-      { enabled: registration?.isRegistered },
-    ),
   );
 
   return (
@@ -97,9 +65,7 @@ export default async function DomainPage({
       />
 
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense fallback={<DomainReportFallback />}>
-          <DomainReportView domain={normalized} />
-        </Suspense>
+        <DomainReportView domain={normalized} />
       </HydrationBoundary>
     </div>
   );
