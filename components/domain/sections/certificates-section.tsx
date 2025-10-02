@@ -135,26 +135,17 @@ export function CertificatesSection({
             </div>
           </Fragment>
 
-          {remainingCerts.length > 0 && (
+          {remainingCerts.length > 0 && !showAll && (
             <div className="my-2 flex justify-center">
               <Button
                 variant="ghost"
                 size="sm"
-                aria-expanded={showAll}
-                onClick={() => setShowAll((v) => !v)}
+                aria-expanded={false}
+                onClick={() => setShowAll(true)}
                 className="text-[13px]"
               >
-                {showAll ? (
-                  <>
-                    <ChevronUp className="h-4 w-4" aria-hidden />
-                    <span>Hide Chain</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4" aria-hidden />
-                    <span>Show Chain</span>
-                  </>
-                )}
+                <ChevronDown className="h-4 w-4" aria-hidden />
+                <span>Show Chain</span>
               </Button>
             </div>
           )}
@@ -242,6 +233,18 @@ export function CertificatesSection({
                   )}
                 </Fragment>
               ))}
+              <div className="my-2 flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-expanded={true}
+                  onClick={() => setShowAll(false)}
+                  className="text-[13px]"
+                >
+                  <ChevronUp className="h-4 w-4" aria-hidden />
+                  <span>Hide Chain</span>
+                </Button>
+              </div>
             </>
           )}
         </>
