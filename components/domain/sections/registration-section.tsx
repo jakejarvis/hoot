@@ -5,7 +5,7 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { Badge } from "@/components/ui/badge";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
@@ -33,7 +33,14 @@ export function RegistrationSection({
       isError={isError}
       isLoading={isLoading}
     >
-      {isLoading ? null : data ? (
+      {isLoading ? (
+        <>
+          <KeyValueSkeleton label="Registrar" withLeading withSuffix />
+          <KeyValueSkeleton label="Created" />
+          <KeyValueSkeleton label="Expires" withSuffix />
+          <KeyValueSkeleton label="Registrant" />
+        </>
+      ) : data ? (
         <>
           <KeyValue
             label="Registrar"
@@ -46,11 +53,6 @@ export function RegistrationSection({
                   className="rounded"
                 />
               ) : undefined
-            }
-            suffix={
-              <Badge variant="secondary" title="Data source">
-                {data.source ? data.source.toUpperCase() : "RDAP"}
-              </Badge>
             }
           />
           <KeyValue
@@ -66,7 +68,7 @@ export function RegistrationSection({
                   to={data.expirationDate}
                   dangerDays={30}
                   warnDays={60}
-                  className="text-[11px]"
+                  className="flex items-center text-[11px] leading-none"
                 />
               ) : null
             }

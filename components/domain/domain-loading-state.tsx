@@ -1,5 +1,4 @@
 import { Section } from "@/components/domain/section";
-import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SECTION_DEFS, SECTION_ORDER } from "@/lib/sections-meta";
 
@@ -16,15 +15,11 @@ export function DomainLoadingState() {
         </div>
       </div>
 
-      <Accordion
-        type="multiple"
-        className="space-y-4"
-        defaultValue={["registration"]}
-      >
+      <div className="space-y-4">
         {SECTION_ORDER.map((key) => (
           <Section {...SECTION_DEFS[key]} key={key} isLoading />
         ))}
-      </Accordion>
+      </div>
     </div>
   );
 }

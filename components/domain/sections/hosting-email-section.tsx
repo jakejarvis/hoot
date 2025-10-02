@@ -5,6 +5,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import type { Hosting } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -31,7 +32,26 @@ export function HostingEmailSection({
 }) {
   return (
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
-      {isLoading ? null : data ? (
+      {isLoading ? (
+        <>
+          <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
+          <KeyValueSkeleton
+            label="Hosting"
+            withLeading
+            widthClass="w-[100px]"
+          />
+          <KeyValueSkeleton label="Email" withLeading widthClass="w-[100px]" />
+          <KeyValueSkeleton
+            label="Location"
+            withLeading
+            widthClass="w-[100px]"
+          />
+          {/* Map skeleton provided by dynamic component's loading prop; keep spacing */}
+          <div className="mt-2">
+            <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />
+          </div>
+        </>
+      ) : data ? (
         <>
           <KeyValue
             label="DNS"
@@ -74,11 +94,18 @@ export function HostingEmailSection({
           />
           <KeyValue
             label="Location"
-            value={`${data.geo.emoji ? `${data.geo.emoji} ` : ""}${
+            value={`${
               data.geo.city || data.geo.region || data.geo.country
                 ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
                 : ""
             }`}
+            leading={
+              data.geo.emoji ? (
+                <span className="inline-block leading-none">
+                  {data.geo.emoji}
+                </span>
+              ) : undefined
+            }
           />
           {data.geo.lat != null && data.geo.lon != null ? (
             <div className="mt-2">

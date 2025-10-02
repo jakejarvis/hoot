@@ -39,6 +39,12 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
+const getBaseUrl = () => {
+  if (typeof window !== "undefined") return ""; // browser should use relative url
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
+  return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
+};
+
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   const [trpcClient] = useState(() =>
@@ -50,7 +56,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             (opts.direction === "down" && opts.result instanceof Error),
         }),
         httpBatchStreamLink({
-          url: "/api/trpc",
+          url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,
         }),
       ],

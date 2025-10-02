@@ -1,10 +1,4 @@
 import { AlertCircle, Info, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   Card,
   CardContent,
@@ -24,6 +18,7 @@ export function Section({
   description,
   help,
   icon,
+  slug,
   accent = "slate",
   isLoading,
   isError,
@@ -33,25 +28,26 @@ export function Section({
   description?: string;
   help?: string;
   icon?: React.ElementType;
+  slug?: string;
   accent?: "blue" | "purple" | "green" | "orange" | "pink" | "slate";
   isLoading?: boolean;
   isError?: boolean;
   children?: React.ReactNode;
 }) {
   const Icon = icon;
-  const [isHydrated, setIsHydrated] = useState(false);
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-  const disabled = isHydrated ? Boolean(isError || isLoading) : false;
-  const slug = title
+  // Loading/Error adornments reflect props only; avoid client-only hydration gates
+  const computedSlug = (slug ?? title)
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-  const triggerId = `accordion-trigger-${slug}`;
-  const contentId = `accordion-content-${slug}`;
+  const headerId = `section-header-${computedSlug}`;
+  const contentId = `section-content-${computedSlug}`;
   return (
-    <AccordionItem value={slug} className="border-none">
+    <section
+      id={computedSlug}
+      aria-labelledby={headerId}
+      className="border-none"
+    >
       <Card
         className="relative overflow-hidden rounded-3xl border border-black/10 bg-background/60 py-0 shadow-2xl shadow-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 dark:border-white/10"
         data-accent={accent}
@@ -65,11 +61,9 @@ export function Section({
           )}
         />
         <div className="relative">
-          <AccordionTrigger
+          <div
             className={cn("px-5 py-4 no-underline hover:no-underline")}
-            disabled={disabled}
-            id={triggerId}
-            aria-controls={contentId}
+            id={headerId}
           >
             <div className="flex w-full items-center gap-3 text-left">
               {Icon && (
@@ -106,34 +100,32 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <span style={{ display: "contents" }} suppressHydrationWarning>
-                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                    {isHydrated && isLoading && (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Loading</span>
-                      </>
-                    )}
-                    {isHydrated && isError && (
-                      <>
-                        <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
-                        <span>Error</span>
-                      </>
-                    )}
-                  </div>
-                </span>
+                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                  {isLoading && (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Loading</span>
+                    </>
+                  )}
+                  {isError && (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
+                      <span>Error</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </AccordionTrigger>
+          </div>
         </div>
-        <AccordionContent id={contentId} aria-labelledby={triggerId}>
-          {children && (
+        {children && (
+          <div id={contentId}>
             <CardContent className="space-y-3 px-5 pt-0 pb-5">
               {children}
             </CardContent>
-          )}
-        </AccordionContent>
+          </div>
+        )}
       </Card>
-    </AccordionItem>
+    </section>
   );
 }
