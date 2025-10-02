@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CertificatesSection } from "./certificates-section";
+import { CertificatesSection, equalHostname } from "./certificates-section";
 
 // Mock tooltip
 vi.mock("@/components/ui/tooltip", () => ({
@@ -107,5 +107,11 @@ describe("CertificatesSection", () => {
       />,
     );
     expect(screen.getByText("SSL Certificates")).toBeInTheDocument();
+  });
+});
+
+describe("equalHostname", () => {
+  it("ignores case and whitespace", () => {
+    expect(equalHostname(" ExAmple.COM ", "example.com")).toBe(true);
   });
 });

@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  equalHostname,
-  formatDate,
-  formatRegistrant,
-  formatTtl,
-} from "./format";
+import { formatDate, formatTtl } from "./format";
 
 describe("formatDate", () => {
   it("formats ISO string to locale string", () => {
@@ -12,20 +7,6 @@ describe("formatDate", () => {
     const out = formatDate(iso);
     expect(out).toBeTypeOf("string");
     expect(out.length).toBeGreaterThan(0);
-  });
-});
-
-describe("formatRegistrant", () => {
-  it("returns Unavailable when empty", () => {
-    expect(formatRegistrant({ organization: "", country: "", state: "" })).toBe(
-      "Unavailable",
-    );
-  });
-
-  it("joins org and location", () => {
-    expect(
-      formatRegistrant({ organization: "Acme", country: "US", state: "CA" }),
-    ).toBe("Acme — CA, US");
   });
 });
 
@@ -46,11 +27,5 @@ describe("formatTtl", () => {
     expect(formatTtl(0)).toBe("0s");
     expect(formatTtl(Number.NaN)).toBe("NaNs");
     expect(formatTtl(-5)).toBe("-5s");
-  });
-});
-
-describe("equalHostname", () => {
-  it("ignores case and whitespace", () => {
-    expect(equalHostname(" ExAmple.COM ", "example.com")).toBe(true);
   });
 });

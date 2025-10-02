@@ -14,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { equalHostname, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -256,4 +256,12 @@ export function CertificatesSection({
       ) : null}
     </Section>
   );
+}
+
+export function equalHostname(a: string, b: string): boolean {
+  try {
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+  } catch {
+    return a === b;
+  }
 }

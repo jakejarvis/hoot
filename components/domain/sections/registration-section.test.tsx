@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { RegistrationSection } from "./registration-section";
+import { formatRegistrant, RegistrationSection } from "./registration-section";
 
 vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>favicon:{domain}</div>,
@@ -93,5 +93,19 @@ describe("RegistrationSection", () => {
     );
     // skeletons are present via role none; just assert section title appears to ensure render
     expect(screen.getByText(/Registration/i)).toBeInTheDocument();
+  });
+});
+
+describe("formatRegistrant", () => {
+  it("returns Unavailable when empty", () => {
+    expect(formatRegistrant({ organization: "", country: "", state: "" })).toBe(
+      "Unavailable",
+    );
+  });
+
+  it("joins org and location", () => {
+    expect(
+      formatRegistrant({ organization: "Acme", country: "US", state: "CA" }),
+    ).toBe("Acme — CA, US");
   });
 });

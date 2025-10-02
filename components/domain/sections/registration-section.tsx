@@ -6,11 +6,27 @@ import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { KeyValueSkeleton } from "@/components/domain/skeletons";
-import { formatDate, formatRegistrant } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
+
+export function formatRegistrant(reg: {
+  organization: string;
+  country: string;
+  state?: string;
+}) {
+  const org = (reg.organization || "").trim();
+  const country = (reg.country || "").trim();
+  const state = (reg.state || "").trim();
+  const parts = [] as string[];
+  if (org) parts.push(org);
+  const loc = [state, country].filter(Boolean).join(", ");
+  if (loc) parts.push(loc);
+  if (parts.length === 0) return "Unavailable";
+  return parts.join(" — ");
+}
 
 export function RegistrationSection({
   data,
