@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowDown } from "lucide-react";
-import { Fragment } from "react";
+import { ArrowDown, ChevronDown, ChevronUp } from "lucide-react";
+import { Fragment, useState } from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { KeyValueSkeleton } from "@/components/domain/skeletons";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +42,10 @@ export function CertificatesSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
+  const firstCert = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  const remainingCerts =
+    Array.isArray(data) && data.length > 1 ? data.slice(1) : [];
   return (
     <Section
       {...SECTION_DEFS.certificates}
@@ -55,27 +60,30 @@ export function CertificatesSection({
           </div>
           <CertificateCardSkeleton />
         </>
-      ) : data ? (
-        data.map((c, idx) => (
-          <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
+      ) : data && firstCert ? (
+        <>
+          <Fragment
+            key={`cert-${firstCert.subject}-${firstCert.validFrom}-${firstCert.validTo}`}
+          >
             <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <KeyValue
                   label="Issuer"
-                  value={c.issuer}
+                  value={firstCert.issuer}
                   leading={
-                    c.caProvider?.domain ? (
+                    firstCert.caProvider?.domain ? (
                       <Favicon
-                        domain={c.caProvider.domain}
+                        domain={firstCert.caProvider.domain}
                         size={16}
                         className="rounded"
                       />
                     ) : undefined
                   }
                   suffix={
-                    c.caProvider?.name && c.caProvider.name !== "Unknown" ? (
+                    firstCert.caProvider?.name &&
+                    firstCert.caProvider.name !== "Unknown" ? (
                       <span className="text-[11px] text-muted-foreground">
-                        {c.caProvider.name}
+                        {firstCert.caProvider.name}
                       </span>
                     ) : undefined
                   }
@@ -83,11 +91,13 @@ export function CertificatesSection({
 
                 <KeyValue
                   label="Subject"
-                  value={c.subject}
+                  value={firstCert.subject}
                   suffix={(() => {
-                    const subjectName = c.subject;
-                    const sans = Array.isArray(c.altNames)
-                      ? c.altNames.filter((n) => !equalHostname(n, subjectName))
+                    const subjectName = firstCert.subject;
+                    const sans = Array.isArray(firstCert.altNames)
+                      ? firstCert.altNames.filter(
+                          (n) => !equalHostname(n, subjectName),
+                        )
                       : [];
                     return sans.length > 0 ? (
                       <Tooltip>
@@ -104,14 +114,17 @@ export function CertificatesSection({
                   })()}
                 />
 
-                <KeyValue label="Valid from" value={formatDate(c.validFrom)} />
+                <KeyValue
+                  label="Valid from"
+                  value={formatDate(firstCert.validFrom)}
+                />
 
                 <KeyValue
                   label="Valid to"
-                  value={formatDate(c.validTo)}
+                  value={formatDate(firstCert.validTo)}
                   suffix={
                     <RelativeExpiry
-                      to={c.validTo}
+                      to={firstCert.validTo}
                       dangerDays={7}
                       warnDays={30}
                       className="flex items-center text-[11px] leading-none"
@@ -120,14 +133,118 @@ export function CertificatesSection({
                 />
               </div>
             </div>
+          </Fragment>
 
-            {idx < data.length - 1 && (
+          {remainingCerts.length > 0 && (
+            <div className="my-2 flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-expanded={showAll}
+                onClick={() => setShowAll((v) => !v)}
+                className="text-[13px]"
+              >
+                {showAll ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" aria-hidden />
+                    <span>Hide Chain</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" aria-hidden />
+                    <span>Show Chain</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {remainingCerts.length > 0 && showAll && (
+            <>
               <div className="my-2 flex justify-center" aria-hidden>
                 <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
               </div>
-            )}
-          </Fragment>
-        ))
+              {remainingCerts.map((c, idx) => (
+                <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
+                  <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <KeyValue
+                        label="Issuer"
+                        value={c.issuer}
+                        leading={
+                          c.caProvider?.domain ? (
+                            <Favicon
+                              domain={c.caProvider.domain}
+                              size={16}
+                              className="rounded"
+                            />
+                          ) : undefined
+                        }
+                        suffix={
+                          c.caProvider?.name &&
+                          c.caProvider.name !== "Unknown" ? (
+                            <span className="text-[11px] text-muted-foreground">
+                              {c.caProvider.name}
+                            </span>
+                          ) : undefined
+                        }
+                      />
+
+                      <KeyValue
+                        label="Subject"
+                        value={c.subject}
+                        suffix={(() => {
+                          const subjectName = c.subject;
+                          const sans = Array.isArray(c.altNames)
+                            ? c.altNames.filter(
+                                (n) => !equalHostname(n, subjectName),
+                              )
+                            : [];
+                          return sans.length > 0 ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="select-none font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
+                                  +{sans.length}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
+                                {sans.join(", ")}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : undefined;
+                        })()}
+                      />
+
+                      <KeyValue
+                        label="Valid from"
+                        value={formatDate(c.validFrom)}
+                      />
+
+                      <KeyValue
+                        label="Valid to"
+                        value={formatDate(c.validTo)}
+                        suffix={
+                          <RelativeExpiry
+                            to={c.validTo}
+                            dangerDays={7}
+                            warnDays={30}
+                            className="flex items-center text-[11px] leading-none"
+                          />
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {idx < remainingCerts.length - 1 && (
+                    <div className="my-2 flex justify-center" aria-hidden>
+                      <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+            </>
+          )}
+        </>
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load certificates."
