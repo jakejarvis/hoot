@@ -1,28 +1,49 @@
 import { captureServer } from "@/lib/analytics/server";
-import { getOrSet, ns } from "@/lib/redis";
-import { isCloudflareIpAsync } from "./cloudflare";
+import { isCloudflareIpAsync } from "@/lib/cloudflare";
+import { USER_AGENT } from "@/lib/constants";
+import { getOrSetZod, ns } from "@/lib/redis";
 import {
-  DOH_PROVIDERS,
-  type DohProvider,
-  type DohProviderKey,
-} from "./doh-providers";
+  type DnsRecord,
+  DnsRecordSchema,
+  type DnsResolveResult,
+  type DnsSource,
+  type DnsType,
+  DnsTypeSchema,
+} from "@/lib/schemas";
 
-export type DnsRecord = {
-  type: "A" | "AAAA" | "MX" | "TXT" | "NS";
-  name: string;
-  value: string;
-  ttl?: number;
-  priority?: number;
-  isCloudflare?: boolean;
+export type DohProvider = {
+  key: DnsSource;
+  buildUrl: (domain: string, type: DnsType) => URL;
+  headers?: Record<string, string>;
 };
 
-type DnsType = DnsRecord["type"];
-const TYPES: DnsType[] = ["A", "AAAA", "MX", "TXT", "NS"];
-
-export type DnsResolveResult = {
-  records: DnsRecord[];
-  source: DohProviderKey;
+const DEFAULT_HEADERS: Record<string, string> = {
+  accept: "application/dns-json",
+  "user-agent": USER_AGENT,
 };
+
+export const DOH_PROVIDERS: DohProvider[] = [
+  {
+    key: "cloudflare",
+    buildUrl: (domain, type) => {
+      const u = new URL("https://cloudflare-dns.com/dns-query");
+      u.searchParams.set("name", domain);
+      u.searchParams.set("type", type);
+      return u;
+    },
+    headers: DEFAULT_HEADERS,
+  },
+  {
+    key: "google",
+    buildUrl: (domain, type) => {
+      const u = new URL("https://dns.google/resolve");
+      u.searchParams.set("name", domain);
+      u.searchParams.set("type", type);
+      return u;
+    },
+    headers: DEFAULT_HEADERS,
+  },
+];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const lower = domain.toLowerCase();
@@ -36,19 +57,20 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const attemptStart = Date.now();
     try {
       const results = await Promise.all(
-        TYPES.map(async (type) => {
+        DnsTypeSchema.options.map(async (type) => {
           const key = ns("dns", `${lower}:${type}:${provider.key}`);
-          return await getOrSet<DnsRecord[]>(
+          return await getOrSetZod<DnsRecord[]>(
             key,
             5 * 60,
             async () => await resolveTypeWithProvider(domain, type, provider),
+            DnsRecordSchema.array(),
           );
         }),
       );
       const flat = results.flat();
       durationByProvider[provider.key] = Date.now() - attemptStart;
 
-      const counts = TYPES.reduce(
+      const counts = DnsTypeSchema.options.reduce(
         (acc, t) => {
           acc[t] = flat.filter((r) => r.type === t).length;
           return acc;
@@ -67,7 +89,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         provider_attempts: attemptIndex + 1,
         duration_ms_by_provider: durationByProvider,
       });
-      return { records: flat, source: provider.key };
+      return { records: flat, source: provider.key } as DnsResolveResult;
     } catch (err) {
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;

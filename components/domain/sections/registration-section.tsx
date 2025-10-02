@@ -1,50 +1,62 @@
 "use client";
 
-import type { DomainRecord } from "rdapper";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
-import { Badge } from "@/components/ui/badge";
-import { formatDate, formatRegistrant } from "@/lib/format";
-import { resolveRegistrarDomain } from "@/lib/providers/detection";
-import { SECTION_DEFS } from "./sections-meta";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
+import { formatDate } from "@/lib/format";
+import type { Registration } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
-type RegistrarView = { name: string; domain: string | null };
 type RegistrantView = { organization: string; country: string; state?: string };
+
+export function formatRegistrant(reg: {
+  organization: string;
+  country: string;
+  state?: string;
+}) {
+  const org = (reg.organization || "").trim();
+  const country = (reg.country || "").trim();
+  const state = (reg.state || "").trim();
+  const parts = [] as string[];
+  if (org) parts.push(org);
+  const loc = [state, country].filter(Boolean).join(", ");
+  if (loc) parts.push(loc);
+  if (parts.length === 0) return "Unavailable";
+  return parts.join(" — ");
+}
 
 export function RegistrationSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
-  data?: DomainRecord | null;
+  data?: Registration | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.registration;
-  const registrar: RegistrarView | null = data
-    ? {
-        name: (data.registrar?.name || "").trim() || "Unknown",
-        domain: deriveRegistrarDomain(data),
-      }
-    : null;
+  const registrar = data?.registrarProvider ?? null;
   const registrant: RegistrantView | null = data
     ? extractRegistrantView(data)
     : null;
   return (
     <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
+      {...SECTION_DEFS.registration}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {data ? (
+      {isLoading ? (
+        <>
+          <KeyValueSkeleton label="Registrar" withLeading withSuffix />
+          <KeyValueSkeleton label="Created" />
+          <KeyValueSkeleton label="Expires" withSuffix />
+          <KeyValueSkeleton label="Registrant" />
+        </>
+      ) : data ? (
         <>
           <KeyValue
             label="Registrar"
@@ -58,11 +70,6 @@ export function RegistrationSection({
                 />
               ) : undefined
             }
-            suffix={
-              <Badge variant="secondary" title="Data source">
-                {data.source ? data.source.toUpperCase() : "RDAP"}
-              </Badge>
-            }
           />
           <KeyValue
             label="Created"
@@ -71,6 +78,16 @@ export function RegistrationSection({
           <KeyValue
             label="Expires"
             value={formatDate(data.expirationDate || "")}
+            suffix={
+              data.expirationDate ? (
+                <RelativeExpiry
+                  to={data.expirationDate}
+                  dangerDays={30}
+                  warnDays={60}
+                  className="flex items-center text-[11px] leading-none"
+                />
+              ) : null
+            }
           />
           <KeyValue
             label="Registrant"
@@ -84,25 +101,12 @@ export function RegistrationSection({
           message="Failed to load WHOIS."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={4} />
-      )}
+      ) : null}
     </Section>
   );
 }
 
-function deriveRegistrarDomain(record: DomainRecord): string | null {
-  const url = record.registrar?.url;
-  if (url) {
-    try {
-      const host = new URL(url).hostname;
-      return host || null;
-    } catch {}
-  }
-  return resolveRegistrarDomain(record.registrar?.name || "");
-}
-
-function extractRegistrantView(record: DomainRecord): RegistrantView | null {
+function extractRegistrantView(record: Registration): RegistrantView | null {
   const registrant = record.contacts?.find((c) => c.type === "registrant");
   if (!registrant) return null;
   const organization =

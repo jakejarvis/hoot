@@ -1,26 +1,24 @@
 "use client";
 
-import React from "react";
+import { useMemo } from "react";
+import { Favicon } from "@/components/domain/favicon";
+import { KeyValue } from "@/components/domain/key-value";
+import { TtlBadge } from "@/components/domain/ttl-badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { DnsRecord } from "@/server/services/dns";
-import { Favicon } from "./favicon";
-import { KeyValue } from "./key-value";
-import { TtlBadge } from "./ttl-badge";
+import type { DnsRecord } from "@/lib/schemas";
 
 export function DnsRecordList({
   records,
   type,
-  showTtls,
 }: {
   records: DnsRecord[];
   type: DnsRecord["type"];
-  showTtls: boolean;
 }) {
-  const filtered = React.useMemo(() => {
+  const filtered = useMemo(() => {
     const arr = records.filter((r) => r.type === type);
     if (type === "MX") {
       arr.sort((a, b) => {
@@ -44,11 +42,8 @@ export function DnsRecordList({
               : undefined
           }
           value={r.value}
-          copyable
           trailing={
-            showTtls && typeof r.ttl === "number" ? (
-              <TtlBadge ttl={r.ttl} />
-            ) : undefined
+            typeof r.ttl === "number" ? <TtlBadge ttl={r.ttl} /> : undefined
           }
           suffix={
             r.isCloudflare ? (

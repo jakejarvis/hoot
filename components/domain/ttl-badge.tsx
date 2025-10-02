@@ -1,5 +1,6 @@
 "use client";
 
+import { ClockFading } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -12,7 +13,11 @@ export function TtlBadge({ ttl }: { ttl: number }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="secondary" title="Time to Live">
+        <Badge
+          variant="outline"
+          className="cursor-default text-[11px] text-muted-foreground"
+        >
+          <ClockFading />
           {formatTtl(ttl)}
         </Badge>
       </TooltipTrigger>

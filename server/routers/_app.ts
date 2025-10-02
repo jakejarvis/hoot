@@ -1,7 +1,7 @@
-import { router } from "../trpc";
-import { domainRouter } from "./domain";
+import { domainRouter } from "@/server/routers/domain";
+import { createTRPCRouter } from "@/trpc/init";
 
-export const appRouter = router({
+export const appRouter = createTRPCRouter({
   domain: domainRouter,
 });
 

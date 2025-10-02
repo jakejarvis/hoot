@@ -33,7 +33,17 @@ describe("exportDomainData", () => {
     });
 
     exportDomainData("example.com", {
-      registration: { ok: true },
+      registration: {
+        isRegistered: true,
+        domain: "example.com",
+        tld: "com",
+        fetchedAt: "2021-01-01",
+        source: "rdap",
+        registrar: { name: "Test Registrar" },
+        warnings: [],
+        unicodeName: "example.com",
+        punycodeName: "example.com",
+      },
       dns: null,
       hosting: null,
       certificates: [],

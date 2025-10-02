@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import type React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { CertificatesSection } from "./certificates-section";
+import { CertificatesSection, equalHostname } from "./certificates-section";
 
 // Mock tooltip
 vi.mock("@/components/ui/tooltip", () => ({
@@ -34,6 +33,12 @@ vi.mock("@/components/ui/accordion", () => ({
   ),
 }));
 
+vi.mock("@/components/domain/favicon", () => ({
+  Favicon: ({ domain }: { domain: string }) => (
+    <div data-slot="favicon" data-domain={domain} />
+  ),
+}));
+
 describe("CertificatesSection", () => {
   it("renders certificate fields and SAN count tooltip", () => {
     const data = [
@@ -43,6 +48,7 @@ describe("CertificatesSection", () => {
         altNames: ["*.example.com", "example.com"],
         validFrom: "2024-01-01T00:00:00.000Z",
         validTo: "2025-01-01T00:00:00.000Z",
+        caProvider: { name: "Let's Encrypt", domain: "letsencrypt.org" },
       },
     ];
     render(
@@ -67,6 +73,14 @@ describe("CertificatesSection", () => {
     ).toBe(true);
     // SAN count excludes subject equal altName
     expect(screen.getByText("+1")).toBeInTheDocument();
+    // shows CA annotation (may appear in value, tooltip, and suffix)
+    expect(screen.getAllByText("Let's Encrypt").length).toBeGreaterThan(0);
+    // shows CA favicon for issuer
+    expect(
+      document.querySelector(
+        '[data-slot="favicon"][data-domain="letsencrypt.org"]',
+      ),
+    ).not.toBeNull();
   });
 
   it("shows error state", () => {
@@ -93,5 +107,11 @@ describe("CertificatesSection", () => {
       />,
     );
     expect(screen.getByText("SSL Certificates")).toBeInTheDocument();
+  });
+});
+
+describe("equalHostname", () => {
+  it("ignores case and whitespace", () => {
+    expect(equalHostname(" ExAmple.COM ", "example.com")).toBe(true);
   });
 });

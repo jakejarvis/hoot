@@ -1,7 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
+import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
-import { USER_AGENT } from "./constants";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -52,25 +52,20 @@ function buildSources(domain: string): string[] {
 
 export async function getOrCreateFaviconBlobUrl(
   domain: string,
-  opts?: { distinctId?: string },
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
   // 1) Check blob first
   try {
     const existing = await headFaviconBlob(domain, DEFAULT_SIZE);
     if (existing) {
-      await captureServer(
-        "favicon_fetch",
-        {
-          domain,
-          size: DEFAULT_SIZE,
-          source: "blob",
-          duration_ms: Date.now() - startedAt,
-          outcome: "ok",
-          cache: "hit_blob",
-        },
-        opts?.distinctId,
-      );
+      await captureServer("favicon_fetch", {
+        domain,
+        size: DEFAULT_SIZE,
+        source: "blob",
+        duration_ms: Date.now() - startedAt,
+        outcome: "ok",
+        cache: "hit_blob",
+      });
       return { url: existing };
     }
   } catch {
@@ -100,20 +95,16 @@ export async function getOrCreateFaviconBlobUrl(
 
       const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
 
-      await captureServer(
-        "favicon_fetch",
-        {
-          domain,
-          size: DEFAULT_SIZE,
-          source,
-          upstream_status: res.status,
-          upstream_content_type: contentType ?? null,
-          duration_ms: Date.now() - startedAt,
-          outcome: "ok",
-          cache: "store_blob",
-        },
-        opts?.distinctId,
-      );
+      await captureServer("favicon_fetch", {
+        domain,
+        size: DEFAULT_SIZE,
+        source,
+        upstream_status: res.status,
+        upstream_content_type: contentType ?? null,
+        duration_ms: Date.now() - startedAt,
+        outcome: "ok",
+        cache: "store_blob",
+      });
 
       return { url };
     } catch {
@@ -121,16 +112,12 @@ export async function getOrCreateFaviconBlobUrl(
     }
   }
 
-  await captureServer(
-    "favicon_fetch",
-    {
-      domain,
-      size: DEFAULT_SIZE,
-      duration_ms: Date.now() - startedAt,
-      outcome: "not_found",
-      cache: "miss",
-    },
-    opts?.distinctId,
-  );
+  await captureServer("favicon_fetch", {
+    domain,
+    size: DEFAULT_SIZE,
+    duration_ms: Date.now() - startedAt,
+    outcome: "not_found",
+    cache: "miss",
+  });
   return { url: null };
 }

@@ -6,8 +6,8 @@ export interface CloudflareIpRanges {
   ipv6Cidrs: string[];
 }
 
-let lastLoadedIpv6Parsed: Array<[ipaddr.IPv6, number]> | undefined;
 let lastLoadedIpv4Parsed: Array<[ipaddr.IPv4, number]> | undefined;
+let lastLoadedIpv6Parsed: Array<[ipaddr.IPv6, number]> | undefined;
 
 export const getCloudflareIpRanges = unstable_cache(
   async (): Promise<CloudflareIpRanges> => {
@@ -16,26 +16,12 @@ export const getCloudflareIpRanges = unstable_cache(
       throw new Error(`Failed to fetch Cloudflare IPs: ${res.status}`);
     }
     const data = await res.json();
+
     const ranges: CloudflareIpRanges = {
       ipv4Cidrs: data.result?.ipv4_cidrs || [],
       ipv6Cidrs: data.result?.ipv6_cidrs || [],
     };
-    // Pre-parse IPv6 CIDRs for fast sync/async checks
-    try {
-      lastLoadedIpv6Parsed = ranges.ipv6Cidrs
-        .map((cidr) => {
-          try {
-            const [net, prefix] = ipaddr.parseCIDR(cidr);
-            if (net.kind() !== "ipv6") return undefined;
-            return [net as ipaddr.IPv6, prefix] as [ipaddr.IPv6, number];
-          } catch {
-            return undefined;
-          }
-        })
-        .filter(Boolean) as Array<[ipaddr.IPv6, number]>;
-    } catch {
-      lastLoadedIpv6Parsed = undefined;
-    }
+
     // Pre-parse IPv4 CIDRs for fast sync/async checks
     try {
       lastLoadedIpv4Parsed = ranges.ipv4Cidrs
@@ -51,6 +37,23 @@ export const getCloudflareIpRanges = unstable_cache(
         .filter(Boolean) as Array<[ipaddr.IPv4, number]>;
     } catch {
       lastLoadedIpv4Parsed = undefined;
+    }
+
+    // Pre-parse IPv6 CIDRs for fast sync/async checks
+    try {
+      lastLoadedIpv6Parsed = ranges.ipv6Cidrs
+        .map((cidr) => {
+          try {
+            const [net, prefix] = ipaddr.parseCIDR(cidr);
+            if (net.kind() !== "ipv6") return undefined;
+            return [net as ipaddr.IPv6, prefix] as [ipaddr.IPv6, number];
+          } catch {
+            return undefined;
+          }
+        })
+        .filter(Boolean) as Array<[ipaddr.IPv6, number]>;
+    } catch {
+      lastLoadedIpv6Parsed = undefined;
     }
     return ranges;
   },

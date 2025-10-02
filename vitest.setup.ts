@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
 // Global mocks for analytics capture to avoid network/log noise in tests
@@ -20,17 +20,46 @@ const __redisImpl = vi.hoisted(() => {
   const cacheSet = vi.fn(async (key: string, value: unknown) => {
     store.set(key, value);
   });
+  const cacheDel = vi.fn(async (key: string) => {
+    store.delete(key);
+  });
   const getOrSet = vi.fn(
     async (_key: string, _ttl: number, loader: () => Promise<unknown>) =>
       loader(),
+  );
+  const getOrSetZod = vi.fn(
+    async (
+      _key: string,
+      _ttl: number | ((v: unknown) => number),
+      loader: () => Promise<unknown>,
+      _schema: unknown,
+    ) => {
+      if (store.has(_key)) {
+        return store.get(_key);
+      }
+      const fresh = await loader();
+      store.set(_key, fresh);
+      return fresh;
+    },
   );
   const reset = () => {
     store.clear();
     cacheGet.mockClear();
     cacheSet.mockClear();
+    cacheDel.mockClear();
     getOrSet.mockClear();
+    getOrSetZod.mockClear();
   };
-  return { store, ns, cacheGet, cacheSet, getOrSet, reset };
+  return {
+    store,
+    ns,
+    cacheGet,
+    cacheSet,
+    cacheDel,
+    getOrSet,
+    getOrSetZod,
+    reset,
+  };
 });
 
 vi.mock("@/lib/redis", () => __redisImpl);

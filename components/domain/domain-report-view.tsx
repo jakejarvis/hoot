@@ -2,36 +2,26 @@
 
 import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import type { DomainRecord } from "rdapper";
-import { Accordion } from "@/components/ui/accordion";
+import { DomainLoadingState } from "@/components/domain/domain-loading-state";
+import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
+import { exportDomainData } from "@/components/domain/export-data";
+import { Favicon } from "@/components/domain/favicon";
+import { ScreenshotTooltip } from "@/components/domain/screenshot-tooltip";
+import { CertificatesSection } from "@/components/domain/sections/certificates-section";
+import { DnsRecordsSection } from "@/components/domain/sections/dns-records-section";
+import { HeadersSection } from "@/components/domain/sections/headers-section";
+import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
+import { RegistrationSection } from "@/components/domain/sections/registration-section";
 import { Button } from "@/components/ui/button";
+import { useDomainHistory } from "@/hooks/use-domain-history";
+import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
-import { useDomainHistory } from "../../hooks/use-domain-history";
-import { useDomainQueries } from "../../hooks/use-domain-queries";
-import { useTtlPreferences } from "../../hooks/use-ttl-preferences";
-import { DomainLoadingState } from "./domain-loading-state";
-import { DomainUnregisteredState } from "./domain-unregistered-state";
-import { exportDomainData } from "./export-data";
-import { Favicon } from "./favicon";
-import { ScreenshotTooltip } from "./screenshot-tooltip";
-import { CertificatesSection } from "./sections/certificates-section";
-import { DnsRecordsSection } from "./sections/dns-records-section";
-import { HeadersSection } from "./sections/headers-section";
-import { HostingEmailSection } from "./sections/hosting-email-section";
-import { RegistrationSection } from "./sections/registration-section";
+// no longer need SECTION_SLUGS now that accordions are removed
 
-export function DomainReportView({
-  domain,
-  initialRegistration,
-  initialRegistered,
-}: {
-  domain: string;
-  initialRegistration?: DomainRecord;
-  initialRegistered?: boolean;
-}) {
-  const { registration, dns, hosting, certs, headers, allSectionsReady } =
-    useDomainQueries(domain, { initialRegistration, initialRegistered });
-  const { showTtls, setShowTtls } = useTtlPreferences();
+export function DomainReportView({ domain }: { domain: string }) {
+  const { registration, dns, hosting, certs, headers } =
+    useDomainQueries(domain);
+  // TTLs are always shown now; preference removed
 
   // Manage domain history
   useDomainHistory(
@@ -64,24 +54,6 @@ export function DomainReportView({
     return <DomainUnregisteredState domain={domain} />;
   }
 
-  const dnsLoading = dns.isLoading;
-  const hasAnyIp =
-    dns.data?.records?.some((r) => r.type === "A" || r.type === "AAAA") ??
-    false;
-
-  const gateByDns = <T,>(q: { isLoading: boolean; data?: T[] | null }) => {
-    if (dnsLoading) {
-      return { isLoading: true, data: null as T[] | null };
-    }
-    if (hasAnyIp) {
-      return { isLoading: q.isLoading, data: (q.data ?? null) as T[] | null };
-    }
-    return { isLoading: false, data: [] as T[] };
-  };
-
-  const certsView = gateByDns(certs);
-  const headersView = gateByDns(headers);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -97,27 +69,23 @@ export function DomainReportView({
               }
             >
               <Favicon domain={domain} size={20} className="rounded" />
-              <h2 className="text-xl font-semibold tracking-tight">{domain}</h2>
+              <h2 className="font-semibold text-xl tracking-tight">{domain}</h2>
               <ExternalLink
-                className="h-4 w-4 text-muted-foreground/60"
+                className="size-3.5 text-muted-foreground/60"
                 aria-hidden="true"
               />
             </Link>
           </ScreenshotTooltip>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportJson}
-            disabled={!allSectionsReady}
-          >
-            <Download className="h-4 w-4" /> Export JSON
+        <div>
+          <Button variant="outline" size="sm" onClick={handleExportJson}>
+            <Download />
+            Export JSON
           </Button>
         </div>
       </div>
 
-      <Accordion type="multiple" className="space-y-4">
+      <div className="space-y-4">
         <RegistrationSection
           data={registration.data || null}
           isLoading={registration.isLoading}
@@ -155,19 +123,11 @@ export function DomainReportView({
             });
             dns.refetch();
           }}
-          showTtls={showTtls}
-          onToggleTtlsAction={(v) => {
-            captureClient("ttl_preference_toggled", {
-              domain,
-              show_ttls: v,
-            });
-            setShowTtls(v);
-          }}
         />
 
         <CertificatesSection
-          data={certsView.data}
-          isLoading={certsView.isLoading}
+          data={certs.data || null}
+          isLoading={certs.isLoading}
           isError={!!certs.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -179,8 +139,8 @@ export function DomainReportView({
         />
 
         <HeadersSection
-          data={headersView.data}
-          isLoading={headersView.isLoading}
+          data={headers.data || null}
+          isLoading={headers.isLoading}
           isError={!!headers.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -190,7 +150,7 @@ export function DomainReportView({
             headers.refetch();
           }}
         />
-      </Accordion>
+      </div>
     </div>
   );
 }

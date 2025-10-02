@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import type React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { HostingEmailSection } from "./hosting-email-section";
 
@@ -36,7 +35,6 @@ describe("HostingEmailSection", () => {
       dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
       hostingProvider: { name: "Vercel", domain: "vercel.com" },
       emailProvider: { name: "Google Workspace", domain: "google.com" },
-      ipAddress: "1.2.3.4",
       geo: {
         city: "",
         region: "",
@@ -45,7 +43,7 @@ describe("HostingEmailSection", () => {
         lon: null,
         emoji: null,
       },
-    } as unknown as import("@/server/services/hosting").HostingInfo;
+    } as unknown as import("@/lib/schemas").Hosting;
     render(
       <HostingEmailSection
         data={data}

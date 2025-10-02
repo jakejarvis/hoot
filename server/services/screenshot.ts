@@ -6,6 +6,23 @@ import { USER_AGENT } from "./constants";
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
 const NAV_TIMEOUT_MS = 8000;
+const CAPTURE_MAX_ATTEMPTS_DEFAULT = 3;
+const CAPTURE_BACKOFF_BASE_MS_DEFAULT = 200;
+const CAPTURE_BACKOFF_MAX_MS_DEFAULT = 1200;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function backoffDelayMs(
+  attemptIndex: number,
+  baseMs: number,
+  maxMs: number,
+): number {
+  const base = Math.min(maxMs, baseMs * 2 ** attemptIndex);
+  const jitter = Math.floor(Math.random() * Math.min(base, maxMs) * 0.25);
+  return Math.min(base + jitter, maxMs);
+}
 
 function buildHomepageUrls(domain: string): string[] {
   return [`https://${domain}`, `http://${domain}`];
@@ -13,9 +30,20 @@ function buildHomepageUrls(domain: string): string[] {
 
 export async function getOrCreateScreenshotBlobUrl(
   domain: string,
-  opts?: { distinctId?: string },
+  options?: {
+    attempts?: number;
+    backoffBaseMs?: number;
+    backoffMaxMs?: number;
+  },
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
+  const attempts = Math.max(
+    1,
+    options?.attempts ?? CAPTURE_MAX_ATTEMPTS_DEFAULT,
+  );
+  const backoffBaseMs =
+    options?.backoffBaseMs ?? CAPTURE_BACKOFF_BASE_MS_DEFAULT;
+  const backoffMaxMs = options?.backoffMaxMs ?? CAPTURE_BACKOFF_MAX_MS_DEFAULT;
 
   // 1) Check existing blob
   try {
@@ -25,19 +53,15 @@ export async function getOrCreateScreenshotBlobUrl(
       VIEWPORT_HEIGHT,
     );
     if (existing) {
-      await captureServer(
-        "screenshot_capture",
-        {
-          domain,
-          width: VIEWPORT_WIDTH,
-          height: VIEWPORT_HEIGHT,
-          source: "blob",
-          duration_ms: Date.now() - startedAt,
-          outcome: "ok",
-          cache: "hit_blob",
-        },
-        opts?.distinctId,
-      );
+      await captureServer("screenshot_capture", {
+        domain,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        source: "blob",
+        duration_ms: Date.now() - startedAt,
+        outcome: "ok",
+        cache: "hit_blob",
+      });
       return { url: existing };
     }
   } catch {
@@ -133,20 +157,25 @@ export async function getOrCreateScreenshotBlobUrl(
 
     const tryUrls = buildHomepageUrls(domain);
     for (const url of tryUrls) {
-      try {
-        const page = await browser.newPage();
-        await page.setViewport({
-          width: VIEWPORT_WIDTH,
-          height: VIEWPORT_HEIGHT,
-          deviceScaleFactor: 1,
-        });
-        await page.setUserAgent(USER_AGENT);
+      let lastError: unknown = null;
+      for (let attemptIndex = 0; attemptIndex < attempts; attemptIndex++) {
+        try {
+          const page = await browser.newPage();
+          await page.setViewport({
+            width: VIEWPORT_WIDTH,
+            height: VIEWPORT_HEIGHT,
+            deviceScaleFactor: 1,
+          });
+          await page.setUserAgent(USER_AGENT);
 
-        console.debug("[screenshot] navigating", { url });
-        await page.goto(url, {
-          waitUntil: "networkidle2",
-          timeout: NAV_TIMEOUT_MS,
-        });
+          console.debug("[screenshot] navigating", {
+            url,
+            attempt: attemptIndex + 1,
+          });
+          await page.goto(url, {
+            waitUntil: "networkidle2",
+            timeout: NAV_TIMEOUT_MS,
+          });
 
         console.debug("[screenshot] navigated", { url });
 
@@ -165,14 +194,18 @@ export async function getOrCreateScreenshotBlobUrl(
             domain,
             VIEWPORT_WIDTH,
             VIEWPORT_HEIGHT,
-            png,
           );
+          if (png && png.length > 0) {
+            const storedUrl = await putScreenshotBlob(
+              domain,
+              VIEWPORT_WIDTH,
+              VIEWPORT_HEIGHT,
+              png,
+            );
 
-          console.info("[screenshot] stored blob", { url: storedUrl });
+            console.info("[screenshot] stored blob", { url: storedUrl });
 
-          await captureServer(
-            "screenshot_capture",
-            {
+            await captureServer("screenshot_capture", {
               domain,
               width: VIEWPORT_WIDTH,
               height: VIEWPORT_HEIGHT,
@@ -182,18 +215,35 @@ export async function getOrCreateScreenshotBlobUrl(
               duration_ms: Date.now() - startedAt,
               outcome: "ok",
               cache: "store_blob",
-            },
-            opts?.distinctId,
+            });
+
+            return { url: storedUrl };
+          }
+        } catch (err) {
+          lastError = err;
+          const delay = backoffDelayMs(
+            attemptIndex,
+            backoffBaseMs,
+            backoffMaxMs,
           );
-
-          return { url: storedUrl };
+          console.warn("[screenshot] attempt failed", {
+            url,
+            attempt: attemptIndex + 1,
+            delay_ms: delay,
+            error: (err as Error)?.message,
+          });
+          if (attemptIndex < attempts - 1) {
+            await sleep(delay);
+          }
         }
-      } catch (err) {
-        // try next URL
+      }
 
-        console.warn("[screenshot] attempt failed", {
+      // Exhausted attempts for this URL, move to next candidate
+      if (lastError) {
+        console.warn("[screenshot] all attempts failed for url", {
           url,
-          error: (err as Error)?.message,
+          attempts,
+          error: (lastError as Error)?.message,
         });
       }
     }
@@ -212,18 +262,14 @@ export async function getOrCreateScreenshotBlobUrl(
     }
   }
 
-  await captureServer(
-    "screenshot_capture",
-    {
-      domain,
-      width: VIEWPORT_WIDTH,
-      height: VIEWPORT_HEIGHT,
-      duration_ms: Date.now() - startedAt,
-      outcome: "not_found",
-      cache: "miss",
-    },
-    opts?.distinctId,
-  );
+  await captureServer("screenshot_capture", {
+    domain,
+    width: VIEWPORT_WIDTH,
+    height: VIEWPORT_HEIGHT,
+    duration_ms: Date.now() - startedAt,
+    outcome: "not_found",
+    cache: "miss",
+  });
 
   console.warn("[screenshot] returning null", { domain });
   return { url: null };

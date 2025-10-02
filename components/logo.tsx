@@ -1,5 +1,3 @@
-import type * as React from "react";
-
 export type LogoProps = React.SVGProps<SVGSVGElement> & {
   title?: string;
 };

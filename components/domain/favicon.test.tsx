@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import React from "react";
+import { createElement } from "react";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Favicon } from "./favicon";
@@ -17,7 +17,7 @@ vi.mock("next/image", () => ({
     width: number;
     height: number;
   }) =>
-    React.createElement("img", {
+    createElement("img", {
       alt,
       src,
       width,
@@ -59,7 +59,7 @@ describe("Favicon", () => {
   it("shows Skeleton while loading", () => {
     (useQuery as unknown as Mock).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     });
     render(<Favicon domain="example.com" size={16} />);
     const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
@@ -82,7 +82,7 @@ describe("Favicon", () => {
       isLoading: false,
     });
     render(<Favicon domain="example.com" size={16} />);
-    const img = screen.getByRole("img", { name: /favicon/i });
+    const img = screen.getByRole("img", { name: /icon/i });
     expect(img).toHaveAttribute("src", "https://x/y.png");
   });
 });

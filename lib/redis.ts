@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import type { ZodType } from "zod";
 
 let redis: Redis | null = null;
 if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
@@ -41,25 +42,57 @@ export async function cacheSet<T>(
   }
 }
 
-export async function getOrSet<T>(
+export async function cacheDel(key: string): Promise<void> {
+  if (!redis) return;
+  try {
+    await redis.del(key);
+  } catch {
+    // no-op
+  }
+}
+
+export async function cacheGetZod<T>(
   key: string,
-  ttlSeconds: number,
+  schema: ZodType<T>,
+): Promise<T | null> {
+  const value = await cacheGet<unknown>(key);
+  if (value === null) return null;
+  const parsed = schema.safeParse(value);
+  if (parsed.success) return parsed.data;
+  try {
+    await cacheDel(key);
+  } catch {}
+  return null;
+}
+
+// removed legacy validated helpers in favor of Zod-based variants
+
+export async function getOrSetZod<T>(
+  key: string,
+  ttlSeconds: number | ((value: T) => number),
   loader: () => Promise<T>,
+  schema: ZodType<T>,
 ): Promise<T> {
   if (!redis) return await loader();
   try {
-    const cached = await cacheGet<T>(key);
-    if (cached !== null) return cached;
+    const value = await cacheGet<unknown>(key);
+    if (value !== null) {
+      const parsed = schema.safeParse(value);
+      if (parsed.success) return parsed.data as T;
+      await cacheDel(key);
+    }
   } catch {
     // ignore cache errors
   }
-  const value = await loader();
+  const fresh = await loader();
   try {
-    await cacheSet<T>(key, value, ttlSeconds);
+    const ttl =
+      typeof ttlSeconds === "function" ? ttlSeconds(fresh) : ttlSeconds;
+    await cacheSet<T>(key, fresh, ttl);
   } catch {
     // ignore cache errors
   }
-  return value;
+  return fresh;
 }
 
 export { redis };

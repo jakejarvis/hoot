@@ -16,15 +16,20 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "next": "recommended",
+      "react": "recommended"
+    },
     "rules": {
       "recommended": true,
       "suspicious": {
         "noUnknownAtRules": "off"
+      },
+      "nursery": {
+        "useSortedClasses": "error",
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error"
       }
-    },
-    "domains": {
-      "next": "recommended",
-      "react": "recommended"
     }
   },
   "assist": {

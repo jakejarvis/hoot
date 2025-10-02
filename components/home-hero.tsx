@@ -49,12 +49,12 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
 
   return (
     <div className={className}>
-      <h1 className="w-full flex flex-col items-center sm:flex-row sm:items-baseline justify-center gap-y-2 sm:gap-y-0 text-center text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-none">
-        <span className="text-foreground/90 whitespace-nowrap">
+      <h1 className="flex w-full flex-col items-center justify-center gap-y-2 text-center font-semibold text-3xl leading-none tracking-tight sm:flex-row sm:items-baseline sm:gap-y-0 sm:text-4xl md:text-5xl">
+        <span className="whitespace-nowrap text-foreground/90">
           Inspect any domain's
         </span>
         <motion.span
-          className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 ml-2.5 rounded-lg sm:rounded-xl bg-muted/70 text-foreground ring-1 ring-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
+          className="ml-2.5 inline-flex items-center rounded-lg bg-muted/70 px-2 py-0.5 text-foreground shadow-sm ring-1 ring-border/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md sm:rounded-xl sm:px-3 sm:py-1"
           aria-live="polite"
           aria-atomic="true"
           initial={false}
@@ -62,8 +62,8 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
           transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
           style={{ willChange: "width", width: measuredWidth ?? undefined }}
         >
-          <span className="relative h-[1.15em] overflow-hidden flex w-full items-center whitespace-nowrap">
-            <span className="absolute left-1/2 -translate-x-1/2">
+          <span className="relative flex h-[1.15em] w-full items-center overflow-hidden whitespace-nowrap">
+            <span className="-translate-x-1/2 absolute left-1/2">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
                   key={rotatingWords[index]}
@@ -75,7 +75,7 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
                     ease: [0.22, 1, 0.36, 1],
                     duration: 0.5,
                   }}
-                  className="will-change-transform inline-block"
+                  className="inline-block will-change-transform"
                 >
                   {rotatingWords[index]}
                 </motion.span>
@@ -90,14 +90,14 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
         {/* measurement element for smooth width animation (inherits h1 font sizing) */}
         <span
           ref={measureRef}
-          className="invisible absolute pointer-events-none inline-flex items-center align-baseline px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl bg-muted/70 text-foreground ring-1 ring-border/60 shadow-sm"
+          className="pointer-events-none invisible absolute inline-flex items-center rounded-lg bg-muted/70 px-2 py-0.5 align-baseline text-foreground shadow-sm ring-1 ring-border/60 sm:rounded-xl sm:px-3 sm:py-1"
           aria-hidden="true"
         >
           <span className="inline-flex items-center whitespace-nowrap">
             {rotatingWords[index]}
           </span>
         </span>
-        <span className="text-foreground/90 whitespace-nowrap hidden sm:inline">
+        <span className="hidden whitespace-nowrap text-foreground/90 sm:inline">
           .
         </span>
       </h1>

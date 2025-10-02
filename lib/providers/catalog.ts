@@ -1,148 +1,250 @@
-import type { Provider, RegistrarProvider } from "./types";
+import type { Provider } from "@/lib/schemas";
 
 /**
  * A registry of known hosting providers. The detection algorithm will iterate
  * through this list to identify the hosting provider from HTTP headers.
  */
-export const HOSTING_PROVIDERS: Provider[] = [
+export const HOSTING_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "hosting" }
+> = [
   {
     name: "Vercel",
     domain: "vercel.com",
-    rules: [
-      { type: "header", name: "server", value: "vercel" },
-      { type: "header", name: "x-vercel-id", present: true },
-    ],
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "vercel" },
+        { kind: "headerPresent", name: "x-vercel-id" },
+      ],
+    },
   },
   {
     name: "WP Engine",
     domain: "wpengine.com",
-    rules: [{ type: "header", name: "x-powered-by", value: "wp engine" }],
-  },
-  {
-    name: "WordPress.com",
-    domain: "wordpress.com",
-    rules: [{ type: "header", name: "host-header", value: "wordpress.com" }],
-  },
-  {
-    name: "Amazon S3",
-    domain: "aws.amazon.com",
-    rules: [{ type: "header", name: "server", value: "AmazonS3" }],
-  },
-  {
-    name: "Netlify",
-    domain: "netlify.com",
-    rules: [{ type: "header", name: "server", value: "Netlify" }],
-  },
-  {
-    name: "GitHub Pages",
-    domain: "github.com",
-    rules: [{ type: "header", name: "server", value: "GitHub.com" }],
-  },
-  {
-    name: "GitLab Pages",
-    domain: "gitlab.com",
-    rules: [{ type: "header", name: "server", value: "GitLab Pages" }],
-  },
-  {
-    name: "Fly.io",
-    domain: "fly.io",
-    rules: [{ type: "header", name: "server", value: "Fly/" }],
-  },
-  {
-    name: "Akamai",
-    domain: "akamai.com",
-    rules: [{ type: "header", name: "server", value: "AkamaiGHost" }],
-  },
-  {
-    name: "Amazon CloudFront",
-    domain: "aws.amazon.com",
-    rules: [
-      { type: "header", name: "server", value: "CloudFront" },
-      { type: "header", name: "x-amz-cf-id", present: true },
-    ],
-  },
-  {
-    name: "Heroku",
-    domain: "heroku.com",
-    rules: [{ type: "header", name: "server", value: "vegur" }],
-  },
-  {
-    name: "Render",
-    domain: "render.com",
-    rules: [{ type: "header", name: "server", value: "Render" }],
-  },
-  {
-    name: "Squarespace",
-    domain: "squarespace.com",
-    rules: [{ type: "header", name: "x-contextid", present: true }],
-  },
-  {
-    name: "Shopify",
-    domain: "shopify.com",
-    rules: [{ type: "header", name: "x-shopify-stage", present: true }],
-  },
-  {
-    name: "Webflow",
-    domain: "webflow.com",
-    rules: [{ type: "header", name: "x-wf-page-id", present: true }],
-  },
-  {
-    name: "Wix",
-    domain: "wix.com",
-    rules: [{ type: "header", name: "x-wix-request-id", present: true }],
-  },
-  {
-    name: "Cloudflare",
-    domain: "cloudflare.com",
-    rules: [
-      { type: "header", name: "server", value: "cloudflare" },
-      { type: "header", name: "cf-ray", present: true },
-    ],
-  },
-  {
-    name: "Azure Front Door",
-    domain: "azure.microsoft.com",
-    rules: [{ type: "header", name: "x-azure-ref", present: true }],
-  },
-  {
-    name: "Google Cloud Storage",
-    domain: "cloud.google.com",
-    rules: [{ type: "header", name: "x-goog-generation", present: true }],
-  },
-  {
-    name: "Azure Static Web Apps",
-    domain: "azure.microsoft.com",
-    rules: [{ type: "header", name: "x-azure-ref", present: true }],
-  },
-  {
-    name: "OVHcloud",
-    domain: "ovhcloud.com",
-    rules: [{ type: "header", name: "x-ovh-request-id", present: true }],
-  },
-  {
-    name: "Pantheon",
-    domain: "pantheon.io",
-    rules: [{ type: "header", name: "x-pantheon-site", present: true }],
-  },
-  {
-    name: "Sucuri",
-    domain: "sucuri.net",
-    rules: [{ type: "header", name: "x-sucuri-id", present: true }],
-  },
-  {
-    name: "Imperva",
-    domain: "imperva.com",
-    rules: [{ type: "header", name: "x-iinfo", present: true }],
-  },
-  {
-    name: "Kinsta",
-    domain: "kinsta.com",
-    rules: [{ type: "header", name: "x-kinsta-cache", present: true }],
+    category: "hosting",
+    rule: { kind: "headerIncludes", name: "x-powered-by", substr: "wp engine" },
   },
   {
     name: "WordPress VIP",
     domain: "wpvip.com",
-    rules: [{ type: "header", name: "x-powered-by", value: "WordPress VIP" }],
+    category: "hosting",
+    rule: {
+      kind: "headerIncludes",
+      name: "x-powered-by",
+      substr: "wordpress vip",
+    },
+  },
+  {
+    name: "WordPress.com",
+    domain: "wordpress.com",
+    category: "hosting",
+    rule: {
+      kind: "headerIncludes",
+      name: "host-header",
+      substr: "wordpress.com",
+    },
+  },
+  {
+    name: "Shopify",
+    domain: "shopify.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerIncludes", name: "powered-by", substr: "shopify" },
+        { kind: "headerPresent", name: "x-shopid" },
+      ],
+    },
+  },
+  {
+    name: "Amazon S3",
+    domain: "aws.amazon.com",
+    category: "hosting",
+    rule: { kind: "headerEquals", name: "server", value: "amazons3" },
+  },
+  {
+    name: "Netlify",
+    domain: "netlify.com",
+    category: "hosting",
+    rule: { kind: "headerEquals", name: "server", value: "netlify" },
+  },
+  {
+    name: "GitHub Pages",
+    domain: "github.com",
+    category: "hosting",
+    rule: { kind: "headerEquals", name: "server", value: "github.com" },
+  },
+  {
+    name: "GitLab Pages",
+    domain: "gitlab.com",
+    category: "hosting",
+    rule: { kind: "headerEquals", name: "server", value: "gitlab pages" },
+  },
+  {
+    name: "Fly.io",
+    domain: "fly.io",
+    category: "hosting",
+    rule: { kind: "headerIncludes", name: "server", substr: "fly/" },
+  },
+  {
+    name: "Heroku",
+    domain: "heroku.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "vegur" },
+        { kind: "headerEquals", name: "server", value: "heroku" },
+      ],
+    },
+  },
+  {
+    name: "Render",
+    domain: "render.com",
+    category: "hosting",
+    rule: { kind: "headerEquals", name: "server", value: "render" },
+  },
+  {
+    name: "Squarespace",
+    domain: "squarespace.com",
+    category: "hosting",
+    rule: { kind: "headerEquals", name: "server", value: "squarespace" },
+  },
+  {
+    name: "Webflow",
+    domain: "webflow.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-wf-page-id" },
+  },
+  {
+    name: "Wix",
+    domain: "wix.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-wix-request-id" },
+  },
+  {
+    name: "Azure Front Door",
+    domain: "azure.microsoft.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-azure-ref" },
+  },
+  {
+    name: "Google Cloud",
+    domain: "cloud.google.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "google frontend" },
+        { kind: "headerEquals", name: "server", value: "esf" },
+        { kind: "headerEquals", name: "server", value: "gws" },
+        { kind: "headerIncludes", name: "via", substr: "1.1 google" },
+      ],
+    },
+  },
+  {
+    name: "Google Cloud Storage",
+    domain: "cloud.google.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-goog-generation" },
+  },
+  {
+    name: "Azure Static Web Apps",
+    domain: "azure.microsoft.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-azure-ref" },
+  },
+  {
+    name: "OVHcloud",
+    domain: "ovhcloud.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-ovh-request-id" },
+  },
+  {
+    name: "Pantheon",
+    domain: "pantheon.io",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerPresent", name: "x-pantheon-site" },
+        { kind: "headerPresent", name: "x-pantheon-styx-hostname" },
+        { kind: "headerPresent", name: "x-styx-req-id" },
+      ],
+    },
+  },
+  {
+    name: "Sucuri",
+    domain: "sucuri.net",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-sucuri-id" },
+  },
+  {
+    name: "Imperva",
+    domain: "imperva.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-iinfo" },
+  },
+  {
+    name: "Kinsta",
+    domain: "kinsta.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-kinsta-cache" },
+  },
+  {
+    name: "Bunny.net",
+    domain: "bunny.net",
+    category: "hosting",
+    rule: {
+      all: [
+        { kind: "headerPresent", name: "cdn-cache" },
+        { kind: "headerPresent", name: "perma-cache" },
+      ],
+    },
+  },
+  {
+    name: "Fastly",
+    domain: "fastly.com",
+    category: "hosting",
+    rule: {
+      all: [
+        { kind: "headerPresent", name: "x-served-by" },
+        { kind: "headerPresent", name: "x-cache" },
+        { kind: "headerPresent", name: "x-timer" },
+      ],
+    },
+  },
+  {
+    name: "Akamai",
+    domain: "akamai.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "akamaighost" },
+        { kind: "headerPresent", name: "x-akamai-transformed" },
+        { kind: "headerPresent", name: "x-akamai-request-id" },
+        { kind: "headerPresent", name: "akamai-request-bc" },
+        { kind: "headerPresent", name: "akamai-grn" },
+      ],
+    },
+  },
+  {
+    name: "Amazon CloudFront",
+    domain: "aws.amazon.com",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerEquals", name: "server", value: "cloudfront" },
+        { kind: "headerPresent", name: "x-amz-cf-id" },
+      ],
+    },
+  },
+  {
+    name: "Cloudflare",
+    domain: "cloudflare.com",
+    category: "hosting",
+    rule: {
+      all: [
+        { kind: "headerEquals", name: "server", value: "cloudflare" },
+        { kind: "headerPresent", name: "cf-ray" },
+      ],
+    },
   },
 ];
 
@@ -150,119 +252,167 @@ export const HOSTING_PROVIDERS: Provider[] = [
  * A registry of known email providers. The detection algorithm will iterate
  * through this list to identify the email provider from MX records.
  */
-export const EMAIL_PROVIDERS: Provider[] = [
-  // Google now supports a single MX as well as the legacy multi-MX set.
+export const EMAIL_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "email" }
+> = [
   {
     name: "Google Workspace",
     domain: "google.com",
-    rules: [{ type: "dns", recordType: "MX", value: "smtp.google.com" }],
-  },
-  {
-    name: "Google Workspace",
-    domain: "google.com",
-    rules: [{ type: "dns", recordType: "MX", value: "aspmx.l.google.com" }],
+    category: "email",
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "smtp.google.com" },
+        { kind: "mxSuffix", suffix: "aspmx.l.google.com" },
+        { kind: "mxSuffix", suffix: "googlemail.com" },
+      ],
+    },
   },
   {
     name: "Microsoft 365",
     domain: "office.com",
-    rules: [
-      { type: "dns", recordType: "MX", value: "mail.protection.outlook.com" },
-    ],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mail.protection.outlook.com" },
   },
   {
     name: "Zoho",
     domain: "zoho.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mx.zoho.com" }],
+    category: "email",
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mx.zoho.com" },
+        { kind: "mxSuffix", suffix: "mx.zoho.eu" },
+      ],
+    },
   },
   {
     name: "Proton",
     domain: "proton.me",
-    rules: [{ type: "dns", recordType: "MX", value: "protonmail.ch" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "protonmail.ch" },
   },
   {
     name: "Fastmail",
     domain: "fastmail.com",
-    rules: [{ type: "dns", recordType: "MX", value: "messagingengine.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "messagingengine.com" },
   },
   {
     name: "Cloudflare Email Routing",
     domain: "cloudflare.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mx.cloudflare.net" }],
+    category: "email",
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mx.cloudflare.net" },
+        { kind: "mxSuffix", suffix: "inbound.cf-emailsecurity.net" },
+      ],
+    },
   },
   {
     name: "Yahoo Mail",
     domain: "yahoo.com",
-    rules: [{ type: "dns", recordType: "MX", value: "yahoodns.net" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "yahoodns.net" },
   },
   {
     name: "Yandex 360",
     domain: "yandex.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mx.yandex.net" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mx.yandex.net" },
   },
   {
     name: "ImprovMX",
     domain: "improvmx.com",
-    rules: [{ type: "dns", recordType: "MX", value: "improvmx.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "improvmx.com" },
   },
   {
     name: "Forward Email",
     domain: "forwardemail.net",
-    rules: [{ type: "dns", recordType: "MX", value: "forwardemail.net" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "forwardemail.net" },
   },
   {
     name: "Migadu",
     domain: "migadu.com",
-    rules: [{ type: "dns", recordType: "MX", value: "migadu.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "migadu.com" },
   },
   {
     name: "iCloud Mail",
     domain: "icloud.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mail.icloud.com" }],
+    category: "email",
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mail.icloud.com" },
+        { kind: "mxSuffix", suffix: "apple.com" },
+      ],
+    },
   },
   {
     name: "Mailgun",
     domain: "mailgun.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mailgun.org" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mailgun.org" },
   },
   {
     name: "SendGrid",
     domain: "sendgrid.com",
-    rules: [{ type: "dns", recordType: "MX", value: "sendgrid.net" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "sendgrid.net" },
   },
   {
     name: "Mailjet",
     domain: "mailjet.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mailjet.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mailjet.com" },
   },
   {
     name: "Postmark",
     domain: "postmarkapp.com",
-    rules: [{ type: "dns", recordType: "MX", value: "postmarkapp.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "postmarkapp.com" },
   },
   {
     name: "Rackspace Email",
     domain: "rackspace.com",
-    rules: [{ type: "dns", recordType: "MX", value: "emailsrvr.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "emailsrvr.com" },
   },
   {
     name: "Proofpoint",
     domain: "proofpoint.com",
-    rules: [{ type: "dns", recordType: "MX", value: "pphosted.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "pphosted.com" },
   },
-  {
-    name: "Amazon WorkMail",
-    domain: "aws.amazon.com",
-    rules: [{ type: "dns", recordType: "MX", value: "inbound-smtp." }],
-  },
+  // {
+  //   name: "Amazon WorkMail",
+  //   domain: "aws.amazon.com",
+  //   category: "email",
+  //   rule: { kind: "mxSuffix", suffix: "inbound-smtp." },
+  // },
   {
     name: "Titan Email",
     domain: "titan.email",
-    rules: [{ type: "dns", recordType: "MX", value: "mx1.titan.email" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "titan.email" },
   },
   {
     name: "IONOS Mail",
     domain: "ionos.com",
-    rules: [{ type: "dns", recordType: "MX", value: "mx00.ionos.com" }],
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "ionos.com" },
+  },
+  {
+    name: "Mimecast",
+    domain: "mimecast.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mimecast.com" },
+  },
+  {
+    name: "GoDaddy",
+    domain: "godaddy.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "secureserver.net" },
   },
 ];
 
@@ -270,233 +420,697 @@ export const EMAIL_PROVIDERS: Provider[] = [
  * A registry of known DNS providers. The detection algorithm will iterate
  * through this list to identify the DNS provider from NS records.
  */
-export const DNS_PROVIDERS: Provider[] = [
+export const DNS_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "dns" }
+> = [
   {
     name: "Cloudflare",
     domain: "cloudflare.com",
-    rules: [{ type: "dns", recordType: "NS", value: "cloudflare.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "cloudflare.com" },
   },
   {
     name: "Vercel",
     domain: "vercel.com",
-    rules: [{ type: "dns", recordType: "NS", value: "vercel-dns.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "vercel-dns.com" },
   },
   {
     name: "DNSimple",
     domain: "dnsimple.com",
-    rules: [{ type: "dns", recordType: "NS", value: "dnsimple.com" }],
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "dnsimple.com" },
+        { kind: "nsSuffix", suffix: "dnsimple-edge.net" },
+        { kind: "nsSuffix", suffix: "dnsimple-edge.org" },
+      ],
+    },
   },
   {
     name: "WordPress.com",
     domain: "wordpress.com",
-    rules: [{ type: "dns", recordType: "NS", value: "wordpress.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "wordpress.com" },
   },
   {
     name: "DNS Made Easy",
     domain: "dnsmadeeasy.com",
-    rules: [{ type: "dns", recordType: "NS", value: "dnsmadeeasy.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "dnsmadeeasy.com" },
   },
   {
     name: "DigitalOcean",
     domain: "digitalocean.com",
-    rules: [{ type: "dns", recordType: "NS", value: "digitalocean.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "digitalocean.com" },
   },
   {
     name: "NS1",
     domain: "ns1.com",
-    rules: [
-      { type: "dns", recordType: "NS", value: "nsone.net" },
-      { type: "dns", recordType: "NS", value: "ns1.com" },
-    ],
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "nsone.net" },
+        { kind: "nsSuffix", suffix: "ns1.com" },
+      ],
+    },
   },
   {
     name: "Amazon Route 53",
     domain: "aws.amazon.com",
-    rules: [{ type: "dns", recordType: "NS", value: "awsdns" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "awsdns" },
   },
   {
     name: "GoDaddy",
     domain: "godaddy.com",
-    rules: [{ type: "dns", recordType: "NS", value: "domaincontrol.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "domaincontrol.com" },
   },
   {
     name: "Google Cloud DNS",
     domain: "cloud.google.com",
-    rules: [
-      { type: "dns", recordType: "NS", value: "googledomains.com" },
-      { type: "dns", recordType: "NS", value: "ns-cloud" },
-    ],
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "googledomains.com" },
+        { kind: "nsSuffix", suffix: "google.com" },
+      ],
+    },
   },
   {
     name: "Hurricane Electric",
     domain: "he.net",
-    rules: [{ type: "dns", recordType: "NS", value: "he.net" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "he.net" },
   },
   {
     name: "Linode",
     domain: "linode.com",
-    rules: [{ type: "dns", recordType: "NS", value: "linode.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "linode.com" },
   },
   {
     name: "Hetzner",
     domain: "hetzner.com",
-    rules: [{ type: "dns", recordType: "NS", value: "hetzner.de" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "hetzner.de" },
   },
   {
     name: "OVHcloud",
     domain: "ovhcloud.com",
-    rules: [
-      { type: "dns", recordType: "NS", value: "ovh.net" },
-      { type: "dns", recordType: "NS", value: "ovh.co.uk" },
-    ],
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "ovh.net" },
+        { kind: "nsSuffix", suffix: "ovh.co.uk" },
+      ],
+    },
   },
   {
-    name: "IONOS",
+    name: "1&1 IONOS",
     domain: "ionos.com",
-    rules: [
-      { type: "dns", recordType: "NS", value: "ionos.com" },
-      { type: "dns", recordType: "NS", value: "1and1.com" },
-    ],
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "ionos.com" },
+        { kind: "nsSuffix", suffix: "1and1.com" },
+      ],
+    },
   },
   {
     name: "NameSilo",
     domain: "namesilo.com",
-    rules: [{ type: "dns", recordType: "NS", value: "namesilo.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "namesilo.com" },
   },
   {
     name: "DreamHost",
     domain: "dreamhost.com",
-    rules: [{ type: "dns", recordType: "NS", value: "dreamhost.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "dreamhost.com" },
   },
   {
     name: "Squarespace",
     domain: "squarespace.com",
-    rules: [{ type: "dns", recordType: "NS", value: "squarespacedns.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "squarespacedns.com" },
   },
   {
     name: "Wix",
     domain: "wix.com",
-    rules: [{ type: "dns", recordType: "NS", value: "wixdns.net" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "wixdns.net" },
   },
   {
     name: "Microsoft Azure",
     domain: "azure.microsoft.com",
-    rules: [
-      { type: "dns", recordType: "NS", value: "azure-dns.com" },
-      { type: "dns", recordType: "NS", value: "azure-dns.net" },
-      { type: "dns", recordType: "NS", value: "azure-dns.org" },
-      { type: "dns", recordType: "NS", value: "azure-dns.info" },
-    ],
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "azure-dns.com" },
+        { kind: "nsSuffix", suffix: "azure-dns.net" },
+        { kind: "nsSuffix", suffix: "azure-dns.org" },
+        { kind: "nsSuffix", suffix: "azure-dns.info" },
+      ],
+    },
   },
   {
     name: "Namecheap FreeDNS",
     domain: "namecheap.com",
-    rules: [{ type: "dns", recordType: "NS", value: "registrar-servers.com" }],
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "registrar-servers.com" },
+  },
+  {
+    name: "Akamai Edge DNS",
+    domain: "akamai.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "akam.net" },
+  },
+  {
+    name: "UltraDNS (Vercara)",
+    domain: "vercara.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "ultradns.net" },
+        { kind: "nsSuffix", suffix: "ultradns.org" },
+        { kind: "nsSuffix", suffix: "ultradns.com" },
+        { kind: "nsSuffix", suffix: "ultradns.biz" },
+      ],
+    },
+  },
+  {
+    name: "Porkbun DNS",
+    domain: "porkbun.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "porkbun.com" },
+  },
+  {
+    name: "AliDNS / HiChina",
+    domain: "alibabacloud.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "hichina.com" },
+        { kind: "nsSuffix", suffix: "alidns.com" },
+      ],
+    },
+  },
+  {
+    name: "DNSPod",
+    domain: "dnspod.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "dnspod.net" },
+  },
+  {
+    name: "Network Solutions",
+    domain: "networksolutions.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "worldnic.com" },
+        { kind: "nsSuffix", suffix: "register.com" },
+      ],
+    },
   },
 ];
 
 /** Registrar providers registry for WHOIS/RDAP partial name matching */
-export const REGISTRAR_PROVIDERS: RegistrarProvider[] = [
+export const REGISTRAR_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "registrar" }
+> = [
   {
     name: "GoDaddy",
     domain: "godaddy.com",
-    aliases: ["godaddy inc", "go daddy", "wild west domains"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "godaddy" },
+        { kind: "registrarIncludes", substr: "go daddy" },
+        { kind: "registrarIncludes", substr: "wild west domains" },
+      ],
+    },
   },
   {
     name: "Namecheap",
     domain: "namecheap.com",
-    aliases: ["namecheap, inc", "namecheap inc"],
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "namecheap" },
   },
   {
     name: "Squarespace",
     domain: "squarespace.domains",
-    aliases: ["squarespace domains llc", "squarespace domains ii llc"],
+    category: "registrar",
+    rule: {
+      any: [{ kind: "registrarIncludes", substr: "squarespace" }],
+    },
   },
   // Keep Google LLC for rare legacy WHOIS text, but do not alias to MarkMonitor (separate registrar).
   {
     name: "Google",
     domain: "google.com",
-    aliases: ["google llc", "google inc"],
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "google" },
   },
   {
     name: "Cloudflare",
     domain: "cloudflare.com",
-    aliases: ["cloudflare, inc", "cloudflare inc"],
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "cloudflare" },
   },
-  { name: "Gandi", domain: "gandi.net", aliases: ["gandi sas", "gandi sas"] },
+  {
+    name: "Amazon Route 53",
+    domain: "aws.amazon.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "amazon" },
+  },
+  {
+    name: "Sav.com",
+    domain: "sav.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "sav" },
+  },
+  {
+    name: "1API",
+    domain: "1api.net",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "1api" },
+  },
+  {
+    name: "Gandi",
+    domain: "gandi.net",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "gandi" },
+  },
   {
     name: "Tucows",
     domain: "tucows.com",
-    aliases: ["tucows domains inc", "hover"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "tucows" },
+        { kind: "registrarIncludes", substr: "hover" },
+      ],
+    },
   },
   {
     name: "OVHcloud",
     domain: "ovhcloud.com",
-    aliases: ["ovh sas", "ovhgroup"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "ovhcloud" },
+        { kind: "registrarIncludes", substr: "ovhgroup" },
+        { kind: "registrarIncludes", substr: "ovh sas" },
+      ],
+    },
   },
   {
     name: "1&1 IONOS",
     domain: "ionos.com",
-    aliases: ["1&1", "ionos se", "united internet"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "1&1" },
+        { kind: "registrarIncludes", substr: "ionos" },
+        { kind: "registrarIncludes", substr: "united internet" },
+      ],
+    },
   },
   {
     name: "Name.com",
     domain: "name.com",
-    aliases: ["rightside", "donuts inc", "identity digital"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "name.com" },
+        { kind: "registrarIncludes", substr: "rightside" },
+        { kind: "registrarIncludes", substr: "afilias" },
+        { kind: "registrarIncludes", substr: "donuts" },
+        { kind: "registrarIncludes", substr: "identity digital" },
+      ],
+    },
   },
-  { name: "Dynadot", domain: "dynadot.com", aliases: ["dynadot llc"] },
-  { name: "Porkbun", domain: "porkbun.com", aliases: ["porkbun llc"] },
+  {
+    name: "Dynadot",
+    domain: "dynadot.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "dynadot" },
+  },
+  {
+    name: "Porkbun",
+    domain: "porkbun.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "porkbun" },
+  },
   {
     name: "Alibaba Cloud",
     domain: "alibaba.com",
-    aliases: ["alibaba cloud computing ltd", "aliyun"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "alibaba" },
+        { kind: "registrarIncludes", substr: "aliyun" },
+      ],
+    },
   },
-  { name: "Enom", domain: "enom.com", aliases: ["enom, llc"] },
+  {
+    name: "Enom",
+    domain: "enom.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "enom" },
+  },
   {
     name: "GMO Internet",
     domain: "gmo.jp",
-    aliases: ["onamae", "gmo internet group"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "gmo internet" },
+        { kind: "registrarIncludes", substr: "onamae" },
+      ],
+    },
+  },
+  {
+    name: "Openprovider (Registrar.eu)",
+    domain: "openprovider.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "hosting concepts" },
+        { kind: "registrarIncludes", substr: "registrar.eu" },
+      ],
+    },
+  },
+  {
+    name: "EuroDNS",
+    domain: "eurodns.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "eurodns" },
   },
   {
     name: "Network Solutions",
     domain: "networksolutions.com",
-    aliases: ["networksolutions inc", "networksolutions llc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "network solutions" },
+        { kind: "registrarIncludes", substr: "networksolutions" },
+        { kind: "registrarIncludes", substr: "web.com" },
+      ],
+    },
   },
   {
     name: "Register.com",
     domain: "register.com",
-    aliases: ["register, inc", "register inc"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "register.com" },
+        { kind: "registrarIncludes", substr: "register, inc" },
+        { kind: "registrarIncludes", substr: "register inc" },
+      ],
+    },
   },
   {
     name: "Automattic",
     domain: "wordpress.com",
-    aliases: ["wordpress.com", "wordpress vip"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "automattic" },
+        { kind: "registrarIncludes", substr: "wordpress.com" },
+      ],
+    },
   },
   {
     name: "MarkMonitor",
     domain: "markmonitor.com",
-    aliases: ["markmonitor inc", "markmonitor, inc."],
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "markmonitor" },
   },
   {
     name: "CSC Corporate Domains",
     domain: "cscdbs.com",
-    aliases: ["csc corporate domains", "csc global"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "csc corporate" },
+        { kind: "registrarIncludes", substr: "csc global" },
+      ],
+    },
   },
   {
     name: "Ascio",
     domain: "ascio.com",
-    aliases: ["ascio technologies", "ascio technologies, inc."],
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "ascio" },
   },
   {
     name: "Key-Systems",
     domain: "key-systems.net",
-    aliases: ["key-systems gmbh", "rrpproxy"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "key-systems" },
+        { kind: "registrarIncludes", substr: "rrpproxy" },
+      ],
+    },
   },
   {
     name: "PublicDomainRegistry (PDR)",
     domain: "publicdomainregistry.com",
-    aliases: ["pdr ltd", "publicdomainregistry.com"],
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "publicdomainregistry" },
+        { kind: "registrarIncludes", substr: "pdr ltd" },
+      ],
+    },
   },
-  { name: "Wix", domain: "wix.com", aliases: ["wix.com ltd"] },
-  { name: "RegistrarSafe", domain: "meta.com", aliases: ["registrarsafe llc"] },
+  {
+    name: "Wix",
+    domain: "wix.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "wix" },
+  },
+  {
+    name: "RegistrarSafe",
+    domain: "meta.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "registrarsafe" },
+  },
+  {
+    name: "Com Laude",
+    domain: "comlaude.com",
+    category: "registrar",
+    rule: {
+      any: [
+        { kind: "registrarIncludes", substr: "nom-iq" },
+        { kind: "registrarIncludes", substr: "comlaude" },
+      ],
+    },
+  },
+];
+
+/**
+ * Certificate Authorities registry. Matches against issuer strings.
+ */
+export const CA_PROVIDERS: Array<
+  Omit<Provider, "category"> & { category: "ca" }
+> = [
+  {
+    name: "Let's Encrypt",
+    domain: "letsencrypt.org",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "let's encrypt" },
+        { kind: "issuerIncludes", substr: "lets encrypt" },
+        { kind: "issuerIncludes", substr: "isrg" },
+        // https://letsencrypt.org/certificates/
+        { kind: "issuerEquals", value: "e1" },
+        { kind: "issuerEquals", value: "e2" },
+        { kind: "issuerEquals", value: "e5" },
+        { kind: "issuerEquals", value: "e6" },
+        { kind: "issuerEquals", value: "e7" },
+        { kind: "issuerEquals", value: "e8" },
+        { kind: "issuerEquals", value: "e9" },
+        { kind: "issuerEquals", value: "r3" },
+        { kind: "issuerEquals", value: "r4" },
+        { kind: "issuerEquals", value: "r10" },
+        { kind: "issuerEquals", value: "r11" },
+        { kind: "issuerEquals", value: "r12" },
+        { kind: "issuerEquals", value: "r13" },
+        { kind: "issuerEquals", value: "r14" },
+        { kind: "issuerEquals", value: "ye1" },
+        { kind: "issuerEquals", value: "ye2" },
+        { kind: "issuerEquals", value: "ye3" },
+        { kind: "issuerEquals", value: "yr1" },
+        { kind: "issuerEquals", value: "yr2" },
+        { kind: "issuerEquals", value: "yr3" },
+      ],
+    },
+  },
+  {
+    name: "Google Trust Services",
+    domain: "pki.goog",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "google trust services" },
+        { kind: "issuerIncludes", substr: "gts" },
+        // https://pki.goog/repository/
+        { kind: "issuerEquals", value: "wr1" },
+        { kind: "issuerEquals", value: "wr2" },
+        { kind: "issuerEquals", value: "wr3" },
+        { kind: "issuerEquals", value: "wr4" },
+        { kind: "issuerEquals", value: "wr5" },
+        { kind: "issuerEquals", value: "we1" },
+        { kind: "issuerEquals", value: "we2" },
+        { kind: "issuerEquals", value: "we3" },
+        { kind: "issuerEquals", value: "we4" },
+        { kind: "issuerEquals", value: "we5" },
+      ],
+    },
+  },
+  {
+    name: "ZeroSSL",
+    domain: "zerossl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "zerossl" },
+  },
+  {
+    name: "Thawte (DigiCert)",
+    domain: "thawte.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "thawte" },
+  },
+  {
+    name: "DigiCert",
+    domain: "digicert.com",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "digicert" },
+        { kind: "issuerIncludes", substr: "baltimore cybertrust" },
+      ],
+    },
+  },
+  {
+    name: "GoDaddy",
+    domain: "godaddy.com",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "godaddy" },
+        { kind: "issuerIncludes", substr: "go daddy" },
+        { kind: "issuerIncludes", substr: "starfield" },
+      ],
+    },
+  },
+  {
+    name: "Sectigo (Comodo)",
+    domain: "sectigo.com",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "sectigo" },
+        { kind: "issuerIncludes", substr: "comodo" },
+        { kind: "issuerIncludes", substr: "usertrust" },
+        { kind: "issuerIncludes", substr: "aaa" },
+      ],
+    },
+  },
+  {
+    name: "GlobalSign",
+    domain: "globalsign.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "globalsign" },
+  },
+  {
+    name: "GeoTrust",
+    domain: "geotrust.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "geotrust" },
+  },
+  {
+    name: "Entrust",
+    domain: "entrust.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "entrust" },
+  },
+  {
+    name: "Amazon Trust Services",
+    domain: "amazontrust.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "amazon" },
+  },
+  {
+    name: "SSL.com",
+    domain: "ssl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "ssl.com" },
+  },
+  {
+    name: "Buypass",
+    domain: "buypass.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "buypass" },
+  },
+  {
+    name: "HARICA",
+    domain: "harica.gr",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "harica" },
+  },
+  {
+    name: "Actalis",
+    domain: "actalis.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "actalis" },
+  },
+  {
+    name: "TrustAsia",
+    domain: "trustasia.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "trustasia" },
+  },
+  {
+    name: "D-TRUST",
+    domain: "d-trust.net",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "d-trust" },
+  },
+  {
+    name: "TWCA",
+    domain: "twca.com.tw",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "twca" },
+        { kind: "issuerIncludes", substr: "taiwan-ca" },
+      ],
+    },
+  },
+  {
+    name: "SwissSign",
+    domain: "swisssign.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "swisssign" },
+  },
+  {
+    name: "RapidSSL",
+    domain: "rapidssl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "rapidssl" },
+  },
+  {
+    name: "Cloudflare",
+    domain: "cloudflare.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "cloudflare" },
+  },
 ];

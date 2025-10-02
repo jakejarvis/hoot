@@ -35,16 +35,12 @@ export function CopyButton({ value, label }: CopyButtonProps) {
   return (
     <Button
       variant="outline"
-      size="icon"
-      className="shrink-0 bg-background/50 backdrop-blur border-black/15 dark:border-white/10"
+      size="sm"
+      className="shrink-0 border-black/15 bg-background/50 backdrop-blur dark:border-white/10"
       aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
       onClick={handleCopy}
     >
-      {copied ? (
-        <Check className="h-3.5 w-3.5" />
-      ) : (
-        <Copy className="h-3.5 w-3.5" />
-      )}
+      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
       <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
     </Button>
   );

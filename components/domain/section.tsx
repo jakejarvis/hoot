@@ -1,9 +1,4 @@
-import { Info, Loader2 } from "lucide-react";
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { AlertCircle, Info, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,47 +18,58 @@ export function Section({
   description,
   help,
   icon,
-  accent,
-  status,
-  headerRight,
+  slug,
+  accent = "slate",
+  isLoading,
+  isError,
   children,
 }: {
   title: string;
   description?: string;
   help?: string;
-  icon?: React.ReactNode;
-  accent?: "blue" | "purple" | "green" | "orange" | "pink";
-  status?: "loading" | "ready" | "error";
-  headerRight?: React.ReactNode;
+  icon?: React.ElementType;
+  slug?: string;
+  accent?: "blue" | "purple" | "green" | "orange" | "pink" | "slate";
+  isLoading?: boolean;
+  isError?: boolean;
   children?: React.ReactNode;
 }) {
+  const Icon = icon;
+  // Loading/Error adornments reflect props only; avoid client-only hydration gates
+  const computedSlug = (slug ?? title)
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+  const headerId = `section-header-${computedSlug}`;
+  const contentId = `section-content-${computedSlug}`;
   return (
-    <AccordionItem value={title} className="border-none group">
+    <section
+      id={computedSlug}
+      aria-labelledby={headerId}
+      className="border-none"
+    >
       <Card
-        className="relative overflow-hidden bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 py-0 rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_8px_30px_rgb(0_0_0_/_0.12)]"
+        className="relative overflow-hidden rounded-3xl border border-black/10 bg-background/60 py-0 shadow-2xl shadow-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 dark:border-white/10"
         data-accent={accent}
       >
         {/* Accent glow */}
         <div
           aria-hidden
           className={cn(
-            "pointer-events-none absolute -inset-x-8 -top-8 h-24 blur-2xl opacity-30",
+            "-inset-x-8 -top-8 pointer-events-none absolute h-24 opacity-30 blur-2xl",
             "accent-glow",
           )}
         />
         <div className="relative">
-          <AccordionTrigger
-            className={cn("px-5 py-4 hover:no-underline no-underline group")}
-            disabled={status !== "ready"}
-          >
+          <div className="p-5" id={headerId}>
             <div className="flex w-full items-center gap-3 text-left">
-              {icon && (
+              {Icon && (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
-                  {icon}
+                  <Icon className="h-4 w-4" />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <CardTitle className="gap-2 flex items-center">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="flex items-center gap-2">
                   <span className="text-base">{title}</span>
                   {help && (
                     <TooltipProvider>
@@ -91,36 +97,32 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                {status && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {status === "loading" && (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Loading
-                      </>
-                    )}
-                    {status === "error" && (
-                      <span className="text-destructive">Error</span>
-                    )}
-                  </div>
-                )}
+                <div className="mr-2 flex items-center gap-2 text-muted-foreground text-xs">
+                  {isLoading && (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="sr-only">Loading</span>
+                    </>
+                  )}
+                  {isError && (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
+                      <span>Error</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </AccordionTrigger>
-          {headerRight && (
-            <div className="absolute right-16 top-1/2 -translate-y-1/2 hidden group-data-[state=open]:flex z-10">
-              {headerRight}
-            </div>
-          )}
+          </div>
         </div>
-        <AccordionContent>
-          {children && (
-            <CardContent className="pt-0 px-5 pb-5 space-y-3">
+        {children && (
+          <div id={contentId}>
+            <CardContent className="space-y-3 px-5 pt-0 pb-5">
               {children}
             </CardContent>
-          )}
-        </AccordionContent>
+          </div>
+        )}
       </Card>
-    </AccordionItem>
+    </section>
   );
 }

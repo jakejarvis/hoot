@@ -1,96 +1,269 @@
 "use client";
 
-import { ArrowDown } from "lucide-react";
-import React from "react";
+import { ArrowDown, ChevronDown, ChevronUp } from "lucide-react";
+import { Fragment, useState } from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
+import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { equalHostname, formatDate } from "@/lib/format";
-import { SECTION_DEFS } from "./sections-meta";
+import { formatDate } from "@/lib/format";
+import type { Certificate } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function CertificatesSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
-  data?: Array<{
-    issuer: string;
-    subject: string;
-    altNames?: string[];
-    validFrom: string;
-    validTo: string;
-  }> | null;
+  data?: Certificate[] | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.certificates;
+  const [showAll, setShowAll] = useState(false);
+  const firstCert = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  const remainingCerts =
+    Array.isArray(data) && data.length > 1 ? data.slice(1) : [];
   return (
     <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
+      {...SECTION_DEFS.certificates}
+      isError={isError}
+      isLoading={isLoading}
     >
-      {data ? (
-        data.map((c, idx) => (
-          <React.Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
-            <div className="relative overflow-hidden rounded-2xl border bg-background/40 backdrop-blur supports-[backdrop-filter]:bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] border-black/10 dark:border-white/10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <KeyValue label="Issuer" value={c.issuer} />
+      {isLoading ? (
+        <>
+          <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <KeyValueSkeleton
+                label="Issuer"
+                widthClass="w-[100px]"
+                withLeading
+              />
+              <KeyValueSkeleton label="Subject" widthClass="w-[100px]" />
+              <KeyValueSkeleton label="Valid from" widthClass="w-[100px]" />
+              <KeyValueSkeleton
+                label="Valid to"
+                widthClass="w-[100px]"
+                withSuffix
+              />
+            </div>
+          </div>
+          <div className="my-2 flex justify-center">
+            <Skeleton className="h-8 w-28 rounded-md" />
+          </div>
+        </>
+      ) : data && firstCert ? (
+        <>
+          <Fragment
+            key={`cert-${firstCert.subject}-${firstCert.validFrom}-${firstCert.validTo}`}
+          >
+            <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <KeyValue
+                  label="Issuer"
+                  value={firstCert.issuer}
+                  leading={
+                    firstCert.caProvider?.domain ? (
+                      <Favicon
+                        domain={firstCert.caProvider.domain}
+                        size={16}
+                        className="rounded"
+                      />
+                    ) : undefined
+                  }
+                  suffix={
+                    firstCert.caProvider?.name &&
+                    firstCert.caProvider.name !== "Unknown" ? (
+                      <span className="flex items-center text-[11px] text-muted-foreground leading-none">
+                        {firstCert.caProvider.name}
+                      </span>
+                    ) : undefined
+                  }
+                />
+
                 <KeyValue
                   label="Subject"
-                  value={c.subject}
+                  value={firstCert.subject}
                   suffix={(() => {
-                    const subjectName = c.subject;
-                    const sans = Array.isArray(c.altNames)
-                      ? c.altNames.filter((n) => !equalHostname(n, subjectName))
+                    const subjectName = firstCert.subject;
+                    const sans = Array.isArray(firstCert.altNames)
+                      ? firstCert.altNames.filter(
+                          (n) => !equalHostname(n, subjectName),
+                        )
                       : [];
                     return sans.length > 0 ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span
-                            className="text-[11px] font-mono leading-none text-muted-foreground/80 underline underline-offset-2"
-                            title={sans.join(", ")}
-                          >
+                          <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
                             +{sans.length}
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-[80vw] md:max-w-[40rem] break-words whitespace-pre-wrap">
+                        <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
                           {sans.join(", ")}
                         </TooltipContent>
                       </Tooltip>
                     ) : undefined;
                   })()}
                 />
-                <KeyValue label="Valid from" value={formatDate(c.validFrom)} />
-                <KeyValue label="Valid to" value={formatDate(c.validTo)} />
+
+                <KeyValue
+                  label="Valid from"
+                  value={formatDate(firstCert.validFrom)}
+                />
+
+                <KeyValue
+                  label="Valid to"
+                  value={formatDate(firstCert.validTo)}
+                  suffix={
+                    <RelativeExpiry
+                      to={firstCert.validTo}
+                      dangerDays={7}
+                      warnDays={30}
+                      className="flex items-center text-[11px] leading-none"
+                    />
+                  }
+                />
               </div>
             </div>
-            {idx < data.length - 1 && (
-              <div className="flex justify-center my-2" aria-hidden>
+          </Fragment>
+
+          {remainingCerts.length > 0 && !showAll && (
+            <div className="my-2 flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-expanded={false}
+                onClick={() => setShowAll(true)}
+                className="text-[13px]"
+              >
+                <ChevronDown className="h-4 w-4" aria-hidden />
+                <span>Show Chain</span>
+              </Button>
+            </div>
+          )}
+
+          {remainingCerts.length > 0 && showAll && (
+            <>
+              <div className="my-2 flex justify-center" aria-hidden>
                 <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
               </div>
-            )}
-          </React.Fragment>
-        ))
+              {remainingCerts.map((c, idx) => (
+                <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
+                  <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <KeyValue
+                        label="Issuer"
+                        value={c.issuer}
+                        leading={
+                          c.caProvider?.domain ? (
+                            <Favicon
+                              domain={c.caProvider.domain}
+                              size={16}
+                              className="rounded"
+                            />
+                          ) : undefined
+                        }
+                        suffix={
+                          c.caProvider?.name &&
+                          c.caProvider.name !== "Unknown" ? (
+                            <span className="flex items-center text-[11px] text-muted-foreground leading-none">
+                              {c.caProvider.name}
+                            </span>
+                          ) : undefined
+                        }
+                      />
+
+                      <KeyValue
+                        label="Subject"
+                        value={c.subject}
+                        suffix={(() => {
+                          const subjectName = c.subject;
+                          const sans = Array.isArray(c.altNames)
+                            ? c.altNames.filter(
+                                (n) => !equalHostname(n, subjectName),
+                              )
+                            : [];
+                          return sans.length > 0 ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
+                                  +{sans.length}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
+                                {sans.join(", ")}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : undefined;
+                        })()}
+                      />
+
+                      <KeyValue
+                        label="Valid from"
+                        value={formatDate(c.validFrom)}
+                      />
+
+                      <KeyValue
+                        label="Valid to"
+                        value={formatDate(c.validTo)}
+                        suffix={
+                          <RelativeExpiry
+                            to={c.validTo}
+                            dangerDays={7}
+                            warnDays={30}
+                            className="flex items-center text-[11px] leading-none"
+                          />
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {idx < remainingCerts.length - 1 && (
+                    <div className="my-2 flex justify-center" aria-hidden>
+                      <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+              <div className="my-2 flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-expanded={true}
+                  onClick={() => setShowAll(false)}
+                  className="text-[13px]"
+                >
+                  <ChevronUp className="h-4 w-4" aria-hidden />
+                  <span>Hide Chain</span>
+                </Button>
+              </div>
+            </>
+          )}
+        </>
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load certificates."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={1} />
-      )}
+      ) : null}
     </Section>
   );
+}
+
+export function equalHostname(a: string, b: string): boolean {
+  try {
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+  } catch {
+    return a === b;
+  }
 }

@@ -10,7 +10,7 @@ export function ErrorWithRetry({
   onRetry: () => void;
 }) {
   return (
-    <div className="text-sm text-destructive flex items-center gap-2">
+    <div className="flex items-center gap-2 text-destructive text-sm">
       {message}
       <Button variant="outline" size="sm" onClick={onRetry}>
         Retry

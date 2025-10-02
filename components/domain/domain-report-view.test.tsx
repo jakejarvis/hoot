@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import type React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { DomainReportView } from "./domain-report-view";
+import { DomainReportView } from "@/components/domain/domain-report-view";
 
 // Mock Accordion to avoid Radix provider
 vi.mock("@/components/ui/accordion", () => ({
@@ -21,12 +20,12 @@ vi.mock("@/components/ui/accordion", () => ({
   ),
 }));
 
-vi.mock("./favicon", () => ({
+vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
 // Mock hooks for queries/history/preferences
-vi.mock("../../hooks/use-domain-queries", () => ({
+vi.mock("@/hooks/use-domain-queries", () => ({
   useDomainQueries: () => ({
     registration: {
       isLoading: false,
@@ -45,7 +44,6 @@ vi.mock("../../hooks/use-domain-queries", () => ({
         dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
         hostingProvider: { name: "Vercel", domain: "vercel.com" },
         emailProvider: { name: "Google Workspace", domain: "google.com" },
-        ipAddress: null,
         geo: {
           city: "",
           region: "",
@@ -64,11 +62,7 @@ vi.mock("../../hooks/use-domain-queries", () => ({
   }),
 }));
 
-vi.mock("../../hooks/use-ttl-preferences", () => ({
-  useTtlPreferences: () => ({ showTtls: true, setShowTtls: vi.fn() }),
-}));
-
-vi.mock("../../hooks/use-domain-history", () => ({
+vi.mock("@/hooks/use-domain-history", () => ({
   useDomainHistory: vi.fn(),
 }));
 

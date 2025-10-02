@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { DnsRecordList } from "./dns-record-list";
+import { DnsRecordList } from "@/components/domain/dns-record-list";
 
-vi.mock("./favicon", () => ({
+vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
@@ -20,7 +20,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 describe("DnsRecordList", () => {
-  it("sorts MX by priority and renders TTL badges when enabled", () => {
+  it("sorts MX by priority and renders TTL badges", () => {
     const records = [
       {
         type: "MX",
@@ -43,9 +43,9 @@ describe("DnsRecordList", () => {
         ttl: 100,
         priority: 30,
       },
-    ] as unknown as import("@/server/services/dns").DnsRecord[];
+    ] as unknown as import("@/lib/schemas").DnsRecord[];
 
-    render(<DnsRecordList records={records} type="MX" showTtls />);
+    render(<DnsRecordList records={records} type="MX" />);
 
     const items = Array.from(
       document.querySelectorAll("span.truncate.flex-1.min-w-0.block"),
@@ -63,9 +63,9 @@ describe("DnsRecordList", () => {
   it("shows Cloudflare favicon suffix when isCloudflare", () => {
     const records = [
       { type: "A", name: "", value: "1.2.3.4", ttl: 60, isCloudflare: true },
-    ] as unknown as import("@/server/services/dns").DnsRecord[];
+    ] as unknown as import("@/lib/schemas").DnsRecord[];
 
-    render(<DnsRecordList records={records} type="A" showTtls={false} />);
+    render(<DnsRecordList records={records} type="A" />);
     expect(screen.getByText(/icon:cloudflare.com/i)).toBeInTheDocument();
   });
 });

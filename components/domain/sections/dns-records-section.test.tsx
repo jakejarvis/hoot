@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import type React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { DnsRecordsSection } from "./dns-records-section";
 
@@ -47,7 +46,7 @@ describe("DnsRecordsSection", () => {
       { type: "MX", name: "mx", value: "mx.example.com", priority: 10 },
       { type: "TXT", name: "txt", value: "v=spf1" },
       { type: "NS", name: "ns", value: "ns1.example.com" },
-    ] as unknown as import("@/server/services/dns").DnsRecord[];
+    ] as unknown as import("@/lib/schemas").DnsRecord[];
 
     render(
       <DnsRecordsSection
@@ -55,8 +54,6 @@ describe("DnsRecordsSection", () => {
         isLoading={false}
         isError={false}
         onRetryAction={() => {}}
-        showTtls={false}
-        onToggleTtlsAction={() => {}}
       />,
     );
 
@@ -73,8 +70,6 @@ describe("DnsRecordsSection", () => {
         isLoading={false}
         isError
         onRetryAction={() => {}}
-        showTtls={false}
-        onToggleTtlsAction={() => {}}
       />,
     );
     expect(screen.getByText(/Failed to load DNS/i)).toBeInTheDocument();
@@ -85,8 +80,6 @@ describe("DnsRecordsSection", () => {
         isLoading
         isError={false}
         onRetryAction={() => {}}
-        showTtls={false}
-        onToggleTtlsAction={() => {}}
       />,
     );
     expect(screen.getAllByText("DNS Records").length).toBeGreaterThan(0);

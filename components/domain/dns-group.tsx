@@ -1,76 +1,59 @@
-import * as React from "react";
+import { cn } from "@/lib/utils";
 
 type DnsGroupColor =
-  | "slate"
   | "blue"
   | "cyan"
   | "green"
   | "orange"
   | "purple"
-  | "indigo";
+  | "indigo"
+  | "slate";
 
 export function DnsGroup({
   title,
   children,
   color = "slate",
-  chart,
   count,
 }: {
   title: string;
   children: React.ReactNode;
   color?: DnsGroupColor;
-  chart?: 1 | 2 | 3 | 4 | 5;
   count?: number;
 }) {
-  const actualCount = count ?? React.Children.count(children);
+  const actualCount = count ?? (Array.isArray(children) ? children.length : 1);
   if (actualCount === 0) return null;
-  const chartVar =
-    chart === 1
-      ? "--dns-a"
-      : chart === 2
-        ? "--dns-aaaa"
-        : chart === 3
-          ? "--dns-mx"
-          : chart === 4
-            ? "--dns-cname"
-            : chart === 5
-              ? "--dns-txt"
-              : undefined;
-  const colorClass =
+
+  const accentColorClass =
     color === "blue"
-      ? "bg-blue-500/15 text-blue-400 dark:text-blue-300"
+      ? "text-accent-blue bg-accent-blue/18"
       : color === "cyan"
-        ? "bg-cyan-500/15 text-cyan-400 dark:text-cyan-300"
+        ? "text-accent-cyan bg-accent-cyan/18"
         : color === "green"
-          ? "bg-green-500/15 text-green-400 dark:text-green-300"
+          ? "text-accent-green bg-accent-green/18"
           : color === "orange"
-            ? "bg-orange-500/15 text-orange-400 dark:text-orange-300"
+            ? "text-accent-orange bg-accent-orange/18"
             : color === "purple"
-              ? "bg-purple-500/15 text-purple-400 dark:text-purple-300"
+              ? "text-accent-purple bg-accent-purple/18"
               : color === "indigo"
-                ? "bg-indigo-500/15 text-indigo-400 dark:text-indigo-300"
-                : "bg-foreground/10 text-foreground/80";
+                ? "text-accent-indigo bg-accent-indigo/18"
+                : "text-accent-slate bg-accent-slate/18";
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <div className="text-[11px] uppercase tracking-[0.08em] text-foreground/70 dark:text-foreground/80">
+        <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
           {title}
         </div>
         <span
-          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full text-[10px] px-1.5 ${chartVar ? "" : colorClass}`}
-          style={
-            chartVar
-              ? ({
-                  color: `var(${chartVar})`,
-                  background: `color-mix(in oklch, var(${chartVar}) 18%, transparent)`,
-                } as React.CSSProperties)
-              : undefined
-          }
+          className={cn(
+            `inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]`,
+            accentColorClass,
+          )}
         >
           {actualCount}
         </span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{children}</div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{children}</div>
     </div>
   );
 }

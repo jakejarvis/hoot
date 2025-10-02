@@ -1,22 +1,14 @@
 import tls from "node:tls";
 import { captureServer } from "@/lib/analytics/server";
-import { cacheGet, cacheSet, ns } from "@/lib/redis";
-
-export type Certificate = {
-  issuer: string;
-  subject: string;
-  altNames: string[];
-  validFrom: string;
-  validTo: string;
-};
+import { detectCertificateAuthority } from "@/lib/providers/detection";
+import { getOrSetZod, ns } from "@/lib/redis";
+import { type Certificate, CertificatesSchema } from "@/lib/schemas";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
   const key = ns("tls", lower);
 
-  // Cache check
-  const cached = await cacheGet<Certificate[]>(key);
-  if (cached) return cached;
+  const schema = CertificatesSchema;
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
 
@@ -60,15 +52,19 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       },
     );
 
-    const out: Certificate[] = chain.map((c) => ({
-      issuer: toName(c.issuer),
-      subject: toName(c.subject),
-      altNames: parseAltNames(
-        (c as Partial<{ subjectaltname: string }>).subjectaltname,
-      ),
-      validFrom: new Date(c.valid_from).toISOString(),
-      validTo: new Date(c.valid_to).toISOString(),
-    }));
+    const out: Certificate[] = chain.map((c) => {
+      const issuerName = toName(c.issuer);
+      return {
+        issuer: issuerName,
+        subject: toName(c.subject),
+        altNames: parseAltNames(
+          (c as Partial<{ subjectaltname: string }>).subjectaltname,
+        ),
+        validFrom: new Date(c.valid_from).toISOString(),
+        validTo: new Date(c.valid_to).toISOString(),
+        caProvider: detectCertificateAuthority(issuerName),
+      };
+    });
 
     await captureServer("tls_probe", {
       domain: lower,
@@ -77,9 +73,12 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       outcome,
     });
 
-    // Cache success for longer; empty chains are still cached briefly
-    await cacheSet(key, out, out.length > 0 ? 12 * 60 * 60 : 10 * 60);
-    return out;
+    return await getOrSetZod<Certificate[]>(
+      key,
+      (val) => (val.length > 0 ? 12 * 60 * 60 : 10 * 60),
+      async () => out,
+      schema,
+    );
   } catch (err) {
     await captureServer("tls_probe", {
       domain: lower,

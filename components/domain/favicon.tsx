@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Globe } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -17,26 +18,32 @@ export function Favicon({
   className?: string;
 }) {
   const trpc = useTRPC();
-  const { data, isLoading } = useQuery(
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  const { data, isPending } = useQuery(
     trpc.domain.favicon.queryOptions(
       { domain },
       {
-        staleTime: 30 * 60_000, // 30 minutes
+        staleTime: 60 * 60_000, // 1 hour
+        placeholderData: (prev) => prev,
+        enabled: isHydrated,
       },
     ),
   );
-  const url = data?.url ?? null;
 
-  if (isLoading) {
+  if (!isHydrated || isPending) {
     return (
       <Skeleton
-        className={cn("inline-block bg-input", className)}
+        className={cn("bg-input", className)}
         style={{ width: size, height: size }}
       />
     );
   }
 
-  if (!isLoading && !url) {
+  if (!data?.url) {
     return (
       <Globe
         className={cn("text-muted-foreground", className)}
@@ -48,14 +55,12 @@ export function Favicon({
 
   return (
     <Image
-      src={
-        url ??
-        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
-      }
-      alt="Favicon"
+      src={data.url}
+      alt={`${domain} icon`}
       width={size}
       height={size}
       className={className}
+      loading="lazy"
       unoptimized
     />
   );

@@ -1,11 +1,18 @@
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
+  CA_PROVIDERS,
   DNS_PROVIDERS,
   EMAIL_PROVIDERS,
   HOSTING_PROVIDERS,
   REGISTRAR_PROVIDERS,
-} from "./catalog";
-import type { DetectionRule, HttpHeader, Provider } from "./types";
+} from "@/lib/providers/catalog";
+import type {
+  DetectionContext,
+  HttpHeader,
+  Logic,
+  Provider,
+  ProviderRef,
+} from "@/lib/schemas";
 
 /**
  * A context object for header-based detection, pre-calculating values to
@@ -37,43 +44,53 @@ function createHeaderContext(headers: HttpHeader[]): HeaderDetectionContext {
 /**
  * Evaluate a single detection rule against the provided context.
  */
-function evaluateRule(
-  rule: DetectionRule,
-  headerContext?: HeaderDetectionContext,
-  mxHosts?: string[],
-  nsHosts?: string[],
-): boolean {
-  switch (rule.type) {
-    case "header": {
-      if (!headerContext) return false;
+export function evalRule(rule: Logic, ctx: DetectionContext): boolean {
+  const get = (name: string) => ctx.headers[name.toLowerCase()];
+  const anyDns = (arr: string[], suf: string) =>
+    arr.some((h) => h === suf || h.endsWith(`.${suf}`));
 
-      const headerName = rule.name.toLowerCase();
-      const headerValue = headerContext.headerMap.get(headerName);
+  if ("all" in rule) return rule.all.every((r) => evalRule(r, ctx));
+  if ("any" in rule) return rule.any.some((r) => evalRule(r, ctx));
+  if ("not" in rule) return !evalRule(rule.not, ctx);
 
-      // Check for header presence
-      if (rule.present) {
-        return headerContext.headerNames.has(headerName);
-      }
-
-      // Check for header value match
-      if (rule.value && headerValue) {
-        return headerValue.includes(rule.value.toLowerCase());
-      }
-
-      // If no specific checks, just check for presence
-      return headerContext.headerNames.has(headerName);
+  switch (rule.kind) {
+    case "headerEquals": {
+      const v = get(rule.name);
+      return (
+        typeof v === "string" && v.toLowerCase() === rule.value.toLowerCase()
+      );
     }
-
-    case "dns": {
-      const hosts = rule.recordType === "MX" ? mxHosts : nsHosts;
-      if (!hosts) return false;
-
-      const searchValue = rule.value.toLowerCase();
-      return hosts.some((host) => host.toLowerCase().includes(searchValue));
+    case "headerIncludes": {
+      const v = get(rule.name);
+      return (
+        typeof v === "string" &&
+        v.toLowerCase().includes(rule.substr.toLowerCase())
+      );
     }
-
-    default:
-      return false;
+    case "headerPresent": {
+      const key = rule.name.toLowerCase();
+      return key in ctx.headers;
+    }
+    case "mxSuffix": {
+      return anyDns(ctx.mx, rule.suffix.toLowerCase());
+    }
+    case "nsSuffix": {
+      return anyDns(ctx.ns, rule.suffix.toLowerCase());
+    }
+    case "issuerEquals": {
+      return !!ctx.issuer && ctx.issuer === rule.value.toLowerCase();
+    }
+    case "issuerIncludes": {
+      return !!ctx.issuer?.includes(rule.substr.toLowerCase());
+    }
+    case "registrarEquals": {
+      return !!ctx.registrar && ctx.registrar === rule.value.toLowerCase();
+    }
+    case "registrarIncludes": {
+      return (
+        !!ctx.registrar && ctx.registrar.includes(rule.substr.toLowerCase())
+      );
+    }
   }
 }
 
@@ -86,25 +103,28 @@ function detectProviderFromList(
   mxHosts?: string[],
   nsHosts?: string[],
 ): ProviderRef {
+  const headersObj: Record<string, string> = Object.fromEntries(
+    (headerContext?.headers ?? []).map((h) => [
+      h.name.toLowerCase(),
+      h.value.trim().toLowerCase(),
+    ]),
+  );
+  const ctx: DetectionContext = {
+    headers: headersObj,
+    mx: (mxHosts ?? []).map((h) => h.toLowerCase().replace(/\.$/, "")),
+    ns: (nsHosts ?? []).map((h) => h.toLowerCase().replace(/\.$/, "")),
+  };
   for (const provider of providers) {
-    // A provider matches if ANY of its rules match (OR logic)
-    const matches = provider.rules.some((rule) =>
-      evaluateRule(rule, headerContext, mxHosts, nsHosts),
-    );
-
-    if (matches) {
+    if (evalRule(provider.rule, ctx)) {
       return { name: provider.name, domain: provider.domain };
     }
   }
-
   return { name: "Unknown", domain: null };
 }
 
 /**
  * Detect hosting provider from HTTP headers.
  */
-export type ProviderRef = { name: string; domain: string | null };
-
 export function detectHostingProvider(headers: HttpHeader[]): ProviderRef {
   const context = createHeaderContext(headers);
   return detectProviderFromList(HOSTING_PROVIDERS, context);
@@ -143,37 +163,32 @@ export function detectDnsProvider(nsHosts: string[]): ProviderRef {
   return { name: "Unknown", domain: null };
 }
 
-/** Resolve registrar domain from a registrar name using partial matching */
-export function resolveRegistrarDomain(registrarName: string): string | null {
+/** Detect registrar provider from registrar name */
+export function detectRegistrar(registrarName: string): ProviderRef {
   const name = (registrarName || "").toLowerCase();
-  if (!name) return null;
-
+  if (!name) return { name: "Unknown", domain: null };
+  const ctx: DetectionContext = {
+    headers: {},
+    mx: [],
+    ns: [],
+    issuer: undefined,
+    registrar: name,
+  };
   for (const reg of REGISTRAR_PROVIDERS) {
-    if (reg.name.toLowerCase() === name) return reg.domain;
+    if (evalRule(reg.rule, ctx)) return { name: reg.name, domain: reg.domain };
   }
-
-  for (const reg of REGISTRAR_PROVIDERS) {
-    if (name.includes(reg.name.toLowerCase())) return reg.domain;
-  }
-
-  for (const reg of REGISTRAR_PROVIDERS) {
-    if (reg.aliases?.some((a) => name.includes(a.toLowerCase()))) {
-      return reg.domain;
-    }
-  }
-
-  return null;
+  return { name: "Unknown", domain: null };
 }
 
-/**
- * Map provider name to icon domain for favicon display.
- */
-// mapping helpers removed; detectors now return name+domain directly
-
-// Export provider lists for backward compatibility and access
-export const ProviderCatalog = {
-  hosting: HOSTING_PROVIDERS,
-  email: EMAIL_PROVIDERS,
-  dns: DNS_PROVIDERS,
-  all: [...HOSTING_PROVIDERS, ...EMAIL_PROVIDERS, ...DNS_PROVIDERS],
-};
+/** Detect certificate authority from an issuer string */
+export function detectCertificateAuthority(issuer: string): ProviderRef {
+  const name = (issuer || "").toLowerCase();
+  if (!name) return { name: "Unknown", domain: null };
+  const ctx: DetectionContext = { headers: {}, mx: [], ns: [], issuer: name };
+  for (const ca of CA_PROVIDERS) {
+    if (evalRule(ca.rule, ctx)) {
+      return { name: ca.name, domain: ca.domain };
+    }
+  }
+  return { name: "Unknown", domain: null };
+}

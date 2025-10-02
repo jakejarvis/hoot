@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
+import { Screenshot } from "@/components/domain/screenshot";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Screenshot } from "./screenshot";
 
 export function ScreenshotTooltip({
   domain,
@@ -15,8 +15,8 @@ export function ScreenshotTooltip({
   domain: string;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [hasOpened, setHasOpened] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
 
   return (
     <Tooltip
@@ -29,7 +29,7 @@ export function ScreenshotTooltip({
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
         sideOffset={10}
-        className="bg-popover text-popover-foreground p-0 border shadow-xl"
+        className="border bg-popover p-0 text-popover-foreground shadow-xl"
         hideArrow
       >
         <div className="w-[300px] sm:w-[360px] md:w-[420px]">

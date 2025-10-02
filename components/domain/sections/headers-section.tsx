@@ -3,36 +3,31 @@
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
-import { Skeletons } from "@/components/domain/skeletons";
-import { SECTION_DEFS } from "./sections-meta";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
+import type { HttpHeader } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function HeadersSection({
   data,
-  isLoading: _isLoading,
+  isLoading,
   isError,
   onRetryAction,
 }: {
-  data?: Array<
-    | { name: string; value: string }
-    | { name: string; value: string | number }
-    | { name: string; value: string | null }
-  > | null;
+  data?: HttpHeader[] | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const Def = SECTION_DEFS.headers;
   return (
-    <Section
-      title={Def.title}
-      description={Def.description}
-      help={Def.help}
-      icon={<Def.Icon className="h-4 w-4" />}
-      accent={Def.accent}
-      status={isError ? "error" : data ? "ready" : "loading"}
-    >
-      {data ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+    <Section {...SECTION_DEFS.headers} isError={isError} isLoading={isLoading}>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {Array.from({ length: 12 }, (_, n) => `hdr-skel-${n}`).map((id) => (
+            <KeyValueSkeleton key={id} widthClass="w-[100px]" withTrailing />
+          ))}
+        </div>
+      ) : data ? (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(() => {
             const important = new Set([
               "strict-transport-security",
@@ -61,9 +56,7 @@ export function HeadersSection({
           message="Failed to load headers."
           onRetry={onRetryAction}
         />
-      ) : (
-        <Skeletons count={4} />
-      )}
+      ) : null}
     </Section>
   );
 }

@@ -1,26 +1,20 @@
-import { type DomainRecord, lookupDomain } from "rdapper";
+import { lookupDomain } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { cacheGet, cacheSet, ns } from "@/lib/redis";
+import { detectRegistrar } from "@/lib/providers/detection";
+import { getOrSetZod, ns } from "@/lib/redis";
+import { type Registration, RegistrationSchema } from "@/lib/schemas";
 
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
-export async function getRegistration(domain: string): Promise<DomainRecord> {
+// Type exported from schemas; keep alias for local file consumers if any
+
+export async function getRegistration(domain: string): Promise<Registration> {
   const registrable = toRegistrableDomain(domain);
   if (!registrable) throw new Error("Invalid domain");
 
   const key = ns("reg", registrable.toLowerCase());
-  const cached = await cacheGet<DomainRecord>(key);
-  if (cached) {
-    await captureServer("registration_lookup", {
-      domain: registrable,
-      outcome: "cache_hit",
-      cached: true,
-      source: cached.source,
-    });
-    return cached;
-  }
 
   const startedAt = Date.now();
   const { ok, record, error } = await lookupDomain(registrable, {
@@ -39,7 +33,35 @@ export async function getRegistration(domain: string): Promise<DomainRecord> {
   }
 
   const ttl = record.isRegistered ? 24 * 60 * 60 : 60 * 60;
-  await cacheSet(key, record, ttl);
+  let registrarName = (record.registrar?.name || "").toString();
+  let registrarDomain: string | null = null;
+  const det = detectRegistrar(registrarName);
+  if (det.name !== "Unknown") {
+    registrarName = det.name;
+  }
+  if (det.domain) {
+    registrarDomain = det.domain;
+  }
+  try {
+    if (!registrarDomain && record.registrar?.url) {
+      registrarDomain = new URL(record.registrar.url).hostname || null;
+    }
+  } catch {}
+
+  const withProvider: Registration = {
+    ...record,
+    registrarProvider: {
+      name: registrarName.trim() || "Unknown",
+      domain: registrarDomain,
+    },
+  };
+
+  await getOrSetZod<Registration>(
+    key,
+    ttl,
+    async () => withProvider,
+    RegistrationSchema,
+  );
   await captureServer("registration_lookup", {
     domain: registrable,
     outcome: record.isRegistered ? "ok" : "unregistered",
@@ -48,5 +70,5 @@ export async function getRegistration(domain: string): Promise<DomainRecord> {
     source: record.source,
   });
 
-  return record;
+  return withProvider;
 }
