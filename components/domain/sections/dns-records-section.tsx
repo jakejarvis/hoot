@@ -4,9 +4,36 @@ import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Section } from "@/components/domain/section";
-import { DnsGroupSkeleton } from "@/components/domain/skeletons";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import type { DnsRecord } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+
+function DnsGroupSkeleton({
+  title,
+  rows = 2,
+}: {
+  title: string;
+  rows?: number;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
+          {title}
+        </div>
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground/10 px-1.5 text-[10px] text-foreground/60" />
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {Array.from(
+          { length: rows },
+          (_, n) => `dns-skel-${title}-${rows}-${n}`,
+        ).map((id) => (
+          <KeyValueSkeleton key={id} withTrailing widthClass="w-[100px]" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function DnsRecordsSection({
   records,
@@ -23,10 +50,10 @@ export function DnsRecordsSection({
     <Section {...SECTION_DEFS.dns} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <div className="space-y-4">
-          <DnsGroupSkeleton title="A Records" rows={2} />
-          <DnsGroupSkeleton title="AAAA Records" rows={2} />
-          <DnsGroupSkeleton title="MX Records" rows={3} />
-          <DnsGroupSkeleton title="TXT Records" rows={3} />
+          <DnsGroupSkeleton title="A Records" rows={1} />
+          <DnsGroupSkeleton title="AAAA Records" rows={1} />
+          <DnsGroupSkeleton title="MX Records" rows={2} />
+          <DnsGroupSkeleton title="TXT Records" rows={4} />
           <DnsGroupSkeleton title="NS Records" rows={2} />
         </div>
       ) : records ? (

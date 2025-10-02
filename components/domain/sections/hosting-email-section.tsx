@@ -34,10 +34,18 @@ export function HostingEmailSection({
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <>
-          <KeyValueSkeleton label="DNS" withLeading />
-          <KeyValueSkeleton label="Hosting" withLeading />
-          <KeyValueSkeleton label="Email" withLeading />
-          <KeyValueSkeleton label="Location" />
+          <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
+          <KeyValueSkeleton
+            label="Hosting"
+            withLeading
+            widthClass="w-[100px]"
+          />
+          <KeyValueSkeleton label="Email" withLeading widthClass="w-[100px]" />
+          <KeyValueSkeleton
+            label="Location"
+            withLeading
+            widthClass="w-[100px]"
+          />
           {/* Map skeleton provided by dynamic component's loading prop; keep spacing */}
           <div className="mt-2">
             <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />
@@ -86,11 +94,18 @@ export function HostingEmailSection({
           />
           <KeyValue
             label="Location"
-            value={`${data.geo.emoji ? `${data.geo.emoji} ` : ""}${
+            value={`${
               data.geo.city || data.geo.region || data.geo.country
                 ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
                 : ""
             }`}
+            leading={
+              data.geo.emoji ? (
+                <span className="inline-block leading-none">
+                  {data.geo.emoji}
+                </span>
+              ) : undefined
+            }
           />
           {data.geo.lat != null && data.geo.lon != null ? (
             <div className="mt-2">

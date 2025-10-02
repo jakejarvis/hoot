@@ -7,7 +7,7 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { CertificateCardSkeleton } from "@/components/domain/skeletons";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +16,19 @@ import {
 import { equalHostname, formatDate } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+
+function CertificateCardSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <KeyValueSkeleton label="Issuer" widthClass="w-[100px]" withLeading />
+        <KeyValueSkeleton label="Subject" widthClass="w-[100px]" />
+        <KeyValueSkeleton label="Valid from" widthClass="w-[100px]" />
+        <KeyValueSkeleton label="Valid to" widthClass="w-[100px]" withSuffix />
+      </div>
+    </div>
+  );
+}
 
 export function CertificatesSection({
   data,

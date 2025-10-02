@@ -6,7 +6,6 @@ import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { KeyValueSkeleton } from "@/components/domain/skeletons";
-import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
@@ -54,11 +53,6 @@ export function RegistrationSection({
                   className="rounded"
                 />
               ) : undefined
-            }
-            suffix={
-              <Badge variant="secondary" title="Data source">
-                {data.source ? data.source.toUpperCase() : "RDAP"}
-              </Badge>
             }
           />
           <KeyValue
