@@ -9,6 +9,7 @@ import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -17,19 +18,6 @@ import {
 import { formatDate } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
-
-function CertificateCardSkeleton() {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <KeyValueSkeleton label="Issuer" widthClass="w-[100px]" withLeading />
-        <KeyValueSkeleton label="Subject" widthClass="w-[100px]" />
-        <KeyValueSkeleton label="Valid from" widthClass="w-[100px]" />
-        <KeyValueSkeleton label="Valid to" widthClass="w-[100px]" withSuffix />
-      </div>
-    </div>
-  );
-}
 
 export function CertificatesSection({
   data,
@@ -54,11 +42,25 @@ export function CertificatesSection({
     >
       {isLoading ? (
         <>
-          <CertificateCardSkeleton />
-          <div className="my-2 flex justify-center" aria-hidden>
-            <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+          <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <KeyValueSkeleton
+                label="Issuer"
+                widthClass="w-[100px]"
+                withLeading
+              />
+              <KeyValueSkeleton label="Subject" widthClass="w-[100px]" />
+              <KeyValueSkeleton label="Valid from" widthClass="w-[100px]" />
+              <KeyValueSkeleton
+                label="Valid to"
+                widthClass="w-[100px]"
+                withSuffix
+              />
+            </div>
           </div>
-          <CertificateCardSkeleton />
+          <div className="my-2 flex justify-center">
+            <Skeleton className="h-8 w-28 rounded-md" />
+          </div>
         </>
       ) : data && firstCert ? (
         <>
@@ -82,7 +84,7 @@ export function CertificatesSection({
                   suffix={
                     firstCert.caProvider?.name &&
                     firstCert.caProvider.name !== "Unknown" ? (
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="flex items-center text-[11px] text-muted-foreground leading-none">
                         {firstCert.caProvider.name}
                       </span>
                     ) : undefined
@@ -102,7 +104,7 @@ export function CertificatesSection({
                     return sans.length > 0 ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="select-none font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
+                          <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
                             +{sans.length}
                           </span>
                         </TooltipTrigger>
@@ -174,7 +176,7 @@ export function CertificatesSection({
                         suffix={
                           c.caProvider?.name &&
                           c.caProvider.name !== "Unknown" ? (
-                            <span className="text-[11px] text-muted-foreground">
+                            <span className="flex items-center text-[11px] text-muted-foreground leading-none">
                               {c.caProvider.name}
                             </span>
                           ) : undefined
@@ -194,7 +196,7 @@ export function CertificatesSection({
                           return sans.length > 0 ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="select-none font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
+                                <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
                                   +{sans.length}
                                 </span>
                               </TooltipTrigger>

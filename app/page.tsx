@@ -25,15 +25,15 @@ export default async function Home() {
 
   return (
     <div className="container mx-auto my-auto flex items-center justify-center px-4 py-8">
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <div className="w-full space-y-6">
-          <HomeHero />
+      <div className="w-full space-y-6">
+        <HomeHero />
 
-          <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-3xl">
+          <HydrationBoundary state={dehydrate(queryClient)}>
             <DomainSearch variant="lg" />
-          </div>
+          </HydrationBoundary>
         </div>
-      </HydrationBoundary>
+      </div>
     </div>
   );
 }

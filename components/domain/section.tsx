@@ -61,10 +61,7 @@ export function Section({
           )}
         />
         <div className="relative">
-          <div
-            className={cn("px-5 py-4 no-underline hover:no-underline")}
-            id={headerId}
-          >
+          <div className="p-5" id={headerId}>
             <div className="flex w-full items-center gap-3 text-left">
               {Icon && (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-foreground/80">
@@ -100,11 +97,11 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                <div className="mr-2 flex items-center gap-2 text-muted-foreground text-xs">
                   {isLoading && (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Loading</span>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="sr-only">Loading</span>
                     </>
                   )}
                   {isError && (
