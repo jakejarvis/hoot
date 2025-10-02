@@ -24,6 +24,7 @@ export function Section({
   description,
   help,
   icon,
+  slug,
   accent = "slate",
   isLoading,
   isError,
@@ -33,6 +34,7 @@ export function Section({
   description?: string;
   help?: string;
   icon?: React.ElementType;
+  slug?: string;
   accent?: "blue" | "purple" | "green" | "orange" | "pink" | "slate";
   isLoading?: boolean;
   isError?: boolean;
@@ -44,14 +46,14 @@ export function Section({
     setIsHydrated(true);
   }, []);
   const disabled = isHydrated ? Boolean(isError || isLoading) : false;
-  const slug = title
+  const computedSlug = (slug ?? title)
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-  const triggerId = `accordion-trigger-${slug}`;
-  const contentId = `accordion-content-${slug}`;
+  const triggerId = `accordion-trigger-${computedSlug}`;
+  const contentId = `accordion-content-${computedSlug}`;
   return (
-    <AccordionItem value={slug} className="border-none">
+    <AccordionItem value={computedSlug} className="border-none">
       <Card
         className="relative overflow-hidden rounded-3xl border border-black/10 bg-background/60 py-0 shadow-2xl shadow-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 dark:border-white/10"
         data-accent={accent}

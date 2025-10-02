@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
+import { SECTION_SLUGS } from "@/lib/sections-meta";
 
 export function DomainReportView({ domain }: { domain: string }) {
   const { registration, dns, hosting, certs, headers } =
@@ -88,9 +89,11 @@ export function DomainReportView({ domain }: { domain: string }) {
       <Accordion
         type="multiple"
         className="space-y-4"
-        defaultValue={["registration"]}
+        defaultValue={[...SECTION_SLUGS]}
       >
         <RegistrationSection
+          // pass slug for stable Accordion value
+
           data={registration.data || null}
           isLoading={registration.isLoading}
           isError={!!registration.isError}

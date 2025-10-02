@@ -5,6 +5,7 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatRegistrant } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
@@ -33,7 +34,14 @@ export function RegistrationSection({
       isError={isError}
       isLoading={isLoading}
     >
-      {isLoading ? null : data ? (
+      {isLoading ? (
+        <>
+          <KeyValueSkeleton withLeading withSuffix />
+          <KeyValueSkeleton />
+          <KeyValueSkeleton withSuffix />
+          <KeyValueSkeleton />
+        </>
+      ) : data ? (
         <>
           <KeyValue
             label="Registrar"

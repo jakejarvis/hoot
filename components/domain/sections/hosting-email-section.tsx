@@ -5,6 +5,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
+import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import type { Hosting } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -31,7 +32,18 @@ export function HostingEmailSection({
 }) {
   return (
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
-      {isLoading ? null : data ? (
+      {isLoading ? (
+        <>
+          <KeyValueSkeleton withLeading />
+          <KeyValueSkeleton withLeading />
+          <KeyValueSkeleton withLeading />
+          <KeyValueSkeleton />
+          {/* Map skeleton provided by dynamic component's loading prop; keep spacing */}
+          <div className="mt-2">
+            <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />
+          </div>
+        </>
+      ) : data ? (
         <>
           <KeyValue
             label="DNS"

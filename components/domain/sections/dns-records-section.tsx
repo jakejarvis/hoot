@@ -4,6 +4,7 @@ import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Section } from "@/components/domain/section";
+import { DnsGroupSkeleton } from "@/components/domain/skeletons";
 import type { DnsRecord } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -20,7 +21,15 @@ export function DnsRecordsSection({
 }) {
   return (
     <Section {...SECTION_DEFS.dns} isError={isError} isLoading={isLoading}>
-      {isLoading ? null : records ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          <DnsGroupSkeleton title="A Records" rows={2} />
+          <DnsGroupSkeleton title="AAAA Records" rows={2} />
+          <DnsGroupSkeleton title="MX Records" rows={3} />
+          <DnsGroupSkeleton title="TXT Records" rows={3} />
+          <DnsGroupSkeleton title="NS Records" rows={2} />
+        </div>
+      ) : records ? (
         <div className="space-y-4">
           <DnsGroup
             title="A Records"

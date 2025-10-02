@@ -7,6 +7,7 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
+import { CertificateCardSkeleton } from "@/components/domain/skeletons";
 import {
   Tooltip,
   TooltipContent,
@@ -33,7 +34,15 @@ export function CertificatesSection({
       isError={isError}
       isLoading={isLoading}
     >
-      {isLoading ? null : data ? (
+      {isLoading ? (
+        <>
+          <CertificateCardSkeleton />
+          <div className="my-2 flex justify-center" aria-hidden>
+            <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+          </div>
+          <CertificateCardSkeleton />
+        </>
+      ) : data ? (
         data.map((c, idx) => (
           <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
             <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
