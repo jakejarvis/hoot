@@ -34,10 +34,10 @@ export function HostingEmailSection({
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <>
-          <KeyValueSkeleton withLeading />
-          <KeyValueSkeleton withLeading />
-          <KeyValueSkeleton withLeading />
-          <KeyValueSkeleton />
+          <KeyValueSkeleton label="DNS" withLeading />
+          <KeyValueSkeleton label="Hosting" withLeading />
+          <KeyValueSkeleton label="Email" withLeading />
+          <KeyValueSkeleton label="Location" />
           {/* Map skeleton provided by dynamic component's loading prop; keep spacing */}
           <div className="mt-2">
             <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />

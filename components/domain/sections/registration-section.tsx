@@ -36,10 +36,10 @@ export function RegistrationSection({
     >
       {isLoading ? (
         <>
-          <KeyValueSkeleton withLeading withSuffix />
-          <KeyValueSkeleton />
-          <KeyValueSkeleton withSuffix />
-          <KeyValueSkeleton />
+          <KeyValueSkeleton label="Registrar" withLeading withSuffix />
+          <KeyValueSkeleton label="Created" />
+          <KeyValueSkeleton label="Expires" withSuffix />
+          <KeyValueSkeleton label="Registrant" />
         </>
       ) : data ? (
         <>

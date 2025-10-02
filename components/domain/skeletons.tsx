@@ -17,13 +17,13 @@ export function Skeletons({ count = 3 }: { count?: number }) {
 }
 
 export function KeyValueSkeleton({
-  showLabel = true,
+  label,
   withLeading = false,
   withTrailing = false,
   withSuffix = false,
   widthClass = "w-2/3",
 }: {
-  showLabel?: boolean;
+  label?: string;
   withLeading?: boolean;
   withTrailing?: boolean;
   withSuffix?: boolean;
@@ -32,7 +32,11 @@ export function KeyValueSkeleton({
   return (
     <div className="flex h-16 items-center justify-between gap-4 rounded-2xl border border-black/10 bg-background/40 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-lg dark:border-white/10">
       <div className="min-w-0 space-y-1">
-        {showLabel && <Skeleton className="h-2 w-16" />}
+        {label ? (
+          <div className="text-[10px] text-foreground/75 uppercase tracking-[0.08em] dark:text-foreground/80">
+            {label}
+          </div>
+        ) : null}
         <div className="flex items-center gap-2">
           {withLeading && <Skeleton className="h-4 w-4 rounded" />}
           <Skeleton className={`h-4 ${widthClass}`} />
@@ -72,7 +76,6 @@ export function DnsGroupSkeleton({
         ).map((id) => (
           <KeyValueSkeleton
             key={`dns-skel-${title}-${id}`}
-            showLabel={false}
             withTrailing
             withSuffix
             widthClass="w-1/2"
@@ -87,10 +90,10 @@ export function CertificateCardSkeleton() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <KeyValueSkeleton showLabel widthClass="w-1/3" withLeading />
-        <KeyValueSkeleton showLabel widthClass="w-2/3" />
-        <KeyValueSkeleton showLabel widthClass="w-1/4" />
-        <KeyValueSkeleton showLabel widthClass="w-1/4" withSuffix />
+        <KeyValueSkeleton label="Issuer" widthClass="w-1/3" withLeading />
+        <KeyValueSkeleton label="Subject" widthClass="w-2/3" />
+        <KeyValueSkeleton label="Valid from" widthClass="w-1/4" />
+        <KeyValueSkeleton label="Valid to" widthClass="w-1/4" withSuffix />
       </div>
     </div>
   );
@@ -107,7 +110,6 @@ export function HeadersSkeleton({ rows = 12 }: { rows?: number }) {
       ).map((id) => (
         <KeyValueSkeleton
           key={`hdr-skel-${id}`}
-          showLabel
           widthClass="w-2/3"
           withTrailing
         />
