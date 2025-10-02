@@ -1,7 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headScreenshotBlob, putScreenshotBlob } from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
-import { optimizePngCover } from "@/lib/image";
+import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -193,11 +193,16 @@ export async function getOrCreateScreenshotBlobUrl(
             VIEWPORT_HEIGHT,
           );
           if (png && png.length > 0) {
+            const pngWithWatermark = await addWatermarkToScreenshot(
+              png,
+              VIEWPORT_WIDTH,
+              VIEWPORT_HEIGHT,
+            );
             const storedUrl = await putScreenshotBlob(
               domain,
               VIEWPORT_WIDTH,
               VIEWPORT_HEIGHT,
-              png,
+              pngWithWatermark,
             );
 
             console.info("[screenshot] stored blob", { url: storedUrl });

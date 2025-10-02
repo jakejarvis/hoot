@@ -92,3 +92,42 @@ export async function optimizePngCover(
     .png({ compressionLevel: 9 })
     .toBuffer();
 }
+
+export async function addWatermarkToScreenshot(
+  png: Buffer,
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  const watermarkText = "hoot.sh";
+  const fontSize = Math.max(24, Math.floor(width / 100)); // Scale font with image size
+  const padding = Math.floor(fontSize * 0.8);
+
+  // Create SVG watermark text
+  const watermarkSvg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <text x="${width - padding}" y="${height - padding}" 
+            text-anchor="end" 
+            dominant-baseline="alphabetic"
+            font-family="Arial, sans-serif" 
+            font-size="${fontSize}" 
+            fill="rgba(255,255,255,0.4)" 
+            stroke="rgba(0,0,0,0.2)" 
+            stroke-width="0.5">
+        ${watermarkText}
+      </text>
+    </svg>
+  `;
+
+  const watermarkBuffer = Buffer.from(watermarkSvg);
+
+  return await sharp(png)
+    .resize(width, height, { fit: "cover" })
+    .composite([
+      {
+        input: watermarkBuffer,
+        blend: "over",
+      },
+    ])
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
