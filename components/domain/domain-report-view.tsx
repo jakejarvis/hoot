@@ -12,12 +12,11 @@ import { DnsRecordsSection } from "@/components/domain/sections/dns-records-sect
 import { HeadersSection } from "@/components/domain/sections/headers-section";
 import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
 import { RegistrationSection } from "@/components/domain/sections/registration-section";
-import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
-import { SECTION_SLUGS } from "@/lib/sections-meta";
+// no longer need SECTION_SLUGS now that accordions are removed
 
 export function DomainReportView({ domain }: { domain: string }) {
   const { registration, dns, hosting, certs, headers } =
@@ -86,14 +85,8 @@ export function DomainReportView({ domain }: { domain: string }) {
         </div>
       </div>
 
-      <Accordion
-        type="multiple"
-        className="space-y-4"
-        defaultValue={[...SECTION_SLUGS]}
-      >
+      <div className="space-y-4">
         <RegistrationSection
-          // pass slug for stable Accordion value
-
           data={registration.data || null}
           isLoading={registration.isLoading}
           isError={!!registration.isError}
@@ -157,7 +150,7 @@ export function DomainReportView({ domain }: { domain: string }) {
             headers.refetch();
           }}
         />
-      </Accordion>
+      </div>
     </div>
   );
 }

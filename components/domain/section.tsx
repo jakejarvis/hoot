@@ -1,11 +1,6 @@
 import { AlertCircle, Info, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -45,15 +40,18 @@ export function Section({
   useEffect(() => {
     setIsHydrated(true);
   }, []);
-  const disabled = isHydrated ? Boolean(isError || isLoading) : false;
   const computedSlug = (slug ?? title)
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-  const triggerId = `accordion-trigger-${computedSlug}`;
-  const contentId = `accordion-content-${computedSlug}`;
+  const headerId = `section-header-${computedSlug}`;
+  const contentId = `section-content-${computedSlug}`;
   return (
-    <AccordionItem value={computedSlug} className="border-none">
+    <section
+      id={computedSlug}
+      aria-labelledby={headerId}
+      className="border-none"
+    >
       <Card
         className="relative overflow-hidden rounded-3xl border border-black/10 bg-background/60 py-0 shadow-2xl shadow-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 dark:border-white/10"
         data-accent={accent}
@@ -67,11 +65,9 @@ export function Section({
           )}
         />
         <div className="relative">
-          <AccordionTrigger
+          <div
             className={cn("px-5 py-4 no-underline hover:no-underline")}
-            disabled={disabled}
-            id={triggerId}
-            aria-controls={contentId}
+            id={headerId}
           >
             <div className="flex w-full items-center gap-3 text-left">
               {Icon && (
@@ -126,16 +122,16 @@ export function Section({
                 </span>
               </div>
             </div>
-          </AccordionTrigger>
+          </div>
         </div>
-        <AccordionContent id={contentId} aria-labelledby={triggerId}>
-          {children && (
+        {children && (
+          <div id={contentId}>
             <CardContent className="space-y-3 px-5 pt-0 pb-5">
               {children}
             </CardContent>
-          )}
-        </AccordionContent>
+          </div>
+        )}
       </Card>
-    </AccordionItem>
+    </section>
   );
 }
