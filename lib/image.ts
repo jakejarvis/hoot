@@ -99,7 +99,7 @@ export async function addWatermarkToScreenshot(
   height: number,
 ): Promise<Buffer> {
   const watermarkText = "hoot.sh";
-  const fontSize = Math.max(12, Math.floor(width / 100)); // Scale font with image size
+  const fontSize = Math.max(24, Math.floor(width / 100)); // Scale font with image size
   const padding = Math.floor(fontSize * 0.8);
 
   // Create SVG watermark text

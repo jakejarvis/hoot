@@ -1,7 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { headScreenshotBlob, putScreenshotBlob } from "@/lib/blob";
-import { addWatermarkToScreenshot } from "@/lib/image";
-import { USER_AGENT } from "./constants";
+import { USER_AGENT } from "@/lib/constants";
+import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -177,30 +177,32 @@ export async function getOrCreateScreenshotBlobUrl(
             timeout: NAV_TIMEOUT_MS,
           });
 
-        console.debug("[screenshot] navigated", { url });
+          console.debug("[screenshot] navigated", {
+            url,
+            attempt: attemptIndex + 1,
+          });
 
-        const rawPng: Buffer = (await page.screenshot({
-          type: "png",
-          fullPage: false,
-        })) as Buffer;
+          const rawPng: Buffer = (await page.screenshot({
+            type: "png",
+            fullPage: false,
+          })) as Buffer;
 
-        const png = await addWatermarkToScreenshot(
-          rawPng,
-          VIEWPORT_WIDTH,
-          VIEWPORT_HEIGHT,
-        );
-        if (png && png.length > 0) {
-          const storedUrl = await putScreenshotBlob(
-            domain,
+          const png = await optimizePngCover(
+            rawPng,
             VIEWPORT_WIDTH,
             VIEWPORT_HEIGHT,
           );
           if (png && png.length > 0) {
+            const pngWithWatermark = await addWatermarkToScreenshot(
+              png,
+              VIEWPORT_WIDTH,
+              VIEWPORT_HEIGHT,
+            );
             const storedUrl = await putScreenshotBlob(
               domain,
               VIEWPORT_WIDTH,
               VIEWPORT_HEIGHT,
-              png,
+              pngWithWatermark,
             );
 
             console.info("[screenshot] stored blob", { url: storedUrl });
