@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check, ClipboardCheck, Copy } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,9 @@ export function CopyButton({ value, label }: CopyButtonProps) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
-    toast.success("Copied");
+    toast.success("Copied!", {
+      icon: <ClipboardCheck className="h-4 w-4" />,
+    });
     captureClient("copy_clicked", {
       label: label ?? null,
       value_length: value.length,
