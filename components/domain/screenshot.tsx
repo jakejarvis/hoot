@@ -52,6 +52,7 @@ export function Screenshot({
           )}
           unoptimized
           priority={false}
+          draggable={false}
         />
       ) : (
         <div

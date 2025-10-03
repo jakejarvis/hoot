@@ -14,7 +14,7 @@ export function BrowserWindow({
   return (
     <div
       className={cn(
-        "inline-block overflow-hidden rounded-lg border",
+        "inline-block select-none overflow-hidden rounded-lg border",
         className,
       )}
     >
@@ -29,7 +29,7 @@ export function BrowserWindow({
 
         {/* Address Bar */}
         <div className="flex h-3.5 flex-1 items-center rounded-sm bg-zinc-200 px-2 dark:bg-zinc-800">
-          <span className="inline-block w-full select-none truncate text-center text-[8px] text-zinc-500 dark:text-zinc-400">
+          <span className="inline-block w-full truncate text-center text-[8px] text-zinc-500 dark:text-zinc-400">
             {url}
           </span>
         </div>
