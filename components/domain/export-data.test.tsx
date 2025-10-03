@@ -43,6 +43,10 @@ describe("exportDomainData", () => {
         warnings: [],
         unicodeName: "example.com",
         punycodeName: "example.com",
+        registrarProvider: {
+          name: "Test Registrar",
+          domain: "testregistrar.com",
+        },
       },
       dns: null,
       hosting: null,
