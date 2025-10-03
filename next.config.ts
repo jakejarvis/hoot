@@ -23,11 +23,11 @@ const nextConfig: NextConfig = {
   rewrites: async () => {
     return [
       {
-        source: "/_ingest/static/:path*",
+        source: "/_proxy/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
       },
       {
-        source: "/_ingest/:path*",
+        source: "/_proxy/ingest/:path*",
         destination: "https://us.i.posthog.com/:path*",
       },
     ];
