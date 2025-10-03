@@ -25,6 +25,9 @@
       "suspicious": {
         "noUnknownAtRules": "off"
       },
+      "a11y": {
+        "noSvgWithoutTitle": "off"
+      },
       "nursery": {
         "useSortedClasses": "error",
         "noFloatingPromises": "error",

@@ -52,9 +52,9 @@ export function KeyValue({
             {label}
           </div>
         )}
-        <div className="flex min-w-0 items-center gap-2 text-[13px] text-foreground/95 leading-[1.2]">
+        <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-foreground/95 leading-[1.2]">
           {leading ? (
-            <span className="inline-flex h-[1em] w-[1em] shrink-0 items-center justify-center overflow-hidden rounded [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+            <span className="mr-0.5 inline-flex h-[1em] w-[1em] shrink-0 items-center justify-center overflow-hidden rounded [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
               {leading}
             </span>
           ) : null}

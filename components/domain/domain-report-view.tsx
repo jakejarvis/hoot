@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, ExternalLink } from "lucide-react";
+import { ExternalLink, FileJson2 } from "lucide-react";
 import Link from "next/link";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
@@ -92,11 +92,10 @@ export function DomainReportView({ domain }: { domain: string }) {
         <div>
           <Button
             variant="outline"
-            size="sm"
             onClick={handleExportJson}
             disabled={areSecondarySectionsLoading}
           >
-            <Download />
+            <FileJson2 />
             Export JSON
           </Button>
         </div>
