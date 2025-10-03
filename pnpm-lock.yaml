@@ -102,8 +102,8 @@ importers:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
       react-map-gl:
-        specifier: ^8.0.4
-        version: 8.0.4(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^8.1.0
+        version: 8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       server-only:
         specifier: 0.0.1
         version: 0.0.1
@@ -1933,8 +1933,8 @@ packages:
     resolution: {integrity: sha512-V/YRVrJDqM6VaMBjRUrd6qRMrTKvZjHdVdEmdXsOZMulTa3iK98ijKTc3wldBmst6W5rHpqMoKllKcBAHgN7GQ==}
     engines: {node: '>= 20'}
 
-  '@vis.gl/react-mapbox@8.0.4':
-    resolution: {integrity: sha512-NFk0vsWcNzSs0YCsVdt2100Zli9QWR+pje8DacpLkkGEAXFaJsFtI1oKD0Hatiate4/iAIW39SQHhgfhbeEPfQ==}
+  '@vis.gl/react-mapbox@8.1.0':
+    resolution: {integrity: sha512-FwvH822oxEjWYOr+pP2L8hpv+7cZB2UsQbHHHT0ryrkvvqzmTgt7qHDhamv0EobKw86e1I+B4ojENdJ5G5BkyQ==}
     peerDependencies:
       mapbox-gl: '>=3.5.0'
       react: '>=16.3.0'
@@ -1943,8 +1943,8 @@ packages:
       mapbox-gl:
         optional: true
 
-  '@vis.gl/react-maplibre@8.0.4':
-    resolution: {integrity: sha512-HwZyfLjEu+y1mUFvwDAkVxinGm8fEegaWN+O8np/WZ2Sqe5Lv6OXFpV6GWz9LOEvBYMbGuGk1FQdejo+4HCJ5w==}
+  '@vis.gl/react-maplibre@8.1.0':
+    resolution: {integrity: sha512-PkAK/gp3mUfhCLhUuc+4gc3PN9zCtVGxTF2hB6R5R5yYUw+hdg84OZ770U5MU4tPMTCG6fbduExuIW6RRKN6qQ==}
     peerDependencies:
       maplibre-gl: '>=4.0.0'
       react: '>=16.3.0'
@@ -3182,8 +3182,8 @@ packages:
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
-  react-map-gl@8.0.4:
-    resolution: {integrity: sha512-SHdpvFIvswsZBg6BCPcwY/nbKuCo3sJM1Cj7Sd+gA3gFRFOixD+KtZ2XSuUWq2WySL2emYEXEgrLZoXsV4Ut4Q==}
+  react-map-gl@8.1.0:
+    resolution: {integrity: sha512-vDx/QXR3Tb+8/ap/z6gdMjJQ8ZEyaZf6+uMSPz7jhWF5VZeIsKsGfPvwHVPPwGF43Ryn+YR4bd09uEFNR5OPdg==}
     peerDependencies:
       mapbox-gl: '>=1.13.0'
       maplibre-gl: '>=1.13.0'
@@ -5455,14 +5455,14 @@ snapshots:
 
   '@vercel/oidc@3.0.1': {}
 
-  '@vis.gl/react-mapbox@8.0.4(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@vis.gl/react-mapbox@8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
     optionalDependencies:
       mapbox-gl: 3.15.0
 
-  '@vis.gl/react-maplibre@8.0.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@vis.gl/react-maplibre@8.1.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       '@maplibre/maplibre-gl-style-spec': 19.3.3
       react: 19.1.1
@@ -6775,10 +6775,10 @@ snapshots:
 
   react-is@17.0.2: {}
 
-  react-map-gl@8.0.4(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  react-map-gl@8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
-      '@vis.gl/react-mapbox': 8.0.4(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@vis.gl/react-maplibre': 8.0.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@vis.gl/react-mapbox': 8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@vis.gl/react-maplibre': 8.1.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
     optionalDependencies:
