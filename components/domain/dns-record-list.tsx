@@ -49,7 +49,9 @@ export function DnsRecordList({
             r.isCloudflare ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Favicon domain="cloudflare.com" />
+                  <span className="inline-flex">
+                    <Favicon domain="cloudflare.com" />
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Real IP is being concealed using Cloudflare.</p>

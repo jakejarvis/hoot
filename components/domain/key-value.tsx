@@ -77,7 +77,7 @@ export function KeyValue({
           </Tooltip>
 
           {suffix ? (
-            <span className="inline-flex shrink-0 items-center [&>img]:h-[1em] [&>img]:w-[1em] [&>svg]:h-[1em] [&>svg]:w-[1em]">
+            <span className="inline-flex shrink-0 items-center [&_img]:block [&_img]:h-[1em] [&_img]:w-[1em] [&_svg]:block [&_svg]:h-[1em] [&_svg]:w-[1em]">
               {suffix}
             </span>
           ) : null}
