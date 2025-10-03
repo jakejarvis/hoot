@@ -30,6 +30,18 @@ export function DomainReportView({ domain }: { domain: string }) {
     registration.data?.isRegistered ?? false,
   );
 
+  // Disable export until all sections are settled (loaded or errored)
+  const areSecondarySectionsLoading =
+    registration.data?.isRegistered &&
+    (dns.isLoading ||
+      hosting.isLoading ||
+      certs.isLoading ||
+      headers.isLoading ||
+      dns.isFetching ||
+      hosting.isFetching ||
+      certs.isFetching ||
+      headers.isFetching);
+
   const handleExportJson = () => {
     captureClient("export_json_clicked", { domain });
     exportDomainData(domain, {
@@ -78,7 +90,12 @@ export function DomainReportView({ domain }: { domain: string }) {
           </ScreenshotTooltip>
         </div>
         <div>
-          <Button variant="outline" size="sm" onClick={handleExportJson}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportJson}
+            disabled={areSecondarySectionsLoading}
+          >
             <Download />
             Export JSON
           </Button>

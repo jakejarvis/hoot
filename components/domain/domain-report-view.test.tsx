@@ -24,42 +24,45 @@ vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
-// Mock hooks for queries/history/preferences
+// Mock hooks for queries/history with an overridable return value
+type DomainQueriesMock = {
+  registration: {
+    isLoading: boolean;
+    isSuccess?: boolean;
+    data?: { isRegistered?: boolean } | null;
+  };
+  dns: {
+    isLoading: boolean;
+    isFetching?: boolean;
+    data?: { records?: unknown[] } | null | undefined;
+    isError?: boolean;
+    refetch: () => void;
+  };
+  hosting: {
+    isLoading: boolean;
+    isFetching?: boolean;
+    data?: unknown;
+    isError?: boolean;
+    refetch: () => void;
+  };
+  certs: {
+    isLoading: boolean;
+    isFetching?: boolean;
+    data?: unknown;
+    isError?: boolean;
+    refetch: () => void;
+  };
+  headers: {
+    isLoading: boolean;
+    isFetching?: boolean;
+    data?: unknown;
+    isError?: boolean;
+    refetch: () => void;
+  };
+};
+let mockQueries: DomainQueriesMock;
 vi.mock("@/hooks/use-domain-queries", () => ({
-  useDomainQueries: () => ({
-    registration: {
-      isLoading: false,
-      isSuccess: true,
-      data: { isRegistered: true },
-    },
-    dns: {
-      isLoading: false,
-      data: { records: [] },
-      isError: false,
-      refetch: vi.fn(),
-    },
-    hosting: {
-      isLoading: false,
-      data: {
-        dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
-        hostingProvider: { name: "Vercel", domain: "vercel.com" },
-        emailProvider: { name: "Google Workspace", domain: "google.com" },
-        geo: {
-          city: "",
-          region: "",
-          country: "",
-          lat: null,
-          lon: null,
-          emoji: null,
-        },
-      },
-      isError: false,
-      refetch: vi.fn(),
-    },
-    certs: { isLoading: false, data: [], isError: false, refetch: vi.fn() },
-    headers: { isLoading: false, data: [], isError: false, refetch: vi.fn() },
-    allSectionsReady: true,
-  }),
+  useDomainQueries: () => mockQueries,
 }));
 
 vi.mock("@/hooks/use-domain-history", () => ({
@@ -68,6 +71,53 @@ vi.mock("@/hooks/use-domain-history", () => ({
 
 describe("DomainReportView", () => {
   it("renders heading and sections with ready data", () => {
+    mockQueries = {
+      registration: {
+        isLoading: false,
+        isSuccess: true,
+        data: { isRegistered: true },
+      },
+      dns: {
+        isLoading: false,
+        isFetching: false,
+        data: { records: [] },
+        isError: false,
+        refetch: vi.fn(),
+      },
+      hosting: {
+        isLoading: false,
+        isFetching: false,
+        data: {
+          dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
+          hostingProvider: { name: "Vercel", domain: "vercel.com" },
+          emailProvider: { name: "Google Workspace", domain: "google.com" },
+          geo: {
+            city: "",
+            region: "",
+            country: "",
+            lat: null,
+            lon: null,
+            emoji: null,
+          },
+        },
+        isError: false,
+        refetch: vi.fn(),
+      },
+      certs: {
+        isLoading: false,
+        isFetching: false,
+        data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+      headers: {
+        isLoading: false,
+        isFetching: false,
+        data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+    };
     render(<DomainReportView domain="example.com" />);
     expect(screen.getByText("example.com")).toBeInTheDocument();
     // Section titles exist (match exact main titles to avoid label collisions)
@@ -76,5 +126,90 @@ describe("DomainReportView", () => {
     expect(screen.getByText("DNS Records")).toBeInTheDocument();
     expect(screen.getByText("SSL Certificates")).toBeInTheDocument();
     expect(screen.getByText("HTTP Headers")).toBeInTheDocument();
+    // Export button enabled when all sections are settled
+    const exportBtn = screen.getByRole("button", { name: /Export JSON/i });
+    expect(exportBtn).not.toBeDisabled();
+  });
+
+  it("disables Export JSON while any section is loading", () => {
+    mockQueries = {
+      registration: {
+        isLoading: false,
+        isSuccess: true,
+        data: { isRegistered: true },
+      },
+      dns: {
+        isLoading: true,
+        isFetching: false,
+        data: undefined,
+        isError: false,
+        refetch: vi.fn(),
+      },
+      hosting: {
+        isLoading: false,
+        isFetching: false,
+        data: null,
+        isError: false,
+        refetch: vi.fn(),
+      },
+      certs: {
+        isLoading: false,
+        isFetching: false,
+        data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+      headers: {
+        isLoading: false,
+        isFetching: false,
+        data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+    };
+    render(<DomainReportView domain="loading.com" />);
+    const exportBtn = screen.getByRole("button", { name: /Export JSON/i });
+    expect(exportBtn).toBeDisabled();
+  });
+
+  it("enables Export JSON when all sections settled even if some errored", () => {
+    mockQueries = {
+      registration: {
+        isLoading: false,
+        isSuccess: true,
+        data: { isRegistered: true },
+      },
+      dns: {
+        isLoading: false,
+        isFetching: false,
+        data: undefined,
+        isError: true,
+        refetch: vi.fn(),
+      },
+      hosting: {
+        isLoading: false,
+        isFetching: false,
+        data: null,
+        isError: true,
+        refetch: vi.fn(),
+      },
+      certs: {
+        isLoading: false,
+        isFetching: false,
+        data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+      headers: {
+        isLoading: false,
+        isFetching: false,
+        data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+    };
+    render(<DomainReportView domain="errors.com" />);
+    const exportBtn = screen.getByRole("button", { name: /Export JSON/i });
+    expect(exportBtn).not.toBeDisabled();
   });
 });
