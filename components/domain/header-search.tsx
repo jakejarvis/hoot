@@ -6,7 +6,8 @@ import { DomainSearch } from "@/components/domain/domain-search";
 export function HeaderSearch() {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  if (isHome) return null;
+  // Return empty div to avoid messing up header grid layout
+  if (isHome) return <div />;
 
   return (
     <div className="flex flex-1 justify-center">

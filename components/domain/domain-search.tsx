@@ -110,7 +110,7 @@ export function DomainSearch({
           />
 
           {variant === "sm" && (
-            <kbd className="-translate-y-1/2 pointer-events-none invisible absolute top-1/2 right-2 select-none rounded-md border bg-muted px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground sm:visible">
+            <kbd className="-translate-y-1/2 pointer-events-none invisible absolute top-1/2 right-2 select-none rounded-md border bg-muted/80 px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground sm:visible">
               ⌘ K
             </kbd>
           )}
