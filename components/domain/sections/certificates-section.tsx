@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ChevronDown, ChevronUp } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useState } from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
@@ -42,7 +43,7 @@ export function CertificatesSection({
     >
       {isLoading ? (
         <>
-          <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+          <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <KeyValueSkeleton
                 label="Issuer"
@@ -67,7 +68,7 @@ export function CertificatesSection({
           <Fragment
             key={`cert-${firstCert.subject}-${firstCert.validFrom}-${firstCert.validTo}`}
           >
-            <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
+            <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <KeyValue
                   label="Issuer"
@@ -138,7 +139,7 @@ export function CertificatesSection({
           </Fragment>
 
           {remainingCerts.length > 0 && !showAll && (
-            <div className="my-2 flex justify-center">
+            <div className="mt-4 flex justify-center">
               <Button
                 variant="ghost"
                 size="sm"
@@ -152,102 +153,115 @@ export function CertificatesSection({
             </div>
           )}
 
-          {remainingCerts.length > 0 && showAll && (
-            <>
-              <div className="my-2 flex justify-center" aria-hidden>
-                <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
-              </div>
-              {remainingCerts.map((c, idx) => (
-                <Fragment key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}>
-                  <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <KeyValue
-                        label="Issuer"
-                        value={c.issuer}
-                        leading={
-                          c.caProvider?.domain ? (
-                            <Favicon
-                              domain={c.caProvider.domain}
-                              size={16}
-                              className="rounded"
-                            />
-                          ) : undefined
-                        }
-                        suffix={
-                          c.caProvider?.name &&
-                          c.caProvider.name !== "Unknown" ? (
-                            <span className="flex items-center text-[11px] text-muted-foreground leading-none">
-                              {c.caProvider.name}
-                            </span>
-                          ) : undefined
-                        }
-                      />
-
-                      <KeyValue
-                        label="Subject"
-                        value={c.subject}
-                        suffix={(() => {
-                          const subjectName = c.subject;
-                          const sans = Array.isArray(c.altNames)
-                            ? c.altNames.filter(
-                                (n) => !equalHostname(n, subjectName),
-                              )
-                            : [];
-                          return sans.length > 0 ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
-                                  +{sans.length}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
-                                {sans.join(", ")}
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : undefined;
-                        })()}
-                      />
-
-                      <KeyValue
-                        label="Valid from"
-                        value={formatDate(c.validFrom)}
-                      />
-
-                      <KeyValue
-                        label="Valid to"
-                        value={formatDate(c.validTo)}
-                        suffix={
-                          <RelativeExpiry
-                            to={c.validTo}
-                            dangerDays={7}
-                            warnDays={30}
-                            className="flex items-center text-[11px] leading-none"
-                          />
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  {idx < remainingCerts.length - 1 && (
-                    <div className="my-2 flex justify-center" aria-hidden>
-                      <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
-                    </div>
-                  )}
-                </Fragment>
-              ))}
-              <div className="my-2 flex justify-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-expanded={true}
-                  onClick={() => setShowAll(false)}
-                  className="text-[13px]"
+          {remainingCerts.length > 0 && (
+            <AnimatePresence initial={false}>
+              {showAll && (
+                <motion.div
+                  key="cert-chain"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  style={{ overflow: "hidden" }}
                 >
-                  <ChevronUp className="h-4 w-4" aria-hidden />
-                  <span>Hide Chain</span>
-                </Button>
-              </div>
-            </>
+                  <div className="my-3 flex justify-center" aria-hidden>
+                    <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+                  </div>
+                  {remainingCerts.map((c, idx) => (
+                    <Fragment
+                      key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}
+                    >
+                      <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <KeyValue
+                            label="Issuer"
+                            value={c.issuer}
+                            leading={
+                              c.caProvider?.domain ? (
+                                <Favicon
+                                  domain={c.caProvider.domain}
+                                  size={16}
+                                  className="rounded"
+                                />
+                              ) : undefined
+                            }
+                            suffix={
+                              c.caProvider?.name &&
+                              c.caProvider.name !== "Unknown" ? (
+                                <span className="flex items-center text-[11px] text-muted-foreground leading-none">
+                                  {c.caProvider.name}
+                                </span>
+                              ) : undefined
+                            }
+                          />
+
+                          <KeyValue
+                            label="Subject"
+                            value={c.subject}
+                            suffix={(() => {
+                              const subjectName = c.subject;
+                              const sans = Array.isArray(c.altNames)
+                                ? c.altNames.filter(
+                                    (n) => !equalHostname(n, subjectName),
+                                  )
+                                : [];
+                              return sans.length > 0 ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
+                                      +{sans.length}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
+                                    {sans.join(", ")}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : undefined;
+                            })()}
+                          />
+
+                          <KeyValue
+                            label="Valid from"
+                            value={formatDate(c.validFrom)}
+                          />
+
+                          <KeyValue
+                            label="Valid to"
+                            value={formatDate(c.validTo)}
+                            suffix={
+                              <RelativeExpiry
+                                to={c.validTo}
+                                dangerDays={7}
+                                warnDays={30}
+                                className="flex items-center text-[11px] leading-none"
+                              />
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      {idx < remainingCerts.length - 1 && (
+                        <div className="my-3 flex justify-center" aria-hidden>
+                          <ArrowDown className="h-4 w-4 text-muted-foreground/60" />
+                        </div>
+                      )}
+                    </Fragment>
+                  ))}
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-expanded={true}
+                      onClick={() => setShowAll(false)}
+                      className="text-[13px]"
+                    >
+                      <ChevronUp className="h-4 w-4" aria-hidden />
+                      <span>Hide Chain</span>
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
         </>
       ) : isError ? (
