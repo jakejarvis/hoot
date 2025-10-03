@@ -13,16 +13,32 @@ export const DomainExportSchema = z.object({
     punycodeName: true,
     fetchedAt: true,
     warnings: true,
-    registrarProvider: true,
-  }).nullish(),
+  })
+    .transform((r) => ({
+      ...r,
+      registrarProvider: r.registrarProvider.name ?? null,
+    }))
+    .nullish(),
   dns: z
     .object({
       records: z.array(DnsRecordSchema.omit({ isCloudflare: true })),
       source: DnsSourceSchema,
     })
     .nullish(),
-  hosting: HostingSchema.nullish(),
-  certificates: z.array(CertificateSchema.omit({ caProvider: true })).nullish(),
+  hosting: HostingSchema.transform((h) => ({
+    ...h,
+    hostingProvider: h.hostingProvider.name ?? null,
+    emailProvider: h.emailProvider.name ?? null,
+    dnsProvider: h.dnsProvider.name ?? null,
+  })).nullish(),
+  certificates: z
+    .array(
+      CertificateSchema.transform((c) => ({
+        ...c,
+        caProvider: c.caProvider.name ?? null,
+      })),
+    )
+    .nullish(),
   headers: HttpHeadersSchema.nullish(),
 });
 

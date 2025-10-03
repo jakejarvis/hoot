@@ -2,7 +2,7 @@
 // Note: Do not import this file in client components.
 
 import { parse } from "tldts";
-import { BLACKLISTED_SUFFIXES } from "./constants";
+import { BLACKLISTED_SUFFIXES } from "@/lib/constants";
 
 /**
  * Normalize arbitrary input (domain or URL) to its registrable domain (eTLD+1).
