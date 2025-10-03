@@ -85,7 +85,7 @@ export function CertificatesSection({
                   suffix={
                     firstCert.caProvider?.name &&
                     firstCert.caProvider.name !== "Unknown" ? (
-                      <span className="flex items-center text-[11px] text-muted-foreground leading-none">
+                      <span className="text-[11px] text-muted-foreground">
                         {firstCert.caProvider.name}
                       </span>
                     ) : undefined
@@ -105,7 +105,7 @@ export function CertificatesSection({
                     return sans.length > 0 ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex select-none items-center font-mono text-[11px] text-muted-foreground/80 leading-none underline underline-offset-2">
+                          <span className="select-none font-mono text-[11px] text-muted-foreground/80 underline underline-offset-2">
                             +{sans.length}
                           </span>
                         </TooltipTrigger>
@@ -132,7 +132,7 @@ export function CertificatesSection({
                       to={firstCert.validTo}
                       dangerDays={7}
                       warnDays={30}
-                      className="flex items-center text-[11px] leading-none"
+                      className="text-[11px]"
                     />
                   }
                 />
@@ -237,7 +237,7 @@ export function CertificatesSection({
                                 to={c.validTo}
                                 dangerDays={7}
                                 warnDays={30}
-                                className="flex items-center text-[11px] leading-none"
+                                className="text-[11px]"
                               />
                             }
                           />

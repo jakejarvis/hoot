@@ -99,13 +99,7 @@ export function HostingEmailSection({
                 ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
                 : ""
             }`}
-            leading={
-              data.geo.emoji ? (
-                <span className="inline-block leading-none">
-                  {data.geo.emoji}
-                </span>
-              ) : undefined
-            }
+            leading={data.geo.emoji ? <span>{data.geo.emoji}</span> : undefined}
           />
           {data.geo.lat != null && data.geo.lon != null ? (
             <div className="mt-2">
