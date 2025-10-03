@@ -55,7 +55,7 @@
     "ioredis": "^5.0.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "react-map-gl": "^8.0.4",
+    "react-map-gl": "^8.1.0",
     "server-only": "0.0.1",
     "sharp": "^0.34.4",
     "sonner": "^2.0.7",
