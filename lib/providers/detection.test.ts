@@ -30,8 +30,18 @@ describe("provider detection", () => {
     expect(res.domain).toBe("cloudflare.com");
   });
 
+  it("detects DNS from NS (Amazon Route 53)", () => {
+    const res = detectDnsProvider([
+      "ns-2048.awsdns-64.com",
+      "ns-2049.awsdns-65.net",
+    ]);
+    expect(res.name).toBe("Amazon Route 53");
+    expect(res.domain).toBe("aws.amazon.com");
+  });
+
   it("detects registrar from name (GoDaddy)", () => {
     const res = detectRegistrar("GoDaddy Inc.");
+    expect(res.name).toBe("GoDaddy");
     expect(res.domain).toBe("godaddy.com");
   });
 

@@ -48,6 +48,14 @@ export function evalRule(rule: Logic, ctx: DetectionContext): boolean {
   const get = (name: string) => ctx.headers[name.toLowerCase()];
   const anyDns = (arr: string[], suf: string) =>
     arr.some((h) => h === suf || h.endsWith(`.${suf}`));
+  const anyDnsRegex = (arr: string[], pattern: string, flags?: string) => {
+    try {
+      const re = new RegExp(pattern, flags ?? "i");
+      return arr.some((h) => re.test(h));
+    } catch {
+      return false;
+    }
+  };
 
   if ("all" in rule) return rule.all.every((r) => evalRule(r, ctx));
   if ("any" in rule) return rule.any.some((r) => evalRule(r, ctx));
@@ -74,8 +82,14 @@ export function evalRule(rule: Logic, ctx: DetectionContext): boolean {
     case "mxSuffix": {
       return anyDns(ctx.mx, rule.suffix.toLowerCase());
     }
+    case "mxRegex": {
+      return anyDnsRegex(ctx.mx, rule.pattern, rule.flags);
+    }
     case "nsSuffix": {
       return anyDns(ctx.ns, rule.suffix.toLowerCase());
+    }
+    case "nsRegex": {
+      return anyDnsRegex(ctx.ns, rule.pattern, rule.flags);
     }
     case "issuerEquals": {
       return !!ctx.issuer && ctx.issuer === rule.value.toLowerCase();

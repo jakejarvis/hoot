@@ -13,7 +13,9 @@ export type HeaderIncludes = {
 };
 export type HeaderPresent = { kind: "headerPresent"; name: string };
 export type MxSuffix = { kind: "mxSuffix"; suffix: string };
+export type MxRegex = { kind: "mxRegex"; pattern: string; flags?: string };
 export type NsSuffix = { kind: "nsSuffix"; suffix: string };
+export type NsRegex = { kind: "nsRegex"; pattern: string; flags?: string };
 export type IssuerEquals = { kind: "issuerEquals"; value: string };
 export type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
 export type RegistrarEquals = { kind: "registrarEquals"; value: string };
@@ -28,7 +30,9 @@ export type Logic =
   | HeaderIncludes
   | HeaderPresent
   | MxSuffix
+  | MxRegex
   | NsSuffix
+  | NsRegex
   | IssuerEquals
   | IssuerIncludes
   | RegistrarEquals

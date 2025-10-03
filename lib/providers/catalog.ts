@@ -288,7 +288,12 @@ export const EMAIL_PROVIDERS: Array<
     name: "Proton",
     domain: "proton.me",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "protonmail.ch" },
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "mail.protonmail.ch" },
+        { kind: "mxSuffix", suffix: "mailsec.protonmail.ch" },
+      ],
+    },
   },
   {
     name: "Fastmail",
@@ -384,12 +389,16 @@ export const EMAIL_PROVIDERS: Array<
     category: "email",
     rule: { kind: "mxSuffix", suffix: "pphosted.com" },
   },
-  // {
-  //   name: "Amazon WorkMail",
-  //   domain: "aws.amazon.com",
-  //   category: "email",
-  //   rule: { kind: "mxSuffix", suffix: "inbound-smtp." },
-  // },
+  {
+    name: "Amazon WorkMail",
+    domain: "aws.amazon.com",
+    category: "email",
+    rule: {
+      kind: "mxRegex",
+      pattern: "^inbound-smtp\\.[a-z]{2}-[a-z0-9-]+-\\d\\.amazonaws\\.com$",
+      flags: "i",
+    },
+  },
   {
     name: "Titan Email",
     domain: "titan.email",
@@ -413,6 +422,23 @@ export const EMAIL_PROVIDERS: Array<
     domain: "godaddy.com",
     category: "email",
     rule: { kind: "mxSuffix", suffix: "secureserver.net" },
+  },
+  {
+    name: "Namecheap",
+    domain: "namecheap.com",
+    category: "email",
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "registrar-servers.com" },
+        { kind: "mxSuffix", suffix: "privateemail.com" },
+      ],
+    },
+  },
+  {
+    name: "WordPress.com",
+    domain: "wordpress.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "wordpress.com" },
   },
 ];
 
@@ -469,18 +495,17 @@ export const DNS_PROVIDERS: Array<
     name: "NS1",
     domain: "ns1.com",
     category: "dns",
-    rule: {
-      any: [
-        { kind: "nsSuffix", suffix: "nsone.net" },
-        { kind: "nsSuffix", suffix: "ns1.com" },
-      ],
-    },
+    rule: { kind: "nsSuffix", suffix: "nsone.net" },
   },
   {
     name: "Amazon Route 53",
     domain: "aws.amazon.com",
     category: "dns",
-    rule: { kind: "nsSuffix", suffix: "awsdns" },
+    rule: {
+      kind: "nsRegex",
+      pattern: "^ns-\\d+\\.awsdns-\\d+\\.(com|net|org|co\\.uk)$",
+      flags: "i",
+    },
   },
   {
     name: "GoDaddy",
@@ -515,7 +540,12 @@ export const DNS_PROVIDERS: Array<
     name: "Hetzner",
     domain: "hetzner.com",
     category: "dns",
-    rule: { kind: "nsSuffix", suffix: "hetzner.de" },
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "hetzner.de" },
+        { kind: "nsSuffix", suffix: "hetzner.com" },
+      ],
+    },
   },
   {
     name: "OVHcloud",
@@ -635,6 +665,18 @@ export const DNS_PROVIDERS: Array<
       ],
     },
   },
+  {
+    name: "Fastmail",
+    domain: "fastmail.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "messagingengine.com" },
+  },
+  {
+    name: "Gandi LiveDNS",
+    domain: "gandi.net",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "gandi.net" },
+  },
 ];
 
 /** Registrar providers registry for WHOIS/RDAP partial name matching */
@@ -712,6 +754,7 @@ export const REGISTRAR_PROVIDERS: Array<
       any: [
         { kind: "registrarIncludes", substr: "tucows" },
         { kind: "registrarIncludes", substr: "hover" },
+        { kind: "registrarIncludes", substr: "opensrs" },
       ],
     },
   },
@@ -913,6 +956,25 @@ export const REGISTRAR_PROVIDERS: Array<
       ],
     },
   },
+  {
+    name: "NameBright",
+    domain: "namebright.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "namebright" },
+  },
+
+  {
+    name: "Domain.com",
+    domain: "domain.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "domain.com" },
+  },
+  {
+    name: "DreamHost",
+    domain: "dreamhost.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "dreamhost" },
+  },
 ];
 
 /**
@@ -996,6 +1058,7 @@ export const CA_PROVIDERS: Array<
       any: [
         { kind: "issuerIncludes", substr: "digicert" },
         { kind: "issuerIncludes", substr: "baltimore cybertrust" },
+        { kind: "issuerIncludes", substr: "quovadis" },
       ],
     },
   },
@@ -1112,5 +1175,22 @@ export const CA_PROVIDERS: Array<
     domain: "cloudflare.com",
     category: "ca",
     rule: { kind: "issuerIncludes", substr: "cloudflare" },
+  },
+  {
+    name: "IdenTrust",
+    domain: "identrust.com",
+    category: "ca",
+    rule: {
+      any: [
+        { kind: "issuerIncludes", substr: "identrust" },
+        { kind: "issuerIncludes", substr: "trustid" },
+      ],
+    },
+  },
+  {
+    name: "Certum (Asseco)",
+    domain: "www.certum.eu",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "certum" },
   },
 ];
