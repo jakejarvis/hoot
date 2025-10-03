@@ -1,7 +1,11 @@
 "use client";
 
 import { CopyButton } from "@/components/domain/copy-button";
-import { TruncatedValue } from "@/components/domain/truncated-value";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTruncation } from "@/hooks/use-truncation";
 import { cn } from "@/lib/utils";
 
@@ -48,14 +52,36 @@ export function KeyValue({
             {label}
           </div>
         )}
-        <TruncatedValue
-          value={value}
-          leading={leading}
-          suffix={suffix}
-          isTruncated={isTruncated}
-          valueRef={valueRef}
-          tooltipContent={valueTooltip}
-        />
+        <div className="flex min-w-0 items-center gap-2 text-[13px] text-foreground/95 leading-[1.2]">
+          {leading ? (
+            <span className="inline-flex h-[1em] w-[1em] shrink-0 items-center justify-center overflow-hidden rounded [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+              {leading}
+            </span>
+          ) : null}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span ref={valueRef} className="block min-w-0 flex-1 truncate">
+                {value}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              className={cn(
+                isTruncated || valueTooltip != null
+                  ? "max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]"
+                  : "hidden",
+              )}
+            >
+              {valueTooltip ?? value}
+            </TooltipContent>
+          </Tooltip>
+
+          {suffix ? (
+            <span className="inline-flex shrink-0 items-center [&>img]:h-[1em] [&>img]:w-[1em] [&>svg]:h-[1em] [&>svg]:w-[1em]">
+              {suffix}
+            </span>
+          ) : null}
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {trailing}
