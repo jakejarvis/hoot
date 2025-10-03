@@ -40,6 +40,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
               emoji: null,
             },
             owner: null,
+            domain: null,
           };
       const geo = meta.geo;
 
@@ -55,7 +56,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         hostingIconDomain = null;
       } else if (/^unknown$/i.test(hostingName)) {
         if (meta.owner) hostingName = meta.owner;
-        hostingIconDomain = null;
+        hostingIconDomain = meta.domain ?? null;
       }
 
       // Determine email provider, using "none" when MX is unset

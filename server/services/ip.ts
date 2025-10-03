@@ -8,6 +8,7 @@ export async function lookupIpMeta(ip: string): Promise<{
     emoji: string | null;
   };
   owner: string | null;
+  domain: string | null;
 }> {
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
@@ -20,7 +21,7 @@ export async function lookupIpMeta(ip: string): Promise<{
       latitude?: number;
       longitude?: number;
       flag?: { emoji?: string };
-      connection?: { org?: string; isp?: string };
+      connection?: { org?: string; isp?: string; domain?: string };
     };
     const geo = {
       city: j.city || "",
@@ -33,7 +34,8 @@ export async function lookupIpMeta(ip: string): Promise<{
     const org = j.connection?.org?.trim();
     const isp = j.connection?.isp?.trim();
     const owner = (org || isp || "").trim() || null;
-    return { geo, owner };
+    const domain = (j.connection?.domain || "").trim() || null;
+    return { geo, owner, domain };
   } catch {
     return {
       geo: {
@@ -45,6 +47,7 @@ export async function lookupIpMeta(ip: string): Promise<{
         emoji: null,
       },
       owner: null,
+      domain: null,
     };
   }
 }

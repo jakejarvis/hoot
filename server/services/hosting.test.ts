@@ -29,6 +29,7 @@ vi.mock("@/server/services/ip", () => ({
       emoji: null,
     },
     owner: null,
+    domain: null,
   })),
 }));
 
@@ -77,6 +78,7 @@ describe("detectHosting", () => {
         emoji: "🇺🇸",
       },
       owner: null,
+      domain: null,
     });
 
     // Act
@@ -138,11 +140,12 @@ describe("detectHosting", () => {
         emoji: null,
       },
       owner: "My ISP",
+      domain: "isp.example",
     });
 
     const result = await detectHosting("owner.example");
     expect(result.hostingProvider.name).toBe("My ISP");
-    expect(result.hostingProvider.domain).toBeNull();
+    expect(result.hostingProvider.domain).toBe("isp.example");
   });
 
   it("falls back to root domains for email and DNS when unknown", async () => {
