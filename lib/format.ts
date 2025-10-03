@@ -13,6 +13,18 @@ export function formatDate(iso: string) {
   }
 }
 
+export function formatDateTimeUtc(iso: string) {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const utc = new UTCDate(d);
+    // Example: 2025-10-02 14:30:05 UTC
+    return format(utc, "yyyy-MM-dd HH:mm:ss 'UTC'");
+  } catch {
+    return iso;
+  }
+}
+
 export function formatTtl(ttl: number): string {
   if (!Number.isFinite(ttl) || ttl <= 0) return `${ttl}s`;
   const hours = Math.floor(ttl / 3600);

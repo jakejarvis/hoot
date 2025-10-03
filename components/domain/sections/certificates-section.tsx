@@ -16,7 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -120,11 +120,13 @@ export function CertificatesSection({
                 <KeyValue
                   label="Valid from"
                   value={formatDate(firstCert.validFrom)}
+                  valueTooltip={formatDateTimeUtc(firstCert.validFrom)}
                 />
 
                 <KeyValue
                   label="Valid to"
                   value={formatDate(firstCert.validTo)}
+                  valueTooltip={formatDateTimeUtc(firstCert.validTo)}
                   suffix={
                     <RelativeExpiry
                       to={firstCert.validTo}
@@ -223,11 +225,13 @@ export function CertificatesSection({
                           <KeyValue
                             label="Valid from"
                             value={formatDate(c.validFrom)}
+                            valueTooltip={formatDateTimeUtc(c.validFrom)}
                           />
 
                           <KeyValue
                             label="Valid to"
                             value={formatDate(c.validTo)}
+                            valueTooltip={formatDateTimeUtc(c.validTo)}
                             suffix={
                               <RelativeExpiry
                                 to={c.validTo}

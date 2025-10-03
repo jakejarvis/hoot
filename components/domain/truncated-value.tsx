@@ -13,6 +13,7 @@ interface TruncatedValueProps {
   suffix?: React.ReactNode;
   isTruncated: boolean;
   valueRef: React.RefObject<HTMLSpanElement | null>;
+  tooltipContent?: React.ReactNode;
 }
 
 export function TruncatedValue({
@@ -21,7 +22,9 @@ export function TruncatedValue({
   suffix,
   isTruncated,
   valueRef,
+  tooltipContent,
 }: TruncatedValueProps) {
+  const shouldShowTooltip = isTruncated || tooltipContent != null;
   const content = (
     <div className="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-foreground/95 leading-[1.2]">
       {leading}
@@ -38,12 +41,12 @@ export function TruncatedValue({
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent
             className={cn(
-              isTruncated
+              shouldShowTooltip
                 ? "max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]"
                 : "hidden",
             )}
           >
-            {value}
+            {tooltipContent ?? value}
           </TooltipContent>
         </Tooltip>
         <div className="shrink-0">{suffix}</div>
@@ -56,12 +59,12 @@ export function TruncatedValue({
       <TooltipTrigger asChild>{content}</TooltipTrigger>
       <TooltipContent
         className={cn(
-          isTruncated
+          shouldShowTooltip
             ? "max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]"
             : "hidden",
         )}
       >
-        {value}
+        {tooltipContent ?? value}
       </TooltipContent>
     </Tooltip>
   );

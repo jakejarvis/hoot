@@ -13,6 +13,7 @@ export function KeyValue({
   highlight,
   trailing,
   suffix,
+  valueTooltip,
 }: {
   label?: string;
   value: string;
@@ -21,6 +22,7 @@ export function KeyValue({
   highlight?: boolean;
   trailing?: React.ReactNode;
   suffix?: React.ReactNode;
+  valueTooltip?: React.ReactNode;
 }) {
   const { valueRef, isTruncated } = useTruncation();
 
@@ -52,6 +54,7 @@ export function KeyValue({
           suffix={suffix}
           isTruncated={isTruncated}
           valueRef={valueRef}
+          tooltipContent={valueTooltip}
         />
       </div>
       <div className="flex shrink-0 items-center gap-2">
