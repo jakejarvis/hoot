@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BrowserWindow } from "../browser-window";
 
 export function ScreenshotTooltip({
   domain,
@@ -28,16 +29,16 @@ export function ScreenshotTooltip({
     >
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
-        sideOffset={10}
-        className="border bg-popover p-0 text-popover-foreground shadow-xl"
+        sideOffset={6}
+        alignOffset={-12}
+        className="bg-transparent"
         hideArrow
+        align="start"
       >
         <div className="w-[300px] sm:w-[360px] md:w-[420px]">
-          <Screenshot
-            domain={domain}
-            enabled={hasOpened}
-            aspectClassName="aspect-[4/2.1]"
-          />
+          <BrowserWindow url={domain} className="h-auto w-full shadow-xl">
+            <Screenshot domain={domain} enabled={hasOpened} />
+          </BrowserWindow>
         </div>
       </TooltipContent>
     </Tooltip>

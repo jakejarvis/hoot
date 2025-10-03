@@ -10,7 +10,6 @@ export function Screenshot({
   domain,
   enabled = true,
   className,
-  caption,
   width = 1200,
   height = 630,
   imageClassName,
@@ -19,7 +18,6 @@ export function Screenshot({
   domain: string;
   enabled?: boolean;
   className?: string;
-  caption?: string;
   width?: number;
   height?: number;
   imageClassName?: string;
@@ -42,47 +40,38 @@ export function Screenshot({
   return (
     <div className={className}>
       {url ? (
-        <div className="p-2">
-          <Image
-            src={url}
-            alt={`Homepage preview of ${domain}`}
-            width={width}
-            height={height}
-            className={cn(
-              "h-auto w-full rounded-md border object-cover",
-              aspectClassName,
-              imageClassName,
-            )}
-            unoptimized
-            priority={false}
-          />
-          {caption ? (
-            <div className="px-1 pt-1 text-[10px] text-muted-foreground">
-              {caption}
-            </div>
-          ) : null}
-        </div>
+        <Image
+          src={url}
+          alt={`Homepage preview of ${domain}`}
+          width={width}
+          height={height}
+          className={cn(
+            "h-auto w-full object-cover",
+            aspectClassName,
+            imageClassName,
+          )}
+          unoptimized
+          priority={false}
+        />
       ) : (
-        <div className="p-2">
+        <div
+          className={`h-auto w-full ${aspectClassName} flex items-center justify-center bg-muted/50`}
+        >
           <div
-            className={`w-full ${aspectClassName} flex items-center justify-center rounded-md border bg-muted/50`}
+            className="flex items-center gap-2 text-muted-foreground text-xs"
+            aria-live="polite"
           >
-            <div
-              className="flex items-center gap-2 text-muted-foreground text-xs"
-              aria-live="polite"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Loading screenshot...</span>
-                </>
-              ) : (
-                <>
-                  <CircleX className="h-4 w-4" />
-                  <span>Unable to generate a screenshot.</span>
-                </>
-              )}
-            </div>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading screenshot...</span>
+              </>
+            ) : (
+              <>
+                <CircleX className="h-4 w-4" />
+                <span>Unable to generate a screenshot.</span>
+              </>
+            )}
           </div>
         </div>
       )}
