@@ -1,6 +1,7 @@
 "use client";
 
 import { Globe, Loader2, Search as SearchIcon } from "lucide-react";
+import { useRef } from "react";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,32 @@ export function DomainSearch({
       enableShortcut: variant === "sm", // header supports ⌘/Ctrl + K
       prefillFromRoute: variant === "sm", // header derives initial from route
     });
+
+  // Select all on first focus (click or Cmd+K), but allow precise cursor placement on the next click.
+  const pointerDownRef = useRef(false);
+  const didSelectOnFocusRef = useRef(false);
+
+  function handlePointerDown() {
+    if (variant !== "sm") return;
+    pointerDownRef.current = true;
+  }
+
+  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    e.currentTarget.select();
+    // Only block the immediate mouseup if the focus came from a pointer
+    // (so Cmd+K focus won't require an extra click to place the caret).
+    if (pointerDownRef.current) {
+      didSelectOnFocusRef.current = true;
+    }
+    pointerDownRef.current = false;
+  }
+
+  function handleMouseUp(e: React.MouseEvent<HTMLInputElement>) {
+    if (didSelectOnFocusRef.current) {
+      e.preventDefault();
+      didSelectOnFocusRef.current = false;
+    }
+  }
 
   return (
     <>
@@ -73,6 +100,9 @@ export function DomainSearch({
             aria-label="Search any domain"
             value={value}
             onChange={(e) => setValue(e.target.value)}
+            onPointerDown={handlePointerDown}
+            onFocus={handleFocus}
+            onMouseUp={handleMouseUp}
             className={cn(
               "pl-9",
               variant === "lg" ? "h-12" : "h-10 rounded-xl sm:pr-14",
