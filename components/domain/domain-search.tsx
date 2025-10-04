@@ -28,9 +28,9 @@ export function DomainSearch({
       prefillFromRoute: variant === "sm", // header derives initial from route
     });
 
-  // Select all on first focus (click or Cmd+K), but allow precise cursor placement on the next click.
+  // Select all on first focus from keyboard or first click; allow precise cursor on next click.
   const pointerDownRef = useRef(false);
-  const didSelectOnFocusRef = useRef(false);
+  const justFocusedRef = useRef(false);
 
   function handlePointerDown() {
     if (variant !== "sm") return;
@@ -38,20 +38,32 @@ export function DomainSearch({
   }
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-    e.currentTarget.select();
-    // Only block the immediate mouseup if the focus came from a pointer
-    // (so Cmd+K focus won't require an extra click to place the caret).
-    if (pointerDownRef.current) {
-      didSelectOnFocusRef.current = true;
+    // If focus came from keyboard (e.g., Cmd/Ctrl+K), select immediately
+    // and allow the next click to place the caret precisely.
+    if (!pointerDownRef.current) {
+      e.currentTarget.select();
+      justFocusedRef.current = false;
+    } else {
+      // For pointer-initiated focus, wait for the first click to select all
+      // so double-click can still select a word normally.
+      justFocusedRef.current = true;
+      pointerDownRef.current = false;
     }
-    pointerDownRef.current = false;
   }
 
-  function handleMouseUp(e: React.MouseEvent<HTMLInputElement>) {
-    if (didSelectOnFocusRef.current) {
-      e.preventDefault();
-      didSelectOnFocusRef.current = false;
+  function handleClick(e: React.MouseEvent<HTMLInputElement>) {
+    // Triple-click: select entire value explicitly.
+    if (e.detail === 3) {
+      e.currentTarget.select();
+      justFocusedRef.current = false;
+      return;
     }
+    // If this is the very first click after pointer-focus, select all on single click.
+    // Double-click (detail 2) will use the browser's default word selection.
+    if (justFocusedRef.current && e.detail === 1) {
+      e.currentTarget.select();
+    }
+    justFocusedRef.current = false;
   }
 
   return (
@@ -102,7 +114,7 @@ export function DomainSearch({
             onChange={(e) => setValue(e.target.value)}
             onPointerDown={handlePointerDown}
             onFocus={handleFocus}
-            onMouseUp={handleMouseUp}
+            onClick={handleClick}
             className={cn(
               "pl-9",
               variant === "lg" ? "h-12" : "h-10 rounded-xl sm:pr-14",
