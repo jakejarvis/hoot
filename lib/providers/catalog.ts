@@ -188,6 +188,18 @@ export const HOSTING_PROVIDERS: Array<
     rule: { kind: "headerPresent", name: "x-kinsta-cache" },
   },
   {
+    name: "Railway",
+    domain: "railway.app",
+    category: "hosting",
+    rule: {
+      any: [
+        { kind: "headerPresent", name: "x-railway-request-id" },
+        { kind: "headerPresent", name: "x-railway-edge" },
+        { kind: "headerIncludes", name: "server", substr: "railway" },
+      ],
+    },
+  },
+  {
     name: "Bunny.net",
     domain: "bunny.net",
     category: "hosting",

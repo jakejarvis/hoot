@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const DnsSourceSchema = z.enum(["cloudflare", "google"]);
+export const DnsResolverSchema = z.enum(["cloudflare", "google"]);
 
 export const DnsTypeSchema = z.enum(["A", "AAAA", "MX", "TXT", "NS"]);
 
@@ -15,10 +15,10 @@ export const DnsRecordSchema = z.object({
 
 export const DnsResolveResultSchema = z.object({
   records: z.array(DnsRecordSchema),
-  source: DnsSourceSchema,
+  resolver: DnsResolverSchema,
 });
 
-export type DnsSource = z.infer<typeof DnsSourceSchema>;
+export type DnsResolver = z.infer<typeof DnsResolverSchema>;
 export type DnsType = z.infer<typeof DnsTypeSchema>;
 export type DnsRecord = z.infer<typeof DnsRecordSchema>;
 export type DnsResolveResult = z.infer<typeof DnsResolveResultSchema>;

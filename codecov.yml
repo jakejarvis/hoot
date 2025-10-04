@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://json.schemastore.org/codecov
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        informational: true
+    patch:
+      default:
+        target: auto
+        informational: true

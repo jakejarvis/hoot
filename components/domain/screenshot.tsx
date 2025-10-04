@@ -29,6 +29,7 @@ export function Screenshot({
       { domain },
       {
         staleTime: 24 * 60 * 60_000, // 24h in ms
+        retry: 5,
         enabled,
       },
     ),

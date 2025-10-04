@@ -127,7 +127,7 @@ describe("DomainReportView", () => {
     expect(screen.getByText("SSL Certificates")).toBeInTheDocument();
     expect(screen.getByText("HTTP Headers")).toBeInTheDocument();
     // Export button enabled when all sections are settled
-    const exportBtn = screen.getByRole("button", { name: /Export JSON/i });
+    const exportBtn = screen.getByRole("button", { name: /Export/i });
     expect(exportBtn).not.toBeDisabled();
   });
 
@@ -168,7 +168,7 @@ describe("DomainReportView", () => {
       },
     };
     render(<DomainReportView domain="loading.com" />);
-    const exportBtn = screen.getByRole("button", { name: /Export JSON/i });
+    const exportBtn = screen.getByRole("button", { name: /Export/i });
     expect(exportBtn).toBeDisabled();
   });
 
@@ -209,7 +209,7 @@ describe("DomainReportView", () => {
       },
     };
     render(<DomainReportView domain="errors.com" />);
-    const exportBtn = screen.getByRole("button", { name: /Export JSON/i });
+    const exportBtn = screen.getByRole("button", { name: /Export/i });
     expect(exportBtn).not.toBeDisabled();
   });
 });

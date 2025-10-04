@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DnsRecordSchema, DnsSourceSchema } from "./dns";
+import { DnsRecordSchema, DnsResolverSchema } from "./dns";
 import { HostingSchema } from "./hosting";
 import { HttpHeadersSchema } from "./http";
 import { RegistrationSchema } from "./registration";
@@ -22,7 +22,7 @@ export const DomainExportSchema = z.object({
   dns: z
     .object({
       records: z.array(DnsRecordSchema.omit({ isCloudflare: true })),
-      source: DnsSourceSchema,
+      resolver: DnsResolverSchema,
     })
     .nullish(),
   hosting: HostingSchema.transform((h) => ({

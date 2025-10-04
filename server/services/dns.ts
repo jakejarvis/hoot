@@ -6,13 +6,13 @@ import {
   type DnsRecord,
   DnsRecordSchema,
   type DnsResolveResult,
-  type DnsSource,
+  type DnsResolver,
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
 
 export type DohProvider = {
-  key: DnsSource;
+  key: DnsResolver;
   buildUrl: (domain: string, type: DnsType) => URL;
   headers?: Record<string, string>;
 };
@@ -89,7 +89,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         provider_attempts: attemptIndex + 1,
         duration_ms_by_provider: durationByProvider,
       });
-      return { records: flat, source: provider.key } as DnsResolveResult;
+      return { records: flat, resolver: provider.key } as DnsResolveResult;
     } catch (err) {
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
