@@ -83,6 +83,39 @@ export async function cacheDel(key: string): Promise<void> {
   }
 }
 
+// Best-effort short-lived distributed lock using SET NX with TTL
+export async function tryAcquireLock(
+  key: string,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const redis = await ensureClient();
+  if (!redis) return true; // single instance fallback
+  try {
+    const res = await (
+      redis as unknown as {
+        set: (
+          k: string,
+          v: string,
+          mode: "NX" | "XX",
+          ex: "EX" | "PX",
+          ttl: number,
+        ) => Promise<string | null>;
+      }
+    ).set(key, "1", "NX", "EX", ttlSeconds);
+    return res === "OK";
+  } catch {
+    return false;
+  }
+}
+
+export async function releaseLock(key: string): Promise<void> {
+  const redis = await ensureClient();
+  if (!redis) return;
+  try {
+    await redis.del(key);
+  } catch {}
+}
+
 export async function cacheGetZod<T>(
   key: string,
   schema: ZodType<T>,

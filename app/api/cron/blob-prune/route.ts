@@ -1,6 +1,7 @@
-import { del, list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getFaviconBucket, getScreenshotBucket } from "@/lib/blob";
+import { cacheDel, cacheGet, ns } from "@/lib/redis";
+import { getStorageAdapter } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -20,18 +21,7 @@ const KEEP_BUCKETS = () => parseIntEnv("BLOB_KEEP_BUCKETS", 2);
  * We prune old time-bucketed assets under `favicons/` and `screenshots/`.
  * Paths are structured as: `${kind}/${bucket}/${digest}/...`.
  */
-function shouldDeletePath(
-  pathname: string,
-  currentBucket: number,
-  keep: number,
-) {
-  // Expect: kind/bucket/...
-  const parts = pathname.split("/");
-  if (parts.length < 3) return false;
-  const bucketNum = Number(parts[1]);
-  if (!Number.isFinite(bucketNum)) return false;
-  return bucketNum <= currentBucket - keep;
-}
+// Removed old shouldDeletePath; deletion now uses Redis bucket sets
 
 export async function GET(req: Request) {
   const secret = getCronSecret();
@@ -48,34 +38,47 @@ export async function GET(req: Request) {
   const deleted: string[] = [];
   const errors: Array<{ path: string; error: string }> = [];
 
-  // List favicons and screenshots prefixes separately to reduce listing size
-  for (const prefix of ["favicons/", "screenshots/"]) {
-    // Paginate list in case of many objects
-    let cursor: string | undefined;
-    do {
-      const res = await list({
-        prefix,
-        cursor,
-        token: process.env.BLOB_READ_WRITE_TOKEN,
-      });
-      cursor = res.cursor || undefined;
-      for (const item of res.blobs) {
-        const current = prefix.startsWith("favicons/")
-          ? faviconBucket
-          : screenshotBucket;
-        if (shouldDeletePath(item.pathname, current, keep)) {
-          try {
-            await del(item.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
-            deleted.push(item.pathname);
-          } catch (err) {
-            errors.push({
-              path: item.pathname,
-              error: (err as Error)?.message || "unknown",
-            });
-          }
+  type Kind = "icon" | "screenshot";
+  const adapter = getStorageAdapter();
+
+  function bucketSetKey(kind: Kind, bucket: number): string {
+    return ns(`${kind}:bucket`, String(bucket));
+  }
+
+  function shouldDeleteBucket(kind: Kind, bucket: number): boolean {
+    const current = kind === "icon" ? faviconBucket : screenshotBucket;
+    return bucket <= current - keep;
+  }
+
+  for (const kind of ["icon", "screenshot"] as const) {
+    const current = kind === "icon" ? faviconBucket : screenshotBucket;
+    const doomed: number[] = [];
+    for (let b = 0; b <= current - keep; b++) doomed.push(b);
+
+    for (const bucket of doomed) {
+      if (!shouldDeleteBucket(kind, bucket)) continue;
+      try {
+        const setKey = bucketSetKey(kind, bucket);
+        const entries =
+          (await cacheGet<{ providerKey: string; indexKey: string }[]>(
+            setKey,
+          )) || [];
+        if (entries.length === 0) continue;
+        const keys = entries.map((e) => e.providerKey);
+        await adapter.deleteByKeys(keys);
+        // Remove index keys and the bucket set
+        for (const e of entries) {
+          await cacheDel(e.indexKey);
+          deleted.push(e.indexKey);
         }
+        await cacheDel(setKey);
+      } catch (err) {
+        errors.push({
+          path: `${kind}:${bucket}`,
+          error: (err as Error)?.message || "unknown",
+        });
       }
-    } while (cursor);
+    }
   }
 
   return NextResponse.json({
