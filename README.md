@@ -49,7 +49,7 @@
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 3. **(Optional) Configure `.env.local`:**  
-   See `.env.example` for Upstash Redis and Vercel Blob credentials (needed for caching and favicon/screenshot features).
+   See `.env.example` for Redis and Vercel Blob credentials (needed for caching and favicon/screenshot features).
 
    Useful keys:
    - `BLOB_SIGNING_SECRET` (required in production)

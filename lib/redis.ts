@@ -1,18 +1,40 @@
-import { Redis } from "@upstash/redis";
+import Redis from "ioredis";
 import type { ZodType } from "zod";
 
-let redis: Redis | null = null;
-if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-  redis = new Redis({
-    url: process.env.KV_REST_API_URL as string,
-    token: process.env.KV_REST_API_TOKEN as string,
-  });
-}
+let client: Redis | null = null;
+let connecting: Promise<unknown> | null = null;
 
-if (!redis && process.env.NODE_ENV === "development") {
-  console.warn(
-    "Missing KV_REST_API_URL and/or KV_REST_API_TOKEN environment variables.",
-  );
+async function ensureClient(): Promise<Redis | null> {
+  const url = process.env.REDIS_URL;
+  if (!url) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Missing REDIS_URL environment variable.");
+    }
+    return null;
+  }
+
+  if (client) return client;
+
+  if (!client) {
+    client = new Redis(url);
+    client.on("error", () => {
+      // swallow errors; callers already fail soft
+    });
+  }
+
+  if (!connecting) {
+    connecting =
+      client.status === "ready" ? Promise.resolve() : client.connect();
+  }
+  try {
+    await connecting;
+  } catch {
+    client = null;
+  } finally {
+    connecting = null;
+  }
+
+  return client?.status === "ready" ? client : null;
 }
 
 export function ns(namespace: string, id: string): string {
@@ -20,10 +42,17 @@ export function ns(namespace: string, id: string): string {
 }
 
 export async function cacheGet<T>(key: string): Promise<T | null> {
+  const redis = await ensureClient();
   if (!redis) return null;
   try {
-    const value = await redis.get<T>(key);
-    return (value as T | null) ?? null;
+    const raw = await redis.get(key);
+    if (raw == null) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      // Non-JSON payloads are not expected; treat as miss
+      return null;
+    }
   } catch {
     return null;
   }
@@ -34,15 +63,18 @@ export async function cacheSet<T>(
   value: T,
   ttlSeconds: number,
 ): Promise<void> {
+  const redis = await ensureClient();
   if (!redis) return;
   try {
-    await redis.set(key, value as unknown as object, { ex: ttlSeconds });
+    const payload = JSON.stringify(value);
+    await redis.set(key, payload, "EX", ttlSeconds);
   } catch {
     // no-op
   }
 }
 
 export async function cacheDel(key: string): Promise<void> {
+  const redis = await ensureClient();
   if (!redis) return;
   try {
     await redis.del(key);
@@ -73,6 +105,7 @@ export async function getOrSetZod<T>(
   loader: () => Promise<T>,
   schema: ZodType<T>,
 ): Promise<T> {
+  const redis = await ensureClient();
   if (!redis) return await loader();
   try {
     const value = await cacheGet<unknown>(key);
@@ -94,5 +127,3 @@ export async function getOrSetZod<T>(
   }
   return fresh;
 }
-
-export { redis };
