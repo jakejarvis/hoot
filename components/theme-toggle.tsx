@@ -17,7 +17,7 @@ export function ThemeToggle() {
     <Button
       aria-label="Toggle theme"
       variant="ghost"
-      size="icon"
+      size="sm"
       onClick={toggleTheme}
     >
       <Sun className="dark:-rotate-90 rotate-0 scale-100 transition-all dark:scale-0" />

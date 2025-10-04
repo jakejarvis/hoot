@@ -54,7 +54,7 @@ export function HeadersSection({
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load headers."
-          onRetry={onRetryAction}
+          onRetryAction={onRetryAction}
         />
       ) : null}
     </Section>

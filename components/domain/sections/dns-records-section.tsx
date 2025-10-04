@@ -95,7 +95,10 @@ export function DnsRecordsSection({
           </DnsGroup>
         </div>
       ) : isError ? (
-        <ErrorWithRetry message="Failed to load DNS." onRetry={onRetryAction} />
+        <ErrorWithRetry
+          message="Failed to load DNS."
+          onRetryAction={onRetryAction}
+        />
       ) : null}
     </Section>
   );

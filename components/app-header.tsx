@@ -3,6 +3,7 @@ import { HeaderSearch } from "@/components/domain/header-search";
 import { GithubStars } from "@/components/github-stars";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Separator } from "@/components/ui/separator";
 
 export function AppHeader() {
   return (
@@ -15,9 +16,10 @@ export function AppHeader() {
         <Logo className="h-10 w-10" aria-hidden="true" />
       </Link>
       <HeaderSearch />
-      <div className="flex items-center gap-1.5 justify-self-end">
+      <div className="flex h-full items-center gap-1.5 justify-self-end">
         {/* Server-fetched star count with link */}
         <GithubStars />
+        <Separator orientation="vertical" className="!h-4" />
         <ThemeToggle />
       </div>
     </header>

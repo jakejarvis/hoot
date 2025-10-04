@@ -110,7 +110,7 @@ export function HostingEmailSection({
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load hosting details."
-          onRetry={onRetryAction}
+          onRetryAction={onRetryAction}
         />
       ) : null}
     </Section>

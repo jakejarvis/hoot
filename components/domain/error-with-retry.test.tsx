@@ -6,7 +6,7 @@ import { ErrorWithRetry } from "./error-with-retry";
 describe("ErrorWithRetry", () => {
   it("calls onRetry when clicking Retry", async () => {
     const onRetry = vi.fn();
-    render(<ErrorWithRetry message="Failed" onRetry={onRetry} />);
+    render(<ErrorWithRetry message="Failed" onRetryAction={onRetry} />);
     await userEvent.click(screen.getByRole("button", { name: /retry/i }));
     expect(onRetry).toHaveBeenCalled();
   });

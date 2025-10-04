@@ -109,7 +109,7 @@ export function RegistrationSection({
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load WHOIS."
-          onRetry={onRetryAction}
+          onRetryAction={onRetryAction}
         />
       ) : null}
     </Section>

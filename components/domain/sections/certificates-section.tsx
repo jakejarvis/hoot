@@ -271,7 +271,7 @@ export function CertificatesSection({
       ) : isError ? (
         <ErrorWithRetry
           message="Failed to load certificates."
-          onRetry={onRetryAction}
+          onRetryAction={onRetryAction}
         />
       ) : null}
     </Section>

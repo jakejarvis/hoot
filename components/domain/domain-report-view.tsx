@@ -13,6 +13,11 @@ import { HeadersSection } from "@/components/domain/sections/headers-section";
 import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
 import { RegistrationSection } from "@/components/domain/sections/registration-section";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
@@ -69,36 +74,42 @@ export function DomainReportView({ domain }: { domain: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <ScreenshotTooltip domain={domain}>
-            <Link
-              href={`https://${domain}`}
-              target="_blank"
-              rel="noopener"
-              className="flex items-center gap-2"
-              onClick={() =>
-                captureClient("external_domain_link_clicked", { domain })
-              }
-            >
-              <Favicon domain={domain} size={20} className="rounded" />
-              <h2 className="font-semibold text-xl tracking-tight">{domain}</h2>
-              <ExternalLink
-                className="size-3.5 text-muted-foreground/60"
-                aria-hidden="true"
-              />
-            </Link>
-          </ScreenshotTooltip>
-        </div>
-        <div>
-          <Button
-            variant="outline"
-            onClick={handleExportJson}
-            disabled={areSecondarySectionsLoading}
+        <ScreenshotTooltip domain={domain}>
+          <Link
+            href={`https://${domain}`}
+            target="_blank"
+            rel="noopener"
+            className="flex items-center gap-2"
+            onClick={() =>
+              captureClient("external_domain_link_clicked", { domain })
+            }
           >
-            <Download />
-            <span className="hidden sm:inline-block">Export</span>
-          </Button>
-        </div>
+            <Favicon domain={domain} size={20} className="rounded" />
+            <h2 className="font-semibold text-xl tracking-tight">{domain}</h2>
+            <ExternalLink
+              className="size-3.5 text-muted-foreground/60"
+              aria-hidden="true"
+            />
+          </Link>
+        </ScreenshotTooltip>
+        <Tooltip delayDuration={500}>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              onClick={handleExportJson}
+              disabled={areSecondarySectionsLoading}
+            >
+              <Download />
+              <span className="hidden sm:inline-block">Export</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>
+              Save this report as a <span className="font-mono">JSON</span>{" "}
+              file.
+            </p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="space-y-4">
