@@ -12,7 +12,7 @@
 - **Comprehensive Reports:** See registration info, hosting & email, DNS records, SSL certificates, and HTTP headers.
 - **Interactive UI:** Expand/collapse sections, copy data, and enjoy beautiful dark mode.
 - **Fast & Private:** Data is fetched live, with caching for speed—no sign-up required.
-- **Favicons & Screenshots:** Extract favicons and capture homepage screenshots, cached on Vercel Blob for quick reuse.
+- **Favicons & Screenshots:** Extract favicons and capture homepage screenshots, cached via UploadThing for quick reuse.
 
 ---
 
@@ -24,7 +24,7 @@
 - **Tailwind CSS v4**
 - **tRPC** API endpoints
 - **Upstash Redis** for caching
-- **Vercel Blob** for favicon & screenshot storage
+- **UploadThing** for favicon & screenshot storage
 - **rdapper** for RDAP registration lookups with WHOIS fallback
 - **Puppeteer** for server-side screenshots
 - **Mapbox** for embedded IP geolocation maps
@@ -49,16 +49,41 @@
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 3. **(Optional) Configure `.env.local`:**  
-   See `.env.example` for Redis and Vercel Blob credentials (needed for caching and favicon/screenshot features).
+   See `.env.example` for Redis and UploadThing credentials (needed for caching and favicon/screenshot features).
 
    Useful keys:
    - `BLOB_SIGNING_SECRET` (required in production)
-   - `BLOB_READ_WRITE_TOKEN`
+   - `UPLOADTHING_TOKEN` (UploadThing server API key)
+   - `UPLOADTHING_APP_ID` (UploadThing app identifier for canonical ufs URLs)
    - `FAVICON_TTL_SECONDS`, `SCREENSHOT_TTL_SECONDS` (optional TTLs)
    - `HOOT_USER_AGENT` (optional UA override)
    - `PUPPETEER_SKIP_DOWNLOAD=1` on Vercel to skip full `puppeteer` download
 
 ---
+
+## ⏲️ Cron (pruning old assets)
+
+- Schedule any external cron (GitHub Actions, Cloudflare Workers Cron, etc.) to call `GET /api/cron/blob-prune` with header `authorization: Bearer $CRON_SECRET`.
+
+Example GitHub Actions snippet:
+
+```yaml
+name: Prune old assets
+on:
+  schedule:
+    - cron: "0 * * * *" # hourly
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call prune endpoint
+        run: |
+          curl -fsSL -H "authorization: Bearer $CRON_SECRET" \
+            $PRUNE_URL
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PRUNE_URL: ${{ secrets.PRUNE_URL }} # e.g. https://your.app/api/cron/blob-prune
+```
 
 ## 📜 License
 

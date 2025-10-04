@@ -1,18 +1,18 @@
 /* @vitest-environment node */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@vercel/blob", () => ({
-  list: vi.fn(async (_opts: unknown) => ({
-    blobs: [
-      { pathname: "favicons/1/abc/32.png", url: "https://blob/f1" },
-      { pathname: "favicons/999999/def/32.png", url: "https://blob/f2" },
-      { pathname: "screenshots/1/ghi/1200x630.png", url: "https://blob/s1" },
-    ],
-    cursor: undefined,
-  })),
-  del: vi.fn(async (_url: string) => undefined),
-}));
+vi.mock("@/lib/storage", () => {
+  const adapter = {
+    uploadPublicPng: vi.fn(),
+    deleteByKeys: vi.fn(async () => undefined),
+    getUrls: vi.fn(),
+  };
+  return {
+    getStorageAdapter: () => adapter,
+  };
+});
 
+import { cacheSet, ns } from "@/lib/redis";
 import { GET } from "./route";
 
 describe("/api/cron/blob-prune", () => {
@@ -25,6 +25,32 @@ describe("/api/cron/blob-prune", () => {
     // Force nowBucket to be large so bucket=1 items are considered old
     const realNow = Date.now;
     Date.now = () => 10_000_000_000_000;
+
+    // Seed Redis bucket sets and index keys
+    const favSet = ns("icon:bucket", "1");
+    const ssSet = ns("screenshot:bucket", "1");
+    const entries = [
+      {
+        providerKey: "favicons/1/abc/32.png",
+        indexKey: ns("icon:index", "1:abc:32"),
+      },
+      {
+        providerKey: "screenshots/1/ghi/1200x630.png",
+        indexKey: ns("screenshot:index", "1:ghi:1200x630"),
+      },
+    ];
+    await cacheSet(favSet, [entries[0]], 60);
+    await cacheSet(ssSet, [entries[1]], 60);
+    await cacheSet(
+      entries[0].indexKey,
+      { providerKey: entries[0].providerKey, url: "https://ufs/icon" },
+      60,
+    );
+    await cacheSet(
+      entries[1].indexKey,
+      { providerKey: entries[1].providerKey, url: "https://ufs/screenshot" },
+      60,
+    );
 
     const req = new Request("http://localhost/api/cron/blob-prune", {
       method: "GET",
