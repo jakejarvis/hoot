@@ -200,6 +200,12 @@ export const HOSTING_PROVIDERS: Array<
     },
   },
   {
+    name: "Render",
+    domain: "render.com",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-render-origin-server" },
+  },
+  {
     name: "Bunny.net",
     domain: "bunny.net",
     category: "hosting",

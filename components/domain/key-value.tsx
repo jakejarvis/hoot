@@ -54,7 +54,7 @@ export function KeyValue({
         )}
         <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-foreground/95 leading-[1.2]">
           {leading ? (
-            <span className="mr-0.5 inline-flex h-[1em] w-[1em] shrink-0 items-center justify-center overflow-hidden rounded [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+            <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
               {leading}
             </span>
           ) : null}
@@ -77,7 +77,7 @@ export function KeyValue({
           </Tooltip>
 
           {suffix ? (
-            <span className="inline-flex shrink-0 items-center [&_img]:block [&_img]:h-[1em] [&_img]:w-[1em] [&_svg]:block [&_svg]:h-[1em] [&_svg]:w-[1em]">
+            <span className="inline-flex shrink-0 items-center [&_img]:block [&_img]:h-4 [&_img]:w-4 [&_svg]:block [&_svg]:h-4 [&_svg]:w-4">
               {suffix}
             </span>
           ) : null}
