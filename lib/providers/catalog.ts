@@ -501,7 +501,13 @@ export const DNS_PROVIDERS: Array<
     name: "DNS Made Easy",
     domain: "dnsmadeeasy.com",
     category: "dns",
-    rule: { kind: "nsSuffix", suffix: "dnsmadeeasy.com" },
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "dnsmadeeasy.com" },
+        { kind: "nsSuffix", suffix: "constellix.com" },
+        { kind: "nsSuffix", suffix: "constellix.net" },
+      ],
+    },
   },
   {
     name: "DigitalOcean",

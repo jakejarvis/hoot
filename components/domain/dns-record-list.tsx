@@ -53,7 +53,7 @@ export function DnsRecordList({
                     <Favicon domain="cloudflare.com" />
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="right">
                   <p>Real IP is being concealed using Cloudflare.</p>
                 </TooltipContent>
               </Tooltip>

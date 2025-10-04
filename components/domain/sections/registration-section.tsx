@@ -1,11 +1,17 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { KeyValueSkeleton } from "@/components/domain/skeletons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
@@ -69,6 +75,24 @@ export function RegistrationSection({
                   className="rounded"
                 />
               ) : undefined
+            }
+            suffix={
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex text-muted-foreground/80">
+                    <Info className="!h-3 !w-3" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>
+                    Sourced via{" "}
+                    <span className="font-mono">
+                      {data?.source === "rdap" ? "RDAP" : "WHOIS"}
+                    </span>
+                    .
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             }
           />
           <KeyValue
