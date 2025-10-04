@@ -52,7 +52,7 @@
     "puppeteer-core": "^24.23.0",
     "radix-ui": "^1.4.3",
     "rdapper": "^0.2.0",
-    "ioredis": "^5.0.0",
+    "ioredis": "^5.8.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-map-gl": "^8.1.0",
