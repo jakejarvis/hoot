@@ -24,7 +24,7 @@ function toUTFileFromBuffer(
   type: string,
   customId: string,
 ): UTFile {
-  return new UTFile([buf as unknown as BlobPart], name, { type, customId });
+  return new UTFile([new Uint8Array(buf)], name, { type, customId });
 }
 
 const ut = new UTApi({ token: process.env.UPLOADTHING_TOKEN });
