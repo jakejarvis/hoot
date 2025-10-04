@@ -91,17 +91,7 @@ export async function tryAcquireLock(
   const redis = await ensureClient();
   if (!redis) return true; // single instance fallback
   try {
-    const res = await (
-      redis as unknown as {
-        set: (
-          k: string,
-          v: string,
-          mode: "NX" | "XX",
-          ex: "EX" | "PX",
-          ttl: number,
-        ) => Promise<string | null>;
-      }
-    ).set(key, "1", "NX", "EX", ttlSeconds);
+    const res = await redis.set(key, "1", "NX", "EX", ttlSeconds);
     return res === "OK";
   } catch {
     return false;
