@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
-import { head, put } from "@vercel/blob";
+import { put } from "@vercel/blob";
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 
@@ -16,18 +16,6 @@ export function getFaviconTtlSeconds(): number {
 
 export function getScreenshotTtlSeconds(): number {
   return toPositiveInt(process.env.SCREENSHOT_TTL_SECONDS, ONE_WEEK_SECONDS);
-}
-
-function getBucket(nowMs: number, ttlSeconds: number): number {
-  return Math.floor(nowMs / (ttlSeconds * 1000));
-}
-
-export function getFaviconBucket(nowMs = Date.now()): number {
-  return getBucket(nowMs, getFaviconTtlSeconds());
-}
-
-export function getScreenshotBucket(nowMs = Date.now()): number {
-  return getBucket(nowMs, getScreenshotTtlSeconds());
 }
 
 function getSigningSecret(): string {
@@ -46,35 +34,11 @@ function getSigningSecret(): string {
 }
 
 export function computeFaviconBlobPath(domain: string, size: number): string {
-  const bucket = getFaviconBucket();
-  const input = `${bucket}:${domain}:${size}`;
+  const input = `${domain}:${size}`;
   const secret = getSigningSecret();
   const digest = createHmac("sha256", secret).update(input).digest("hex");
   // Avoid leaking domain; path is deterministic but unpredictable without secret
-  return `favicons/${bucket}/${digest}/${size}.png`;
-}
-
-export async function headFaviconBlob(
-  domain: string,
-  size: number,
-): Promise<string | null> {
-  const current = getFaviconBucket();
-  const candidates = [current, current - 1];
-  for (const bucket of candidates) {
-    const input = `${bucket}:${domain}:${size}`;
-    const secret = getSigningSecret();
-    const digest = createHmac("sha256", secret).update(input).digest("hex");
-    const pathname = `favicons/${bucket}/${digest}/${size}.png`;
-    try {
-      const res = await head(pathname, {
-        token: process.env.BLOB_READ_WRITE_TOKEN,
-      });
-      if (res?.url) return res.url;
-    } catch {
-      // try next candidate
-    }
-  }
-  return null;
+  return `favicons/${digest}/${size}.png`;
 }
 
 export async function putFaviconBlob(
@@ -82,11 +46,10 @@ export async function putFaviconBlob(
   size: number,
   png: Buffer,
 ): Promise<string> {
-  const bucket = getFaviconBucket();
-  const input = `${bucket}:${domain}:${size}`;
+  const input = `${domain}:${size}`;
   const secret = getSigningSecret();
   const digest = createHmac("sha256", secret).update(input).digest("hex");
-  const pathname = `favicons/${bucket}/${digest}/${size}.png`;
+  const pathname = `favicons/${digest}/${size}.png`;
   const res = await put(pathname, png, {
     access: "public",
     contentType: "image/png",
@@ -103,35 +66,10 @@ export function computeScreenshotBlobPath(
   width: number,
   height: number,
 ): string {
-  const bucket = getScreenshotBucket();
-  const input = `${bucket}:${domain}:${width}x${height}`;
+  const input = `${domain}:${width}x${height}`;
   const secret = getSigningSecret();
   const digest = createHmac("sha256", secret).update(input).digest("hex");
-  return `screenshots/${bucket}/${digest}/${width}x${height}.png`;
-}
-
-export async function headScreenshotBlob(
-  domain: string,
-  width: number,
-  height: number,
-): Promise<string | null> {
-  const current = getScreenshotBucket();
-  const candidates = [current, current - 1];
-  for (const bucket of candidates) {
-    const input = `${bucket}:${domain}:${width}x${height}`;
-    const secret = getSigningSecret();
-    const digest = createHmac("sha256", secret).update(input).digest("hex");
-    const pathname = `screenshots/${bucket}/${digest}/${width}x${height}.png`;
-    try {
-      const res = await head(pathname, {
-        token: process.env.BLOB_READ_WRITE_TOKEN,
-      });
-      if (res?.url) return res.url;
-    } catch {
-      // try next candidate
-    }
-  }
-  return null;
+  return `screenshots/${digest}/${width}x${height}.png`;
 }
 
 export async function putScreenshotBlob(
@@ -140,11 +78,10 @@ export async function putScreenshotBlob(
   height: number,
   png: Buffer,
 ): Promise<string> {
-  const bucket = getScreenshotBucket();
-  const input = `${bucket}:${domain}:${width}x${height}`;
+  const input = `${domain}:${width}x${height}`;
   const secret = getSigningSecret();
   const digest = createHmac("sha256", secret).update(input).digest("hex");
-  const pathname = `screenshots/${bucket}/${digest}/${width}x${height}.png`;
+  const pathname = `screenshots/${digest}/${width}x${height}.png`;
   const res = await put(pathname, png, {
     access: "public",
     contentType: "image/png",

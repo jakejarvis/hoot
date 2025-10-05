@@ -1,7 +1,8 @@
 import { captureServer } from "@/lib/analytics/server";
-import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
+import { getFaviconTtlSeconds, putFaviconBlob } from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
+import { ns, redis } from "@/lib/redis";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -54,19 +55,21 @@ export async function getOrCreateFaviconBlobUrl(
   domain: string,
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
-  // 1) Check blob first
+  // 1) Check Redis index first
   try {
-    const existing = await headFaviconBlob(domain, DEFAULT_SIZE);
-    if (existing) {
+    const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+    const raw = await redis.get<string>(key);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { url: string };
       await captureServer("favicon_fetch", {
         domain,
         size: DEFAULT_SIZE,
-        source: "blob",
+        source: "redis",
         duration_ms: Date.now() - startedAt,
         outcome: "ok",
-        cache: "hit_blob",
+        cache: "hit",
       });
-      return { url: existing };
+      return { url: parsed.url };
     }
   } catch {
     // ignore and proceed to fetch
@@ -95,6 +98,22 @@ export async function getOrCreateFaviconBlobUrl(
 
       const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
 
+      // 3) Write Redis index and schedule purge
+      try {
+        const ttl = getFaviconTtlSeconds();
+        const expiresAtMs = Date.now() + ttl * 1000;
+        const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+        await redis.set(key, JSON.stringify({ url, expiresAtMs }), {
+          ex: ttl,
+        });
+        await redis.zadd(ns("purge", "favicon"), {
+          score: expiresAtMs,
+          member: new URL(url).pathname.replace(/^\//, ""),
+        });
+      } catch {
+        // best effort
+      }
+
       await captureServer("favicon_fetch", {
         domain,
         size: DEFAULT_SIZE,
@@ -103,7 +122,7 @@ export async function getOrCreateFaviconBlobUrl(
         upstream_content_type: contentType ?? null,
         duration_ms: Date.now() - startedAt,
         outcome: "ok",
-        cache: "store_blob",
+        cache: "store",
       });
 
       return { url };

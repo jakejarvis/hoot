@@ -1,8 +1,8 @@
 /* @vitest-environment node */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const blobMock = vi.hoisted(() => ({
-  headScreenshotBlob: vi.fn(),
   putScreenshotBlob: vi.fn(async () => "blob://stored-screenshot"),
 }));
 
@@ -41,29 +41,34 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  blobMock.headScreenshotBlob.mockReset();
   blobMock.putScreenshotBlob.mockReset();
+  global.__redisTestHelper.reset();
   pageMock.goto.mockReset();
   pageMock.screenshot.mockReset();
 });
 
 describe("getOrCreateScreenshotBlobUrl", () => {
   it("returns existing blob url when present", async () => {
-    blobMock.headScreenshotBlob.mockResolvedValueOnce("blob://existing");
+    const key = `screenshot:url:${"example.com"}:${1200}x${630}`;
+    global.__redisTestHelper.store.set(
+      key,
+      JSON.stringify({
+        url: "blob://existing",
+        expiresAtMs: Date.now() + 1000,
+      }),
+    );
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("blob://existing");
     expect(blobMock.putScreenshotBlob).not.toHaveBeenCalled();
   });
 
   it("captures, uploads and returns url when not cached", async () => {
-    blobMock.headScreenshotBlob.mockResolvedValueOnce(null);
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("blob://stored-screenshot");
     expect(blobMock.putScreenshotBlob).toHaveBeenCalled();
   });
 
   it("retries navigation failure and succeeds on second attempt", async () => {
-    blobMock.headScreenshotBlob.mockResolvedValueOnce(null);
     let calls = 0;
     pageMock.goto.mockImplementation(async () => {
       calls += 1;
@@ -82,7 +87,6 @@ describe("getOrCreateScreenshotBlobUrl", () => {
   });
 
   it("retries screenshot failure and succeeds on second attempt", async () => {
-    blobMock.headScreenshotBlob.mockResolvedValueOnce(null);
     pageMock.goto.mockResolvedValueOnce(undefined);
     let shot = 0;
     pageMock.screenshot.mockImplementation(async () => {
@@ -103,7 +107,6 @@ describe("getOrCreateScreenshotBlobUrl", () => {
   });
 
   it("returns null when all attempts across both urls fail", async () => {
-    blobMock.headScreenshotBlob.mockResolvedValueOnce(null);
     pageMock.goto.mockImplementation(async () => {
       throw new Error("always fail");
     });
