@@ -30,13 +30,10 @@ afterEach(() => {
 describe("getOrCreateFaviconBlobUrl", () => {
   it("returns existing blob url when present", async () => {
     const key = `favicon:url:${"example.com"}:${32}`;
-    global.__redisTestHelper.store.set(
-      key,
-      JSON.stringify({
-        url: "blob://existing-url",
-        expiresAtMs: Date.now() + 1000,
-      }),
-    );
+    global.__redisTestHelper.store.set(key, {
+      url: "blob://existing-url",
+      expiresAtMs: Date.now() + 1000,
+    });
     const out = await getOrCreateFaviconBlobUrl("example.com");
     expect(out.url).toBe("blob://existing-url");
     expect(blobMock.putFaviconBlob).not.toHaveBeenCalled();
