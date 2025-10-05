@@ -47,19 +47,18 @@ afterEach(() => {
 });
 
 describe("getOrCreateScreenshotBlobUrl", () => {
-  it("returns existing blob url when present", async () => {
+  it("returns existing blob url when present (object)", async () => {
     const key = `screenshot:url:${"example.com"}:${1200}x${630}`;
-    global.__redisTestHelper.store.set(
-      key,
-      JSON.stringify({
-        url: "blob://existing",
-        expiresAtMs: Date.now() + 1000,
-      }),
-    );
+    global.__redisTestHelper.store.set(key, {
+      url: "blob://existing",
+      expiresAtMs: Date.now() + 1000,
+    });
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("blob://existing");
     expect(blobMock.putScreenshotBlob).not.toHaveBeenCalled();
   });
+
+  // Drop string JSON case now that we assume automatic deserialization
 
   it("captures, uploads and returns url when not cached", async () => {
     const out = await getOrCreateScreenshotBlobUrl("example.com");

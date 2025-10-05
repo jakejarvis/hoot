@@ -42,6 +42,27 @@ describe("getOrCreateFaviconBlobUrl", () => {
     expect(blobMock.putFaviconBlob).not.toHaveBeenCalled();
   });
 
+  it("reads object values from redis index", async () => {
+    const key = `favicon:url:${"legacy.com"}:${32}`;
+    global.__redisTestHelper.store.set(key, {
+      url: "https://blob/legacy.png",
+      expiresAtMs: Date.now() + 1000,
+    });
+    const out = await getOrCreateFaviconBlobUrl("legacy.com");
+    expect(out.url).toBe("https://blob/legacy.png");
+  });
+
+  it("accepts object values from redis client auto-parse", async () => {
+    const key = `favicon:url:${"object.com"}:${32}`;
+    // Simulate a client returning an already-parsed object
+    global.__redisTestHelper.store.set(key, {
+      url: "https://blob/object.png",
+      expiresAtMs: Date.now() + 1000,
+    });
+    const out = await getOrCreateFaviconBlobUrl("object.com");
+    expect(out.url).toBe("https://blob/object.png");
+  });
+
   it("fetches, converts, stores, and returns url when not cached", async () => {
     const body = new Uint8Array([137, 80, 78, 71]); // pretend PNG signature bytes
     const resp = new Response(body, {

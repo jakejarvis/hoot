@@ -52,9 +52,8 @@ export async function getOrCreateScreenshotBlobUrl(
       "screenshot:url",
       `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
     );
-    const raw = await redis.get<string>(key);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { url: string };
+    const raw = (await redis.get(key)) as { url?: unknown } | null;
+    if (raw && typeof raw === "object" && typeof raw.url === "string") {
       await captureServer("screenshot_capture", {
         domain,
         width: VIEWPORT_WIDTH,
@@ -64,7 +63,7 @@ export async function getOrCreateScreenshotBlobUrl(
         outcome: "ok",
         cache: "hit",
       });
-      return { url: parsed.url };
+      return { url: raw.url };
     }
   } catch {
     // ignore and proceed
@@ -219,7 +218,7 @@ export async function getOrCreateScreenshotBlobUrl(
               );
               await redis.set(
                 key,
-                JSON.stringify({ url: storedUrl, expiresAtMs }),
+                { url: storedUrl, expiresAtMs },
                 {
                   ex: ttl,
                 },

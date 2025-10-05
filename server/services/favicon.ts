@@ -50,9 +50,8 @@ export async function getOrCreateFaviconBlobUrl(
   // 1) Check Redis index first
   try {
     const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-    const raw = await redis.get<string>(key);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { url: string };
+    const raw = (await redis.get(key)) as { url?: unknown } | null;
+    if (raw && typeof raw === "object" && typeof raw.url === "string") {
       await captureServer("favicon_fetch", {
         domain,
         size: DEFAULT_SIZE,
@@ -61,7 +60,7 @@ export async function getOrCreateFaviconBlobUrl(
         outcome: "ok",
         cache: "hit",
       });
-      return { url: parsed.url };
+      return { url: raw.url };
     }
   } catch {
     // ignore and proceed to fetch
@@ -99,9 +98,13 @@ export async function getOrCreateFaviconBlobUrl(
         const ttl = getFaviconTtlSeconds();
         const expiresAtMs = Date.now() + ttl * 1000;
         const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-        await redis.set(key, JSON.stringify({ url, expiresAtMs }), {
-          ex: ttl,
-        });
+        await redis.set(
+          key,
+          { url, expiresAtMs },
+          {
+            ex: ttl,
+          },
+        );
         await redis.zadd(ns("purge", "favicon"), {
           score: expiresAtMs,
           member: url, // store full URL for deletion API
