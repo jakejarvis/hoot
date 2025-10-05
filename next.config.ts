@@ -9,10 +9,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
-  outputFileTracingRoot: process.cwd(),
-  outputFileTracingIncludes: {
-    "app/api/**": ["node_modules/@sparticuz/chromium/bin/**"],
-  },
   reactCompiler: true,
   images: {
     unoptimized: true,
