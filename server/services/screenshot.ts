@@ -7,6 +7,8 @@ import { ns, redis } from "@/lib/redis";
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
 const NAV_TIMEOUT_MS = 8000;
+const IDLE_TIME_MS = 500;
+const IDLE_TIMEOUT_MS = 3000;
 const CAPTURE_MAX_ATTEMPTS_DEFAULT = 3;
 const CAPTURE_BACKOFF_BASE_MS_DEFAULT = 200;
 const CAPTURE_BACKOFF_MAX_MS_DEFAULT = 1200;
@@ -174,9 +176,17 @@ export async function getOrCreateScreenshotBlobUrl(
             attempt: attemptIndex + 1,
           });
           await page.goto(url, {
-            waitUntil: "networkidle2",
+            waitUntil: "domcontentloaded",
             timeout: NAV_TIMEOUT_MS,
           });
+
+          // Give chatty pages/CDNs a brief chance to settle without hanging
+          try {
+            await page.waitForNetworkIdle({
+              idleTime: IDLE_TIME_MS,
+              timeout: IDLE_TIMEOUT_MS,
+            });
+          } catch {}
 
           console.debug("[screenshot] navigated", {
             url,

@@ -12,6 +12,7 @@ const pageMock = {
   setViewport: vi.fn(async () => undefined),
   setUserAgent: vi.fn(async () => undefined),
   goto: vi.fn(async () => undefined),
+  waitForNetworkIdle: vi.fn(async () => undefined),
   screenshot: vi.fn(async () => Buffer.from([1, 2, 3])),
 };
 const browserMock = {
@@ -43,6 +44,7 @@ afterEach(() => {
   blobMock.putScreenshotBlob.mockReset();
   global.__redisTestHelper.reset();
   pageMock.goto.mockReset();
+  pageMock.waitForNetworkIdle.mockReset();
   pageMock.screenshot.mockReset();
 });
 
