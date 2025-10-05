@@ -1,22 +1,32 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { FileQuestionMark } from "lucide-react";
+import { DomainSearch } from "@/components/domain/domain-search";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center px-6">
-      <div className="text-center">
-        <h1 className="font-semibold text-3xl tracking-tight">
-          Page not found
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          The page you’re looking for doesn’t exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Button asChild>
-            <Link href="/">Back to home</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="container mx-auto my-auto flex items-center justify-center px-6">
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <FileQuestionMark />
+          </EmptyMedia>
+          <EmptyTitle>404 - Not Found</EmptyTitle>
+          <EmptyDescription>
+            <p>The page you&apos;re looking for doesn&apos;t exist.</p>{" "}
+            <p>Try searching for a domain below.</p>
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent className="w-full">
+          <DomainSearch showSuggestions={false} />
+        </EmptyContent>
+      </Empty>
     </div>
   );
 }

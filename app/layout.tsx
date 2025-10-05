@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} font-sans slashed-zero tabular-nums antialiased selection:bg-[#6a6a6a] selection:text-white`}
+        className={`${GeistSans.variable} ${GeistMono.variable} font-sans slashed-zero tabular-nums antialiased`}
       >
         <ThemeProvider>
           {/* Solid background for light/dark modes */}

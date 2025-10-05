@@ -1,10 +1,15 @@
 "use client";
 
-import { Globe, Search as SearchIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import { useRef } from "react";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 import { cn } from "@/lib/utils";
@@ -14,11 +19,13 @@ export type DomainSearchVariant = "sm" | "lg";
 export type DomainSearchProps = {
   variant?: DomainSearchVariant;
   initialValue?: string;
+  showSuggestions?: boolean;
 };
 
 export function DomainSearch({
   variant = "lg",
   initialValue = "",
+  showSuggestions = true,
 }: DomainSearchProps) {
   const { value, setValue, loading, inputRef, submit, navigateToDomain } =
     useDomainSearch({
@@ -68,14 +75,9 @@ export function DomainSearch({
   }
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-5">
       <form
         aria-label="Domain search"
-        className={
-          variant === "lg"
-            ? "relative flex items-center gap-2 rounded-xl border bg-background/60 p-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60"
-            : undefined
-        }
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -87,66 +89,70 @@ export function DomainSearch({
           </label>
         )}
 
-        <div className="relative flex-1">
-          {variant === "lg" ? (
-            <Globe
-              className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground"
-              aria-hidden
-            />
-          ) : (
-            <SearchIcon
-              aria-hidden
-              className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground"
-            />
-          )}
-          <Input
-            id="domain"
-            ref={inputRef}
-            autoFocus={variant === "lg"}
-            inputMode="url"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            disabled={loading}
-            placeholder={variant === "lg" ? "hoot.sh" : "Search any domain"}
-            aria-label="Search any domain"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onPointerDown={handlePointerDown}
-            onFocus={handleFocus}
-            onClick={handleClick}
-            className={cn(
-              "pl-9",
-              variant === "lg" ? "h-12" : "h-10 rounded-xl sm:pr-14",
-            )}
-          />
-
-          {variant === "sm" && (
-            <kbd className="-translate-y-1/2 pointer-events-none invisible absolute top-1/2 right-2 select-none rounded-md border bg-muted/80 px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground sm:visible">
-              ⌘ K
-            </kbd>
-          )}
-        </div>
-
-        {variant === "lg" ? (
-          <Button
-            type="submit"
-            disabled={loading}
-            size="lg"
-            className="h-12 cursor-pointer"
+        <div className="relative w-full flex-1">
+          <InputGroup
+            className={cn(variant === "lg" ? "h-12" : "h-10 rounded-xl")}
           >
-            {loading ? <Spinner /> : <SearchIcon className="size-4" />}
-            Analyze
-          </Button>
-        ) : (
-          <button type="submit" disabled={loading} className="sr-only">
-            Search
-          </button>
-        )}
+            <InputGroupInput
+              id="domain"
+              ref={inputRef}
+              autoFocus={variant === "lg"}
+              inputMode="url"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              disabled={loading}
+              placeholder={variant === "lg" ? "hoot.sh" : "Search any domain"}
+              aria-label="Search any domain"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onPointerDown={handlePointerDown}
+              onFocus={handleFocus}
+              onClick={handleClick}
+              className="relative top-px"
+            />
+
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+
+            {variant === "sm" && (
+              <InputGroupAddon align="inline-end">
+                {loading ? (
+                  <Spinner />
+                ) : (
+                  <Kbd className="hidden border bg-muted/80 px-1.5 py-0.5 sm:inline-flex">
+                    ⌘ K
+                  </Kbd>
+                )}
+              </InputGroupAddon>
+            )}
+
+            {variant === "lg" && (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  type="submit"
+                  disabled={loading}
+                  className="h-8"
+                  variant="ghost"
+                >
+                  {loading ? (
+                    <Spinner />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px]">Analyze</span>
+                      <Kbd className="hidden sm:inline-flex">⏎</Kbd>
+                    </div>
+                  )}
+                </InputGroupButton>
+              </InputGroupAddon>
+            )}
+          </InputGroup>
+        </div>
       </form>
 
-      {variant === "lg" && (
+      {variant === "lg" && showSuggestions && (
         <DomainSuggestions
           onSelectAction={(d) => {
             // Mirror the selected domain in the input so the form
@@ -156,6 +162,6 @@ export function DomainSearch({
           }}
         />
       )}
-    </>
+    </div>
   );
 }

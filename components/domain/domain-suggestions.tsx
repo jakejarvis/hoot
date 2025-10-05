@@ -56,7 +56,7 @@ export function DomainSuggestions({
   }
 
   return (
-    <div className={cn("mt-3 flex flex-wrap justify-center gap-2", className)}>
+    <div className={cn("flex flex-wrap justify-center gap-2", className)}>
       {(historyLoaded ? suggestions : DEFAULT_SUGGESTIONS).map((domain) => (
         <Button
           key={domain}
