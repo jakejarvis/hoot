@@ -1,13 +1,14 @@
 import { captureServer } from "@/lib/analytics/server";
-import { getOrSetZod, ns } from "@/lib/redis";
-import { type HttpHeader, HttpHeadersSchema } from "@/lib/schemas";
+import { ns, redis } from "@/lib/redis";
+import type { HttpHeader } from "@/lib/schemas";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const lower = domain.toLowerCase();
   const url = `https://${domain}/`;
   const key = ns("headers", lower);
 
-  const schema = HttpHeadersSchema;
+  const cached = await redis.get<HttpHeader[]>(key);
+  if (cached) return cached;
 
   const REQUEST_TIMEOUT_MS = 5000;
   try {
@@ -61,12 +62,8 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       final_url: final.url,
     });
 
-    return await getOrSetZod<HttpHeader[]>(
-      key,
-      10 * 60,
-      async () => normalized,
-      schema,
-    );
+    await redis.set(key, normalized, { ex: 10 * 60 });
+    return normalized;
   } catch (err) {
     await captureServer("headers_probe", {
       domain: lower,

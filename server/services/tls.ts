@@ -1,14 +1,15 @@
 import tls from "node:tls";
 import { captureServer } from "@/lib/analytics/server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
-import { getOrSetZod, ns } from "@/lib/redis";
-import { type Certificate, CertificatesSchema } from "@/lib/schemas";
+import { ns, redis } from "@/lib/redis";
+import type { Certificate } from "@/lib/schemas";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
   const key = ns("tls", lower);
 
-  const schema = CertificatesSchema;
+  const cached = await redis.get<Certificate[]>(key);
+  if (cached) return cached;
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
 
@@ -73,12 +74,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       outcome,
     });
 
-    return await getOrSetZod<Certificate[]>(
-      key,
-      (val) => (val.length > 0 ? 12 * 60 * 60 : 10 * 60),
-      async () => out,
-      schema,
-    );
+    const ttl = out.length > 0 ? 12 * 60 * 60 : 10 * 60;
+    await redis.set(key, out, { ex: ttl });
+    return out;
   } catch (err) {
     await captureServer("tls_probe", {
       domain: lower,

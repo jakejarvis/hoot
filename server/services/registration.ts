@@ -2,8 +2,8 @@ import { lookupDomain } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
-import { getOrSetZod, ns } from "@/lib/redis";
-import { type Registration, RegistrationSchema } from "@/lib/schemas";
+import { ns, redis } from "@/lib/redis";
+import type { Registration } from "@/lib/schemas";
 
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
@@ -15,6 +15,8 @@ export async function getRegistration(domain: string): Promise<Registration> {
   if (!registrable) throw new Error("Invalid domain");
 
   const key = ns("reg", registrable.toLowerCase());
+  const cached = await redis.get<Registration>(key);
+  if (cached) return cached;
 
   const startedAt = Date.now();
   const { ok, record, error } = await lookupDomain(registrable, {
@@ -56,12 +58,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     },
   };
 
-  await getOrSetZod<Registration>(
-    key,
-    ttl,
-    async () => withProvider,
-    RegistrationSchema,
-  );
+  await redis.set(key, withProvider, { ex: ttl });
   await captureServer("registration_lookup", {
     domain: registrable,
     outcome: record.isRegistered ? "ok" : "unregistered",

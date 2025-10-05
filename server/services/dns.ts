@@ -1,10 +1,9 @@
 import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
-import { getOrSetZod, ns } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import {
   type DnsRecord,
-  DnsRecordSchema,
   type DnsResolveResult,
   type DnsResolver,
   type DnsType,
@@ -59,12 +58,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const results = await Promise.all(
         DnsTypeSchema.options.map(async (type) => {
           const key = ns("dns", `${lower}:${type}:${provider.key}`);
-          return await getOrSetZod<DnsRecord[]>(
-            key,
-            5 * 60,
-            async () => await resolveTypeWithProvider(domain, type, provider),
-            DnsRecordSchema.array(),
-          );
+          const cached = await redis.get<DnsRecord[]>(key);
+          if (cached) return cached;
+          const fresh = await resolveTypeWithProvider(domain, type, provider);
+          await redis.set(key, fresh, { ex: 5 * 60 });
+          return fresh;
         }),
       );
       const flat = results.flat();

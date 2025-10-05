@@ -14,50 +14,30 @@ vi.mock("server-only", () => ({}));
 const __redisImpl = vi.hoisted(() => {
   const store = new Map<string, unknown>();
   const ns = (n: string, id: string) => `${n}:${id}`;
-  const cacheGet = vi.fn(async (key: string) =>
+  const get = vi.fn(async (key: string) =>
     store.has(key) ? store.get(key) : null,
   );
-  const cacheSet = vi.fn(async (key: string, value: unknown) => {
-    store.set(key, value);
-  });
-  const cacheDel = vi.fn(async (key: string) => {
-    store.delete(key);
-  });
-  const getOrSet = vi.fn(
-    async (_key: string, _ttl: number, loader: () => Promise<unknown>) =>
-      loader(),
-  );
-  const getOrSetZod = vi.fn(
-    async (
-      _key: string,
-      _ttl: number | ((v: unknown) => number),
-      loader: () => Promise<unknown>,
-      _schema: unknown,
-    ) => {
-      if (store.has(_key)) {
-        return store.get(_key);
-      }
-      const fresh = await loader();
-      store.set(_key, fresh);
-      return fresh;
+  const set = vi.fn(
+    async (key: string, value: unknown, _opts?: { ex?: number }) => {
+      store.set(key, value);
     },
   );
+  const del = vi.fn(async (key: string) => {
+    store.delete(key);
+  });
   const reset = () => {
     store.clear();
-    cacheGet.mockClear();
-    cacheSet.mockClear();
-    cacheDel.mockClear();
-    getOrSet.mockClear();
-    getOrSetZod.mockClear();
+    get.mockClear();
+    set.mockClear();
+    del.mockClear();
   };
   return {
     store,
     ns,
-    cacheGet,
-    cacheSet,
-    cacheDel,
-    getOrSet,
-    getOrSetZod,
+    redis: { get, set, del },
+    get,
+    set,
+    del,
     reset,
   };
 });
