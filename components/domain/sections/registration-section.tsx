@@ -1,6 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -55,87 +55,86 @@ export function RegistrationSection({
       isError={isError}
       isLoading={isLoading}
     >
-      {isLoading ? (
-        <>
-          <KeyValueSkeleton label="Registrar" withLeading withSuffix />
-          <KeyValueSkeleton label="Created" />
-          <KeyValueSkeleton label="Expires" withSuffix />
-          <KeyValueSkeleton label="Registrant" />
-        </>
-      ) : data ? (
-        <>
-          <KeyValue
-            label="Registrar"
-            value={registrar?.name || ""}
-            leading={
-              registrar?.domain ? (
-                <Favicon
-                  domain={registrar.domain}
-                  size={16}
-                  className="rounded"
-                />
-              ) : undefined
-            }
-            suffix={
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex text-muted-foreground/80">
-                    <Info className="!h-3 !w-3" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>
-                    Sourced via{" "}
-                    <span className="font-mono">
-                      {data?.source === "rdap" ? "RDAP" : "WHOIS"}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {isLoading ? (
+          <>
+            <KeyValueSkeleton label="Registrar" withLeading withSuffix />
+            <KeyValueSkeleton label="Created" />
+            <KeyValueSkeleton label="Expires" withSuffix />
+            <KeyValueSkeleton label="Registrant" />
+          </>
+        ) : data ? (
+          <>
+            <KeyValue
+              label="Registrar"
+              value={registrar?.name || ""}
+              leading={
+                registrar?.domain ? (
+                  <Favicon
+                    domain={registrar.domain}
+                    size={16}
+                    className="rounded"
+                  />
+                ) : undefined
+              }
+              suffix={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex text-muted-foreground/80">
+                      <BadgeCheck className="!h-3.5 !w-3.5" />
                     </span>
-                    .
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            }
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>via {data?.source === "rdap" ? "RDAP" : "WHOIS"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              }
+            />
+
+            <KeyValue
+              label="Registrant"
+              value={formatRegistrant(
+                registrant ?? { organization: "Unavailable", country: "" },
+              )}
+            />
+
+            <KeyValue
+              label="Created"
+              value={formatDate(data.creationDate || "")}
+              valueTooltip={
+                data.creationDate
+                  ? formatDateTimeUtc(data.creationDate)
+                  : undefined
+              }
+            />
+
+            <KeyValue
+              label="Expires"
+              value={formatDate(data.expirationDate || "")}
+              valueTooltip={
+                data.expirationDate
+                  ? formatDateTimeUtc(data.expirationDate)
+                  : undefined
+              }
+              suffix={
+                data.expirationDate ? (
+                  <RelativeExpiry
+                    to={data.expirationDate}
+                    dangerDays={30}
+                    warnDays={60}
+                    className="text-[11px]"
+                  />
+                ) : null
+              }
+            />
+          </>
+        ) : isError ? (
+          <ErrorWithRetry
+            message="Failed to load WHOIS."
+            onRetryAction={onRetryAction}
           />
-          <KeyValue
-            label="Created"
-            value={formatDate(data.creationDate || "")}
-            valueTooltip={
-              data.creationDate
-                ? formatDateTimeUtc(data.creationDate)
-                : undefined
-            }
-          />
-          <KeyValue
-            label="Expires"
-            value={formatDate(data.expirationDate || "")}
-            valueTooltip={
-              data.expirationDate
-                ? formatDateTimeUtc(data.expirationDate)
-                : undefined
-            }
-            suffix={
-              data.expirationDate ? (
-                <RelativeExpiry
-                  to={data.expirationDate}
-                  dangerDays={30}
-                  warnDays={60}
-                  className="text-[11px]"
-                />
-              ) : null
-            }
-          />
-          <KeyValue
-            label="Registrant"
-            value={formatRegistrant(
-              registrant ?? { organization: "Unavailable", country: "" },
-            )}
-          />
-        </>
-      ) : isError ? (
-        <ErrorWithRetry
-          message="Failed to load WHOIS."
-          onRetryAction={onRetryAction}
-        />
-      ) : null}
+        ) : null}
+      </div>
     </Section>
   );
 }
