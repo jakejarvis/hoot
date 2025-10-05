@@ -44,7 +44,7 @@
 - Call out skipped checks and confirm `.env.local` requirements for reviewers.
 
 ## Security & Configuration Tips
-- Keep secrets in `.env.local` (Redis: `REDIS_URL`).
+- Keep secrets in `.env.local`.
 - Blob: `BLOB_SIGNING_SECRET`, `BLOB_READ_WRITE_TOKEN`, `FAVICON_TTL_SECONDS`, `SCREENSHOT_TTL_SECONDS`.
 - Screenshots (Puppeteer): prefer `puppeteer-core` + `@sparticuz/chromium` on Vercel; optional `PUPPETEER_SKIP_DOWNLOAD=1` to avoid full download; `HOOT_USER_AGENT` to override UA; optional `PUPPETEER_EXECUTABLE_PATH` locally.
 - Cache Cloudflare DoH, RDAP, TLS, and header probes via `lib/cache`; apply retry backoff to respect provider limits.
