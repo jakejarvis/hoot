@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     ppr: "incremental",
-    inlineCss: true,
     staleTimes: {
       dynamic: 0, // disable client-side router cache for dynamic pages
     },
