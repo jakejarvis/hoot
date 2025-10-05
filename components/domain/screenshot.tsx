@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CircleX, Loader2 } from "lucide-react";
+import { CircleX } from "lucide-react";
 import Image from "next/image";
+import { Spinner } from "@/components/ui/spinner";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,7 @@ export function Screenshot({
           >
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner />
                 <span>Loading screenshot...</span>
               </>
             ) : (

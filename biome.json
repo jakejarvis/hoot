@@ -26,7 +26,8 @@
         "noUnknownAtRules": "off"
       },
       "a11y": {
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "off",
+        "useSemanticElements": "off"
       },
       "nursery": {
         "useSortedClasses": "error",

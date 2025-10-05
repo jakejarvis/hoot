@@ -1,10 +1,11 @@
-import { AlertCircle, Info, Loader2 } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -100,7 +101,7 @@ export function Section({
                 <div className="mr-2 flex items-center gap-2 text-muted-foreground text-xs">
                   {isLoading && (
                     <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <Spinner className="size-5" />
                       <span className="sr-only">Loading</span>
                     </>
                   )}

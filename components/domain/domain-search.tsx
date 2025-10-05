@@ -1,10 +1,11 @@
 "use client";
 
-import { Globe, Loader2, Search as SearchIcon } from "lucide-react";
+import { Globe, Search as SearchIcon } from "lucide-react";
 import { useRef } from "react";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 import { cn } from "@/lib/utils";
 
@@ -130,11 +131,7 @@ export function DomainSearch({
 
         {variant === "lg" ? (
           <Button type="submit" disabled={loading} size="lg" className="h-12">
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <SearchIcon className="size-4" />
-            )}
+            {loading ? <Spinner /> : <SearchIcon className="size-4" />}
             Analyze
           </Button>
         ) : (

@@ -46,7 +46,7 @@
     "lucide-react": "^0.544.0",
     "mapbox-gl": "^3.15.0",
     "motion": "^12.23.22",
-    "next": "15.6.0-canary.42",
+    "next": "15.6.0-canary.44",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.270.1",
     "posthog-node": "^5.9.2",
