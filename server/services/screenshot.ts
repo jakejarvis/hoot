@@ -1,7 +1,9 @@
+import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
 import { getScreenshotTtlSeconds, putScreenshotBlob } from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
+import { launchChromium } from "@/lib/puppeteer";
 import { ns, redis } from "@/lib/redis";
 
 const VIEWPORT_WIDTH = 1200;
@@ -72,91 +74,10 @@ export async function getOrCreateScreenshotBlobUrl(
   }
 
   // 2) Attempt to capture
-  let browser: import("puppeteer-core").Browser | null = null;
+  let browser: Browser | null = null;
   try {
-    const isVercel = process.env.VERCEL === "1";
-    const isLinux = process.platform === "linux";
-    const preferChromium = isLinux || isVercel;
-
-    type LaunchFn = (
-      options?: Record<string, unknown>,
-    ) => Promise<import("puppeteer-core").Browser>;
-    let puppeteerLaunch: LaunchFn = async () => {
-      throw new Error("puppeteer launcher not configured");
-    };
-    let launchOptions: Record<string, unknown> = { headless: true };
-    let launcherMode: "chromium" | "puppeteer" = preferChromium
-      ? "chromium"
-      : "puppeteer";
-
-    async function setupChromium() {
-      const chromium = (await import("@sparticuz/chromium")).default;
-      const core = await import("puppeteer-core");
-      puppeteerLaunch = core.launch as unknown as LaunchFn;
-      launchOptions = {
-        ...launchOptions,
-        args: chromium.args,
-        executablePath: await chromium.executablePath(),
-      };
-
-      console.debug("[screenshot] using chromium", {
-        executablePath: (launchOptions as { executablePath?: unknown })
-          .executablePath,
-      });
-    }
-
-    async function setupPuppeteer() {
-      const full = await import("puppeteer");
-      puppeteerLaunch = (full as unknown as { launch: LaunchFn }).launch;
-      const path = process.env.PUPPETEER_EXECUTABLE_PATH;
-      launchOptions = {
-        ...launchOptions,
-        ...(path ? { executablePath: path } : {}),
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-        ],
-      };
-
-      console.debug("[screenshot] using puppeteer", {
-        executablePath: path || null,
-      });
-    }
-
-    // First attempt based on platform preference
-    try {
-      if (launcherMode === "chromium") await setupChromium();
-      else await setupPuppeteer();
-      // Try launch
-
-      console.debug("[screenshot] launching browser", { mode: launcherMode });
-      browser = await puppeteerLaunch(launchOptions);
-    } catch (firstErr) {
-      console.warn("[screenshot] first launch attempt failed", {
-        mode: launcherMode,
-        error: (firstErr as Error)?.message,
-      });
-      // Flip mode and retry once
-      launcherMode = launcherMode === "chromium" ? "puppeteer" : "chromium";
-      try {
-        if (launcherMode === "chromium") await setupChromium();
-        else await setupPuppeteer();
-
-        console.debug("[screenshot] retry launching browser", {
-          mode: launcherMode,
-        });
-        browser = await puppeteerLaunch(launchOptions);
-      } catch (secondErr) {
-        console.error("[screenshot] both launch attempts failed", {
-          first_error: (firstErr as Error)?.message,
-          second_error: (secondErr as Error)?.message,
-        });
-        throw secondErr;
-      }
-    }
-
-    console.debug("[screenshot] browser launched", { mode: launcherMode });
+    browser = await launchChromium();
+    console.debug("[screenshot] browser launched", { mode: "chromium" });
 
     const tryUrls = buildHomepageUrls(domain);
     for (const url of tryUrls) {

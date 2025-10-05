@@ -20,8 +20,11 @@ const browserMock = {
   close: vi.fn(async () => undefined),
 };
 
-vi.mock("puppeteer", () => ({
-  launch: vi.fn(async () => browserMock),
+vi.mock("@sparticuz/chromium", () => ({
+  default: {
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    executablePath: vi.fn(async () => "/usr/bin/chromium"),
+  },
 }));
 vi.mock("puppeteer-core", () => ({
   launch: vi.fn(async () => browserMock),
