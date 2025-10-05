@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 async function fetchRepoStars(): Promise<number | null> {
@@ -29,7 +28,7 @@ export async function GithubStars() {
 
   return (
     <Button variant="ghost" size="sm" asChild>
-      <Link
+      <a
         href="https://github.com/jakejarvis/hoot"
         target="_blank"
         rel="noopener"
@@ -50,7 +49,7 @@ export async function GithubStars() {
         <span className="relative top-px flex items-center text-[13px] text-muted-foreground leading-none group-hover:text-foreground">
           {label}
         </span>
-      </Link>
+      </a>
     </Button>
   );
 }

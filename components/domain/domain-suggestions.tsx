@@ -62,7 +62,10 @@ export function DomainSuggestions({
           key={domain}
           variant="secondary"
           size="sm"
-          className={historyLoaded ? "visible" : "invisible"}
+          className={cn(
+            "cursor-pointer",
+            historyLoaded ? "visible" : "invisible",
+          )}
           onClick={() => handleClick(domain)}
         >
           <span className="inline-flex items-center gap-2">

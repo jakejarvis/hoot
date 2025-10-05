@@ -2,20 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { HostingEmailSection } from "./hosting-email-section";
 
-vi.mock("@/components/ui/accordion", () => ({
-  AccordionItem: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-item">{children}</div>
-  ),
-  AccordionTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button type="button" data-slot="accordion-trigger">
-      {children}
-    </button>
-  ),
-  AccordionContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-content">{children}</div>
-  ),
-}));
-
 vi.mock("next/dynamic", () => ({
   __esModule: true,
   // biome-ignore lint/suspicious/noExplicitAny: fine for this test

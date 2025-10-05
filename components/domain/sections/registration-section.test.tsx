@@ -6,28 +6,6 @@ vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>favicon:{domain}</div>,
 }));
 
-// Mock Radix Accordion primitives used by Section to avoid context requirement
-vi.mock("@/components/ui/accordion", () => ({
-  Accordion: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion">{children}</div>
-  ),
-  AccordionItem: ({ children, ...props }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-item" {...props}>
-      {children}
-    </div>
-  ),
-  AccordionTrigger: ({ children, ...props }: { children: React.ReactNode }) => (
-    <button data-slot="accordion-trigger" {...props}>
-      {children}
-    </button>
-  ),
-  AccordionContent: ({ children, ...props }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-content" {...props}>
-      {children}
-    </div>
-  ),
-}));
-
 describe("RegistrationSection", () => {
   it("renders registrar, dates, and registrant when data present", () => {
     const record = {

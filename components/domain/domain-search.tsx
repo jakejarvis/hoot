@@ -130,7 +130,12 @@ export function DomainSearch({
         </div>
 
         {variant === "lg" ? (
-          <Button type="submit" disabled={loading} size="lg" className="h-12">
+          <Button
+            type="submit"
+            disabled={loading}
+            size="lg"
+            className="h-12 cursor-pointer"
+          >
             {loading ? <Spinner /> : <SearchIcon className="size-4" />}
             Analyze
           </Button>

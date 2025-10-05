@@ -2,24 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 
-// Mock Accordion to avoid Radix provider
-vi.mock("@/components/ui/accordion", () => ({
-  Accordion: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion">{children}</div>
-  ),
-  AccordionItem: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-item">{children}</div>
-  ),
-  AccordionTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button type="button" data-slot="accordion-trigger">
-      {children}
-    </button>
-  ),
-  AccordionContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-content">{children}</div>
-  ),
-}));
-
 vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));

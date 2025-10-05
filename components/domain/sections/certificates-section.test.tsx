@@ -18,21 +18,6 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
-// Mock Accordion bits used by Section
-vi.mock("@/components/ui/accordion", () => ({
-  AccordionItem: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-item">{children}</div>
-  ),
-  AccordionTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button type="button" data-slot="accordion-trigger">
-      {children}
-    </button>
-  ),
-  AccordionContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-content">{children}</div>
-  ),
-}));
-
 vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => (
     <div data-slot="favicon" data-domain={domain} />

@@ -2,21 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { HeadersSection } from "./headers-section";
 
-// Mock Accordion from Section
-vi.mock("@/components/ui/accordion", () => ({
-  AccordionItem: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-item">{children}</div>
-  ),
-  AccordionTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button type="button" data-slot="accordion-trigger">
-      {children}
-    </button>
-  ),
-  AccordionContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="accordion-content">{children}</div>
-  ),
-}));
-
 // TooltipProvider is used by Section header help
 vi.mock("@/components/ui/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => (

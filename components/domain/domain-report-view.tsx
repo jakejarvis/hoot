@@ -1,7 +1,6 @@
 "use client";
 
 import { Download, ExternalLink } from "lucide-react";
-import Link from "next/link";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
 import { exportDomainData } from "@/components/domain/export-data";
@@ -75,7 +74,7 @@ export function DomainReportView({ domain }: { domain: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <ScreenshotTooltip domain={domain}>
-          <Link
+          <a
             href={`https://${domain}`}
             target="_blank"
             rel="noopener"
@@ -90,12 +89,13 @@ export function DomainReportView({ domain }: { domain: string }) {
               className="size-3.5 text-muted-foreground/60"
               aria-hidden="true"
             />
-          </Link>
+          </a>
         </ScreenshotTooltip>
         <Tooltip delayDuration={500}>
           <TooltipTrigger asChild>
             <Button
               variant="outline"
+              className="cursor-pointer"
               onClick={handleExportJson}
               disabled={areSecondarySectionsLoading}
             >

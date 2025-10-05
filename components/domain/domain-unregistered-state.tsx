@@ -1,5 +1,4 @@
 import { ShoppingBasket } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface DomainUnregisteredStateProps {
@@ -26,7 +25,7 @@ export function DomainUnregisteredState({
       </p>
       <div className="mt-5 flex justify-center">
         <Button size="lg" variant="outline" asChild>
-          <Link
+          <a
             href={`https://porkbun.com/checkout/search?q=${domain}`}
             target="_blank"
             rel="noopener"
@@ -34,7 +33,7 @@ export function DomainUnregisteredState({
           >
             <ShoppingBasket />
             Until now?
-          </Link>
+          </a>
         </Button>
       </div>
     </div>
