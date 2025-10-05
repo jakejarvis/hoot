@@ -31,14 +31,6 @@ async function fetchWithTimeout(
   }
 }
 
-async function convertToPng(
-  input: Buffer,
-  contentType: string | null,
-  size: number,
-): Promise<Buffer | null> {
-  return convertBufferToSquarePng(input, size, contentType);
-}
-
 function buildSources(domain: string): string[] {
   const enc = encodeURIComponent(domain);
   return [
@@ -85,7 +77,11 @@ export async function getOrCreateFaviconBlobUrl(
       const ab = await res.arrayBuffer();
       const buf = Buffer.from(ab);
 
-      const png = await convertToPng(buf, contentType, DEFAULT_SIZE);
+      const png = await convertBufferToSquarePng(
+        buf,
+        DEFAULT_SIZE,
+        contentType,
+      );
       if (!png) continue;
 
       const source = (() => {

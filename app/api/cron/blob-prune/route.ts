@@ -30,7 +30,6 @@ export async function GET(req: Request) {
   for (const kind of ["favicon", "screenshot"]) {
     // Drain due items in batches
     // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
-    // Fallback: use zrangebyscore when available; here we emulate via zrange with byScore
     while (true) {
       const due = (await (
         redis as unknown as {
@@ -49,15 +48,17 @@ export async function GET(req: Request) {
         limit: { offset: 0, count: batch },
       })) as string[];
       if (!due.length) break;
+      const succeeded: string[] = [];
       for (const path of due) {
         try {
           await del(path, { token: process.env.BLOB_READ_WRITE_TOKEN });
           deleted.push(path);
+          succeeded.push(path);
         } catch (err) {
           errors.push({ path, error: (err as Error)?.message || "unknown" });
         }
       }
-      await redis.zrem(ns("purge", kind), ...due);
+      if (succeeded.length) await redis.zrem(ns("purge", kind), ...succeeded);
       if (due.length < batch) break; // nothing more due right now
     }
   }
