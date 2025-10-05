@@ -1,7 +1,8 @@
 import { captureServer } from "@/lib/analytics/server";
-import { headScreenshotBlob, putScreenshotBlob } from "@/lib/blob";
+import { getScreenshotTtlSeconds, putScreenshotBlob } from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
+import { ns, redis } from "@/lib/redis";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -45,24 +46,25 @@ export async function getOrCreateScreenshotBlobUrl(
     options?.backoffBaseMs ?? CAPTURE_BACKOFF_BASE_MS_DEFAULT;
   const backoffMaxMs = options?.backoffMaxMs ?? CAPTURE_BACKOFF_MAX_MS_DEFAULT;
 
-  // 1) Check existing blob
+  // 1) Check Redis index first
   try {
-    const existing = await headScreenshotBlob(
-      domain,
-      VIEWPORT_WIDTH,
-      VIEWPORT_HEIGHT,
+    const key = ns(
+      "screenshot:url",
+      `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
     );
-    if (existing) {
+    const raw = await redis.get<string>(key);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { url: string };
       await captureServer("screenshot_capture", {
         domain,
         width: VIEWPORT_WIDTH,
         height: VIEWPORT_HEIGHT,
-        source: "blob",
+        source: "redis",
         duration_ms: Date.now() - startedAt,
         outcome: "ok",
-        cache: "hit_blob",
+        cache: "hit",
       });
-      return { url: existing };
+      return { url: parsed.url };
     }
   } catch {
     // ignore and proceed
@@ -207,6 +209,29 @@ export async function getOrCreateScreenshotBlobUrl(
 
             console.info("[screenshot] stored blob", { url: storedUrl });
 
+            // Write Redis index and schedule purge
+            try {
+              const ttl = getScreenshotTtlSeconds();
+              const expiresAtMs = Date.now() + ttl * 1000;
+              const key = ns(
+                "screenshot:url",
+                `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
+              );
+              await redis.set(
+                key,
+                JSON.stringify({ url: storedUrl, expiresAtMs }),
+                {
+                  ex: ttl,
+                },
+              );
+              await redis.zadd(ns("purge", "screenshot"), {
+                score: expiresAtMs,
+                member: storedUrl, // store full URL for deletion API
+              });
+            } catch {
+              // best effort
+            }
+
             await captureServer("screenshot_capture", {
               domain,
               width: VIEWPORT_WIDTH,
@@ -216,7 +241,7 @@ export async function getOrCreateScreenshotBlobUrl(
                 : "direct_http",
               duration_ms: Date.now() - startedAt,
               outcome: "ok",
-              cache: "store_blob",
+              cache: "store",
             });
 
             return { url: storedUrl };

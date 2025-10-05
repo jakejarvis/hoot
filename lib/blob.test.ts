@@ -2,7 +2,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@vercel/blob", () => ({
-  head: vi.fn(async (_path: string) => ({ url: "https://blob/url.png" })),
   put: vi.fn(async (_path: string, _buf: unknown, _opts: unknown) => ({
     url: "https://blob/put.png",
   })),
@@ -11,9 +10,6 @@ vi.mock("@vercel/blob", () => ({
 import {
   computeFaviconBlobPath,
   computeScreenshotBlobPath,
-  getScreenshotBucket,
-  headFaviconBlob,
-  headScreenshotBlob,
   putFaviconBlob,
   putScreenshotBlob,
 } from "./blob";
@@ -56,7 +52,7 @@ describe("blob utils", () => {
     expect(s1).toMatch(/^screenshots\//);
   });
 
-  it("paths include bucket segments and change when bucket changes", () => {
+  it("stable paths do not change over time", () => {
     process.env.FAVICON_TTL_SECONDS = "10";
     process.env.SCREENSHOT_TTL_SECONDS = "10";
     const base = 1_000_000_000_000;
@@ -69,27 +65,12 @@ describe("blob utils", () => {
     Date.now = () => base + 11_000;
     const f2 = computeFaviconBlobPath("example.com", 32);
     const s2 = computeScreenshotBlobPath("example.com", 1200, 630);
-    expect(f1).not.toBe(f2);
-    expect(s1).not.toBe(s2);
+    expect(f1).toBe(f2);
+    expect(s1).toBe(s2);
     Date.now = realNow;
   });
 
-  it("headFaviconBlob returns URL on success and null when both buckets miss", async () => {
-    const { head } = await import("@vercel/blob");
-    (head as unknown as import("vitest").Mock).mockResolvedValueOnce({
-      url: "https://blob/existing.png",
-    });
-    const url = await headFaviconBlob("example.com", 32);
-    expect(url).toBe("https://blob/existing.png");
-    (head as unknown as import("vitest").Mock).mockRejectedValueOnce(
-      new Error("fail-current"),
-    );
-    (head as unknown as import("vitest").Mock).mockRejectedValueOnce(
-      new Error("fail-prev"),
-    );
-    const none = await headFaviconBlob("example.com", 32);
-    expect(none).toBeNull();
-  });
+  // head* helpers removed in favor of Redis index; put* still tested
 
   it("putFaviconBlob uploads with expected options and returns URL", async () => {
     const { put } = await import("@vercel/blob");
@@ -124,42 +105,5 @@ describe("blob utils", () => {
     });
   });
 
-  it("headScreenshotBlob falls back to previous bucket on miss", async () => {
-    process.env.SCREENSHOT_TTL_SECONDS = "10";
-    const base = 1_000_000_000_000;
-    const realNow = Date.now;
-    Date.now = () => base;
-    void getScreenshotBucket();
-    Date.now = () => base + 1_000;
-
-    const { head } = await import("@vercel/blob");
-    (head as unknown as import("vitest").Mock).mockRejectedValueOnce(
-      new Error("current missing"),
-    );
-    (head as unknown as import("vitest").Mock).mockResolvedValueOnce({
-      url: "https://blob/fallback.png",
-    });
-    const url = await headScreenshotBlob("example.com", 1200, 630);
-    expect(url).toBe("https://blob/fallback.png");
-    Date.now = realNow;
-  });
-
-  it("headScreenshotBlob returns URL on success and null when both buckets miss", async () => {
-    const { head } = await import("@vercel/blob");
-    (head as unknown as import("vitest").Mock).mockResolvedValueOnce({
-      url: "https://blob/existing-screenshot.png",
-    });
-    const url = await headScreenshotBlob("example.com", 1200, 630);
-    expect(url).toBe("https://blob/existing-screenshot.png");
-
-    // Miss current and previous
-    (head as unknown as import("vitest").Mock).mockRejectedValueOnce(
-      new Error("miss-current"),
-    );
-    (head as unknown as import("vitest").Mock).mockRejectedValueOnce(
-      new Error("miss-prev"),
-    );
-    const none = await headScreenshotBlob("example.com", 1200, 630);
-    expect(none).toBeNull();
-  });
+  // head* helpers removed in favor of Redis index
 });

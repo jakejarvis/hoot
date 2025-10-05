@@ -1,9 +1,7 @@
 import { Redis } from "@upstash/redis";
 
-export const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-});
+// Uses KV_REST_API_URL and KV_REST_API_TOKEN set by Vercel integration
+export const redis = Redis.fromEnv();
 
 export function ns(n: string, id: string): string {
   return `${n}:${id}`;

@@ -1,81 +1,49 @@
-import { del, list } from "@vercel/blob";
+import { del } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { getFaviconBucket, getScreenshotBucket } from "@/lib/blob";
+import { ns, redis } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
-function getCronSecret(): string | null {
-  return process.env.CRON_SECRET || null;
-}
-
-function parseIntEnv(name: string, fallback: number): number {
-  const v = Number(process.env[name]);
-  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
-}
-
-// Keep last N buckets for safety
-const KEEP_BUCKETS = () => parseIntEnv("BLOB_KEEP_BUCKETS", 2);
-
-/**
- * We prune old time-bucketed assets under `favicons/` and `screenshots/`.
- * Paths are structured as: `${kind}/${bucket}/${digest}/...`.
- */
-function shouldDeletePath(
-  pathname: string,
-  currentBucket: number,
-  keep: number,
-) {
-  // Expect: kind/bucket/...
-  const parts = pathname.split("/");
-  if (parts.length < 3) return false;
-  const bucketNum = Number(parts[1]);
-  if (!Number.isFinite(bucketNum)) return false;
-  return bucketNum <= currentBucket - keep;
-}
-
 export async function GET(req: Request) {
-  const secret = getCronSecret();
+  const secret = process.env.CRON_SECRET || null;
   const header = req.headers.get("authorization");
   if (!secret || header !== `Bearer ${secret}`) {
     return new NextResponse("unauthorized", { status: 401 });
   }
 
-  const keep = KEEP_BUCKETS();
-  // Compute current bucket per kind using the same helpers as blob paths
-  const faviconBucket = getFaviconBucket();
-  const screenshotBucket = getScreenshotBucket();
-
   const deleted: string[] = [];
   const errors: Array<{ path: string; error: string }> = [];
 
-  // List favicons and screenshots prefixes separately to reduce listing size
-  for (const prefix of ["favicons/", "screenshots/"]) {
-    // Paginate list in case of many objects
-    let cursor: string | undefined;
-    do {
-      const res = await list({
-        prefix,
-        cursor,
-        token: process.env.BLOB_READ_WRITE_TOKEN,
+  const batch = process.env.BLOB_PURGE_BATCH
+    ? parseInt(process.env.BLOB_PURGE_BATCH, 10)
+    : 500;
+  const now = Date.now();
+  for (const kind of ["favicon", "screenshot"]) {
+    // Drain due items in batches
+    // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
+    while (true) {
+      const due = await redis.zrange<string[]>(ns("purge", kind), 0, now, {
+        byScore: true,
+        offset: 0,
+        count: batch,
       });
-      cursor = res.cursor || undefined;
-      for (const item of res.blobs) {
-        const current = prefix.startsWith("favicons/")
-          ? faviconBucket
-          : screenshotBucket;
-        if (shouldDeletePath(item.pathname, current, keep)) {
-          try {
-            await del(item.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
-            deleted.push(item.pathname);
-          } catch (err) {
-            errors.push({
-              path: item.pathname,
-              error: (err as Error)?.message || "unknown",
-            });
-          }
+      if (!due.length) break;
+      const succeeded: string[] = [];
+      for (const path of due) {
+        try {
+          await del(path, { token: process.env.BLOB_READ_WRITE_TOKEN });
+          deleted.push(path);
+          succeeded.push(path);
+        } catch (err) {
+          errors.push({ path, error: (err as Error)?.message || "unknown" });
         }
       }
-    } while (cursor);
+      if (succeeded.length) await redis.zrem(ns("purge", kind), ...succeeded);
+      // Avoid infinite loop when a full batch fails to delete (e.g., network or token issue)
+      if (succeeded.length === 0 && due.length > 0) break;
+      // nothing more due right now
+      if (due.length < batch) break;
+    }
   }
 
   return NextResponse.json({

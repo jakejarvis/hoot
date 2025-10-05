@@ -1,7 +1,8 @@
 import { captureServer } from "@/lib/analytics/server";
-import { headFaviconBlob, putFaviconBlob } from "@/lib/blob";
+import { getFaviconTtlSeconds, putFaviconBlob } from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
+import { ns, redis } from "@/lib/redis";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -30,14 +31,6 @@ async function fetchWithTimeout(
   }
 }
 
-async function convertToPng(
-  input: Buffer,
-  contentType: string | null,
-  size: number,
-): Promise<Buffer | null> {
-  return convertBufferToSquarePng(input, size, contentType);
-}
-
 function buildSources(domain: string): string[] {
   const enc = encodeURIComponent(domain);
   return [
@@ -54,19 +47,21 @@ export async function getOrCreateFaviconBlobUrl(
   domain: string,
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
-  // 1) Check blob first
+  // 1) Check Redis index first
   try {
-    const existing = await headFaviconBlob(domain, DEFAULT_SIZE);
-    if (existing) {
+    const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+    const raw = await redis.get<string>(key);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { url: string };
       await captureServer("favicon_fetch", {
         domain,
         size: DEFAULT_SIZE,
-        source: "blob",
+        source: "redis",
         duration_ms: Date.now() - startedAt,
         outcome: "ok",
-        cache: "hit_blob",
+        cache: "hit",
       });
-      return { url: existing };
+      return { url: parsed.url };
     }
   } catch {
     // ignore and proceed to fetch
@@ -82,7 +77,11 @@ export async function getOrCreateFaviconBlobUrl(
       const ab = await res.arrayBuffer();
       const buf = Buffer.from(ab);
 
-      const png = await convertToPng(buf, contentType, DEFAULT_SIZE);
+      const png = await convertBufferToSquarePng(
+        buf,
+        DEFAULT_SIZE,
+        contentType,
+      );
       if (!png) continue;
 
       const source = (() => {
@@ -95,6 +94,22 @@ export async function getOrCreateFaviconBlobUrl(
 
       const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
 
+      // 3) Write Redis index and schedule purge
+      try {
+        const ttl = getFaviconTtlSeconds();
+        const expiresAtMs = Date.now() + ttl * 1000;
+        const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+        await redis.set(key, JSON.stringify({ url, expiresAtMs }), {
+          ex: ttl,
+        });
+        await redis.zadd(ns("purge", "favicon"), {
+          score: expiresAtMs,
+          member: url, // store full URL for deletion API
+        });
+      } catch {
+        // best effort
+      }
+
       await captureServer("favicon_fetch", {
         domain,
         size: DEFAULT_SIZE,
@@ -103,7 +118,7 @@ export async function getOrCreateFaviconBlobUrl(
         upstream_content_type: contentType ?? null,
         duration_ms: Date.now() - startedAt,
         outcome: "ok",
-        cache: "store_blob",
+        cache: "store",
       });
 
       return { url };
