@@ -1,5 +1,4 @@
 /* @vitest-environment node */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const blobMock = vi.hoisted(() => ({

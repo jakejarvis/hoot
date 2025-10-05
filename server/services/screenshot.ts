@@ -226,7 +226,7 @@ export async function getOrCreateScreenshotBlobUrl(
               );
               await redis.zadd(ns("purge", "screenshot"), {
                 score: expiresAtMs,
-                member: new URL(storedUrl).pathname.replace(/^\//, ""),
+                member: storedUrl, // store full URL for deletion API
               });
             } catch {
               // best effort

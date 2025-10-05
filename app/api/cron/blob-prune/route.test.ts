@@ -1,27 +1,17 @@
 /* @vitest-environment node */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@vercel/blob", () => ({
   del: vi.fn(async (_url: string) => undefined),
 }));
 
-const redisMock = vi.hoisted(() => ({
-  redis: {
-    // Store members as an array representing due items
-    _due: ["favicons/abc/32.png", "screenshots/ghi/1200x630.png"],
-    zrange: vi.fn(
-      async (_key: string, _min: number, _max: number, _opts: unknown) => {
-        // return and drain up to 500
-        const out = redisMock.redis._due.splice(0, 500);
-        return out;
-      },
-    ),
-    zrem: vi.fn(async (_key: string, ..._members: string[]) => _members.length),
-  },
-  ns: (n: string, id: string) => `${n}:${id}`,
-}));
-
-vi.mock("@/lib/redis", () => redisMock);
+// Use global redis mock; seed with URLs instead of pathnames
+beforeEach(() => {
+  global.__redisTestHelper.reset();
+  const set = global.__redisTestHelper.zsets;
+  set.set("purge:favicon", new Map([["https://blob/f1", Date.now()]]));
+  set.set("purge:screenshot", new Map([["https://blob/s1", Date.now()]]));
+});
 
 import { GET } from "./route";
 

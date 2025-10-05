@@ -104,7 +104,7 @@ export async function getOrCreateFaviconBlobUrl(
         });
         await redis.zadd(ns("purge", "favicon"), {
           score: expiresAtMs,
-          member: new URL(url).pathname.replace(/^\//, ""),
+          member: url, // store full URL for deletion API
         });
       } catch {
         // best effort
