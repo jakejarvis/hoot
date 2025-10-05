@@ -4,19 +4,8 @@ import { ns, redis } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
-function getCronSecret(): string | null {
-  return process.env.CRON_SECRET || null;
-}
-
-function parseIntEnv(name: string, fallback: number): number {
-  const v = Number(process.env[name]);
-  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
-}
-
-const BATCH = () => parseIntEnv("BLOB_PURGE_BATCH", 500);
-
 export async function GET(req: Request) {
-  const secret = getCronSecret();
+  const secret = process.env.CRON_SECRET || null;
   const header = req.headers.get("authorization");
   if (!secret || header !== `Bearer ${secret}`) {
     return new NextResponse("unauthorized", { status: 401 });
@@ -25,28 +14,19 @@ export async function GET(req: Request) {
   const deleted: string[] = [];
   const errors: Array<{ path: string; error: string }> = [];
 
-  const batch = BATCH();
+  const batch = process.env.BLOB_PURGE_BATCH
+    ? parseInt(process.env.BLOB_PURGE_BATCH, 10)
+    : 500;
   const now = Date.now();
   for (const kind of ["favicon", "screenshot"]) {
     // Drain due items in batches
     // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
     while (true) {
-      const due = (await (
-        redis as unknown as {
-          zrange: (
-            key: string,
-            min: number,
-            max: number,
-            options: {
-              byScore: true;
-              limit?: { offset: number; count: number };
-            },
-          ) => Promise<string[]>;
-        }
-      ).zrange(ns("purge", kind), 0, now, {
+      const due = await redis.zrange<string[]>(ns("purge", kind), 0, now, {
         byScore: true,
-        limit: { offset: 0, count: batch },
-      })) as string[];
+        offset: 0,
+        count: batch,
+      });
       if (!due.length) break;
       const succeeded: string[] = [];
       for (const path of due) {
