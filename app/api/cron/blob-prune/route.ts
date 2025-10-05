@@ -59,7 +59,10 @@ export async function GET(req: Request) {
         }
       }
       if (succeeded.length) await redis.zrem(ns("purge", kind), ...succeeded);
-      if (due.length < batch) break; // nothing more due right now
+      // Avoid infinite loop when a full batch fails to delete (e.g., network or token issue)
+      if (succeeded.length === 0 && due.length > 0) break;
+      // nothing more due right now
+      if (due.length < batch) break;
     }
   }
 
