@@ -51,24 +51,63 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
 
+  // Provider-agnostic cache check: if all types are cached, return immediately
+  const types = DnsTypeSchema.options;
+  const cachedByType = await Promise.all(
+    types.map(async (type) =>
+      redis.get<DnsRecord[]>(ns("dns", `${lower}:${type}`)),
+    ),
+  );
+  const allCached = cachedByType.every((arr) => Array.isArray(arr));
+  if (allCached) {
+    const flat = (cachedByType as DnsRecord[][]).flat();
+    const counts = types.reduce(
+      (acc, t) => {
+        acc[t] = flat.filter((r) => r.type === t).length;
+        return acc;
+      },
+      { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
+    );
+    const cloudflareIpPresent = flat.some(
+      (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
+    );
+    const resolverUsed =
+      ((await redis.get(
+        ns("dns:meta", `${lower}:resolver`),
+      )) as DnsResolver | null) || "cloudflare";
+    await captureServer("dns_resolve_all", {
+      domain: lower,
+      duration_ms_total: Date.now() - startedAt,
+      counts,
+      cloudflare_ip_present: cloudflareIpPresent,
+      dns_provider_used: resolverUsed,
+      provider_attempts: 0,
+      duration_ms_by_provider: {},
+      cache_hit: true,
+    });
+    return { records: flat, resolver: resolverUsed } as DnsResolveResult;
+  }
+
   for (let attemptIndex = 0; attemptIndex < providers.length; attemptIndex++) {
     const provider = providers[attemptIndex] as DohProvider;
     const attemptStart = Date.now();
     try {
+      let usedFresh = false;
       const results = await Promise.all(
-        DnsTypeSchema.options.map(async (type) => {
-          const key = ns("dns", `${lower}:${type}:${provider.key}`);
+        types.map(async (type) => {
+          const key = ns("dns", `${lower}:${type}`);
           const cached = await redis.get<DnsRecord[]>(key);
           if (cached) return cached;
           const fresh = await resolveTypeWithProvider(domain, type, provider);
           await redis.set(key, fresh, { ex: 5 * 60 });
+          usedFresh = usedFresh || true;
           return fresh;
         }),
       );
       const flat = results.flat();
       durationByProvider[provider.key] = Date.now() - attemptStart;
 
-      const counts = DnsTypeSchema.options.reduce(
+      const counts = types.reduce(
         (acc, t) => {
           acc[t] = flat.filter((r) => r.type === t).length;
           return acc;
@@ -78,16 +117,28 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const cloudflareIpPresent = flat.some(
         (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
       );
+      // Persist the resolver metadata only when we actually fetched fresh data
+      if (usedFresh) {
+        await redis.set(ns("dns:meta", `${lower}:resolver`), provider.key, {
+          ex: 5 * 60,
+        });
+      }
+      const resolverUsed = usedFresh
+        ? provider.key
+        : ((await redis.get(
+            ns("dns:meta", `${lower}:resolver`),
+          )) as DnsResolver | null) || provider.key;
       await captureServer("dns_resolve_all", {
         domain: lower,
         duration_ms_total: Date.now() - startedAt,
         counts,
         cloudflare_ip_present: cloudflareIpPresent,
-        dns_provider_used: provider.key,
+        dns_provider_used: resolverUsed,
         provider_attempts: attemptIndex + 1,
         duration_ms_by_provider: durationByProvider,
+        cache_hit: !usedFresh,
       });
-      return { records: flat, resolver: provider.key } as DnsResolveResult;
+      return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;

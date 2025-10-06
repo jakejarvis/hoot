@@ -111,4 +111,52 @@ describe("resolveAll", () => {
     expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(6);
     fetchMock.mockRestore();
   });
+
+  it("caches results across providers and preserves resolver metadata", async () => {
+    globalThis.__redisTestHelper?.reset();
+    // First run: succeed and populate cache and resolver meta
+    const firstFetch = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "1.2.3.4" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "::1" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          {
+            name: "example.com.",
+            TTL: 300,
+            data: "10 aspmx.l.google.com.",
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 120, data: '"v=spf1"' }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          {
+            name: "example.com.",
+            TTL: 600,
+            data: "ns1.cloudflare.com.",
+          },
+        ]),
+      );
+
+    const first = await resolveAll("example.com");
+    expect(first.records.length).toBeGreaterThan(0);
+    firstFetch.mockRestore();
+
+    // Second run: should be cache hit and not call fetch at all
+    const secondFetch = vi.spyOn(global, "fetch").mockImplementation(() => {
+      throw new Error("should not fetch on cache hit");
+    });
+    const second = await resolveAll("example.com");
+    expect(second.records.length).toBe(first.records.length);
+    // Resolver should be preserved (whatever was used first)
+    expect(["cloudflare", "google"]).toContain(second.resolver);
+    secondFetch.mockRestore();
+  });
 });
