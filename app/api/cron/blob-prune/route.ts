@@ -15,10 +15,10 @@ export async function GET(req: Request) {
   const errors: Array<{ path: string; error: string }> = [];
   const utapi = new UTApi();
 
-  const batch = process.env.PURGE_BATCH
-    ? parseInt(process.env.PURGE_BATCH, 10)
-    : 500;
+  // Fixed batch size to avoid env coupling
+  const batch = 500;
   const now = Date.now();
+
   for (const kind of ["favicon", "screenshot"]) {
     // Drain due items in batches
     // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
