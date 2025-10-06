@@ -1,9 +1,5 @@
 import { captureServer } from "@/lib/analytics/server";
-import {
-  computeFaviconBlobPath,
-  getFaviconTtlSeconds,
-  putFaviconBlob,
-} from "@/lib/blob";
+import { getFaviconTtlSeconds, uploadFavicon } from "@/lib/storage";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
@@ -57,9 +53,9 @@ export async function getOrCreateFaviconBlobUrl(
   console.debug("[favicon] start", { domain, size: DEFAULT_SIZE });
   // 1) Check Redis index first
   try {
-    const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-    console.debug("[favicon] redis get", { key });
-    const raw = (await redis.get(key)) as { url?: unknown } | null;
+    const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+    console.debug("[favicon] redis get", { key: indexKey });
+    const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
     if (raw && typeof raw === "object" && typeof raw.url === "string") {
       console.info("[favicon] cache hit", {
         domain,
@@ -121,9 +117,9 @@ export async function getOrCreateFaviconBlobUrl(
     // Another worker is producing the blob; wait briefly for index to be populated
     for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
       try {
-        const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-        console.debug("[favicon] waiting for index", { attempt: i + 1, key });
-        const raw = (await redis.get(key)) as { url?: unknown } | null;
+        const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+        console.debug("[favicon] waiting for index", { attempt: i + 1, key: indexKey });
+        const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
         if (raw && typeof raw === "object" && typeof raw.url === "string") {
           console.info("[favicon] index appeared while waiting", {
             url: raw.url,
@@ -177,10 +173,13 @@ export async function getOrCreateFaviconBlobUrl(
           return "unknown";
         })();
 
-        const blobPath = computeFaviconBlobPath(domain, DEFAULT_SIZE);
-        console.info("[favicon] uploading to blob", { blobPath });
-        const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
-        console.info("[favicon] uploaded", { url });
+        console.info("[favicon] uploading via uploadthing");
+        const { url, key } = await uploadFavicon({
+          domain,
+          size: DEFAULT_SIZE,
+          png,
+        });
+        console.info("[favicon] uploaded", { url, key });
         await waitForPublicUrl(url);
         console.debug("[favicon] public url ready", { url });
 
@@ -188,23 +187,23 @@ export async function getOrCreateFaviconBlobUrl(
         try {
           const ttl = getFaviconTtlSeconds();
           const expiresAtMs = Date.now() + ttl * 1000;
-          const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+          const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
           console.debug("[favicon] redis set index", {
-            key,
+            key: indexKey,
             ttlSeconds: ttl,
             expiresAtMs,
           });
           await redis.set(
-            key,
-            { url, expiresAtMs },
+            indexKey,
+            { url, key, expiresAtMs },
             {
               ex: ttl,
             },
           );
-          console.debug("[favicon] redis zadd purge", { url, expiresAtMs });
+          console.debug("[favicon] redis zadd purge", { key, expiresAtMs });
           await redis.zadd(ns("purge", "favicon"), {
             score: expiresAtMs,
-            member: url, // store full URL for deletion API
+            member: key, // store UploadThing file key for deletion API
           });
         } catch {
           // best effort

@@ -1,16 +1,19 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@vercel/blob", () => ({
-  del: vi.fn(async (_url: string) => undefined),
+const utMock = vi.hoisted(() => ({
+  deleteFiles: vi.fn(async (_keys: string[]) => undefined),
+}));
+vi.mock("uploadthing/server", () => ({
+  UTApi: vi.fn().mockImplementation(() => utMock),
 }));
 
 // Use global redis mock; seed with URLs instead of pathnames
 beforeEach(() => {
   global.__redisTestHelper.reset();
   const set = global.__redisTestHelper.zsets;
-  set.set("purge:favicon", new Map([["https://blob/f1", Date.now()]]));
-  set.set("purge:screenshot", new Map([["https://blob/s1", Date.now()]]));
+  set.set("purge:favicon", new Map([["ut-key-f1", Date.now()]]));
+  set.set("purge:screenshot", new Map([["ut-key-s1", Date.now()]]));
 });
 
 import { GET } from "./route";
@@ -18,6 +21,7 @@ import { GET } from "./route";
 describe("/api/cron/blob-prune", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    utMock.deleteFiles.mockClear();
   });
 
   it("requires secret and prunes old buckets (GET)", async () => {

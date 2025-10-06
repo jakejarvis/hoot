@@ -1,10 +1,6 @@
 import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
-import {
-  computeScreenshotBlobPath,
-  getScreenshotTtlSeconds,
-  putScreenshotBlob,
-} from "@/lib/blob";
+import { getScreenshotTtlSeconds, uploadScreenshot } from "@/lib/storage";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
@@ -239,19 +235,14 @@ export async function getOrCreateScreenshotBlobUrl(
               console.debug("[screenshot] watermarked png bytes", {
                 bytes: pngWithWatermark.length,
               });
-              const blobPath = computeScreenshotBlobPath(
+              console.info("[screenshot] uploading via uploadthing");
+              const { url: storedUrl, key } = await uploadScreenshot({
                 domain,
-                VIEWPORT_WIDTH,
-                VIEWPORT_HEIGHT,
-              );
-              console.info("[screenshot] uploading to blob", { blobPath });
-              const storedUrl = await putScreenshotBlob(
-                domain,
-                VIEWPORT_WIDTH,
-                VIEWPORT_HEIGHT,
-                pngWithWatermark,
-              );
-              console.info("[screenshot] uploaded", { url: storedUrl });
+                width: VIEWPORT_WIDTH,
+                height: VIEWPORT_HEIGHT,
+                png: pngWithWatermark,
+              });
+              console.info("[screenshot] uploaded", { url: storedUrl, key });
               await waitForPublicUrl(storedUrl);
               console.debug("[screenshot] public url ready", {
                 url: storedUrl,
@@ -272,18 +263,18 @@ export async function getOrCreateScreenshotBlobUrl(
                 });
                 await redis.set(
                   key,
-                  { url: storedUrl, expiresAtMs },
+                  { url: storedUrl, key, expiresAtMs },
                   {
                     ex: ttl,
                   },
                 );
                 console.debug("[screenshot] redis zadd purge", {
-                  url: storedUrl,
+                  key,
                   expiresAtMs,
                 });
                 await redis.zadd(ns("purge", "screenshot"), {
                   score: expiresAtMs,
-                  member: storedUrl, // store full URL for deletion API
+                  member: key, // store UploadThing file key for deletion API
                 });
               } catch {
                 // best effort
