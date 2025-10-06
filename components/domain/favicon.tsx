@@ -19,6 +19,9 @@ export function Favicon({
 }) {
   const trpc = useTRPC();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     setIsHydrated(true);
   }, []);
@@ -36,6 +39,12 @@ export function Favicon({
 
   const url = data?.url ?? null;
 
+  // Reset the fade-in state when the image URL changes to animate again
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is intentional.
+  useEffect(() => {
+    setIsLoaded(false);
+  }, [url]);
+
   if (!isHydrated || isPending) {
     return (
       <Skeleton
@@ -45,7 +54,7 @@ export function Favicon({
     );
   }
 
-  if (!url) {
+  if (!url || failedUrl === url) {
     return (
       <Globe
         className={cn("text-muted-foreground", className)}
@@ -57,13 +66,20 @@ export function Favicon({
 
   return (
     <Image
+      key={url}
       src={url}
       alt={`${domain} icon`}
       width={size}
       height={size}
-      className={className}
+      className={cn(
+        className,
+        "transition-opacity duration-200",
+        isLoaded ? "opacity-100" : "opacity-0",
+      )}
       loading="lazy"
       unoptimized
+      onError={() => setFailedUrl(url)}
+      onLoad={() => setIsLoaded(true)}
     />
   );
 }
