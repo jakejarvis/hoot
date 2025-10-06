@@ -30,7 +30,7 @@ Hoot is an all-in-one app for exploring domain names, providing instant insights
 - **Tailwind CSS v4**
 - **tRPC** for API endpoints
 - **Upstash Redis** for caching
-- **Vercel Blob** for favicon and screenshot storage
+- **UploadThing** for favicon and screenshot storage
 - **Puppeteer Core + @sparticuz/chromium** for server screenshots (fallback to `puppeteer` locally)
 - **Biome** for linting and formatting
 
@@ -63,24 +63,23 @@ Hoot is an all-in-one app for exploring domain names, providing instant insights
 - **TLS/SSL Certificates** - Chain analysis
 - **HTTP Headers** - Security headers and tech detection
 - **Geolocation** - IP → map
-- **Favicon & Screenshot Storage** - Vercel Blob with time-bucketed HMAC paths
+- **Favicon & Screenshot Storage** - UploadThing with Redis index
 
-### Screenshots (New)
 - Service: `server/services/screenshot.ts` using Puppeteer.
-- Storage: `lib/blob.ts` computes `screenshots/{bucket}/{digest}/{width}x{height}.png` with HMAC and rotating buckets governed by `SCREENSHOT_TTL_SECONDS`.
+- Storage: `lib/storage.ts` uploads via UploadThing and returns `{ url, key }` stored in Redis with TTLs.
 - Client UI: `components/domain/screenshot.tsx` and `components/domain/screenshot-tooltip.tsx` with optimized loading state and one-time fetch gating.
 - Router: `server/routers/domain.ts` exposes `domain.screenshot` via `createDomainProcedure`.
 - Config: prefer `puppeteer-core` + `@sparticuz/chromium` on Vercel; fallback to `puppeteer` locally. In `next.config.ts`, `serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"]`.
 - Env:
-  - `BLOB_SIGNING_SECRET` (prod required)
-  - `BLOB_READ_WRITE_TOKEN`
+  - `UPLOADTHING_SECRET` (required)
+  - `UPLOADTHING_APP_ID` (recommended)
   - `SCREENSHOT_TTL_SECONDS` (optional, default 7 days)
   - `HOOT_USER_AGENT` (optional UA override)
   - `PUPPETEER_SKIP_DOWNLOAD=1` on Vercel to skip full puppeteer install
 
-### Cron Blob Pruning
+### Cron Upload Pruning
 - Route: `app/api/cron/blob-prune/route.ts` (GET only, Bearer auth via `CRON_SECRET`).
-- Deletes old buckets under `favicons/` and `screenshots/`; keep window via `BLOB_KEEP_BUCKETS`.
+- Deletes expired UploadThing files by key from `purge:favicon` and `purge:screenshot` ZSETs; batch size configurable via `PURGE_BATCH`.
 
 ## Testing Guidelines
 - Runner: **Vitest**; environment `jsdom` by default; Node tests with `/* @vitest-environment node */`.
@@ -88,8 +87,8 @@ Hoot is an all-in-one app for exploring domain names, providing instant insights
 - UI tests: prefer behavior tests; mock Radix primitives and TRPC/React Query as needed.
 - Server tests: hoisted ESM mocks; unique cache domains; reset Redis between tests.
 - New tests:
-  - `server/services/screenshot.test.ts` mocks puppeteer and blob.
-  - `lib/blob.test.ts` includes screenshot path/put/head tests with bucket fallback.
+  - `server/services/screenshot.test.ts` mocks puppeteer and UploadThing storage.
+  - `lib/storage.test.ts` covers upload helpers.
 
 ## Security & Configuration
 - Keep secrets in `.env.local`

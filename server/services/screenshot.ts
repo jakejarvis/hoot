@@ -1,14 +1,10 @@
 import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
-import {
-  computeScreenshotBlobPath,
-  getScreenshotTtlSeconds,
-  putScreenshotBlob,
-} from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { ns, redis } from "@/lib/redis";
+import { getScreenshotTtlSeconds, uploadImage } from "@/lib/storage";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -18,9 +14,8 @@ const IDLE_TIMEOUT_MS = 3000;
 const CAPTURE_MAX_ATTEMPTS_DEFAULT = 3;
 const CAPTURE_BACKOFF_BASE_MS_DEFAULT = 200;
 const CAPTURE_BACKOFF_MAX_MS_DEFAULT = 1200;
-const LOCK_TTL_SECONDS = 15;
-const LOCK_WAIT_ATTEMPTS = 6;
-const LOCK_WAIT_DELAY_MS = 250;
+const LOCK_TTL_SECONDS = 10; // minimal barrier to avoid duplicate concurrent uploads
+// Removed legacy URL propagation waits
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -98,83 +93,30 @@ export async function getOrCreateScreenshotBlobUrl(
   }
 
   // 2) Acquire short-lived lock to avoid duplicate concurrent captures/uploads
-  async function waitForPublicUrl(url: string): Promise<void> {
-    if (process.env.NODE_ENV === "test") return;
-    for (let i = 0; i < 4; i++) {
-      try {
-        const res = await fetch(url, {
-          method: "HEAD",
-          cache: "no-store" as RequestCache,
-        });
-        if (res.ok) return;
-      } catch {}
-      await sleep(200);
-    }
-  }
+  // URL propagation wait removed
 
+  // Removed Redis lock acquisition and wait loops
+
+  // Minimal single-writer barrier (no waiting): if another worker is uploading, bail out
   const lockKey = ns(
     "lock",
     `screenshot:${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
   );
-  let acquiredLock = false;
   try {
-    console.debug("[screenshot] lock attempt", { lockKey });
     const setRes = await redis.set(lockKey, "1", {
       nx: true,
       ex: LOCK_TTL_SECONDS,
     });
-    acquiredLock = setRes === "OK" || setRes === undefined;
-    console.info("[screenshot] lock status", { acquiredLock });
-  } catch {
-    acquiredLock = true;
-    console.warn("[screenshot] lock unsupported; proceeding without lock");
-  }
-
-  if (!acquiredLock) {
-    // Another worker is producing the blob; wait briefly for index to be populated
-    for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
-      try {
-        const key = ns(
-          "screenshot:url",
-          `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-        );
-        console.debug("[screenshot] waiting for index", {
-          attempt: i + 1,
-          key,
-        });
-        const raw = (await redis.get(key)) as { url?: unknown } | null;
-        if (raw && typeof raw === "object" && typeof raw.url === "string") {
-          console.info("[screenshot] index appeared while waiting", {
-            url: raw.url,
-          });
-          return { url: raw.url };
-        }
-      } catch {}
-      await sleep(LOCK_WAIT_DELAY_MS);
-    }
-    console.warn("[screenshot] gave up waiting for lock; returning null", {
-      domain,
-    });
-    return { url: null };
-  }
+    const acquired = setRes === "OK" || setRes === undefined;
+    if (!acquired) return { url: null };
+  } catch {}
 
   // 3) Attempt to capture (wrapped to ensure lock release)
   try {
     let browser: Browser | null = null;
     try {
       // Re-check index after acquiring lock in case another writer finished
-      try {
-        const key = ns(
-          "screenshot:url",
-          `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-        );
-        console.debug("[screenshot] redis recheck after lock", { key });
-        const raw = (await redis.get(key)) as { url?: unknown } | null;
-        if (raw && typeof raw === "object" && typeof raw.url === "string") {
-          console.info("[screenshot] found index after lock", { url: raw.url });
-          return { url: raw.url };
-        }
-      } catch {}
+      // Skip index recheck
 
       browser = await launchChromium();
       console.debug("[screenshot] browser launched", { mode: "chromium" });
@@ -185,39 +127,46 @@ export async function getOrCreateScreenshotBlobUrl(
         for (let attemptIndex = 0; attemptIndex < attempts; attemptIndex++) {
           try {
             const page = await browser.newPage();
-            await page.setViewport({
-              width: VIEWPORT_WIDTH,
-              height: VIEWPORT_HEIGHT,
-              deviceScaleFactor: 1,
-            });
-            await page.setUserAgent(USER_AGENT);
-
-            console.debug("[screenshot] navigating", {
-              url,
-              attempt: attemptIndex + 1,
-            });
-            await page.goto(url, {
-              waitUntil: "domcontentloaded",
-              timeout: NAV_TIMEOUT_MS,
-            });
-
-            // Give chatty pages/CDNs a brief chance to settle without hanging
+            let rawPng: Buffer;
             try {
-              await page.waitForNetworkIdle({
-                idleTime: IDLE_TIME_MS,
-                timeout: IDLE_TIMEOUT_MS,
+              await page.setViewport({
+                width: VIEWPORT_WIDTH,
+                height: VIEWPORT_HEIGHT,
+                deviceScaleFactor: 1,
               });
-            } catch {}
+              await page.setUserAgent(USER_AGENT);
 
-            console.debug("[screenshot] navigated", {
-              url,
-              attempt: attemptIndex + 1,
-            });
+              console.debug("[screenshot] navigating", {
+                url,
+                attempt: attemptIndex + 1,
+              });
+              await page.goto(url, {
+                waitUntil: "domcontentloaded",
+                timeout: NAV_TIMEOUT_MS,
+              });
 
-            const rawPng: Buffer = (await page.screenshot({
-              type: "png",
-              fullPage: false,
-            })) as Buffer;
+              // Give chatty pages/CDNs a brief chance to settle without hanging
+              try {
+                await page.waitForNetworkIdle({
+                  idleTime: IDLE_TIME_MS,
+                  timeout: IDLE_TIMEOUT_MS,
+                });
+              } catch {}
+
+              console.debug("[screenshot] navigated", {
+                url,
+                attempt: attemptIndex + 1,
+              });
+
+              rawPng = (await page.screenshot({
+                type: "png",
+                fullPage: false,
+              })) as Buffer;
+            } finally {
+              try {
+                await page.close();
+              } catch {}
+            }
             console.debug("[screenshot] raw screenshot bytes", {
               bytes: rawPng.length,
             });
@@ -239,51 +188,47 @@ export async function getOrCreateScreenshotBlobUrl(
               console.debug("[screenshot] watermarked png bytes", {
                 bytes: pngWithWatermark.length,
               });
-              const blobPath = computeScreenshotBlobPath(
+              console.info("[screenshot] uploading via uploadthing");
+              const { url: storedUrl, key: fileKey } = await uploadImage({
+                kind: "screenshot",
                 domain,
-                VIEWPORT_WIDTH,
-                VIEWPORT_HEIGHT,
-              );
-              console.info("[screenshot] uploading to blob", { blobPath });
-              const storedUrl = await putScreenshotBlob(
-                domain,
-                VIEWPORT_WIDTH,
-                VIEWPORT_HEIGHT,
-                pngWithWatermark,
-              );
-              console.info("[screenshot] uploaded", { url: storedUrl });
-              await waitForPublicUrl(storedUrl);
-              console.debug("[screenshot] public url ready", {
-                url: storedUrl,
+                width: VIEWPORT_WIDTH,
+                height: VIEWPORT_HEIGHT,
+                png: pngWithWatermark,
               });
+              console.info("[screenshot] uploaded", {
+                url: storedUrl,
+                key: fileKey,
+              });
+              // No need to wait for public URL
 
               // Write Redis index and schedule purge
               try {
                 const ttl = getScreenshotTtlSeconds();
                 const expiresAtMs = Date.now() + ttl * 1000;
-                const key = ns(
+                const indexKey = ns(
                   "screenshot:url",
                   `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
                 );
                 console.debug("[screenshot] redis set index", {
-                  key,
+                  key: indexKey,
                   ttlSeconds: ttl,
                   expiresAtMs,
                 });
                 await redis.set(
-                  key,
-                  { url: storedUrl, expiresAtMs },
+                  indexKey,
+                  { url: storedUrl, key: fileKey, expiresAtMs },
                   {
                     ex: ttl,
                   },
                 );
                 console.debug("[screenshot] redis zadd purge", {
-                  url: storedUrl,
+                  key: fileKey,
                   expiresAtMs,
                 });
                 await redis.zadd(ns("purge", "screenshot"), {
                   score: expiresAtMs,
-                  member: storedUrl, // store full URL for deletion API
+                  member: fileKey, // store UploadThing file key for deletion API
                 });
               } catch {
                 // best effort
@@ -360,7 +305,6 @@ export async function getOrCreateScreenshotBlobUrl(
   } finally {
     try {
       await redis.del(lockKey);
-      console.debug("[screenshot] lock released", { lockKey });
     } catch {}
   }
 }

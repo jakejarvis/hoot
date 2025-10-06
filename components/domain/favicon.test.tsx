@@ -78,11 +78,11 @@ describe("Favicon", () => {
 
   it("renders Image when url present", () => {
     (useQuery as unknown as Mock).mockReturnValue({
-      data: { url: "https://x/y.png" },
+      data: { url: "https://app.ufs.sh/f/x.png" },
       isLoading: false,
     });
     render(<Favicon domain="example.com" size={16} />);
     const img = screen.getByRole("img", { name: /icon/i });
-    expect(img).toHaveAttribute("src", "https://x/y.png");
+    expect(img).toHaveAttribute("src", "https://app.ufs.sh/f/x.png");
   });
 });

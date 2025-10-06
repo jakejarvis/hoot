@@ -1,18 +1,12 @@
 import { captureServer } from "@/lib/analytics/server";
-import {
-  computeFaviconBlobPath,
-  getFaviconTtlSeconds,
-  putFaviconBlob,
-} from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
+import { getFaviconTtlSeconds, uploadImage } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
-const LOCK_TTL_SECONDS = 15;
-const LOCK_WAIT_ATTEMPTS = 6;
-const LOCK_WAIT_DELAY_MS = 250;
+const LOCK_TTL_SECONDS = 10; // minimal barrier to avoid duplicate concurrent uploads
 
 // Legacy Redis-based caching removed; Blob is now the canonical store
 
@@ -57,9 +51,9 @@ export async function getOrCreateFaviconBlobUrl(
   console.debug("[favicon] start", { domain, size: DEFAULT_SIZE });
   // 1) Check Redis index first
   try {
-    const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-    console.debug("[favicon] redis get", { key });
-    const raw = (await redis.get(key)) as { url?: unknown } | null;
+    const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+    console.debug("[favicon] redis get", { key: indexKey });
+    const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
     if (raw && typeof raw === "object" && typeof raw.url === "string") {
       console.info("[favicon] cache hit", {
         domain,
@@ -82,63 +76,18 @@ export async function getOrCreateFaviconBlobUrl(
   }
 
   // 2) Acquire short-lived lock to avoid duplicate concurrent uploads
-  async function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  async function waitForPublicUrl(url: string): Promise<void> {
-    if (process.env.NODE_ENV === "test") return;
-    for (let i = 0; i < 4; i++) {
-      try {
-        const res = await fetch(url, {
-          method: "HEAD",
-          cache: "no-store" as RequestCache,
-        });
-        if (res.ok) return;
-      } catch {}
-      await sleep(200);
-    }
-  }
-
+  // Minimal single-writer barrier (no waiting): if another worker is uploading, bail out
   const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
-  let acquiredLock = false;
   try {
-    console.debug("[favicon] lock attempt", { lockKey });
     const setRes = await redis.set(lockKey, "1", {
       nx: true,
       ex: LOCK_TTL_SECONDS,
     });
-    // Upstash returns "OK" on success; our test mock returns undefined
-    acquiredLock = setRes === "OK" || setRes === undefined;
-    console.info("[favicon] lock status", { acquiredLock });
-  } catch {
-    // If the client doesn't support NX in some env, proceed without blocking
-    acquiredLock = true;
-    console.warn("[favicon] lock unsupported; proceeding without lock");
-  }
+    const acquired = setRes === "OK" || setRes === undefined;
+    if (!acquired) return { url: null };
+  } catch {}
 
-  if (!acquiredLock) {
-    // Another worker is producing the blob; wait briefly for index to be populated
-    for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
-      try {
-        const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-        console.debug("[favicon] waiting for index", { attempt: i + 1, key });
-        const raw = (await redis.get(key)) as { url?: unknown } | null;
-        if (raw && typeof raw === "object" && typeof raw.url === "string") {
-          console.info("[favicon] index appeared while waiting", {
-            url: raw.url,
-          });
-          return { url: raw.url };
-        }
-      } catch {}
-      await sleep(LOCK_WAIT_DELAY_MS);
-    }
-    // Give up to avoid duplicate work; a subsequent request will retry
-    console.warn("[favicon] gave up waiting for lock; returning null", {
-      domain,
-    });
-    return { url: null };
-  }
+  // Removed Redis wait loops; we only guard with a short NX barrier
 
   // 3) Fetch/convert via existing pipeline, then upload
   try {
@@ -177,34 +126,38 @@ export async function getOrCreateFaviconBlobUrl(
           return "unknown";
         })();
 
-        const blobPath = computeFaviconBlobPath(domain, DEFAULT_SIZE);
-        console.info("[favicon] uploading to blob", { blobPath });
-        const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
-        console.info("[favicon] uploaded", { url });
-        await waitForPublicUrl(url);
-        console.debug("[favicon] public url ready", { url });
+        console.info("[favicon] uploading via uploadthing");
+        const { url, key } = await uploadImage({
+          kind: "favicon",
+          domain,
+          width: DEFAULT_SIZE,
+          height: DEFAULT_SIZE,
+          png,
+        });
+        console.info("[favicon] uploaded", { url, key });
+        // No need to wait for public URL
 
         // 3) Write Redis index and schedule purge
         try {
           const ttl = getFaviconTtlSeconds();
           const expiresAtMs = Date.now() + ttl * 1000;
-          const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+          const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
           console.debug("[favicon] redis set index", {
-            key,
+            key: indexKey,
             ttlSeconds: ttl,
             expiresAtMs,
           });
           await redis.set(
-            key,
-            { url, expiresAtMs },
+            indexKey,
+            { url, key, expiresAtMs },
             {
               ex: ttl,
             },
           );
-          console.debug("[favicon] redis zadd purge", { url, expiresAtMs });
+          console.debug("[favicon] redis zadd purge", { key, expiresAtMs });
           await redis.zadd(ns("purge", "favicon"), {
             score: expiresAtMs,
-            member: url, // store full URL for deletion API
+            member: key, // store UploadThing file key for deletion API
           });
         } catch {
           // best effort
@@ -243,7 +196,6 @@ export async function getOrCreateFaviconBlobUrl(
   } finally {
     try {
       await redis.del(lockKey);
-      console.debug("[favicon] lock released", { lockKey });
     } catch {}
   }
 }

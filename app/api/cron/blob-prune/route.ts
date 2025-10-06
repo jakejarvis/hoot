@@ -1,5 +1,5 @@
-import { del } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { UTApi } from "uploadthing/server";
 import { ns, redis } from "@/lib/redis";
 
 export const runtime = "nodejs";
@@ -13,11 +13,12 @@ export async function GET(req: Request) {
 
   const deleted: string[] = [];
   const errors: Array<{ path: string; error: string }> = [];
+  const utapi = new UTApi();
 
-  const batch = process.env.BLOB_PURGE_BATCH
-    ? parseInt(process.env.BLOB_PURGE_BATCH, 10)
-    : 500;
+  // Fixed batch size to avoid env coupling
+  const batch = 500;
   const now = Date.now();
+
   for (const kind of ["favicon", "screenshot"]) {
     // Drain due items in batches
     // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
@@ -29,12 +30,12 @@ export async function GET(req: Request) {
       });
       if (!due.length) break;
       const succeeded: string[] = [];
-      for (const path of due) {
-        try {
-          await del(path, { token: process.env.BLOB_READ_WRITE_TOKEN });
-          deleted.push(path);
-          succeeded.push(path);
-        } catch (err) {
+      try {
+        await utapi.deleteFiles(due);
+        deleted.push(...due);
+        succeeded.push(...due);
+      } catch (err) {
+        for (const path of due) {
           errors.push({ path, error: (err as Error)?.message || "unknown" });
         }
       }

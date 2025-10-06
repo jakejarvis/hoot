@@ -5,7 +5,6 @@ import { Globe } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useImageRetry } from "@/hooks/use-image-retry";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +35,6 @@ export function Favicon({
   );
 
   const url = data?.url ?? null;
-  const { imageKey, showFallback, handleError } = useImageRetry(url, {
-    maxRetries: 2,
-    delayMs: 300,
-  });
 
   if (!isHydrated || isPending) {
     return (
@@ -50,7 +45,7 @@ export function Favicon({
     );
   }
 
-  if (!url || showFallback) {
+  if (!url) {
     return (
       <Globe
         className={cn("text-muted-foreground", className)}
@@ -62,7 +57,6 @@ export function Favicon({
 
   return (
     <Image
-      key={imageKey}
       src={url}
       alt={`${domain} icon`}
       width={size}
@@ -70,7 +64,6 @@ export function Favicon({
       className={className}
       loading="lazy"
       unoptimized
-      onError={handleError}
     />
   );
 }
