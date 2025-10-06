@@ -100,6 +100,8 @@ export function DomainSearch({
         aria-label="Domain search"
         onSubmit={(e) => {
           e.preventDefault();
+          setIsFocused(false);
+          inputRef.current?.blur();
           submit();
         }}
       >
