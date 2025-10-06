@@ -43,26 +43,8 @@ async function extractUploadResultOrFallback(
     return { url, key: customId };
   }
 
-  // Check if error is a duplicate entry error from UploadThing
-  const errorMessage = entry?.error?.toString() || "";
-  const isDuplicateError =
-    errorMessage.includes("code = AlreadyExists") &&
-    errorMessage.includes(customId);
-
   // Fallback path (likely AlreadyExists due to same customId). Probe constructed URL.
   const appId = process.env.UPLOADTHING_APP_ID;
-  if (appId && isDuplicateError) {
-    const ufsUrl = `https://${appId}.ufs.sh/f/${customId}`;
-    console.debug("[storage] duplicate detected, using constructed URL", {
-      customId,
-      ufsUrl,
-    });
-    // For duplicates, assume the file exists and return the constructed URL
-    // This avoids the HEAD request which might fail during build time
-    return { url: ufsUrl, key: customId };
-  }
-
-  // Try HEAD request as last resort
   if (appId) {
     const ufsUrl = `https://${appId}.ufs.sh/f/${customId}`;
     try {
@@ -70,7 +52,6 @@ async function extractUploadResultOrFallback(
       if (res.ok) return { url: ufsUrl, key: customId };
     } catch {}
   }
-
   throw new Error("Upload failed: missing url/key in response");
 }
 
