@@ -74,9 +74,24 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
   }, [enableShortcut, shortcutKey]);
 
   function navigateToDomain(domain: string, navigateSource: Source = source) {
-    captureClient("search_submitted", { domain, source: navigateSource });
+    const target = normalizeDomainInput(domain);
+    captureClient("search_submitted", {
+      domain: target,
+      source: navigateSource,
+    });
+
+    const current = params?.domain
+      ? normalizeDomainInput(decodeURIComponent(params.domain))
+      : null;
+
     setLoading(true);
-    router.push(`/${encodeURIComponent(domain)}`);
+    router.push(`/${encodeURIComponent(target)}`);
+
+    // If pushing to the same route, Next won't navigate. Clear loading shortly
+    // to avoid an infinite spinner when the path doesn't actually change.
+    if (current && current === target) {
+      setTimeout(() => setLoading(false), 300);
+    }
   }
 
   function submit() {

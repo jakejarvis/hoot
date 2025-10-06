@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import {
@@ -113,7 +113,7 @@ export function DomainSearch({
               onPointerDown={handlePointerDown}
               onFocus={handleFocus}
               onClick={handleClick}
-              className="relative top-px"
+              className="relative top-0 sm:top-px"
             />
 
             <InputGroupAddon>
@@ -144,8 +144,9 @@ export function DomainSearch({
                     <Spinner />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px]">Analyze</span>
-                      <Kbd className="hidden sm:inline-flex">⏎</Kbd>
+                      <span className="text-[13px]">Inspect</span>
+                      <Kbd className="hidden text-[13px] sm:inline-flex">⏎</Kbd>
+                      <ArrowRight className="inline-flex sm:hidden" />
                     </div>
                   )}
                 </InputGroupButton>
