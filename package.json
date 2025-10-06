@@ -32,7 +32,7 @@
     "@trpc/client": "^11.6.0",
     "@trpc/server": "^11.6.0",
     "@trpc/tanstack-react-query": "^11.6.0",
-    "@upstash/redis": "^1.35.4",
+    "@upstash/redis": "^1.35.5",
     "@vercel/analytics": "^1.5.0",
     "@vercel/functions": "^3.1.1",
     "class-variance-authority": "^0.7.1",
@@ -42,12 +42,12 @@
     "geist": "^1.5.1",
     "icojs": "^0.19.5",
     "ipaddr.js": "^2.2.0",
-    "lucide-react": "^0.544.0",
+    "lucide-react": "^0.545.0",
     "mapbox-gl": "^3.15.0",
     "motion": "^12.23.22",
     "next": "15.6.0-canary.39",
     "next-themes": "^0.4.6",
-    "posthog-js": "^1.270.1",
+    "posthog-js": "^1.271.0",
     "posthog-node": "^5.9.2",
     "puppeteer-core": "24.22.3",
     "radix-ui": "^1.4.3",
@@ -64,7 +64,7 @@
     "uploadthing": "^7.7.4",
     "uuid": "^13.0.0",
     "vaul": "^1.1.2",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
@@ -73,7 +73,7 @@
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
-    "@types/node": "24.6.2",
+    "@types/node": "24.7.0",
     "@types/react": "19.1.16",
     "@types/react-dom": "19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
@@ -90,5 +90,5 @@
   "engines": {
     "node": ">=22.x"
   },
-  "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
+  "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34"
 }
