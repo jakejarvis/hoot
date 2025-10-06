@@ -14,9 +14,7 @@ const IDLE_TIMEOUT_MS = 3000;
 const CAPTURE_MAX_ATTEMPTS_DEFAULT = 3;
 const CAPTURE_BACKOFF_BASE_MS_DEFAULT = 200;
 const CAPTURE_BACKOFF_MAX_MS_DEFAULT = 1200;
-const LOCK_TTL_SECONDS = 15;
-const LOCK_WAIT_ATTEMPTS = 6;
-const LOCK_WAIT_DELAY_MS = 250;
+// Removed legacy locking and URL propagation waits
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -94,83 +92,16 @@ export async function getOrCreateScreenshotBlobUrl(
   }
 
   // 2) Acquire short-lived lock to avoid duplicate concurrent captures/uploads
-  async function waitForPublicUrl(url: string): Promise<void> {
-    if (process.env.NODE_ENV === "test") return;
-    for (let i = 0; i < 4; i++) {
-      try {
-        const res = await fetch(url, {
-          method: "HEAD",
-          cache: "no-store" as RequestCache,
-        });
-        if (res.ok) return;
-      } catch {}
-      await sleep(200);
-    }
-  }
+  // URL propagation wait removed
 
-  const lockKey = ns(
-    "lock",
-    `screenshot:${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-  );
-  let acquiredLock = false;
-  try {
-    console.debug("[screenshot] lock attempt", { lockKey });
-    const setRes = await redis.set(lockKey, "1", {
-      nx: true,
-      ex: LOCK_TTL_SECONDS,
-    });
-    acquiredLock = setRes === "OK" || setRes === undefined;
-    console.info("[screenshot] lock status", { acquiredLock });
-  } catch {
-    acquiredLock = true;
-    console.warn("[screenshot] lock unsupported; proceeding without lock");
-  }
-
-  if (!acquiredLock) {
-    // Another worker is producing the blob; wait briefly for index to be populated
-    for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
-      try {
-        const key = ns(
-          "screenshot:url",
-          `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-        );
-        console.debug("[screenshot] waiting for index", {
-          attempt: i + 1,
-          key,
-        });
-        const raw = (await redis.get(key)) as { url?: unknown } | null;
-        if (raw && typeof raw === "object" && typeof raw.url === "string") {
-          console.info("[screenshot] index appeared while waiting", {
-            url: raw.url,
-          });
-          return { url: raw.url };
-        }
-      } catch {}
-      await sleep(LOCK_WAIT_DELAY_MS);
-    }
-    console.warn("[screenshot] gave up waiting for lock; returning null", {
-      domain,
-    });
-    return { url: null };
-  }
+  // Removed Redis lock acquisition and wait loops
 
   // 3) Attempt to capture (wrapped to ensure lock release)
   try {
     let browser: Browser | null = null;
     try {
       // Re-check index after acquiring lock in case another writer finished
-      try {
-        const key = ns(
-          "screenshot:url",
-          `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-        );
-        console.debug("[screenshot] redis recheck after lock", { key });
-        const raw = (await redis.get(key)) as { url?: unknown } | null;
-        if (raw && typeof raw === "object" && typeof raw.url === "string") {
-          console.info("[screenshot] found index after lock", { url: raw.url });
-          return { url: raw.url };
-        }
-      } catch {}
+      // Skip index recheck
 
       browser = await launchChromium();
       console.debug("[screenshot] browser launched", { mode: "chromium" });
@@ -243,10 +174,7 @@ export async function getOrCreateScreenshotBlobUrl(
                 png: pngWithWatermark,
               });
               console.info("[screenshot] uploaded", { url: storedUrl, key });
-              await waitForPublicUrl(storedUrl);
-              console.debug("[screenshot] public url ready", {
-                url: storedUrl,
-              });
+              // No need to wait for public URL
 
               // Write Redis index and schedule purge
               try {
@@ -349,9 +277,5 @@ export async function getOrCreateScreenshotBlobUrl(
     console.warn("[screenshot] returning null", { domain });
     return { url: null };
   } finally {
-    try {
-      await redis.del(lockKey);
-      console.debug("[screenshot] lock released", { lockKey });
-    } catch {}
   }
 }

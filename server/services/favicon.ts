@@ -6,9 +6,7 @@ import { getFaviconTtlSeconds, uploadFavicon } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
-const LOCK_TTL_SECONDS = 15;
-const LOCK_WAIT_ATTEMPTS = 6;
-const LOCK_WAIT_DELAY_MS = 250;
+// Removed legacy locking and URL propagation waits
 
 // Legacy Redis-based caching removed; Blob is now the canonical store
 
@@ -78,66 +76,9 @@ export async function getOrCreateFaviconBlobUrl(
   }
 
   // 2) Acquire short-lived lock to avoid duplicate concurrent uploads
-  async function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  // Locking and URL propagation waits removed
 
-  async function waitForPublicUrl(url: string): Promise<void> {
-    if (process.env.NODE_ENV === "test") return;
-    for (let i = 0; i < 4; i++) {
-      try {
-        const res = await fetch(url, {
-          method: "HEAD",
-          cache: "no-store" as RequestCache,
-        });
-        if (res.ok) return;
-      } catch {}
-      await sleep(200);
-    }
-  }
-
-  const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
-  let acquiredLock = false;
-  try {
-    console.debug("[favicon] lock attempt", { lockKey });
-    const setRes = await redis.set(lockKey, "1", {
-      nx: true,
-      ex: LOCK_TTL_SECONDS,
-    });
-    // Upstash returns "OK" on success; our test mock returns undefined
-    acquiredLock = setRes === "OK" || setRes === undefined;
-    console.info("[favicon] lock status", { acquiredLock });
-  } catch {
-    // If the client doesn't support NX in some env, proceed without blocking
-    acquiredLock = true;
-    console.warn("[favicon] lock unsupported; proceeding without lock");
-  }
-
-  if (!acquiredLock) {
-    // Another worker is producing the blob; wait briefly for index to be populated
-    for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
-      try {
-        const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-        console.debug("[favicon] waiting for index", {
-          attempt: i + 1,
-          key: indexKey,
-        });
-        const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
-        if (raw && typeof raw === "object" && typeof raw.url === "string") {
-          console.info("[favicon] index appeared while waiting", {
-            url: raw.url,
-          });
-          return { url: raw.url };
-        }
-      } catch {}
-      await sleep(LOCK_WAIT_DELAY_MS);
-    }
-    // Give up to avoid duplicate work; a subsequent request will retry
-    console.warn("[favicon] gave up waiting for lock; returning null", {
-      domain,
-    });
-    return { url: null };
-  }
+  // Removed Redis lock acquisition and wait loops
 
   // 3) Fetch/convert via existing pipeline, then upload
   try {
@@ -183,8 +124,7 @@ export async function getOrCreateFaviconBlobUrl(
           png,
         });
         console.info("[favicon] uploaded", { url, key });
-        await waitForPublicUrl(url);
-        console.debug("[favicon] public url ready", { url });
+        // No need to wait for public URL
 
         // 3) Write Redis index and schedule purge
         try {
@@ -243,9 +183,5 @@ export async function getOrCreateFaviconBlobUrl(
     console.warn("[favicon] not found after trying all sources", { domain });
     return { url: null };
   } finally {
-    try {
-      await redis.del(lockKey);
-      console.debug("[favicon] lock released", { lockKey });
-    } catch {}
   }
 }
