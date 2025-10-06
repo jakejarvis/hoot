@@ -1,7 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import {
   InputGroup,
@@ -12,6 +12,7 @@ import {
 import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
 import { useDomainSearch } from "@/hooks/use-domain-search";
+import { useIsMac } from "@/hooks/use-is-mac";
 import { cn } from "@/lib/utils";
 
 export type DomainSearchVariant = "sm" | "lg";
@@ -35,6 +36,10 @@ export function DomainSearch({
       enableShortcut: variant === "sm", // header supports ⌘/Ctrl + K
       prefillFromRoute: variant === "sm", // header derives initial from route
     });
+
+  const isMac = useIsMac();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Select all on first focus from keyboard or first click; allow precise cursor on next click.
   const pointerDownRef = useRef(false);
@@ -90,9 +95,7 @@ export function DomainSearch({
         )}
 
         <div className="relative w-full flex-1">
-          <InputGroup
-            className={cn(variant === "lg" ? "h-12" : "h-10 rounded-xl")}
-          >
+          <InputGroup className={cn(variant === "lg" ? "h-12" : "h-10")}>
             <InputGroupInput
               id="domain"
               ref={inputRef}
@@ -117,13 +120,13 @@ export function DomainSearch({
               <Search />
             </InputGroupAddon>
 
-            {variant === "sm" && (
+            {variant === "sm" && (loading || mounted) && (
               <InputGroupAddon align="inline-end">
                 {loading ? (
                   <Spinner />
                 ) : (
                   <Kbd className="hidden border bg-muted/80 px-1.5 py-0.5 sm:inline-flex">
-                    ⌘ K
+                    {isMac ? "⌘ K" : "Ctrl+K"}
                   </Kbd>
                 )}
               </InputGroupAddon>
