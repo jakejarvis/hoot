@@ -39,6 +39,7 @@ export function DomainSearch({
 
   const isMac = useIsMac();
   const [mounted, setMounted] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   useEffect(() => setMounted(true), []);
 
   // Select all on first focus from keyboard or first click; allow precise cursor on next click.
@@ -51,6 +52,7 @@ export function DomainSearch({
   }
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    setIsFocused(true);
     // If focus came from keyboard (e.g., Cmd/Ctrl+K), select immediately
     // and allow the next click to place the caret precisely.
     if (!pointerDownRef.current) {
@@ -62,6 +64,10 @@ export function DomainSearch({
       justFocusedRef.current = true;
       pointerDownRef.current = false;
     }
+  }
+
+  function handleBlur() {
+    setIsFocused(false);
   }
 
   function handleClick(e: React.MouseEvent<HTMLInputElement>) {
@@ -77,6 +83,15 @@ export function DomainSearch({
       e.currentTarget.select();
     }
     justFocusedRef.current = false;
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.blur();
+      setIsFocused(false);
+    }
   }
 
   return (
@@ -112,7 +127,9 @@ export function DomainSearch({
               onChange={(e) => setValue(e.target.value)}
               onPointerDown={handlePointerDown}
               onFocus={handleFocus}
+              onBlur={handleBlur}
               onClick={handleClick}
+              onKeyDown={handleKeyDown}
               className="relative top-0 sm:top-px"
             />
 
@@ -126,7 +143,7 @@ export function DomainSearch({
                   <Spinner />
                 ) : (
                   <Kbd className="hidden border bg-muted/80 px-1.5 py-0.5 sm:inline-flex">
-                    {isMac ? "⌘ K" : "Ctrl+K"}
+                    {isFocused ? "Esc" : isMac ? "⌘ K" : "Ctrl+K"}
                   </Kbd>
                 )}
               </InputGroupAddon>
