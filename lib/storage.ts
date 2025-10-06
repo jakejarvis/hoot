@@ -19,19 +19,32 @@ export function getScreenshotTtlSeconds(): number {
 
 const utapi = new UTApi();
 
-type UploadResult = { url: string; key: string };
+type UploadThingResult =
+  | {
+      data: { key?: string; ufsUrl?: string; url?: string } | null;
+      error: unknown | null;
+    }
+  | Array<{
+      data: { key?: string; ufsUrl?: string; url?: string } | null;
+      error: unknown | null;
+    }>;
 
-function toPlainArrayBuffer(buf: Buffer): ArrayBuffer {
-  const ab = new ArrayBuffer(buf.byteLength);
-  new Uint8Array(ab).set(buf);
-  return ab;
+function extractUploadResult(result: UploadThingResult) {
+  const entry = (Array.isArray(result) ? result[0] : result) as {
+    data: { key?: string; ufsUrl?: string; url?: string } | null;
+    error: unknown | null;
+  };
+  const key = entry?.data?.key;
+  const url = entry?.data?.ufsUrl ?? entry?.data?.url;
+  if (typeof key === "string" && typeof url === "string") return { url, key };
+  throw new Error("Upload failed: missing url/key in response");
 }
 
 export async function uploadFavicon(options: {
   domain: string;
   size: number;
   png: Buffer;
-}): Promise<UploadResult> {
+}): Promise<{ url: string; key: string }> {
   const { domain, size, png } = options;
   // File name is for observability only; UploadThing manages the key
   const fileName = `favicon-${domain}-${size}.png`;
@@ -39,11 +52,7 @@ export async function uploadFavicon(options: {
     type: "image/png",
   });
   const result = await utapi.uploadFiles(file);
-  if (result.data && typeof result.data.key === "string") {
-    const url: string | undefined = result.data.ufsUrl ?? result.data.url;
-    if (typeof url === "string") return { url, key: result.data.key };
-  }
-  throw new Error("Upload failed: missing url/key in response");
+  return extractUploadResult(result);
 }
 
 export async function uploadScreenshot(options: {
@@ -51,16 +60,12 @@ export async function uploadScreenshot(options: {
   width: number;
   height: number;
   png: Buffer;
-}): Promise<UploadResult> {
+}): Promise<{ url: string; key: string }> {
   const { domain, width, height, png } = options;
   const fileName = `screenshot-${domain}-${width}x${height}.png`;
   const file = new File([new Uint8Array(png)], fileName, {
     type: "image/png",
   });
   const result = await utapi.uploadFiles(file);
-  if (result.data && typeof result.data.key === "string") {
-    const url: string | undefined = result.data.ufsUrl ?? result.data.url;
-    if (typeof url === "string") return { url, key: result.data.key };
-  }
-  throw new Error("Upload failed: missing url/key in response");
+  return extractUploadResult(result);
 }
