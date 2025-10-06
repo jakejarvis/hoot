@@ -1,11 +1,14 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const blobMock = vi.hoisted(() => ({
-  putScreenshotBlob: vi.fn(async () => "blob://stored-screenshot"),
+const storageMock = vi.hoisted(() => ({
+  uploadScreenshot: vi.fn(async () => ({
+    url: "https://utfs.io/f/stored-screenshot",
+    key: "ut-key",
+  })),
 }));
 
-vi.mock("@/lib/blob", () => blobMock);
+vi.mock("@/lib/storage", () => storageMock);
 
 // Mock puppeteer environments
 const pageMock = {
@@ -44,7 +47,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  blobMock.putScreenshotBlob.mockReset();
+  storageMock.uploadScreenshot.mockReset();
   global.__redisTestHelper.reset();
   pageMock.goto.mockReset();
   pageMock.waitForNetworkIdle.mockReset();
@@ -60,15 +63,15 @@ describe("getOrCreateScreenshotBlobUrl", () => {
     });
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("blob://existing");
-    expect(blobMock.putScreenshotBlob).not.toHaveBeenCalled();
+    expect(storageMock.uploadScreenshot).not.toHaveBeenCalled();
   });
 
   // Drop string JSON case now that we assume automatic deserialization
 
   it("captures, uploads and returns url when not cached", async () => {
     const out = await getOrCreateScreenshotBlobUrl("example.com");
-    expect(out.url).toBe("blob://stored-screenshot");
-    expect(blobMock.putScreenshotBlob).toHaveBeenCalled();
+    expect(out.url).toBe("https://utfs.io/f/stored-screenshot");
+    expect(storageMock.uploadScreenshot).toHaveBeenCalled();
   });
 
   it("retries navigation failure and succeeds on second attempt", async () => {
@@ -85,7 +88,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
       backoffMaxMs: 2,
     });
     Math.random = originalRandom;
-    expect(out.url).toBe("blob://stored-screenshot");
+    expect(out.url).toBe("https://utfs.io/f/stored-screenshot");
     expect(pageMock.goto).toHaveBeenCalledTimes(2);
   });
 
@@ -105,7 +108,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
       backoffMaxMs: 2,
     });
     Math.random = originalRandom;
-    expect(out.url).toBe("blob://stored-screenshot");
+    expect(out.url).toBe("https://utfs.io/f/stored-screenshot");
     expect(pageMock.screenshot).toHaveBeenCalledTimes(2);
   });
 

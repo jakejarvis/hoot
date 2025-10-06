@@ -21,16 +21,23 @@ const utapi = new UTApi();
 
 type UploadResult = { url: string; key: string };
 
-function extractUploadResult(result: unknown): UploadResult {
-  // UploadThing UTApi may return a single object or an array of results
-  const maybe = result as any;
-  const entry = Array.isArray(maybe) ? maybe[0] : maybe;
-  const data = entry?.data ?? entry; // some versions nest in { data }
-  const url: unknown = data?.url;
-  const key: unknown = data?.key;
-  if (typeof url !== "string" || typeof key !== "string") {
+function extractUploadResult(
+  result:
+    | { data?: { url?: string; key?: string } }
+    | { url?: string; key?: string }
+    | Array<
+        | { data?: { url?: string; key?: string } }
+        | { url?: string; key?: string }
+      >,
+): UploadResult {
+  const entry = Array.isArray(result) ? result[0] : result;
+  const data =
+    (entry as { data?: { url?: string; key?: string } }).data ??
+    (entry as { url?: string; key?: string });
+  const url = data?.url;
+  const key = data?.key;
+  if (!url || !key)
     throw new Error("Upload failed: missing url/key in response");
-  }
   return { url, key };
 }
 

@@ -1,8 +1,8 @@
 import { captureServer } from "@/lib/analytics/server";
-import { getFaviconTtlSeconds, uploadFavicon } from "@/lib/storage";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
+import { getFaviconTtlSeconds, uploadFavicon } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -118,7 +118,10 @@ export async function getOrCreateFaviconBlobUrl(
     for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
       try {
         const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-        console.debug("[favicon] waiting for index", { attempt: i + 1, key: indexKey });
+        console.debug("[favicon] waiting for index", {
+          attempt: i + 1,
+          key: indexKey,
+        });
         const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
         if (raw && typeof raw === "object" && typeof raw.url === "string") {
           console.info("[favicon] index appeared while waiting", {

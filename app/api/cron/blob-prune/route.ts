@@ -1,5 +1,5 @@
-import { UTApi } from "uploadthing/server";
 import { NextResponse } from "next/server";
+import { UTApi } from "uploadthing/server";
 import { ns, redis } from "@/lib/redis";
 
 export const runtime = "nodejs";

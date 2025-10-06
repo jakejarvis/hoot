@@ -1,11 +1,14 @@
 /* @vitest-environment node */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const blobMock = vi.hoisted(() => ({
-  putFaviconBlob: vi.fn(async () => "blob://stored-url"),
+const storageMock = vi.hoisted(() => ({
+  uploadFavicon: vi.fn(async () => ({
+    url: "https://utfs.io/f/stored-url",
+    key: "ut-key",
+  })),
 }));
 
-vi.mock("@/lib/blob", () => blobMock);
+vi.mock("@/lib/storage", () => storageMock);
 
 // Mock sharp to return a pipeline that resolves a buffer
 vi.mock("sharp", () => ({
@@ -23,7 +26,7 @@ import { getOrCreateFaviconBlobUrl } from "./favicon";
 
 afterEach(() => {
   vi.restoreAllMocks();
-  blobMock.putFaviconBlob.mockReset();
+  storageMock.uploadFavicon.mockReset();
   global.__redisTestHelper.reset();
 });
 
@@ -36,7 +39,7 @@ describe("getOrCreateFaviconBlobUrl", () => {
     });
     const out = await getOrCreateFaviconBlobUrl("example.com");
     expect(out.url).toBe("blob://existing-url");
-    expect(blobMock.putFaviconBlob).not.toHaveBeenCalled();
+    expect(storageMock.uploadFavicon).not.toHaveBeenCalled();
   });
 
   it("reads object values from redis index", async () => {
@@ -69,8 +72,8 @@ describe("getOrCreateFaviconBlobUrl", () => {
     const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(resp);
 
     const out = await getOrCreateFaviconBlobUrl("example.com");
-    expect(out.url).toBe("blob://stored-url");
-    expect(blobMock.putFaviconBlob).toHaveBeenCalled();
+    expect(out.url).toBe("https://utfs.io/f/stored-url");
+    expect(storageMock.uploadFavicon).toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
 

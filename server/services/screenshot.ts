@@ -1,10 +1,10 @@
 import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
-import { getScreenshotTtlSeconds, uploadScreenshot } from "@/lib/storage";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { ns, redis } from "@/lib/redis";
+import { getScreenshotTtlSeconds, uploadScreenshot } from "@/lib/storage";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
