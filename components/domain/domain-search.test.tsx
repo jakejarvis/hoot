@@ -33,18 +33,16 @@ describe("DomainSearch (form variant)", () => {
 
   it("submits valid domain and navigates", async () => {
     render(<DomainSearch variant="lg" />);
-    await userEvent.type(
-      screen.getByLabelText(/Search any domain/i),
-      "example.com",
-    );
-    await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
+    const input = screen.getByLabelText(/Search any domain/i);
+    await userEvent.type(input, "example.com{Enter}");
     expect(nav.push).toHaveBeenCalledWith("/example.com");
     // Input and button should be disabled while loading/submitting
     expect(
       (screen.getByLabelText(/Search any domain/i) as HTMLInputElement)
         .disabled,
     ).toBe(true);
-    expect(screen.getByRole("button", { name: /analyze/i })).toBeDisabled();
+    // Submit button shows a loading spinner with accessible name "Loading"
+    expect(screen.getByRole("button", { name: /loading/i })).toBeDisabled();
   });
 
   it("shows error toast for invalid domain", async () => {
@@ -52,11 +50,8 @@ describe("DomainSearch (form variant)", () => {
       toast: { error: (msg: string) => void };
     };
     render(<DomainSearch variant="lg" />);
-    await userEvent.type(
-      screen.getByLabelText(/Search any domain/i),
-      "not a domain",
-    );
-    await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
+    const input = screen.getByLabelText(/Search any domain/i);
+    await userEvent.type(input, "not a domain{Enter}");
     expect(toast.error).toHaveBeenCalled();
   });
 
@@ -73,8 +68,8 @@ describe("DomainSearch (form variant)", () => {
     expect(input.value).toBe("example.com");
     // Navigation should have been triggered
     expect(nav.push).toHaveBeenCalledWith("/example.com");
-    // Analyze button should be disabled (loading state)
-    expect(screen.getByRole("button", { name: /analyze/i })).toBeDisabled();
+    // Submit button shows a loading spinner and is disabled while navigating
+    expect(screen.getByRole("button", { name: /loading/i })).toBeDisabled();
     // Input should be disabled while loading
     expect(
       (screen.getByLabelText(/Search any domain/i) as HTMLInputElement)
