@@ -64,7 +64,7 @@
     "tldts": "^7.0.16",
     "uuid": "^13.0.0",
     "vaul": "^1.1.2",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
