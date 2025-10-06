@@ -40,31 +40,16 @@ function extractUploadResult(result: UploadThingResult) {
   throw new Error("Upload failed: missing url/key in response");
 }
 
-export async function uploadFavicon(options: {
-  domain: string;
-  size: number;
-  png: Buffer;
-}): Promise<{ url: string; key: string }> {
-  const { domain, size, png } = options;
-  // File name is for observability only; UploadThing manages the key
-  const fileName = `favicon_${domain.replace(/[^a-zA-Z0-9]/g, "-")}_${size}x${size}.png`;
-  const customId = fileName; // deterministic id to prevent duplicate uploads
-  const file = new UTFile([new Uint8Array(png)], fileName, {
-    type: "image/png",
-    customId,
-  });
-  const result = await utapi.uploadFiles(file);
-  return extractUploadResult(result);
-}
-
-export async function uploadScreenshot(options: {
+export async function uploadImage(options: {
+  kind: "favicon" | "screenshot";
   domain: string;
   width: number;
   height: number;
   png: Buffer;
 }): Promise<{ url: string; key: string }> {
-  const { domain, width, height, png } = options;
-  const fileName = `screenshot_${domain.replace(/[^a-zA-Z0-9]/g, "-")}_${width}x${height}.png`;
+  const { kind, domain, width, height, png } = options;
+  const safeDomain = domain.replace(/[^a-zA-Z0-9]/g, "-");
+  const fileName = `${kind}_${safeDomain}_${width}x${height}.png`;
   const customId = fileName; // deterministic id to prevent duplicate uploads
   const file = new UTFile([new Uint8Array(png)], fileName, {
     type: "image/png",

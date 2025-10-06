@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
-  uploadFavicon: vi.fn(async () => ({
+  uploadImage: vi.fn(async () => ({
     url: "https://app.ufs.sh/f/stored-url",
     key: "ut-key",
   })),
@@ -26,7 +26,7 @@ import { getOrCreateFaviconBlobUrl } from "./favicon";
 
 afterEach(() => {
   vi.restoreAllMocks();
-  storageMock.uploadFavicon.mockReset();
+  storageMock.uploadImage.mockReset();
   global.__redisTestHelper.reset();
 });
 
@@ -39,7 +39,7 @@ describe("getOrCreateFaviconBlobUrl", () => {
     });
     const out = await getOrCreateFaviconBlobUrl("example.com");
     expect(out.url).toBe("blob://existing-url");
-    expect(storageMock.uploadFavicon).not.toHaveBeenCalled();
+    expect(storageMock.uploadImage).not.toHaveBeenCalled();
   });
 
   it("reads object values from redis index", async () => {
@@ -73,7 +73,7 @@ describe("getOrCreateFaviconBlobUrl", () => {
 
     const out = await getOrCreateFaviconBlobUrl("example.com");
     expect(out.url).toBe("https://app.ufs.sh/f/stored-url");
-    expect(storageMock.uploadFavicon).toHaveBeenCalled();
+    expect(storageMock.uploadImage).toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
 

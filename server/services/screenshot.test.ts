@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
-  uploadScreenshot: vi.fn(async () => ({
+  uploadImage: vi.fn(async () => ({
     url: "https://app.ufs.sh/f/stored-screenshot",
     key: "ut-key",
   })),
@@ -47,7 +47,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  storageMock.uploadScreenshot.mockReset();
+  storageMock.uploadImage.mockReset();
   global.__redisTestHelper.reset();
   pageMock.goto.mockReset();
   pageMock.waitForNetworkIdle.mockReset();
@@ -63,7 +63,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
     });
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("blob://existing");
-    expect(storageMock.uploadScreenshot).not.toHaveBeenCalled();
+    expect(storageMock.uploadImage).not.toHaveBeenCalled();
   });
 
   // Drop string JSON case now that we assume automatic deserialization
@@ -71,7 +71,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
   it("captures, uploads and returns url when not cached", async () => {
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
-    expect(storageMock.uploadScreenshot).toHaveBeenCalled();
+    expect(storageMock.uploadImage).toHaveBeenCalled();
   });
 
   it("retries navigation failure and succeeds on second attempt", async () => {

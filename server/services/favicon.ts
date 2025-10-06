@@ -2,7 +2,7 @@ import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
-import { getFaviconTtlSeconds, uploadFavicon } from "@/lib/storage";
+import { getFaviconTtlSeconds, uploadImage } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -127,9 +127,11 @@ export async function getOrCreateFaviconBlobUrl(
         })();
 
         console.info("[favicon] uploading via uploadthing");
-        const { url, key } = await uploadFavicon({
+        const { url, key } = await uploadImage({
+          kind: "favicon",
           domain,
-          size: DEFAULT_SIZE,
+          width: DEFAULT_SIZE,
+          height: DEFAULT_SIZE,
           png,
         });
         console.info("[favicon] uploaded", { url, key });

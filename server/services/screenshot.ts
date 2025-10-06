@@ -4,7 +4,7 @@ import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { ns, redis } from "@/lib/redis";
-import { getScreenshotTtlSeconds, uploadScreenshot } from "@/lib/storage";
+import { getScreenshotTtlSeconds, uploadImage } from "@/lib/storage";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -189,7 +189,8 @@ export async function getOrCreateScreenshotBlobUrl(
                 bytes: pngWithWatermark.length,
               });
               console.info("[screenshot] uploading via uploadthing");
-              const { url: storedUrl, key: fileKey } = await uploadScreenshot({
+              const { url: storedUrl, key: fileKey } = await uploadImage({
+                kind: "screenshot",
                 domain,
                 width: VIEWPORT_WIDTH,
                 height: VIEWPORT_HEIGHT,

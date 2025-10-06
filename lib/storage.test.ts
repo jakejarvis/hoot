@@ -19,7 +19,7 @@ vi.mock("uploadthing/server", async () => {
   };
 });
 
-import { uploadFavicon, uploadScreenshot } from "./storage";
+import { uploadImage } from "./storage";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -27,10 +27,12 @@ afterEach(() => {
 });
 
 describe("storage uploads", () => {
-  it("uploadFavicon returns ufsUrl and key and calls UTApi", async () => {
-    const res = await uploadFavicon({
+  it("uploadImage (favicon) returns ufsUrl and key and calls UTApi", async () => {
+    const res = await uploadImage({
+      kind: "favicon",
       domain: "example.com",
-      size: 32,
+      width: 32,
+      height: 32,
       png: Buffer.from([1, 2, 3]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
@@ -40,8 +42,9 @@ describe("storage uploads", () => {
     expect(callArg).toBeInstanceOf(Blob);
   });
 
-  it("uploadScreenshot returns ufsUrl and key and calls UTApi", async () => {
-    const res = await uploadScreenshot({
+  it("uploadImage (screenshot) returns ufsUrl and key and calls UTApi", async () => {
+    const res = await uploadImage({
+      kind: "screenshot",
       domain: "example.com",
       width: 1200,
       height: 630,
@@ -49,9 +52,8 @@ describe("storage uploads", () => {
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
     expect(res.key).toBe("mock-key");
-    const callArg = (
-      utMock.uploadFiles as unknown as import("vitest").Mock
-    ).mock.calls.pop()?.[0];
+    const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
+      .mock.calls[0]?.[0];
     expect(callArg).toBeInstanceOf(Blob);
   });
 });
