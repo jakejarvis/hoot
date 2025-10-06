@@ -112,39 +112,46 @@ export async function getOrCreateScreenshotBlobUrl(
         for (let attemptIndex = 0; attemptIndex < attempts; attemptIndex++) {
           try {
             const page = await browser.newPage();
-            await page.setViewport({
-              width: VIEWPORT_WIDTH,
-              height: VIEWPORT_HEIGHT,
-              deviceScaleFactor: 1,
-            });
-            await page.setUserAgent(USER_AGENT);
-
-            console.debug("[screenshot] navigating", {
-              url,
-              attempt: attemptIndex + 1,
-            });
-            await page.goto(url, {
-              waitUntil: "domcontentloaded",
-              timeout: NAV_TIMEOUT_MS,
-            });
-
-            // Give chatty pages/CDNs a brief chance to settle without hanging
+            let rawPng: Buffer;
             try {
-              await page.waitForNetworkIdle({
-                idleTime: IDLE_TIME_MS,
-                timeout: IDLE_TIMEOUT_MS,
+              await page.setViewport({
+                width: VIEWPORT_WIDTH,
+                height: VIEWPORT_HEIGHT,
+                deviceScaleFactor: 1,
               });
-            } catch {}
+              await page.setUserAgent(USER_AGENT);
 
-            console.debug("[screenshot] navigated", {
-              url,
-              attempt: attemptIndex + 1,
-            });
+              console.debug("[screenshot] navigating", {
+                url,
+                attempt: attemptIndex + 1,
+              });
+              await page.goto(url, {
+                waitUntil: "domcontentloaded",
+                timeout: NAV_TIMEOUT_MS,
+              });
 
-            const rawPng: Buffer = (await page.screenshot({
-              type: "png",
-              fullPage: false,
-            })) as Buffer;
+              // Give chatty pages/CDNs a brief chance to settle without hanging
+              try {
+                await page.waitForNetworkIdle({
+                  idleTime: IDLE_TIME_MS,
+                  timeout: IDLE_TIMEOUT_MS,
+                });
+              } catch {}
+
+              console.debug("[screenshot] navigated", {
+                url,
+                attempt: attemptIndex + 1,
+              });
+
+              rawPng = (await page.screenshot({
+                type: "png",
+                fullPage: false,
+              })) as Buffer;
+            } finally {
+              try {
+                await page.close();
+              } catch {}
+            }
             console.debug("[screenshot] raw screenshot bytes", {
               bytes: rawPng.length,
             });
@@ -167,42 +174,45 @@ export async function getOrCreateScreenshotBlobUrl(
                 bytes: pngWithWatermark.length,
               });
               console.info("[screenshot] uploading via uploadthing");
-              const { url: storedUrl, key } = await uploadScreenshot({
+              const { url: storedUrl, key: fileKey } = await uploadScreenshot({
                 domain,
                 width: VIEWPORT_WIDTH,
                 height: VIEWPORT_HEIGHT,
                 png: pngWithWatermark,
               });
-              console.info("[screenshot] uploaded", { url: storedUrl, key });
+              console.info("[screenshot] uploaded", {
+                url: storedUrl,
+                key: fileKey,
+              });
               // No need to wait for public URL
 
               // Write Redis index and schedule purge
               try {
                 const ttl = getScreenshotTtlSeconds();
                 const expiresAtMs = Date.now() + ttl * 1000;
-                const key = ns(
+                const indexKey = ns(
                   "screenshot:url",
                   `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
                 );
                 console.debug("[screenshot] redis set index", {
-                  key,
+                  key: indexKey,
                   ttlSeconds: ttl,
                   expiresAtMs,
                 });
                 await redis.set(
-                  key,
-                  { url: storedUrl, key, expiresAtMs },
+                  indexKey,
+                  { url: storedUrl, key: fileKey, expiresAtMs },
                   {
                     ex: ttl,
                   },
                 );
                 console.debug("[screenshot] redis zadd purge", {
-                  key,
+                  key: fileKey,
                   expiresAtMs,
                 });
                 await redis.zadd(ns("purge", "screenshot"), {
                   score: expiresAtMs,
-                  member: key, // store UploadThing file key for deletion API
+                  member: fileKey, // store UploadThing file key for deletion API
                 });
               } catch {
                 // best effort
