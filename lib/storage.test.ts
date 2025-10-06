@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 describe("storage uploads", () => {
-  it("uploadImage (favicon) returns ufsUrl and key and calls UTApi", async () => {
+  it("uploadImage (favicon) returns ufsUrl and UT file key and calls UTApi", async () => {
     const res = await uploadImage({
       kind: "favicon",
       domain: "example.com",
@@ -36,15 +36,15 @@ describe("storage uploads", () => {
       png: Buffer.from([1, 2, 3]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
-    // we now return customId as key (for deletion by customId)
-    expect(res.key).toBe("favicon_example-com_32x32.png");
+    // we return UploadThing file key for deletion
+    expect(res.key).toBe("mock-key");
     const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
       .mock.calls[0]?.[0];
     expect(callArg).toBeInstanceOf(Blob);
     expect(utMock.uploadFiles).toHaveBeenCalledTimes(1);
   });
 
-  it("uploadImage (screenshot) returns ufsUrl and key and calls UTApi", async () => {
+  it("uploadImage (screenshot) returns ufsUrl and UT file key and calls UTApi", async () => {
     const res = await uploadImage({
       kind: "screenshot",
       domain: "example.com",
@@ -53,8 +53,8 @@ describe("storage uploads", () => {
       png: Buffer.from([4, 5, 6]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
-    // we now return customId as key (for deletion by customId)
-    expect(res.key).toBe("screenshot_example-com_1200x630.png");
+    // we return UploadThing file key for deletion
+    expect(res.key).toBe("mock-key");
     const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
       .mock.calls[0]?.[0];
     expect(callArg).toBeInstanceOf(Blob);
@@ -78,7 +78,7 @@ describe("storage uploads", () => {
     });
 
     expect(res.url).toBe("https://app.ufs.sh/f/retry-key");
-    expect(res.key).toBe("favicon_retry-com_32x32.png");
+    expect(res.key).toBe("retry-key");
     expect(utMock.uploadFiles).toHaveBeenCalledTimes(2);
   });
 

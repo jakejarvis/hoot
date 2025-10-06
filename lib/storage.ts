@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHmac, randomBytes } from "node:crypto";
 import { UTApi, UTFile } from "uploadthing/server";
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
@@ -48,12 +49,12 @@ function backoffDelayMs(
 
 /**
  * Extract upload result from UploadThing response
- * Returns url and customId (for deletion) on success, throws on failure
+ * Returns randomized URL and UploadThing file key; throws on failure
  */
-function extractUploadResult(
-  result: UploadThingResult,
-  customId: string,
-): { url: string; key: string } {
+function extractUploadResult(result: UploadThingResult): {
+  url: string;
+  key: string;
+} {
   const entry = (Array.isArray(result) ? result[0] : result) as {
     data: { key?: string; ufsUrl?: string; url?: string } | null;
     error: unknown | null;
@@ -66,12 +67,12 @@ function extractUploadResult(
   }
 
   const url = entry?.data?.ufsUrl;
-  if (typeof url === "string") {
-    // Return customId as the stored identifier to enable deletion by customId
-    return { url, key: customId };
+  const key = entry?.data?.key;
+  if (typeof url === "string" && typeof key === "string") {
+    return { url, key };
   }
 
-  throw new Error("Upload failed: missing url in response");
+  throw new Error("Upload failed: missing url or key in response");
 }
 
 /**
@@ -79,7 +80,6 @@ function extractUploadResult(
  */
 async function uploadWithRetry(
   file: UTFile,
-  customId: string,
   maxAttempts = UPLOAD_MAX_ATTEMPTS,
 ): Promise<{ url: string; key: string }> {
   let lastError: Error | null = null;
@@ -87,16 +87,16 @@ async function uploadWithRetry(
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       console.debug("[storage] upload attempt", {
-        customId,
+        fileName: (file as unknown as { name?: string }).name ?? "unknown",
         attempt: attempt + 1,
         maxAttempts,
       });
 
       const result = await utapi.uploadFiles(file);
-      const extracted = extractUploadResult(result, customId);
+      const extracted = extractUploadResult(result);
 
       console.info("[storage] upload success", {
-        customId,
+        fileName: (file as unknown as { name?: string }).name ?? "unknown",
         attempt: attempt + 1,
         url: extracted.url,
       });
@@ -106,7 +106,7 @@ async function uploadWithRetry(
       lastError = err instanceof Error ? err : new Error(String(err));
 
       console.warn("[storage] upload attempt failed", {
-        customId,
+        fileName: (file as unknown as { name?: string }).name ?? "unknown",
         attempt: attempt + 1,
         error: lastError.message,
       });
@@ -119,7 +119,7 @@ async function uploadWithRetry(
           UPLOAD_BACKOFF_MAX_MS,
         );
         console.debug("[storage] retrying after delay", {
-          customId,
+          fileName: (file as unknown as { name?: string }).name ?? "unknown",
           delayMs: delay,
         });
         await sleep(delay);
@@ -140,14 +140,19 @@ export async function uploadImage(options: {
   png: Buffer;
 }): Promise<{ url: string; key: string }> {
   const { kind, domain, width, height, png } = options;
-  const safeDomain = domain.replace(/[^a-zA-Z0-9]/g, "-");
-  const fileName = `${kind}_${safeDomain}_${width}x${height}.png`;
-  const customId = fileName; // deterministic id to prevent duplicate uploads
-
+  const fileName = (() => {
+    const base = `${kind}:${domain}:${width}x${height}`;
+    const secret = process.env.UPLOADTHING_SECRET || "dev-hmac-secret";
+    const nonce = randomBytes(8).toString("hex");
+    const digest = createHmac("sha256", secret)
+      .update(`${base}:${nonce}`)
+      .digest("hex")
+      .slice(0, 32);
+    return `${kind}_${digest}.png`;
+  })();
   const file = new UTFile([new Uint8Array(png)], fileName, {
     type: "image/png",
-    customId,
   });
 
-  return await uploadWithRetry(file, customId);
+  return await uploadWithRetry(file);
 }

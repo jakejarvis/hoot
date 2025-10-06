@@ -31,7 +31,8 @@ export async function GET(req: Request) {
       if (!due.length) break;
       const succeeded: string[] = [];
       try {
-        await utapi.deleteFiles(due, { keyType: "customId" });
+        // Delete by UploadThing file key (default behavior)
+        await utapi.deleteFiles(due);
         deleted.push(...due);
         succeeded.push(...due);
       } catch (err) {
