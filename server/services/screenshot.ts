@@ -14,7 +14,8 @@ const IDLE_TIMEOUT_MS = 3000;
 const CAPTURE_MAX_ATTEMPTS_DEFAULT = 3;
 const CAPTURE_BACKOFF_BASE_MS_DEFAULT = 200;
 const CAPTURE_BACKOFF_MAX_MS_DEFAULT = 1200;
-// Removed legacy locking and URL propagation waits
+const LOCK_TTL_SECONDS = 10; // minimal barrier to avoid duplicate concurrent uploads
+// Removed legacy URL propagation waits
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -95,6 +96,20 @@ export async function getOrCreateScreenshotBlobUrl(
   // URL propagation wait removed
 
   // Removed Redis lock acquisition and wait loops
+
+  // Minimal single-writer barrier (no waiting): if another worker is uploading, bail out
+  const lockKey = ns(
+    "lock",
+    `screenshot:${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
+  );
+  try {
+    const setRes = await redis.set(lockKey, "1", {
+      nx: true,
+      ex: LOCK_TTL_SECONDS,
+    });
+    const acquired = setRes === "OK" || setRes === undefined;
+    if (!acquired) return { url: null };
+  } catch {}
 
   // 3) Attempt to capture (wrapped to ensure lock release)
   try {
@@ -287,5 +302,8 @@ export async function getOrCreateScreenshotBlobUrl(
     console.warn("[screenshot] returning null", { domain });
     return { url: null };
   } finally {
+    try {
+      await redis.del(lockKey);
+    } catch {}
   }
 }

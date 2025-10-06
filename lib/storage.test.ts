@@ -8,9 +8,16 @@ const utMock = vi.hoisted(() => ({
   })),
 }));
 
-vi.mock("uploadthing/server", () => ({
-  UTApi: vi.fn().mockImplementation(() => utMock),
-}));
+vi.mock("uploadthing/server", async () => {
+  const actual =
+    await vi.importActual<typeof import("uploadthing/server")>(
+      "uploadthing/server",
+    );
+  return {
+    ...actual,
+    UTApi: vi.fn().mockImplementation(() => utMock),
+  };
+});
 
 import { uploadFavicon, uploadScreenshot } from "./storage";
 
@@ -30,7 +37,7 @@ describe("storage uploads", () => {
     expect(res.key).toBe("mock-key");
     const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
       .mock.calls[0]?.[0];
-    expect(callArg).toBeInstanceOf(File);
+    expect(callArg).toBeInstanceOf(Blob);
   });
 
   it("uploadScreenshot returns ufsUrl and key and calls UTApi", async () => {
@@ -45,6 +52,6 @@ describe("storage uploads", () => {
     const callArg = (
       utMock.uploadFiles as unknown as import("vitest").Mock
     ).mock.calls.pop()?.[0];
-    expect(callArg).toBeInstanceOf(File);
+    expect(callArg).toBeInstanceOf(Blob);
   });
 });

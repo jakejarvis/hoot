@@ -1,6 +1,6 @@
 import "server-only";
 
-import { UTApi } from "uploadthing/server";
+import { UTApi, UTFile } from "uploadthing/server";
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 
@@ -35,7 +35,7 @@ function extractUploadResult(result: UploadThingResult) {
     error: unknown | null;
   };
   const key = entry?.data?.key;
-  const url = entry?.data?.ufsUrl ?? entry?.data?.url;
+  const url = entry?.data?.ufsUrl;
   if (typeof key === "string" && typeof url === "string") return { url, key };
   throw new Error("Upload failed: missing url/key in response");
 }
@@ -47,9 +47,11 @@ export async function uploadFavicon(options: {
 }): Promise<{ url: string; key: string }> {
   const { domain, size, png } = options;
   // File name is for observability only; UploadThing manages the key
-  const fileName = `favicon-${domain}-${size}.png`;
-  const file = new File([new Uint8Array(png)], fileName, {
+  const fileName = `favicon_${domain.replace(/[^a-zA-Z0-9]/g, "-")}_${size}x${size}.png`;
+  const customId = fileName; // deterministic id to prevent duplicate uploads
+  const file = new UTFile([new Uint8Array(png)], fileName, {
     type: "image/png",
+    customId,
   });
   const result = await utapi.uploadFiles(file);
   return extractUploadResult(result);
@@ -62,9 +64,11 @@ export async function uploadScreenshot(options: {
   png: Buffer;
 }): Promise<{ url: string; key: string }> {
   const { domain, width, height, png } = options;
-  const fileName = `screenshot-${domain}-${width}x${height}.png`;
-  const file = new File([new Uint8Array(png)], fileName, {
+  const fileName = `screenshot_${domain.replace(/[^a-zA-Z0-9]/g, "-")}_${width}x${height}.png`;
+  const customId = fileName; // deterministic id to prevent duplicate uploads
+  const file = new UTFile([new Uint8Array(png)], fileName, {
     type: "image/png",
+    customId,
   });
   const result = await utapi.uploadFiles(file);
   return extractUploadResult(result);

@@ -6,7 +6,7 @@ import { getFaviconTtlSeconds, uploadFavicon } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
-// Removed legacy locking and URL propagation waits
+const LOCK_TTL_SECONDS = 10; // minimal barrier to avoid duplicate concurrent uploads
 
 // Legacy Redis-based caching removed; Blob is now the canonical store
 
@@ -76,9 +76,18 @@ export async function getOrCreateFaviconBlobUrl(
   }
 
   // 2) Acquire short-lived lock to avoid duplicate concurrent uploads
-  // Locking and URL propagation waits removed
+  // Minimal single-writer barrier (no waiting): if another worker is uploading, bail out
+  const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
+  try {
+    const setRes = await redis.set(lockKey, "1", {
+      nx: true,
+      ex: LOCK_TTL_SECONDS,
+    });
+    const acquired = setRes === "OK" || setRes === undefined;
+    if (!acquired) return { url: null };
+  } catch {}
 
-  // Removed Redis lock acquisition and wait loops
+  // Removed Redis wait loops; we only guard with a short NX barrier
 
   // 3) Fetch/convert via existing pipeline, then upload
   try {
@@ -183,5 +192,8 @@ export async function getOrCreateFaviconBlobUrl(
     console.warn("[favicon] not found after trying all sources", { domain });
     return { url: null };
   } finally {
+    try {
+      await redis.del(lockKey);
+    } catch {}
   }
 }
