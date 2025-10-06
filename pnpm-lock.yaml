@@ -15,8 +15,8 @@ importers:
         specifier: ^1.3.1
         version: 1.3.1(next@15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
       '@sparticuz/chromium':
-        specifier: 140.0.0
-        version: 140.0.0
+        specifier: 141.0.0
+        version: 141.0.0
       '@tanstack/react-query':
         specifier: ^5.90.2
         version: 5.90.2(react@19.1.1)
@@ -1663,8 +1663,8 @@ packages:
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
-  '@sparticuz/chromium@140.0.0':
-    resolution: {integrity: sha512-pDyHiSp+buakpUq23b74JPC9T5M58665y6ULlh8uSuIDK0vxVGyLzjTTigQL202c6+0+NNp1Po5rgWcT7JSO5g==}
+  '@sparticuz/chromium@141.0.0':
+    resolution: {integrity: sha512-JsTp4AqgStkqKki4dUpEM0GoisAjQhsqZ1lQTNMSKK5A9pw6BbIuIvv2HVYMYzSZGyDdQNJYBPPDg2eggCkezA==}
     engines: {node: '>=20.11.0'}
 
   '@swc/helpers@0.5.15':
@@ -5154,7 +5154,7 @@ snapshots:
 
   '@sec-ant/readable-stream@0.4.1': {}
 
-  '@sparticuz/chromium@140.0.0':
+  '@sparticuz/chromium@141.0.0':
     dependencies:
       follow-redirects: 1.15.11
       tar-fs: 3.1.1
