@@ -3,7 +3,7 @@ import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
-import { ns, redis } from "@/lib/redis";
+import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import { getScreenshotTtlSeconds, uploadImage } from "@/lib/storage";
 
 const VIEWPORT_WIDTH = 1200;
@@ -14,8 +14,7 @@ const IDLE_TIMEOUT_MS = 3000;
 const CAPTURE_MAX_ATTEMPTS_DEFAULT = 3;
 const CAPTURE_BACKOFF_BASE_MS_DEFAULT = 200;
 const CAPTURE_BACKOFF_MAX_MS_DEFAULT = 1200;
-const LOCK_TTL_SECONDS = 10; // minimal barrier to avoid duplicate concurrent uploads
-// Removed legacy URL propagation waits
+const LOCK_TTL_SECONDS = 30; // lock TTL for upload coordination
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -57,14 +56,19 @@ export async function getOrCreateScreenshotBlobUrl(
     options?.backoffBaseMs ?? CAPTURE_BACKOFF_BASE_MS_DEFAULT;
   const backoffMaxMs = options?.backoffMaxMs ?? CAPTURE_BACKOFF_MAX_MS_DEFAULT;
 
+  const indexKey = ns(
+    "screenshot:url",
+    `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
+  );
+  const lockKey = ns(
+    "lock",
+    `screenshot:${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
+  );
+
   // 1) Check Redis index first
   try {
-    const key = ns(
-      "screenshot:url",
-      `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-    );
-    console.debug("[screenshot] redis get", { key });
-    const raw = (await redis.get(key)) as { url?: unknown } | null;
+    console.debug("[screenshot] redis get", { key: indexKey });
+    const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
     if (raw && typeof raw === "object" && typeof raw.url === "string") {
       console.info("[screenshot] cache hit", {
         domain,
@@ -92,26 +96,39 @@ export async function getOrCreateScreenshotBlobUrl(
     // ignore and proceed
   }
 
-  // 2) Acquire short-lived lock to avoid duplicate concurrent captures/uploads
-  // URL propagation wait removed
+  // 2) Acquire lock or wait for another process to complete
+  const lockResult = await acquireLockOrWaitForResult<{ url: string }>({
+    lockKey,
+    resultKey: indexKey,
+    lockTtl: LOCK_TTL_SECONDS,
+  });
 
-  // Removed Redis lock acquisition and wait loops
+  if (!lockResult.acquired) {
+    // Another process was working on it
+    if (lockResult.cachedResult?.url) {
+      console.info("[screenshot] found result from other process", {
+        domain,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        url: lockResult.cachedResult.url,
+      });
+      await captureServer("screenshot_capture", {
+        domain,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        source: "redis_wait",
+        duration_ms: Date.now() - startedAt,
+        outcome: "ok",
+        cache: "wait",
+      });
+      return { url: lockResult.cachedResult.url };
+    }
+    // Timeout or other process failed - return null
+    console.warn("[screenshot] wait timeout, no result", { domain });
+    return { url: null };
+  }
 
-  // Minimal single-writer barrier (no waiting): if another worker is uploading, bail out
-  const lockKey = ns(
-    "lock",
-    `screenshot:${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-  );
-  try {
-    const setRes = await redis.set(lockKey, "1", {
-      nx: true,
-      ex: LOCK_TTL_SECONDS,
-    });
-    const acquired = setRes === "OK" || setRes === undefined;
-    if (!acquired) return { url: null };
-  } catch {}
-
-  // 3) Attempt to capture (wrapped to ensure lock release)
+  // 3) We acquired the lock - attempt to capture
   try {
     let browser: Browser | null = null;
     try {
@@ -200,16 +217,11 @@ export async function getOrCreateScreenshotBlobUrl(
                 url: storedUrl,
                 key: fileKey,
               });
-              // No need to wait for public URL
 
               // Write Redis index and schedule purge
               try {
                 const ttl = getScreenshotTtlSeconds();
                 const expiresAtMs = Date.now() + ttl * 1000;
-                const indexKey = ns(
-                  "screenshot:url",
-                  `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
-                );
                 console.debug("[screenshot] redis set index", {
                   key: indexKey,
                   ttlSeconds: ttl,
@@ -303,8 +315,11 @@ export async function getOrCreateScreenshotBlobUrl(
     console.warn("[screenshot] returning null", { domain });
     return { url: null };
   } finally {
+    // Release lock (best effort)
     try {
       await redis.del(lockKey);
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 }

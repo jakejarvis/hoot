@@ -21,12 +21,24 @@ const __redisImpl = vi.hoisted(() => {
     store.has(key) ? store.get(key) : null,
   );
   const set = vi.fn(
-    async (key: string, value: unknown, _opts?: { ex?: number }) => {
+    async (
+      key: string,
+      value: unknown,
+      opts?: { ex?: number; nx?: boolean },
+    ) => {
+      if (opts?.nx && store.has(key)) {
+        return null; // NX failed - key exists
+      }
       store.set(key, value);
+      return "OK";
     },
   );
   const del = vi.fn(async (key: string) => {
     store.delete(key);
+  });
+
+  const exists = vi.fn(async (key: string) => {
+    return store.has(key) ? 1 : 0;
   });
 
   function ensureZ(key: string): Map<string, number> {
@@ -74,27 +86,58 @@ const __redisImpl = vi.hoisted(() => {
     },
   );
 
+  const acquireLockOrWaitForResult = vi.fn(
+    async <T = unknown>(options: {
+      lockKey: string;
+      resultKey: string;
+      lockTtl?: number;
+      pollIntervalMs?: number;
+      maxWaitMs?: number;
+    }) => {
+      const { lockKey, resultKey } = options;
+
+      // Try to acquire lock
+      if (!store.has(lockKey)) {
+        store.set(lockKey, "1");
+        return { acquired: true, cachedResult: null };
+      }
+
+      // Lock not acquired, check for cached result
+      const result = store.get(resultKey) as T | null;
+      if (result !== null && result !== undefined) {
+        return { acquired: false, cachedResult: result };
+      }
+
+      // No result found
+      return { acquired: false, cachedResult: null };
+    },
+  );
+
   const reset = () => {
     store.clear();
     zsets.clear();
     get.mockClear();
     set.mockClear();
     del.mockClear();
+    exists.mockClear();
     zadd.mockClear();
     zrem.mockClear();
     zrange.mockClear();
+    acquireLockOrWaitForResult.mockClear();
   };
   return {
     store,
     zsets,
     ns,
-    redis: { get, set, del, zadd, zrem, zrange },
+    redis: { get, set, del, exists, zadd, zrem, zrange },
     get,
     set,
     del,
+    exists,
     zadd,
     zrem,
     zrange,
+    acquireLockOrWaitForResult,
     reset,
   };
 });

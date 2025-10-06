@@ -1,14 +1,12 @@
 import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
-import { ns, redis } from "@/lib/redis";
+import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import { getFaviconTtlSeconds, uploadImage } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
-const LOCK_TTL_SECONDS = 10; // minimal barrier to avoid duplicate concurrent uploads
-
-// Legacy Redis-based caching removed; Blob is now the canonical store
+const LOCK_TTL_SECONDS = 30; // lock TTL for upload coordination
 
 async function fetchWithTimeout(
   url: string,
@@ -49,9 +47,12 @@ export async function getOrCreateFaviconBlobUrl(
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
   console.debug("[favicon] start", { domain, size: DEFAULT_SIZE });
+
+  const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+  const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
+
   // 1) Check Redis index first
   try {
-    const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
     console.debug("[favicon] redis get", { key: indexKey });
     const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
     if (raw && typeof raw === "object" && typeof raw.url === "string") {
@@ -75,21 +76,37 @@ export async function getOrCreateFaviconBlobUrl(
     // ignore and proceed to fetch
   }
 
-  // 2) Acquire short-lived lock to avoid duplicate concurrent uploads
-  // Minimal single-writer barrier (no waiting): if another worker is uploading, bail out
-  const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
-  try {
-    const setRes = await redis.set(lockKey, "1", {
-      nx: true,
-      ex: LOCK_TTL_SECONDS,
-    });
-    const acquired = setRes === "OK" || setRes === undefined;
-    if (!acquired) return { url: null };
-  } catch {}
+  // 2) Acquire lock or wait for another process to complete
+  const lockResult = await acquireLockOrWaitForResult<{ url: string }>({
+    lockKey,
+    resultKey: indexKey,
+    lockTtl: LOCK_TTL_SECONDS,
+  });
 
-  // Removed Redis wait loops; we only guard with a short NX barrier
+  if (!lockResult.acquired) {
+    // Another process was working on it
+    if (lockResult.cachedResult?.url) {
+      console.info("[favicon] found result from other process", {
+        domain,
+        size: DEFAULT_SIZE,
+        url: lockResult.cachedResult.url,
+      });
+      await captureServer("favicon_fetch", {
+        domain,
+        size: DEFAULT_SIZE,
+        source: "redis_wait",
+        duration_ms: Date.now() - startedAt,
+        outcome: "ok",
+        cache: "wait",
+      });
+      return { url: lockResult.cachedResult.url };
+    }
+    // Timeout or other process failed - return null
+    console.warn("[favicon] wait timeout, no result", { domain });
+    return { url: null };
+  }
 
-  // 3) Fetch/convert via existing pipeline, then upload
+  // 3) We acquired the lock - fetch/convert/upload
   try {
     const sources = buildSources(domain);
     for (const src of sources) {
@@ -135,13 +152,11 @@ export async function getOrCreateFaviconBlobUrl(
           png,
         });
         console.info("[favicon] uploaded", { url, key });
-        // No need to wait for public URL
 
-        // 3) Write Redis index and schedule purge
+        // Write Redis index and schedule purge
         try {
           const ttl = getFaviconTtlSeconds();
           const expiresAtMs = Date.now() + ttl * 1000;
-          const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
           console.debug("[favicon] redis set index", {
             key: indexKey,
             ttlSeconds: ttl,
@@ -194,8 +209,11 @@ export async function getOrCreateFaviconBlobUrl(
     console.warn("[favicon] not found after trying all sources", { domain });
     return { url: null };
   } finally {
+    // Release lock (best effort)
     try {
       await redis.del(lockKey);
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 }
