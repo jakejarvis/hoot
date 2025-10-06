@@ -68,7 +68,7 @@ describe("Screenshot", () => {
 
   it("renders image when url present", () => {
     (useQuery as unknown as Mock).mockReturnValue({
-      data: { url: "https://blob/url.png" },
+      data: { url: "https://app.ufs.sh/f/url.png" },
       isLoading: false,
       isFetching: false,
     });
@@ -76,7 +76,7 @@ describe("Screenshot", () => {
     const img = screen.getByRole("img", {
       name: /homepage preview of example.com/i,
     });
-    expect(img).toHaveAttribute("src", "https://blob/url.png");
+    expect(img).toHaveAttribute("src", "https://app.ufs.sh/f/url.png");
   });
 
   it("shows fallback when no url and not loading", () => {

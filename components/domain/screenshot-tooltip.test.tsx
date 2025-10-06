@@ -74,7 +74,7 @@ describe("ScreenshotTooltip", () => {
 
   it("renders image when loaded", () => {
     (useQuery as unknown as Mock).mockReturnValue({
-      data: { url: "https://blob/url.png" },
+      data: { url: "https://app.ufs.sh/f/url.png" },
       isLoading: false,
       isFetching: false,
     });
@@ -87,6 +87,6 @@ describe("ScreenshotTooltip", () => {
     const img = screen.getByRole("img", {
       name: /homepage preview of example.com/i,
     });
-    expect(img).toHaveAttribute("src", "https://blob/url.png");
+    expect(img).toHaveAttribute("src", "https://app.ufs.sh/f/url.png");
   });
 });

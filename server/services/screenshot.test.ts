@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
   uploadScreenshot: vi.fn(async () => ({
-    url: "https://utfs.io/f/stored-screenshot",
+    url: "https://app.ufs.sh/f/stored-screenshot",
     key: "ut-key",
   })),
 }));
@@ -70,7 +70,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
 
   it("captures, uploads and returns url when not cached", async () => {
     const out = await getOrCreateScreenshotBlobUrl("example.com");
-    expect(out.url).toBe("https://utfs.io/f/stored-screenshot");
+    expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
     expect(storageMock.uploadScreenshot).toHaveBeenCalled();
   });
 
@@ -88,7 +88,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
       backoffMaxMs: 2,
     });
     Math.random = originalRandom;
-    expect(out.url).toBe("https://utfs.io/f/stored-screenshot");
+    expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
     expect(pageMock.goto).toHaveBeenCalledTimes(2);
   });
 
@@ -108,7 +108,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
       backoffMaxMs: 2,
     });
     Math.random = originalRandom;
-    expect(out.url).toBe("https://utfs.io/f/stored-screenshot");
+    expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
     expect(pageMock.screenshot).toHaveBeenCalledTimes(2);
   });
 

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
   uploadFavicon: vi.fn(async () => ({
-    url: "https://utfs.io/f/stored-url",
+    url: "https://app.ufs.sh/f/stored-url",
     key: "ut-key",
   })),
 }));
@@ -72,7 +72,7 @@ describe("getOrCreateFaviconBlobUrl", () => {
     const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(resp);
 
     const out = await getOrCreateFaviconBlobUrl("example.com");
-    expect(out.url).toBe("https://utfs.io/f/stored-url");
+    expect(out.url).toBe("https://app.ufs.sh/f/stored-url");
     expect(storageMock.uploadFavicon).toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
