@@ -29,14 +29,29 @@ type UploadThingResult =
       error: unknown | null;
     }>;
 
-function extractUploadResult(result: UploadThingResult) {
+async function extractUploadResultOrFallback(
+  result: UploadThingResult,
+  customId: string,
+): Promise<{ url: string; key: string }> {
   const entry = (Array.isArray(result) ? result[0] : result) as {
     data: { key?: string; ufsUrl?: string; url?: string } | null;
     error: unknown | null;
   };
-  const key = entry?.data?.key;
   const url = entry?.data?.ufsUrl;
-  if (typeof key === "string" && typeof url === "string") return { url, key };
+  if (typeof url === "string") {
+    // Return customId as the stored identifier to enable deletion by customId
+    return { url, key: customId };
+  }
+
+  // Fallback path (likely AlreadyExists due to same customId). Probe constructed URL.
+  const appId = process.env.UPLOADTHING_APP_ID;
+  if (appId) {
+    const ufsUrl = `https://${appId}.ufs.sh/f/${customId}`;
+    try {
+      const res = await fetch(ufsUrl, { method: "HEAD", cache: "no-store" });
+      if (res.ok) return { url: ufsUrl, key: customId };
+    } catch {}
+  }
   throw new Error("Upload failed: missing url/key in response");
 }
 
@@ -56,5 +71,5 @@ export async function uploadImage(options: {
     customId,
   });
   const result = await utapi.uploadFiles(file);
-  return extractUploadResult(result);
+  return await extractUploadResultOrFallback(result, customId);
 }

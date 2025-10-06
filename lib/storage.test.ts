@@ -36,7 +36,8 @@ describe("storage uploads", () => {
       png: Buffer.from([1, 2, 3]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
-    expect(res.key).toBe("mock-key");
+    // we now return customId as key (for deletion by customId)
+    expect(res.key).toBe("favicon_example-com_32x32.png");
     const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
       .mock.calls[0]?.[0];
     expect(callArg).toBeInstanceOf(Blob);
@@ -51,7 +52,8 @@ describe("storage uploads", () => {
       png: Buffer.from([4, 5, 6]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
-    expect(res.key).toBe("mock-key");
+    // we now return customId as key (for deletion by customId)
+    expect(res.key).toBe("screenshot_example-com_1200x630.png");
     const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
       .mock.calls[0]?.[0];
     expect(callArg).toBeInstanceOf(Blob);

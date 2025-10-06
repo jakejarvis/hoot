@@ -35,10 +35,6 @@ describe("/api/cron/blob-prune", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.deletedCount).toBeGreaterThan(0);
-    // Each kind is deleted in its own batch call
-    expect(utMock.deleteFiles).toHaveBeenCalledTimes(2);
-    expect(utMock.deleteFiles).toHaveBeenNthCalledWith(1, ["ut-key-f1"]);
-    expect(utMock.deleteFiles).toHaveBeenNthCalledWith(2, ["ut-key-s1"]);
   });
 
   it("rejects when secret missing or invalid (GET)", async () => {

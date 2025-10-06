@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       if (!due.length) break;
       const succeeded: string[] = [];
       try {
-        await utapi.deleteFiles(due);
+        await utapi.deleteFiles(due, { keyType: "customId" });
         deleted.push(...due);
         succeeded.push(...due);
       } catch (err) {
