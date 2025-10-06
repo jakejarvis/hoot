@@ -118,7 +118,7 @@ export function Section({
         </div>
         {children && (
           <div id={contentId}>
-            <CardContent className="space-y-3 px-5 pt-0 pb-5">
+            <CardContent className="space-y-2 px-5 pt-0 pb-5">
               {children}
             </CardContent>
           </div>

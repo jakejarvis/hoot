@@ -34,77 +34,89 @@ export function HostingEmailSection({
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <>
-          <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
-          <KeyValueSkeleton
-            label="Hosting"
-            withLeading
-            widthClass="w-[100px]"
-          />
-          <KeyValueSkeleton label="Email" withLeading widthClass="w-[100px]" />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
+            <KeyValueSkeleton
+              label="Hosting"
+              withLeading
+              widthClass="w-[100px]"
+            />
+            <KeyValueSkeleton
+              label="Email"
+              withLeading
+              widthClass="w-[100px]"
+            />
+          </div>
+
           <KeyValueSkeleton
             label="Location"
             withLeading
             widthClass="w-[100px]"
           />
+
           {/* Map skeleton provided by dynamic component's loading prop; keep spacing */}
-          <div className="mt-2">
-            <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />
-          </div>
+          <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />
         </>
       ) : data ? (
         <>
-          <KeyValue
-            label="DNS"
-            value={data.dnsProvider.name}
-            leading={
-              data.dnsProvider.domain ? (
-                <Favicon
-                  domain={data.dnsProvider.domain}
-                  size={16}
-                  className="rounded"
-                />
-              ) : undefined
-            }
-          />
-          <KeyValue
-            label="Hosting"
-            value={data.hostingProvider.name}
-            leading={
-              data.hostingProvider.domain ? (
-                <Favicon
-                  domain={data.hostingProvider.domain}
-                  size={16}
-                  className="rounded"
-                />
-              ) : undefined
-            }
-          />
-          <KeyValue
-            label="Email"
-            value={data.emailProvider.name}
-            leading={
-              data.emailProvider.domain ? (
-                <Favicon
-                  domain={data.emailProvider.domain}
-                  size={16}
-                  className="rounded"
-                />
-              ) : undefined
-            }
-          />
-          <KeyValue
-            label="Location"
-            value={`${
-              data.geo.city || data.geo.region || data.geo.country
-                ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
-                : ""
-            }`}
-            leading={data.geo.emoji ? <span>{data.geo.emoji}</span> : undefined}
-          />
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <KeyValue
+              label="DNS"
+              value={data.dnsProvider.name}
+              leading={
+                data.dnsProvider.domain ? (
+                  <Favicon
+                    domain={data.dnsProvider.domain}
+                    size={16}
+                    className="rounded"
+                  />
+                ) : undefined
+              }
+            />
+            <KeyValue
+              label="Hosting"
+              value={data.hostingProvider.name}
+              leading={
+                data.hostingProvider.domain ? (
+                  <Favicon
+                    domain={data.hostingProvider.domain}
+                    size={16}
+                    className="rounded"
+                  />
+                ) : undefined
+              }
+            />
+            <KeyValue
+              label="Email"
+              value={data.emailProvider.name}
+              leading={
+                data.emailProvider.domain ? (
+                  <Favicon
+                    domain={data.emailProvider.domain}
+                    size={16}
+                    className="rounded"
+                  />
+                ) : undefined
+              }
+            />
+          </div>
+
           {data.geo.lat != null && data.geo.lon != null ? (
-            <div className="mt-2">
+            <>
+              <KeyValue
+                label="Location"
+                value={`${
+                  data.geo.city || data.geo.region || data.geo.country
+                    ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
+                    : ""
+                }`}
+                leading={
+                  data.geo.emoji ? <span>{data.geo.emoji}</span> : undefined
+                }
+              />
+
               <HostingMap hosting={data} />
-            </div>
+            </>
           ) : null}
         </>
       ) : isError ? (

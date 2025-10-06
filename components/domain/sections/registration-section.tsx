@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, ExternalLink } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -85,7 +85,24 @@ export function RegistrationSection({
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    <p>via {data?.source === "rdap" ? "RDAP" : "WHOIS"}</p>
+                    <p>
+                      Source:{" "}
+                      <a
+                        href={
+                          data?.source === "rdap"
+                            ? "https://rdap.rcode3.com/"
+                            : "https://en.wikipedia.org/wiki/WHOIS"
+                        }
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-1 font-mono underline underline-offset-2"
+                      >
+                        <span>
+                          {data?.source === "rdap" ? "RDAP" : "WHOIS"}
+                        </span>
+                        <ExternalLink className="size-3" />
+                      </a>
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               }

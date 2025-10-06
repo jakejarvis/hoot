@@ -116,7 +116,7 @@ describe("detectHosting", () => {
     });
 
     const result = await detectHosting("no-a.example");
-    expect(result.hostingProvider.name.toLowerCase()).toBe("none");
+    expect(result.hostingProvider.name.toLowerCase()).toBe("not configured");
     expect(result.hostingProvider.domain).toBeNull();
   });
 
