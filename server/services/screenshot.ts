@@ -1,6 +1,10 @@
 import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
-import { getScreenshotTtlSeconds, putScreenshotBlob } from "@/lib/blob";
+import {
+  computeScreenshotBlobPath,
+  getScreenshotTtlSeconds,
+  putScreenshotBlob,
+} from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
@@ -45,6 +49,11 @@ export async function getOrCreateScreenshotBlobUrl(
   },
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
+  console.debug("[screenshot] start", {
+    domain,
+    width: VIEWPORT_WIDTH,
+    height: VIEWPORT_HEIGHT,
+  });
   const attempts = Math.max(
     1,
     options?.attempts ?? CAPTURE_MAX_ATTEMPTS_DEFAULT,
@@ -59,8 +68,15 @@ export async function getOrCreateScreenshotBlobUrl(
       "screenshot:url",
       `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
     );
+    console.debug("[screenshot] redis get", { key });
     const raw = (await redis.get(key)) as { url?: unknown } | null;
     if (raw && typeof raw === "object" && typeof raw.url === "string") {
+      console.info("[screenshot] cache hit", {
+        domain,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        url: raw.url,
+      });
       await captureServer("screenshot_capture", {
         domain,
         width: VIEWPORT_WIDTH,
@@ -72,6 +88,11 @@ export async function getOrCreateScreenshotBlobUrl(
       });
       return { url: raw.url };
     }
+    console.debug("[screenshot] cache miss", {
+      domain,
+      width: VIEWPORT_WIDTH,
+      height: VIEWPORT_HEIGHT,
+    });
   } catch {
     // ignore and proceed
   }
@@ -97,13 +118,16 @@ export async function getOrCreateScreenshotBlobUrl(
   );
   let acquiredLock = false;
   try {
+    console.debug("[screenshot] lock attempt", { lockKey });
     const setRes = await redis.set(lockKey, "1", {
       nx: true,
       ex: LOCK_TTL_SECONDS,
     });
     acquiredLock = setRes === "OK" || setRes === undefined;
+    console.info("[screenshot] lock status", { acquiredLock });
   } catch {
     acquiredLock = true;
+    console.warn("[screenshot] lock unsupported; proceeding without lock");
   }
 
   if (!acquiredLock) {
@@ -114,13 +138,23 @@ export async function getOrCreateScreenshotBlobUrl(
           "screenshot:url",
           `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
         );
+        console.debug("[screenshot] waiting for index", {
+          attempt: i + 1,
+          key,
+        });
         const raw = (await redis.get(key)) as { url?: unknown } | null;
         if (raw && typeof raw === "object" && typeof raw.url === "string") {
+          console.info("[screenshot] index appeared while waiting", {
+            url: raw.url,
+          });
           return { url: raw.url };
         }
       } catch {}
       await sleep(LOCK_WAIT_DELAY_MS);
     }
+    console.warn("[screenshot] gave up waiting for lock; returning null", {
+      domain,
+    });
     return { url: null };
   }
 
@@ -134,8 +168,10 @@ export async function getOrCreateScreenshotBlobUrl(
           "screenshot:url",
           `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
         );
+        console.debug("[screenshot] redis recheck after lock", { key });
         const raw = (await redis.get(key)) as { url?: unknown } | null;
         if (raw && typeof raw === "object" && typeof raw.url === "string") {
+          console.info("[screenshot] found index after lock", { url: raw.url });
           return { url: raw.url };
         }
       } catch {}
@@ -182,6 +218,9 @@ export async function getOrCreateScreenshotBlobUrl(
               type: "png",
               fullPage: false,
             })) as Buffer;
+            console.debug("[screenshot] raw screenshot bytes", {
+              bytes: rawPng.length,
+            });
 
             const png = await optimizePngCover(
               rawPng,
@@ -189,20 +228,34 @@ export async function getOrCreateScreenshotBlobUrl(
               VIEWPORT_HEIGHT,
             );
             if (png && png.length > 0) {
+              console.debug("[screenshot] optimized png bytes", {
+                bytes: png.length,
+              });
               const pngWithWatermark = await addWatermarkToScreenshot(
                 png,
                 VIEWPORT_WIDTH,
                 VIEWPORT_HEIGHT,
               );
+              console.debug("[screenshot] watermarked png bytes", {
+                bytes: pngWithWatermark.length,
+              });
+              const blobPath = computeScreenshotBlobPath(
+                domain,
+                VIEWPORT_WIDTH,
+                VIEWPORT_HEIGHT,
+              );
+              console.info("[screenshot] uploading to blob", { blobPath });
               const storedUrl = await putScreenshotBlob(
                 domain,
                 VIEWPORT_WIDTH,
                 VIEWPORT_HEIGHT,
                 pngWithWatermark,
               );
+              console.info("[screenshot] uploaded", { url: storedUrl });
               await waitForPublicUrl(storedUrl);
-
-              console.info("[screenshot] stored blob", { url: storedUrl });
+              console.debug("[screenshot] public url ready", {
+                url: storedUrl,
+              });
 
               // Write Redis index and schedule purge
               try {
@@ -212,6 +265,11 @@ export async function getOrCreateScreenshotBlobUrl(
                   "screenshot:url",
                   `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
                 );
+                console.debug("[screenshot] redis set index", {
+                  key,
+                  ttlSeconds: ttl,
+                  expiresAtMs,
+                });
                 await redis.set(
                   key,
                   { url: storedUrl, expiresAtMs },
@@ -219,6 +277,10 @@ export async function getOrCreateScreenshotBlobUrl(
                     ex: ttl,
                   },
                 );
+                console.debug("[screenshot] redis zadd purge", {
+                  url: storedUrl,
+                  expiresAtMs,
+                });
                 await redis.zadd(ns("purge", "screenshot"), {
                   score: expiresAtMs,
                   member: storedUrl, // store full URL for deletion API
@@ -298,6 +360,7 @@ export async function getOrCreateScreenshotBlobUrl(
   } finally {
     try {
       await redis.del(lockKey);
+      console.debug("[screenshot] lock released", { lockKey });
     } catch {}
   }
 }

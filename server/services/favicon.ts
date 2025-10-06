@@ -1,5 +1,9 @@
 import { captureServer } from "@/lib/analytics/server";
-import { getFaviconTtlSeconds, putFaviconBlob } from "@/lib/blob";
+import {
+  computeFaviconBlobPath,
+  getFaviconTtlSeconds,
+  putFaviconBlob,
+} from "@/lib/blob";
 import { USER_AGENT } from "@/lib/constants";
 import { convertBufferToSquarePng } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
@@ -50,11 +54,18 @@ export async function getOrCreateFaviconBlobUrl(
   domain: string,
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
+  console.debug("[favicon] start", { domain, size: DEFAULT_SIZE });
   // 1) Check Redis index first
   try {
     const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+    console.debug("[favicon] redis get", { key });
     const raw = (await redis.get(key)) as { url?: unknown } | null;
     if (raw && typeof raw === "object" && typeof raw.url === "string") {
+      console.info("[favicon] cache hit", {
+        domain,
+        size: DEFAULT_SIZE,
+        url: raw.url,
+      });
       await captureServer("favicon_fetch", {
         domain,
         size: DEFAULT_SIZE,
@@ -65,6 +76,7 @@ export async function getOrCreateFaviconBlobUrl(
       });
       return { url: raw.url };
     }
+    console.debug("[favicon] cache miss", { domain, size: DEFAULT_SIZE });
   } catch {
     // ignore and proceed to fetch
   }
@@ -91,15 +103,18 @@ export async function getOrCreateFaviconBlobUrl(
   const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
   let acquiredLock = false;
   try {
+    console.debug("[favicon] lock attempt", { lockKey });
     const setRes = await redis.set(lockKey, "1", {
       nx: true,
       ex: LOCK_TTL_SECONDS,
     });
     // Upstash returns "OK" on success; our test mock returns undefined
     acquiredLock = setRes === "OK" || setRes === undefined;
+    console.info("[favicon] lock status", { acquiredLock });
   } catch {
     // If the client doesn't support NX in some env, proceed without blocking
     acquiredLock = true;
+    console.warn("[favicon] lock unsupported; proceeding without lock");
   }
 
   if (!acquiredLock) {
@@ -107,14 +122,21 @@ export async function getOrCreateFaviconBlobUrl(
     for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
       try {
         const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+        console.debug("[favicon] waiting for index", { attempt: i + 1, key });
         const raw = (await redis.get(key)) as { url?: unknown } | null;
         if (raw && typeof raw === "object" && typeof raw.url === "string") {
+          console.info("[favicon] index appeared while waiting", {
+            url: raw.url,
+          });
           return { url: raw.url };
         }
       } catch {}
       await sleep(LOCK_WAIT_DELAY_MS);
     }
     // Give up to avoid duplicate work; a subsequent request will retry
+    console.warn("[favicon] gave up waiting for lock; returning null", {
+      domain,
+    });
     return { url: null };
   }
 
@@ -123,11 +145,18 @@ export async function getOrCreateFaviconBlobUrl(
     const sources = buildSources(domain);
     for (const src of sources) {
       try {
+        console.debug("[favicon] fetch source", { src });
         const res = await fetchWithTimeout(src);
         if (!res.ok) continue;
         const contentType = res.headers.get("content-type");
         const ab = await res.arrayBuffer();
         const buf = Buffer.from(ab);
+        console.debug("[favicon] fetched source ok", {
+          src,
+          status: res.status,
+          contentType,
+          bytes: buf.length,
+        });
 
         const png = await convertBufferToSquarePng(
           buf,
@@ -135,6 +164,10 @@ export async function getOrCreateFaviconBlobUrl(
           contentType,
         );
         if (!png) continue;
+        console.debug("[favicon] converted to png", {
+          size: DEFAULT_SIZE,
+          bytes: png.length,
+        });
 
         const source = (() => {
           if (src.includes("icons.duckduckgo.com")) return "duckduckgo";
@@ -144,14 +177,23 @@ export async function getOrCreateFaviconBlobUrl(
           return "unknown";
         })();
 
+        const blobPath = computeFaviconBlobPath(domain, DEFAULT_SIZE);
+        console.info("[favicon] uploading to blob", { blobPath });
         const url = await putFaviconBlob(domain, DEFAULT_SIZE, png);
+        console.info("[favicon] uploaded", { url });
         await waitForPublicUrl(url);
+        console.debug("[favicon] public url ready", { url });
 
         // 3) Write Redis index and schedule purge
         try {
           const ttl = getFaviconTtlSeconds();
           const expiresAtMs = Date.now() + ttl * 1000;
           const key = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
+          console.debug("[favicon] redis set index", {
+            key,
+            ttlSeconds: ttl,
+            expiresAtMs,
+          });
           await redis.set(
             key,
             { url, expiresAtMs },
@@ -159,6 +201,7 @@ export async function getOrCreateFaviconBlobUrl(
               ex: ttl,
             },
           );
+          console.debug("[favicon] redis zadd purge", { url, expiresAtMs });
           await redis.zadd(ns("purge", "favicon"), {
             score: expiresAtMs,
             member: url, // store full URL for deletion API
@@ -179,7 +222,11 @@ export async function getOrCreateFaviconBlobUrl(
         });
 
         return { url };
-      } catch {
+      } catch (err) {
+        console.warn("[favicon] source failed; trying next", {
+          src,
+          error: (err as Error)?.message,
+        });
         // try next source
       }
     }
@@ -191,10 +238,12 @@ export async function getOrCreateFaviconBlobUrl(
       outcome: "not_found",
       cache: "miss",
     });
+    console.warn("[favicon] not found after trying all sources", { domain });
     return { url: null };
   } finally {
     try {
       await redis.del(lockKey);
+      console.debug("[favicon] lock released", { lockKey });
     } catch {}
   }
 }
