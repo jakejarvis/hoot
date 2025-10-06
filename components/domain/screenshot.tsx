@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CircleX } from "lucide-react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
+import { useImageRetry } from "@/hooks/use-image-retry";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -38,11 +39,16 @@ export function Screenshot({
 
   const url = data?.url ?? null;
   const loading = isLoading || isFetching;
+  const { imageKey, showFallback, handleError } = useImageRetry(url, {
+    maxRetries: 2,
+    delayMs: 300,
+  });
 
   return (
     <div className={className}>
-      {url ? (
+      {url && !showFallback ? (
         <Image
+          key={imageKey}
           src={url}
           alt={`Homepage preview of ${domain}`}
           width={width}
@@ -55,6 +61,7 @@ export function Screenshot({
           unoptimized
           priority={false}
           draggable={false}
+          onError={handleError}
         />
       ) : (
         <div
