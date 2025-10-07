@@ -89,34 +89,46 @@ export function SeoSection({
           <Tabs defaultValue="x">
             <TabsList className="h-auto w-full gap-1 md:justify-start">
               <TabsTrigger value="x" className="h-9 flex-1 px-2 py-1.5">
-                <TwitterIcon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden md:inline">X</span>
-              </TabsTrigger>
-              <TabsTrigger value="slack" className="h-9 flex-1 px-2 py-1.5">
-                <SlackIcon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden md:inline">Slack</span>
+                <TwitterIcon
+                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                  aria-hidden="true"
+                />
+                <span className="hidden text-[13px] md:inline">Twitter</span>
               </TabsTrigger>
               <TabsTrigger value="facebook" className="h-9 flex-1 px-2 py-1.5">
-                <FacebookIcon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden md:inline">Facebook</span>
+                <FacebookIcon
+                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                  aria-hidden="true"
+                />
+                <span className="hidden text-[13px] md:inline">Facebook</span>
               </TabsTrigger>
               <TabsTrigger value="linkedin" className="h-9 flex-1 px-2 py-1.5">
-                <LinkedinIcon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden md:inline">LinkedIn</span>
+                <LinkedinIcon
+                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                  aria-hidden="true"
+                />
+                <span className="hidden text-[13px] md:inline">LinkedIn</span>
               </TabsTrigger>
               <TabsTrigger value="discord" className="h-9 flex-1 px-2 py-1.5">
-                <DiscordIcon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden md:inline">Discord</span>
+                <DiscordIcon
+                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                  aria-hidden="true"
+                />
+                <span className="hidden text-[13px] md:inline">Discord</span>
+              </TabsTrigger>
+              <TabsTrigger value="slack" className="h-9 flex-1 px-2 py-1.5">
+                <SlackIcon
+                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                  aria-hidden="true"
+                />
+                <span className="hidden text-[13px] md:inline">Slack</span>
               </TabsTrigger>
             </TabsList>
-            <div
-              className="mx-auto w-full max-w-[900px]"
-              style={{ maxHeight: "min(60vh, 520px)" }}
-            >
+            <div className="mx-auto w-full max-w-[480px] md:max-w-[640px]">
               <TabsContent value="x" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
-                    provider="x"
+                    provider="twitter"
                     title={data.preview.title ?? "No title"}
                     description={data.preview.description ?? "No description"}
                     image={data.preview.image}
@@ -125,23 +137,12 @@ export function SeoSection({
                   />
                 ) : null}
               </TabsContent>
-              <TabsContent value="slack" className="grid place-items-center">
-                {data?.preview ? (
-                  <SocialPreview
-                    provider="slack"
-                    title={data.preview.title ?? "No title"}
-                    description={data.preview.description ?? "No description"}
-                    image={data.preview.image}
-                    url={data.preview.canonicalUrl}
-                  />
-                ) : null}
-              </TabsContent>
               <TabsContent value="facebook" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
                     provider="facebook"
-                    title={data.preview.title ?? "No title"}
-                    description={data.preview.description ?? "No description"}
+                    title={data.preview.title}
+                    description={data.preview.description}
                     image={data.preview.image}
                     url={data.preview.canonicalUrl}
                   />
@@ -151,8 +152,8 @@ export function SeoSection({
                 {data?.preview ? (
                   <SocialPreview
                     provider="linkedin"
-                    title={data.preview.title ?? "No title"}
-                    description={data.preview.description ?? "No description"}
+                    title={data.preview.title}
+                    description={data.preview.description}
                     image={data.preview.image}
                     url={data.preview.canonicalUrl}
                   />
@@ -162,8 +163,19 @@ export function SeoSection({
                 {data?.preview ? (
                   <SocialPreview
                     provider="discord"
-                    title={data.preview.title ?? "No title"}
-                    description={data.preview.description ?? "No description"}
+                    title={data.preview.title}
+                    description={data.preview.description}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                  />
+                ) : null}
+              </TabsContent>
+              <TabsContent value="slack" className="grid place-items-center">
+                {data?.preview ? (
+                  <SocialPreview
+                    provider="slack"
+                    title={data.preview.title}
+                    description={data.preview.description}
                     image={data.preview.image}
                     url={data.preview.canonicalUrl}
                   />
