@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, ExternalLink, Plus } from "lucide-react";
+import { ChevronRight, ExternalLink, Filter, Plus, X } from "lucide-react";
 import { motion } from "motion/react";
 import * as React from "react";
 import {
@@ -19,13 +19,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ButtonGroup,
   ButtonGroupSeparator,
 } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SeoResponse, SocialPreviewProvider } from "@/lib/schemas";
@@ -70,79 +75,95 @@ export function SeoSection({
     <Section {...SECTION_DEFS.seo} isError={isError} isLoading={isLoading}>
       {data ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {metaTagValues
-              .filter((t) => t.value != null)
-              .map((t) => (
-                <KeyValue
-                  key={t.label}
-                  label={t.label}
-                  value={String(t.value)}
-                />
-              ))}
+          <div className="space-y-3">
+            <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
+              Meta Tags
+            </div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              {metaTagValues
+                .filter((t) => t.value != null)
+                .map((t) => (
+                  <KeyValue
+                    key={t.label}
+                    label={t.label}
+                    value={String(t.value)}
+                  />
+                ))}
+            </div>
           </div>
 
           <Separator />
 
-          <Tabs
-            value={selectedTab}
-            onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}
-          >
-            <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 md:justify-start">
-              <TabsTrigger value="twitter" className="h-9 flex-1 px-2 py-1.5">
-                <TwitterIcon
-                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
-                  aria-hidden="true"
-                />
-                <span className="hidden text-[13px] md:inline">Twitter</span>
-              </TabsTrigger>
-              <TabsTrigger value="facebook" className="h-9 flex-1 px-2 py-1.5">
-                <FacebookIcon
-                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
-                  aria-hidden="true"
-                />
-                <span className="hidden text-[13px] md:inline">Facebook</span>
-              </TabsTrigger>
-              <TabsTrigger value="linkedin" className="h-9 flex-1 px-2 py-1.5">
-                <LinkedinIcon
-                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
-                  aria-hidden="true"
-                />
-                <span className="hidden text-[13px] md:inline">LinkedIn</span>
-              </TabsTrigger>
-              <TabsTrigger value="discord" className="h-9 flex-1 px-2 py-1.5">
-                <DiscordIcon
-                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
-                  aria-hidden="true"
-                />
-                <span className="hidden text-[13px] md:inline">Discord</span>
-              </TabsTrigger>
-              <TabsTrigger value="slack" className="h-9 flex-1 px-2 py-1.5">
-                <SlackIcon
-                  className="md:!h-3.5 md:!w-3.5 h-4 w-4"
-                  aria-hidden="true"
-                />
-                <span className="hidden text-[13px] md:inline">Slack</span>
-              </TabsTrigger>
-            </TabsList>
-            <div className="mx-auto w-full max-w-[480px] md:max-w-[640px]">
-              <TabsContent
-                value={selectedTab}
-                className="grid place-items-center"
-              >
-                {data?.preview ? (
-                  <SocialPreview
-                    provider={selectedTab}
-                    title={data.preview.title}
-                    description={data.preview.description}
-                    image={data.preview.image}
-                    url={data.preview.canonicalUrl}
-                    variant={selectedTab === "twitter" ? xVariant : undefined}
-                  />
-                ) : null}
-              </TabsContent>
+          <div className="space-y-3">
+            <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
+              Social Previews
             </div>
-          </Tabs>
+            <Tabs
+              value={selectedTab}
+              onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}
+            >
+              <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 md:justify-start">
+                <TabsTrigger value="twitter" className="h-9 flex-1 px-2 py-1.5">
+                  <TwitterIcon
+                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden text-[13px] md:inline">Twitter</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="facebook"
+                  className="h-9 flex-1 px-2 py-1.5"
+                >
+                  <FacebookIcon
+                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden text-[13px] md:inline">Facebook</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="linkedin"
+                  className="h-9 flex-1 px-2 py-1.5"
+                >
+                  <LinkedinIcon
+                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden text-[13px] md:inline">LinkedIn</span>
+                </TabsTrigger>
+                <TabsTrigger value="discord" className="h-9 flex-1 px-2 py-1.5">
+                  <DiscordIcon
+                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden text-[13px] md:inline">Discord</span>
+                </TabsTrigger>
+                <TabsTrigger value="slack" className="h-9 flex-1 px-2 py-1.5">
+                  <SlackIcon
+                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden text-[13px] md:inline">Slack</span>
+                </TabsTrigger>
+              </TabsList>
+              <div className="mx-auto w-full max-w-[480px] md:max-w-[640px]">
+                <TabsContent
+                  value={selectedTab}
+                  className="grid place-items-center"
+                >
+                  {data?.preview ? (
+                    <SocialPreview
+                      provider={selectedTab}
+                      title={data.preview.title}
+                      description={data.preview.description}
+                      image={data.preview.image}
+                      url={data.preview.canonicalUrl}
+                      variant={selectedTab === "twitter" ? xVariant : undefined}
+                    />
+                  ) : null}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
 
           <Separator />
 
@@ -238,55 +259,57 @@ function RobotsSummary({
   const hasFilteredRules = filteredGroups.some((g) => g.rules.length > 0);
 
   return (
-    <div className="space-y-3 rounded-xl border bg-background/40 p-3">
-      <div className="mb-0.5 flex items-center gap-2">
+    <div className="space-y-4 rounded-xl">
+      <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
         {link ? (
           <a
-            className="font-medium text-sm underline-offset-4 hover:underline"
             href={link}
             target="_blank"
             rel="noreferrer"
+            className="flex items-center gap-1 leading-none"
           >
             robots.txt
+            <ExternalLink className="size-3" />
           </a>
         ) : (
-          <div className="font-medium text-sm">robots.txt</div>
+          <span>robots.txt</span>
         )}
-        <Badge variant={has ? "default" : "secondary"}>
-          {has ? "Found" : "Missing"}
-        </Badge>
       </div>
 
       {has ? (
-        <>
-          {/* counts removed per design feedback */}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              placeholder="Filter rules or sitemaps…"
-              value={query}
-              onChange={(e) => setQuery(e.currentTarget.value)}
-              className="h-8 w-56"
-              aria-label="Filter robots rules"
-            />
-            {query ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-8 px-2 text-xs"
-                onClick={() => setQuery("")}
-              >
-                Clear
-              </Button>
-            ) : null}
-            <ButtonGroup className="">
+        <div className="space-y-4">
+          <div className="flex flex-row items-center gap-2">
+            <InputGroup>
+              <InputGroupInput
+                placeholder="Filter rules or sitemaps…"
+                value={query}
+                onChange={(e) => setQuery(e.currentTarget.value)}
+                aria-label="Filter robots rules"
+              />
+              <InputGroupAddon>
+                <Filter />
+              </InputGroupAddon>
+              {query ? (
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setQuery("")}
+                  >
+                    <X />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              ) : null}
+            </InputGroup>
+            <ButtonGroup>
               <Button
                 type="button"
                 variant={only === "all" ? "outline" : "ghost"}
                 size="sm"
                 aria-pressed={only === "all"}
                 onClick={() => setOnly("all")}
+                className="text-[13px]"
               >
                 All
               </Button>
@@ -297,6 +320,7 @@ function RobotsSummary({
                 size="sm"
                 aria-pressed={only === "allow"}
                 onClick={() => setOnly("allow")}
+                className="text-[13px]"
               >
                 Allow ({counts.allows})
               </Button>
@@ -307,6 +331,7 @@ function RobotsSummary({
                 size="sm"
                 aria-pressed={only === "disallow"}
                 onClick={() => setOnly("disallow")}
+                className="text-[13px]"
               >
                 Disallow ({counts.disallows})
               </Button>
@@ -314,7 +339,7 @@ function RobotsSummary({
           </div>
 
           {!hasFilteredRules ? (
-            <div className="text-muted-foreground text-xs">
+            <div className="text-muted-foreground text-sm">
               No matching rules.
               <Button
                 type="button"
@@ -337,11 +362,14 @@ function RobotsSummary({
           />
 
           {robots?.sitemaps?.length ? (
-            <SitemapsList items={robots.sitemaps} query={query} />
+            <>
+              <Separator />
+              <SitemapsList items={robots.sitemaps} query={query} />
+            </>
           ) : null}
-        </>
+        </div>
       ) : (
-        <div className="text-muted-foreground text-xs">
+        <div className="text-muted-foreground text-sm">
           No robots.txt discovered.
           <button
             className="ml-2 underline underline-offset-2"
@@ -394,18 +422,18 @@ function GroupsAccordion({
                   {g.userAgents.map((ua) => (
                     <span
                       key={ua}
-                      className="rounded bg-muted px-1.5 py-0.5 text-[10px]"
+                      className="rounded bg-muted px-1.5 py-0.5 text-xs"
                     >
                       {ua}
                     </span>
                   ))}
                 </div>
-                <div className="text-[10px] text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                   {allowN} allow · {disallowN} disallow
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="pt-0">
+            <AccordionContent className="p-0">
               <GroupContent
                 rules={g.rules}
                 query={query}
@@ -469,7 +497,7 @@ function GroupContent({
         </motion.div>
       ) : null}
       {more > 0 ? (
-        <div className="mt-4 flex justify-center">
+        <div className="my-4 flex justify-center">
           <Button
             type="button"
             size="sm"
@@ -531,8 +559,10 @@ function SitemapsList({ items, query }: { items: string[]; query: string }) {
     prevVisibleRef.current = Math.min(visible, filtered.length);
   }, [visible, filtered]);
   return (
-    <div className="space-y-1 pt-1">
-      <div className="text-muted-foreground text-xs">Sitemaps</div>
+    <div className="space-y-3">
+      <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
+        Sitemaps
+      </div>
       <div className="flex flex-col gap-1">
         {existing.map((u) => (
           <div
