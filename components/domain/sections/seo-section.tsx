@@ -256,10 +256,13 @@ function RobotsSummary({
   }, [robots, only, query, rankAgents]);
 
   const hasFilteredRules = filteredGroups.some((g) => g.rules.length > 0);
+  const filtersActive = query.trim().length > 0 || only !== "all";
   const displayGroups = React.useMemo(
     () =>
-      query ? filteredGroups.filter((g) => g.rules.length > 0) : filteredGroups,
-    [filteredGroups, query],
+      filtersActive
+        ? filteredGroups.filter((g) => g.rules.length > 0)
+        : filteredGroups,
+    [filteredGroups, filtersActive],
   );
 
   return (
@@ -364,6 +367,7 @@ function RobotsSummary({
             groups={displayGroups}
             query={query}
             highlight={highlight}
+            only={only}
           />
 
           {robots?.sitemaps?.length ? (
@@ -393,6 +397,7 @@ function GroupsAccordion({
   groups,
   query,
   highlight,
+  only,
 }: {
   groups: {
     userAgents: string[];
@@ -400,6 +405,7 @@ function GroupsAccordion({
   }[];
   query: string;
   highlight: (text: string, q: string) => React.ReactNode;
+  only?: "all" | "allow" | "disallow";
 }) {
   const defaultIdx = React.useMemo(
     () => groups.findIndex((g) => g.userAgents.includes("*")),
@@ -464,6 +470,8 @@ function GroupsAccordion({
       {groups.map((g, idx) => {
         const allowN = g.rules.filter((r) => r.type === "allow").length;
         const disallowN = g.rules.filter((r) => r.type === "disallow").length;
+        const showAllow = only !== "disallow";
+        const showDisallow = only !== "allow";
         // neutral group styling, no left accent color
         return (
           <AccordionItem
@@ -489,7 +497,9 @@ function GroupsAccordion({
                   ))}
                 </div>
                 <div className="text-muted-foreground text-xs">
-                  {allowN} allow · {disallowN} disallow
+                  {showAllow ? `${allowN} allow` : null}
+                  {showAllow && showDisallow ? " · " : null}
+                  {showDisallow ? `${disallowN} disallow` : null}
                 </div>
               </div>
             </AccordionTrigger>
