@@ -57,7 +57,6 @@ export const SeoResponseSchema = z.object({
   meta: SeoMetaSchema.nullable(),
   robots: RobotsTxtSchema.nullable(),
   preview: SeoPreviewSchema.nullable(),
-  timestamps: z.object({ fetchedAt: z.string() }),
   source: z.object({
     finalUrl: z.string().url().nullable(),
     status: z.number().nullable(),

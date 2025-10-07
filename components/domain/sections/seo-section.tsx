@@ -188,7 +188,6 @@ export function SeoSection({
 
           <RobotsSummary
             robots={data.robots}
-            fetchedAt={data.timestamps.fetchedAt}
             finalUrl={data.source.finalUrl}
             onRetryAction={onRetryAction}
           />
@@ -211,12 +210,10 @@ export function SeoSection({
 
 function RobotsSummary({
   robots,
-  fetchedAt,
   finalUrl,
   onRetryAction,
 }: {
   robots: SeoResponse["robots"];
-  fetchedAt: string;
   finalUrl: string | null;
   onRetryAction: () => void;
 }) {
@@ -260,9 +257,6 @@ function RobotsSummary({
             Open robots.txt
           </a>
         )}
-        <div className="ml-auto text-[10px] text-muted-foreground">
-          Fetched {new Date(fetchedAt).toLocaleString()}
-        </div>
       </div>
       {has ? (
         <>

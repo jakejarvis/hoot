@@ -28,7 +28,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   const baseKey = ns("seo", lower);
   const metaKey = ns(`${baseKey}:meta`, "v1");
   const robotsKey = ns(`${baseKey}:robots`, "v1");
-  const fetchedAt = new Date().toISOString();
 
   const cached = await redis.get<SeoResponse>(metaKey);
   if (cached) return cached;
@@ -107,7 +106,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     meta,
     robots,
     preview,
-    timestamps: { fetchedAt },
     source: { finalUrl, status },
     ...(htmlError || robotsError
       ? {
