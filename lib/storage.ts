@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac } from "node:crypto";
 import { UTApi, UTFile } from "uploadthing/server";
+import type { StorageKind } from "@/lib/schemas/storage";
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 const UPLOAD_MAX_ATTEMPTS = 3;
@@ -43,7 +44,7 @@ export function deterministicHash(input: string, length = 32): string {
  * Build a deterministic image filename for UploadThing
  */
 export function makeImageFileName(
-  kind: "favicon" | "screenshot" | "social",
+  kind: StorageKind,
   domain: string,
   width: number,
   height: number,
@@ -166,7 +167,7 @@ async function uploadWithRetry(
 }
 
 export async function uploadImage(options: {
-  kind: "favicon" | "screenshot" | "social";
+  kind: StorageKind;
   domain: string;
   width: number;
   height: number;

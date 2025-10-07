@@ -19,7 +19,7 @@ vi.mock("uploadthing/server", async () => {
   };
 });
 
-import { uploadImage } from "./storage";
+import { deterministicHash, makeImageFileName, uploadImage } from "./storage";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -142,5 +142,23 @@ describe("storage uploads", () => {
 
     expect(res.url).toBe("https://app.ufs.sh/f/ok");
     expect(utMock.uploadFiles).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("hashing helpers", () => {
+  it("deterministicHash returns stable value for same input", () => {
+    const a1 = deterministicHash("input");
+    const a2 = deterministicHash("input");
+    expect(a1).toBe(a2);
+    expect(a1).toMatch(/^[a-f0-9]{32}$/);
+  });
+
+  it("makeImageFileName is deterministic and changes with inputs", () => {
+    const f1 = makeImageFileName("social", "example.com", 1200, 630);
+    const f2 = makeImageFileName("social", "example.com", 1200, 630);
+    const f3 = makeImageFileName("social", "example.com", 1200, 630, "v2");
+    expect(f1).toBe(f2);
+    expect(f1).toMatch(/^social_[a-f0-9]{32}\.png$/);
+    expect(f3).not.toBe(f1);
   });
 });
