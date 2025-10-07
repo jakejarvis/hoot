@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { UTApi } from "uploadthing/server";
 import { ns, redis } from "@/lib/redis";
-import { StorageKindSchema } from "@/lib/schemas/storage";
+import { StorageKindSchema } from "@/lib/schemas";
 
 export const runtime = "nodejs";
 

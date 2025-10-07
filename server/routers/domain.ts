@@ -9,6 +9,7 @@ import {
   RegistrationSchema,
   SeoResponseSchema,
 } from "@/lib/schemas";
+import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
 import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";
 import { probeHeaders } from "@/server/services/headers";
@@ -16,7 +17,6 @@ import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
 import { getSeo } from "@/server/services/seo";
-import { getCertificates } from "@/server/services/tls";
 import { createTRPCRouter, publicProcedure } from "@/trpc/init";
 
 export const domainInput = z

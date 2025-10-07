@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProviderRefSchema } from "./provider";
+import { ProviderRefSchema } from "../internal/provider";
 
 // typed from rdapper
 // https://chatgpt.com/s/t_68daacac17b88191b9dda5c878327209
