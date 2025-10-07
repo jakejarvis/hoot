@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import {
   DiscordIcon,
@@ -12,6 +13,12 @@ import { CopyButton } from "@/components/domain/copy-button";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { SocialPreview } from "@/components/social-preview";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -230,28 +237,26 @@ function RobotsSummary({
   return (
     <div className="space-y-3 rounded-xl border bg-background/40 p-3">
       <div className="mb-0.5 flex items-center gap-2">
-        <div className="font-medium text-sm">robots.txt</div>
-        <Badge variant={has ? "default" : "secondary"}>
-          {has ? "Found" : "Missing"}
-        </Badge>
-        {link && (
+        {link ? (
           <a
-            className="text-muted-foreground text-xs underline"
+            className="font-medium text-sm underline-offset-4 hover:underline"
             href={link}
             target="_blank"
             rel="noreferrer"
           >
-            Open robots.txt
+            robots.txt
           </a>
+        ) : (
+          <div className="font-medium text-sm">robots.txt</div>
         )}
+        <Badge variant={has ? "default" : "secondary"}>
+          {has ? "Found" : "Missing"}
+        </Badge>
       </div>
 
       {has ? (
         <>
-          <div className="text-muted-foreground text-xs">
-            {counts.allows} allows, {counts.disallows} disallows,{" "}
-            {robots?.sitemaps.length ?? 0} sitemaps
-          </div>
+          {/* counts removed per design feedback */}
 
           <div className="flex flex-wrap items-center gap-2">
             <Input
@@ -320,26 +325,11 @@ function RobotsSummary({
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            {filteredGroups.map((g, idx) => {
-              const allowN = g.rules.filter((r) => r.type === "allow").length;
-              const disallowN = g.rules.filter(
-                (r) => r.type === "disallow",
-              ).length;
-              const heavy = disallowN > allowN ? "disallow" : "allow";
-              return (
-                <GroupCard
-                  key={`ua-${g.userAgents.join(",")}-${idx}`}
-                  userAgents={g.userAgents}
-                  rules={g.rules}
-                  accent={heavy}
-                  limit={6}
-                  highlightQuery={query}
-                  highlight={highlight}
-                />
-              );
-            })}
-          </div>
+          <GroupsAccordion
+            groups={filteredGroups}
+            query={query}
+            highlight={highlight}
+          />
 
           {robots?.sitemaps?.length ? (
             <SitemapsList items={robots.sitemaps} query={query} />
@@ -361,80 +351,129 @@ function RobotsSummary({
   );
 }
 
-function GroupCard({
-  userAgents,
-  rules,
-  accent,
-  limit = 6,
-  highlightQuery,
+function GroupsAccordion({
+  groups,
+  query,
   highlight,
 }: {
-  userAgents: string[];
-  rules: { type: "allow" | "disallow" | "crawlDelay"; value: string }[];
-  accent: "allow" | "disallow";
-  limit?: number;
-  highlightQuery: string;
+  groups: {
+    userAgents: string[];
+    rules: { type: "allow" | "disallow" | "crawlDelay"; value: string }[];
+  }[];
+  query: string;
   highlight: (text: string, q: string) => React.ReactNode;
 }) {
-  const [visible, setVisible] = React.useState(limit);
-  const border =
-    accent === "disallow"
-      ? "border-l-2 border-l-rose-500/60"
-      : "border-l-2 border-l-emerald-500/60";
-  const total = rules.length;
-  const more = total - visible;
+  const defaultIdx = React.useMemo(
+    () => groups.findIndex((g) => g.userAgents.includes("*")),
+    [groups],
+  );
+  const defaultValue = defaultIdx >= 0 ? `g-${defaultIdx}` : undefined;
   return (
-    <div className={cn("rounded-md border bg-background/40", border)}>
-      <div className="flex items-center justify-between px-2 py-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {userAgents.map((ua) => (
-            <span
-              key={ua}
-              className="rounded bg-muted px-1.5 py-0.5 text-[10px]"
-            >
-              {ua}
-            </span>
-          ))}
-        </div>
-        <div className="text-[10px] text-muted-foreground">
-          {rules.filter((r) => r.type === "allow").length} allow ·{" "}
-          {rules.filter((r) => r.type === "disallow").length} disallow
-        </div>
-      </div>
-      <div className="flex flex-col gap-1 p-2">
-        {rules.slice(0, visible).map((r, i) => (
-          <div
-            key={`r-${r.type}-${r.value}-${i}`}
+    <Accordion type="single" collapsible defaultValue={defaultValue}>
+      {groups.map((g, idx) => {
+        const allowN = g.rules.filter((r) => r.type === "allow").length;
+        const disallowN = g.rules.filter((r) => r.type === "disallow").length;
+        // neutral group styling, no left accent color
+        return (
+          <AccordionItem
+            key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
+            value={`g-${idx}`}
             className={cn(
-              "flex items-center justify-between gap-2 rounded-md border px-2 py-1 font-mono text-xs",
-              r.type === "allow"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                : r.type === "disallow"
-                  ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+              "my-1 rounded-md border border-input bg-background/30",
             )}
           >
-            <span className="truncate">
-              <strong className="uppercase">
-                {r.type === "crawlDelay" ? "crawl-delay" : r.type}
-              </strong>
-              : {highlight(r.value, highlightQuery)}
-            </span>
-            <CopyButton value={r.value} />
-          </div>
-        ))}
-        {more > 0 ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="self-start text-xs"
-            onClick={() => setVisible((v) => v + 6)}
-          >
-            Show {more > 6 ? 6 : more} more
-          </Button>
-        ) : null}
-      </div>
+            <AccordionTrigger className="group/acc px-2 py-2 hover:no-underline [&>svg]:hidden">
+              <div className="flex w-full items-center justify-between">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/acc:rotate-90" />
+                  {g.userAgents.map((ua) => (
+                    <span
+                      key={ua}
+                      className="rounded bg-muted px-1.5 py-0.5 text-[10px]"
+                    >
+                      {ua}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {allowN} allow · {disallowN} disallow
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-0">
+              <GroupContent
+                rules={g.rules}
+                query={query}
+                highlight={highlight}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
+    </Accordion>
+  );
+}
+
+function GroupContent({
+  rules,
+  query,
+  highlight,
+}: {
+  rules: { type: "allow" | "disallow" | "crawlDelay"; value: string }[];
+  query: string;
+  highlight: (text: string, q: string) => React.ReactNode;
+}) {
+  const [visible, setVisible] = React.useState(6);
+  const total = rules.length;
+  const show = rules.slice(0, visible);
+  const more = total - visible;
+  return (
+    <div className="flex flex-col gap-1 p-2">
+      {show.map((r, i) => (
+        <RuleRow
+          key={`r-${r.type}-${r.value}-${i}`}
+          rule={r}
+          query={query}
+          highlight={highlight}
+        />
+      ))}
+      {more > 0 ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="self-start text-xs"
+          onClick={() => setVisible((v) => v + 6)}
+        >
+          Show {more > 6 ? 6 : more} more
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function RuleRow({
+  rule,
+  query,
+  highlight,
+}: {
+  rule: { type: "allow" | "disallow" | "crawlDelay"; value: string };
+  query: string;
+  highlight: (text: string, q: string) => React.ReactNode;
+}) {
+  const dot =
+    rule.type === "allow"
+      ? "bg-emerald-500"
+      : rule.type === "disallow"
+        ? "bg-rose-500"
+        : "bg-amber-500";
+  return (
+    <div className="group flex items-center gap-3 rounded-md border border-input px-2 py-1 font-mono text-xs">
+      <span
+        className={cn("inline-block size-1.5 rounded-full", dot)}
+        aria-hidden="true"
+      />
+      <span className="truncate">{highlight(rule.value, query)}</span>
     </div>
   );
 }

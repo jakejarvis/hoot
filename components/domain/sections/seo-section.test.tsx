@@ -213,10 +213,25 @@ describe("SeoSection RobotsSummary", () => {
       screen.getByText(/1 allows, 1 disallows, 1 sitemaps/i),
     ).toBeInTheDocument();
 
-    // Filter to Disallow only (label now includes count)
+    // Filter to Disallow only (label includes count)
     await userEvent.click(screen.getByRole("button", { name: /Disallow/i }));
     // Expect only disallow entries rendered (simpler: path text present)
     expect(screen.getByText(/\/private/i)).toBeInTheDocument();
+  });
+
+  it("opens only wildcard group by default", () => {
+    const data = buildSeoData();
+    render(
+      <SeoSection
+        data={data}
+        isLoading={false}
+        isError={false}
+        onRetryAction={() => {}}
+      />,
+    );
+    // Wildcard group badge should be present, and at least one rule visible
+    expect(screen.getAllByText(/^\*$/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/\//)).toBeInTheDocument();
   });
 
   it("handles missing robots and retry action", async () => {
