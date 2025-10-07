@@ -87,7 +87,7 @@ export function SeoSection({
           <Separator />
 
           <Tabs defaultValue="x">
-            <TabsList className="h-auto w-full gap-1 md:justify-start">
+            <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 md:justify-start">
               <TabsTrigger value="x" className="h-9 flex-1 px-2 py-1.5">
                 <TwitterIcon
                   className="md:!h-3.5 md:!w-3.5 h-4 w-4"
