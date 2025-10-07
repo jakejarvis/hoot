@@ -208,13 +208,13 @@ describe("SeoSection RobotsSummary", () => {
     const link = screen.getByRole("link", { name: /open robots\.txt/i });
     expect(link).toHaveAttribute("href", "https://example.com/robots.txt");
 
-    // Counts
+    // Counts line under header
     expect(
       screen.getByText(/1 allows, 1 disallows, 1 sitemaps/i),
     ).toBeInTheDocument();
 
-    // Filter to Disallow only
-    await userEvent.click(screen.getByRole("button", { name: "Disallow" }));
+    // Filter to Disallow only (label now includes count)
+    await userEvent.click(screen.getByRole("button", { name: /Disallow/i }));
     // Expect only disallow entries rendered (simpler: path text present)
     expect(screen.getByText(/\/private/i)).toBeInTheDocument();
   });
