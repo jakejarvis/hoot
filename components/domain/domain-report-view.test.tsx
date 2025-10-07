@@ -114,13 +114,6 @@ describe("DomainReportView", () => {
         refetch: vi.fn(),
       },
     };
-    (mockQueries as DomainQueriesMock).seo = {
-      isLoading: false,
-      isFetching: false,
-      data: null,
-      isError: false,
-      refetch: vi.fn(),
-    };
     render(<DomainReportView domain="example.com" />);
     expect(screen.getByText("example.com")).toBeInTheDocument();
     // Section titles exist (match exact main titles to avoid label collisions)
@@ -177,13 +170,6 @@ describe("DomainReportView", () => {
         refetch: vi.fn(),
       },
     };
-    (mockQueries as DomainQueriesMock).seo = {
-      isLoading: false,
-      isFetching: false,
-      data: null,
-      isError: false,
-      refetch: vi.fn(),
-    };
     render(<DomainReportView domain="loading.com" />);
     const exportBtn = screen.getByRole("button", { name: /Export/i });
     expect(exportBtn).toBeDisabled();
@@ -231,13 +217,6 @@ describe("DomainReportView", () => {
         isError: false,
         refetch: vi.fn(),
       },
-    };
-    (mockQueries as DomainQueriesMock).seo = {
-      isLoading: false,
-      isFetching: false,
-      data: null,
-      isError: false,
-      refetch: vi.fn(),
     };
     render(<DomainReportView domain="errors.com" />);
     const exportBtn = screen.getByRole("button", { name: /Export/i });

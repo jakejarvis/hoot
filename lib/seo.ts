@@ -26,7 +26,8 @@ export function sanitizeText(input: unknown): string {
     }
     res += out[i] as string;
   }
-  return res;
+  // Strip invisible formatting chars (ZWSP, bidi marks, BOM)
+  return res.replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "");
 }
 
 export function resolveUrlMaybe(
@@ -59,14 +60,22 @@ export function parseHtmlMeta(html: string, finalUrl: string): SeoMeta {
     type: pickMetaAttr($, "property", "og:type"),
     url: pickMetaAttr($, "property", "og:url"),
     siteName: pickMetaAttr($, "property", "og:site_name"),
-    images: collectMetaMulti($, "property", "og:image"),
+    images: Array.from(
+      new Set([
+        ...collectMetaMulti($, "property", "og:image"),
+        ...collectMetaMulti($, "property", "og:image:url"),
+        ...collectMetaMulti($, "property", "og:image:secure_url"),
+      ]),
+    ),
   };
 
   const tw: TwitterMeta = {
     card: pickMetaAttr($, "name", "twitter:card"),
     title: pickMetaAttr($, "name", "twitter:title"),
     description: pickMetaAttr($, "name", "twitter:description"),
-    image: pickMetaAttr($, "name", "twitter:image"),
+    image:
+      pickMetaAttr($, "name", "twitter:image") ??
+      pickMetaAttr($, "name", "twitter:image:src"),
   };
 
   const general: GeneralMeta = {
@@ -152,15 +161,20 @@ export function parseRobotsTxt(text: string): RobotsTxt {
 
   for (const rawLine of lines) {
     const line = rawLine.split("#")[0]?.trim() ?? "";
-    if (line === "") continue;
+    if (line === "") {
+      // Blank line separates groups in common parsers
+      flushGroup();
+      continue;
+    }
     const idx = line.indexOf(":");
     if (idx <= 0) continue;
     const key = line.slice(0, idx).trim().toLowerCase();
     const value = sanitizeText(line.slice(idx + 1));
 
     if (key === "user-agent") {
-      if (currentRules.length > 0) flushGroup();
-      currentAgents.push(value);
+      // Start a new group if we already collected rules; consecutive UA lines share the same group
+      if (currentAgents.length > 0 && currentRules.length > 0) flushGroup();
+      if (value) currentAgents.push(value);
       continue;
     }
     if (key === "allow") {
@@ -176,7 +190,7 @@ export function parseRobotsTxt(text: string): RobotsTxt {
       continue;
     }
     if (key === "sitemap") {
-      sitemaps.push(value);
+      if (value) sitemaps.push(value);
     }
   }
   flushGroup();

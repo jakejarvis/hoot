@@ -71,44 +71,44 @@ export function SocialPreview({
           </div>
         </div>
       );
-    }
-
-    // Large (summary_large_image) layout
-    card = (
-      <div className="overflow-hidden rounded-2xl border border-[#eff3f4] bg-white text-black dark:border-[#2f3336] dark:bg-black dark:text-white">
-        <div className="relative w-full overflow-hidden bg-[#f1f5f9] dark:bg-[#0f1419]">
-          <div className="aspect-[16/9] min-h-[160px] w-full">
-            {image ? (
-              <Image
-                src={image}
-                alt="Preview image"
-                width={1200}
-                height={675}
-                className="h-full w-full object-cover"
-                unoptimized
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-[#64748b] text-[12px] dark:text-[#8b98a5]">
-                No image
+    } else {
+      // Large (summary_large_image) layout
+      card = (
+        <div className="overflow-hidden rounded-2xl border border-[#eff3f4] bg-white text-black dark:border-[#2f3336] dark:bg-black dark:text-white">
+          <div className="relative w-full overflow-hidden bg-[#f1f5f9] dark:bg-[#0f1419]">
+            <div className="aspect-[16/9] min-h-[160px] w-full">
+              {image ? (
+                <Image
+                  src={image}
+                  alt="Preview image"
+                  width={1200}
+                  height={675}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[#64748b] text-[12px] dark:text-[#8b98a5]">
+                  No image
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="p-3">
+            <div className="truncate text-[#536471] text-[11px] leading-4 dark:text-[#8b98a5]">
+              {hostname}
+            </div>
+            <div className="mt-0.5 line-clamp-2 font-semibold text-[15px] leading-5">
+              {title || hostname}
+            </div>
+            {description && (
+              <div className="mt-0.5 line-clamp-2 text-[#536471] text-[13px] leading-5 dark:text-[#8b98a5]">
+                {description}
               </div>
             )}
           </div>
         </div>
-        <div className="p-3">
-          <div className="truncate text-[#536471] text-[11px] leading-4 dark:text-[#8b98a5]">
-            {hostname}
-          </div>
-          <div className="mt-0.5 line-clamp-2 font-semibold text-[15px] leading-5">
-            {title || hostname}
-          </div>
-          {description && (
-            <div className="mt-0.5 line-clamp-2 text-[#536471] text-[13px] leading-5 dark:text-[#8b98a5]">
-              {description}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+      );
+    }
   }
 
   if (provider === "facebook") {

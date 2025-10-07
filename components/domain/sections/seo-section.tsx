@@ -202,7 +202,10 @@ function RobotsSummary({
   robots: SeoResponse["robots"];
   finalUrl: string | null;
 }) {
-  const has = !!robots && robots.fetched && robots.groups.length > 0;
+  const has =
+    !!robots &&
+    robots.fetched &&
+    ((robots.groups?.length ?? 0) > 0 || (robots.sitemaps?.length ?? 0) > 0);
 
   const counts = React.useMemo(() => {
     const disallows =
