@@ -69,6 +69,7 @@
 
   /* Section accent glow (light) */
   --glow-blue: radial-gradient(closest-side, oklch(0.94 0.1 230), transparent);
+  --glow-cyan: radial-gradient(closest-side, oklch(0.92 0.12 200), transparent);
   --glow-purple: radial-gradient(
     closest-side,
     oklch(0.96 0.1 310),
@@ -123,6 +124,7 @@
 
   /* Section accent glow (dark) */
   --glow-blue: radial-gradient(closest-side, oklch(0.82 0.08 230), transparent);
+  --glow-cyan: radial-gradient(closest-side, oklch(0.8 0.12 200), transparent);
   --glow-purple: radial-gradient(
     closest-side,
     oklch(0.78 0.1 310),
@@ -201,6 +203,9 @@
   }
   [data-accent="blue"] .accent-glow {
     --section-accent-glow: var(--glow-blue);
+  }
+  [data-accent="cyan"] .accent-glow {
+    --section-accent-glow: var(--glow-cyan);
   }
   [data-accent="purple"] .accent-glow {
     --section-accent-glow: var(--glow-purple);

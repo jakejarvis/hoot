@@ -35,6 +35,7 @@
     "@upstash/redis": "^1.35.5",
     "@vercel/analytics": "^1.5.0",
     "@vercel/functions": "^3.1.1",
+    "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

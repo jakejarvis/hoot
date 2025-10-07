@@ -11,6 +11,7 @@ import { DnsRecordsSection } from "@/components/domain/sections/dns-records-sect
 import { HeadersSection } from "@/components/domain/sections/headers-section";
 import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
 import { RegistrationSection } from "@/components/domain/sections/registration-section";
+import { SeoSection } from "@/components/domain/sections/seo-section";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -23,7 +24,7 @@ import { captureClient } from "@/lib/analytics/client";
 // no longer need SECTION_SLUGS now that accordions are removed
 
 export function DomainReportView({ domain }: { domain: string }) {
-  const { registration, dns, hosting, certs, headers } =
+  const { registration, dns, hosting, certs, headers, seo } =
     useDomainQueries(domain);
   // TTLs are always shown now; preference removed
 
@@ -41,10 +42,12 @@ export function DomainReportView({ domain }: { domain: string }) {
       hosting.isLoading ||
       certs.isLoading ||
       headers.isLoading ||
+      seo.isLoading ||
       dns.isFetching ||
       hosting.isFetching ||
       certs.isFetching ||
-      headers.isFetching);
+      headers.isFetching ||
+      seo.isFetching);
 
   const handleExportJson = () => {
     captureClient("export_json_clicked", { domain });
@@ -54,6 +57,7 @@ export function DomainReportView({ domain }: { domain: string }) {
       hosting: hosting.data,
       certificates: certs.data,
       headers: headers.data,
+      seo: seo.data,
     });
   };
 
@@ -175,6 +179,19 @@ export function DomainReportView({ domain }: { domain: string }) {
               section: "headers",
             });
             headers.refetch();
+          }}
+        />
+
+        <SeoSection
+          data={seo.data || null}
+          isLoading={seo.isLoading}
+          isError={!!seo.isError}
+          onRetryAction={() => {
+            captureClient("section_refetch_clicked", {
+              domain,
+              section: "seo",
+            });
+            seo.refetch();
           }}
         />
       </div>

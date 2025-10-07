@@ -73,11 +73,26 @@ export function useDomainQueries(domain: string) {
     ),
   );
 
+  const seo = useQuery(
+    trpc.domain.seo.queryOptions(
+      { domain },
+      {
+        enabled: registration.data?.isRegistered,
+        staleTime: 6 * 60 * 60_000,
+        placeholderData: (prev) => prev,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
+    ),
+  );
+
   return {
     registration,
     dns,
     hosting,
     certs,
     headers,
+    seo,
   };
 }

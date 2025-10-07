@@ -30,7 +30,7 @@ export function Section({
   help?: string;
   icon?: React.ElementType;
   slug?: string;
-  accent?: "blue" | "purple" | "green" | "orange" | "pink" | "slate";
+  accent?: "blue" | "purple" | "green" | "orange" | "pink" | "cyan" | "slate";
   isLoading?: boolean;
   isError?: boolean;
   children?: React.ReactNode;

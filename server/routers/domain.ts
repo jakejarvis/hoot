@@ -7,6 +7,7 @@ import {
   HostingSchema,
   HttpHeadersSchema,
   RegistrationSchema,
+  SeoResponseSchema,
 } from "@/lib/schemas";
 import { resolveAll } from "@/server/services/dns";
 import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";
@@ -14,6 +15,7 @@ import { probeHeaders } from "@/server/services/headers";
 import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
+import { getSeo } from "@/server/services/seo";
 import { getCertificates } from "@/server/services/tls";
 import { createTRPCRouter, publicProcedure } from "@/trpc/init";
 
@@ -46,6 +48,10 @@ export const domainRouter = createTRPCRouter({
     .input(domainInput)
     .output(HttpHeadersSchema)
     .query(({ input }) => probeHeaders(input.domain)),
+  seo: publicProcedure
+    .input(domainInput)
+    .output(SeoResponseSchema)
+    .query(({ input }) => getSeo(input.domain)),
   favicon: publicProcedure
     .input(domainInput)
     .query(({ input }) => getOrCreateFaviconBlobUrl(input.domain)),

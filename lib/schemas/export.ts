@@ -3,6 +3,7 @@ import { DnsRecordSchema, DnsResolverSchema } from "./dns";
 import { HostingSchema } from "./hosting";
 import { HttpHeadersSchema } from "./http";
 import { RegistrationSchema } from "./registration";
+import { SeoResponseSchema } from "./seo";
 import { CertificateSchema } from "./tls";
 
 export const DomainExportSchema = z.object({
@@ -40,6 +41,7 @@ export const DomainExportSchema = z.object({
     )
     .nullish(),
   headers: HttpHeadersSchema.nullish(),
+  seo: SeoResponseSchema.nullish(),
 });
 
 export type DomainExport = z.infer<typeof DomainExportSchema>;

@@ -1,6 +1,19 @@
-import { Globe, HardDrive, List, ShieldCheck, User } from "lucide-react";
+import {
+  Globe,
+  HardDrive,
+  List,
+  Share2,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 
-export type SectionAccent = "blue" | "purple" | "green" | "orange" | "pink";
+export type SectionAccent =
+  | "blue"
+  | "purple"
+  | "green"
+  | "orange"
+  | "pink"
+  | "cyan";
 
 type SectionDef = {
   title: string;
@@ -53,6 +66,14 @@ export const SECTION_DEFS: Record<string, SectionDef> = {
     help: "Headers include server info and security/caching directives returned by a site.",
     slug: "headers",
   },
+  seo: {
+    title: "SEO & Social",
+    accent: "cyan" as SectionAccent,
+    icon: Share2,
+    description: "Meta tags, previews, robots.txt",
+    help: "Open Graph, Twitter, and standard meta inform social previews and search engines.",
+    slug: "seo",
+  },
 } as const;
 
 export type SectionKey = keyof typeof SECTION_DEFS;
@@ -64,6 +85,7 @@ export const SECTION_ORDER: readonly SectionKey[] = [
   "dns",
   "certificates",
   "headers",
+  "seo",
 ] as const;
 
 // Convenient list of stable slugs in visual order for Accordion defaultValue
