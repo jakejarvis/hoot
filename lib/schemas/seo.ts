@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+export const SocialPreviewProviderSchema = z.enum([
+  "twitter",
+  "facebook",
+  "linkedin",
+  "discord",
+  "slack",
+]);
+
+export const SocialPreviewVariantSchema = z.enum(["compact", "large"]);
+
 export const RobotsRuleSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("allow"), value: z.string() }),
   z.object({ type: z.literal("disallow"), value: z.string() }),
@@ -67,4 +77,14 @@ export const SeoResponseSchema = z.object({
     .optional(),
 });
 
+export type SocialPreviewProvider = z.infer<typeof SocialPreviewProviderSchema>;
+export type SocialPreviewVariant = z.infer<typeof SocialPreviewVariantSchema>;
+export type RobotsRule = z.infer<typeof RobotsRuleSchema>;
+export type RobotsGroup = z.infer<typeof RobotsGroupSchema>;
+export type RobotsTxt = z.infer<typeof RobotsTxtSchema>;
+export type OpenGraphMeta = z.infer<typeof OpenGraphMetaSchema>;
+export type TwitterMeta = z.infer<typeof TwitterMetaSchema>;
+export type GeneralMeta = z.infer<typeof GeneralMetaSchema>;
+export type SeoMeta = z.infer<typeof SeoMetaSchema>;
+export type SeoPreview = z.infer<typeof SeoPreviewSchema>;
 export type SeoResponse = z.infer<typeof SeoResponseSchema>;

@@ -1,56 +1,14 @@
 import * as cheerio from "cheerio";
-
-export type OpenGraphMeta = {
-  title?: string;
-  description?: string;
-  type?: string;
-  url?: string;
-  siteName?: string;
-  images: string[];
-};
-
-export type TwitterMeta = {
-  card?: string;
-  title?: string;
-  description?: string;
-  image?: string;
-};
-
-export type GeneralMeta = {
-  title?: string;
-  description?: string;
-  canonical?: string;
-  robots?: string;
-};
-
-export type SeoMeta = {
-  openGraph: OpenGraphMeta;
-  twitter: TwitterMeta;
-  general: GeneralMeta;
-};
-
-export type RobotsRule =
-  | { type: "allow"; value: string }
-  | { type: "disallow"; value: string }
-  | { type: "crawlDelay"; value: string };
-
-export type RobotsGroup = {
-  userAgents: string[];
-  rules: RobotsRule[];
-};
-
-export type RobotsTxt = {
-  fetched: boolean;
-  groups: RobotsGroup[];
-  sitemaps: string[];
-};
-
-export type SeoPreview = {
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  canonicalUrl: string;
-};
+import type {
+  GeneralMeta,
+  OpenGraphMeta,
+  RobotsGroup,
+  RobotsRule,
+  RobotsTxt,
+  SeoMeta,
+  SeoPreview,
+  TwitterMeta,
+} from "@/lib/schemas";
 
 export function sanitizeText(input: unknown): string {
   let out = String(input ?? "");

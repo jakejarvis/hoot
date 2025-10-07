@@ -16,8 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// tooltips removed for tabs
-import type { SeoResponse } from "@/lib/schemas";
+import type { SeoResponse, SocialPreviewProvider } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +59,10 @@ export function SeoSection({
           ? "large"
           : "compact";
 
+  // Single SocialPreview approach: control the active tab and render one preview.
+  const [selectedTab, setSelectedTab] =
+    React.useState<SocialPreviewProvider>("twitter");
+
   return (
     <Section
       title={def.title}
@@ -86,9 +89,12 @@ export function SeoSection({
 
           <Separator />
 
-          <Tabs defaultValue="x">
+          <Tabs
+            value={selectedTab}
+            onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}
+          >
             <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 md:justify-start">
-              <TabsTrigger value="x" className="h-9 flex-1 px-2 py-1.5">
+              <TabsTrigger value="twitter" className="h-9 flex-1 px-2 py-1.5">
                 <TwitterIcon
                   className="md:!h-3.5 md:!w-3.5 h-4 w-4"
                   aria-hidden="true"
@@ -125,59 +131,18 @@ export function SeoSection({
               </TabsTrigger>
             </TabsList>
             <div className="mx-auto w-full max-w-[480px] md:max-w-[640px]">
-              <TabsContent value="x" className="grid place-items-center">
+              <TabsContent
+                value={selectedTab}
+                className="grid place-items-center"
+              >
                 {data?.preview ? (
                   <SocialPreview
-                    provider="twitter"
-                    title={data.preview.title ?? "No title"}
-                    description={data.preview.description ?? "No description"}
-                    image={data.preview.image}
-                    url={data.preview.canonicalUrl}
-                    variant={xVariant}
-                  />
-                ) : null}
-              </TabsContent>
-              <TabsContent value="facebook" className="grid place-items-center">
-                {data?.preview ? (
-                  <SocialPreview
-                    provider="facebook"
+                    provider={selectedTab}
                     title={data.preview.title}
                     description={data.preview.description}
                     image={data.preview.image}
                     url={data.preview.canonicalUrl}
-                  />
-                ) : null}
-              </TabsContent>
-              <TabsContent value="linkedin" className="grid place-items-center">
-                {data?.preview ? (
-                  <SocialPreview
-                    provider="linkedin"
-                    title={data.preview.title}
-                    description={data.preview.description}
-                    image={data.preview.image}
-                    url={data.preview.canonicalUrl}
-                  />
-                ) : null}
-              </TabsContent>
-              <TabsContent value="discord" className="grid place-items-center">
-                {data?.preview ? (
-                  <SocialPreview
-                    provider="discord"
-                    title={data.preview.title}
-                    description={data.preview.description}
-                    image={data.preview.image}
-                    url={data.preview.canonicalUrl}
-                  />
-                ) : null}
-              </TabsContent>
-              <TabsContent value="slack" className="grid place-items-center">
-                {data?.preview ? (
-                  <SocialPreview
-                    provider="slack"
-                    title={data.preview.title}
-                    description={data.preview.description}
-                    image={data.preview.image}
-                    url={data.preview.canonicalUrl}
+                    variant={selectedTab === "twitter" ? xVariant : undefined}
                   />
                 ) : null}
               </TabsContent>

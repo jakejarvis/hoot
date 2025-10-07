@@ -1,15 +1,16 @@
 import Image from "next/image";
-
-type Provider = "twitter" | "facebook" | "linkedin" | "slack" | "discord";
-type Variant = "compact" | "large";
+import type {
+  SocialPreviewProvider,
+  SocialPreviewVariant,
+} from "@/lib/schemas";
 
 export type SocialPreviewProps = {
-  provider: Provider;
+  provider: SocialPreviewProvider;
   title: string | null;
   description: string | null;
   image: string | null;
   url: string;
-  variant?: Variant;
+  variant?: SocialPreviewVariant;
 };
 
 function getHostname(url: string): string {
