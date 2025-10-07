@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ExternalLink, Plus } from "lucide-react";
+import { motion } from "motion/react";
 import * as React from "react";
 import {
   DiscordIcon,
@@ -9,7 +10,6 @@ import {
   SlackIcon,
   TwitterIcon,
 } from "@/components/brand-icons";
-import { CopyButton } from "@/components/domain/copy-button";
 import { KeyValue } from "@/components/domain/key-value";
 import { Section } from "@/components/domain/section";
 import { SocialPreview } from "@/components/social-preview";
@@ -21,7 +21,10 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -277,7 +280,7 @@ function RobotsSummary({
                 Clear
               </Button>
             ) : null}
-            <ButtonGroup className="text-xs">
+            <ButtonGroup className="">
               <Button
                 type="button"
                 variant={only === "all" ? "outline" : "ghost"}
@@ -287,6 +290,7 @@ function RobotsSummary({
               >
                 All
               </Button>
+              <ButtonGroupSeparator />
               <Button
                 type="button"
                 variant={only === "allow" ? "outline" : "ghost"}
@@ -296,6 +300,7 @@ function RobotsSummary({
               >
                 Allow ({counts.allows})
               </Button>
+              <ButtonGroupSeparator />
               <Button
                 type="button"
                 variant={only === "disallow" ? "outline" : "ghost"}
@@ -379,7 +384,7 @@ function GroupsAccordion({
             key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
             value={`g-${idx}`}
             className={cn(
-              "my-1 rounded-md border border-input bg-background/30",
+              "my-1 rounded-lg border border-input bg-background/30 last:border",
             )}
           >
             <AccordionTrigger className="group/acc px-2 py-2 hover:no-underline [&>svg]:hidden">
@@ -425,28 +430,57 @@ function GroupContent({
 }) {
   const [visible, setVisible] = React.useState(6);
   const total = rules.length;
-  const show = rules.slice(0, visible);
   const more = total - visible;
+  const prevVisibleRef = React.useRef(visible);
+  const prev = Math.min(prevVisibleRef.current, visible);
+  const existing = rules.slice(0, prev);
+  const added = rules.slice(prev, Math.min(visible, total));
+  React.useEffect(() => {
+    // When rules change significantly, sync the previous visible count
+    prevVisibleRef.current = Math.min(visible, rules.length);
+  }, [visible, rules]);
   return (
     <div className="flex flex-col gap-1 p-2">
-      {show.map((r, i) => (
+      {existing.map((r, i) => (
         <RuleRow
-          key={`r-${r.type}-${r.value}-${i}`}
+          key={`r-${r.type}-${r.value}-existing-${i}`}
           rule={r}
           query={query}
           highlight={highlight}
         />
       ))}
-      {more > 0 ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="self-start text-xs"
-          onClick={() => setVisible((v) => v + 6)}
+      {added.length > 0 ? (
+        <motion.div
+          key={`added-${visible}`}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          style={{ overflow: "hidden" }}
+          className="flex flex-col gap-1"
         >
-          Show {more > 6 ? 6 : more} more
-        </Button>
+          {added.map((r, i) => (
+            <RuleRow
+              key={`r-${r.type}-${r.value}-added-${i}`}
+              rule={r}
+              query={query}
+              highlight={highlight}
+            />
+          ))}
+        </motion.div>
+      ) : null}
+      {more > 0 ? (
+        <div className="mt-4 flex justify-center">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="gap-2 px-3 text-[13px]"
+            onClick={() => setVisible(total)}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            <span>Show {more} more</span>
+          </Button>
+        </div>
       ) : null}
     </div>
   );
@@ -468,7 +502,7 @@ function RuleRow({
         ? "bg-rose-500"
         : "bg-amber-500";
   return (
-    <div className="group flex items-center gap-3 rounded-md border border-input px-2 py-1 font-mono text-xs">
+    <div className="group flex items-center gap-3 rounded-lg border border-input px-2 py-1 font-mono text-xs">
       <span
         className={cn("inline-block size-1.5 rounded-full", dot)}
         aria-hidden="true"
@@ -488,38 +522,74 @@ function SitemapsList({ items, query }: { items: string[]; query: string }) {
     [items, query],
   );
   const total = filtered.length;
-  const show = filtered.slice(0, visible);
   const more = total - visible;
+  const prevVisibleRef = React.useRef(visible);
+  const prev = Math.min(prevVisibleRef.current, visible);
+  const existing = filtered.slice(0, prev);
+  const added = filtered.slice(prev, Math.min(visible, total));
+  React.useEffect(() => {
+    prevVisibleRef.current = Math.min(visible, filtered.length);
+  }, [visible, filtered]);
   return (
     <div className="space-y-1 pt-1">
       <div className="text-muted-foreground text-xs">Sitemaps</div>
       <div className="flex flex-col gap-1">
-        {show.map((u) => (
+        {existing.map((u) => (
           <div
-            key={`sm-${u}`}
-            className="flex items-center justify-between gap-2 rounded border bg-background/40 px-2 py-1"
+            key={`sm-ex-${u}`}
+            className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
           >
             <a
-              className="truncate text-xs underline"
+              className="flex items-center gap-1.5 truncate text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
               href={u}
               target="_blank"
               rel="noreferrer"
             >
               {u}
+              <ExternalLink className="size-3" />
             </a>
-            <CopyButton value={u} />
           </div>
         ))}
-        {more > 0 ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="self-start text-xs"
-            onClick={() => setVisible((v) => v + 4)}
+        {added.length > 0 ? (
+          <motion.div
+            key={`sitemaps-added-${visible}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            style={{ overflow: "hidden" }}
+            className="flex flex-col gap-1"
           >
-            Show {more > 4 ? 4 : more} more
-          </Button>
+            {added.map((u) => (
+              <div
+                key={`sm-add-${u}`}
+                className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
+              >
+                <a
+                  className="flex items-center gap-1.5 truncate text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
+                  href={u}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {u}
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+            ))}
+          </motion.div>
+        ) : null}
+        {more > 0 ? (
+          <div className="mt-4 flex justify-center">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="gap-2 px-3 text-[13px]"
+              onClick={() => setVisible(total)}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              <span>Show {more} more</span>
+            </Button>
+          </div>
         ) : null}
       </div>
     </div>
