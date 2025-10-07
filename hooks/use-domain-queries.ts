@@ -22,7 +22,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -36,7 +36,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -50,7 +50,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -64,7 +64,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -78,7 +78,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 6 * 60 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,

@@ -10,7 +10,7 @@ import {
   uploadImage,
 } from "@/lib/storage";
 
-const HTML_TTL_SECONDS = 6 * 60 * 60; // 6 hours
+const HTML_TTL_SECONDS = 1 * 60 * 60; // 1 hour
 const ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;

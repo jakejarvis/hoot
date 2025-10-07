@@ -95,7 +95,7 @@ export function SeoSection({
 
           <div className="space-y-3">
             <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-              Social Previews
+              Open Graph
             </div>
             <Tabs
               value={selectedTab}
@@ -270,7 +270,7 @@ function RobotsSummary({
             href={link}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 leading-none"
+            className="inline-flex items-center gap-1 leading-none"
           >
             robots.txt
             <ExternalLink className="size-3" />
@@ -285,7 +285,7 @@ function RobotsSummary({
           <div className="flex flex-row items-center gap-2">
             <InputGroup>
               <InputGroupInput
-                placeholder="Filter rules or sitemaps…"
+                placeholder="Filter rules…"
                 value={query}
                 onChange={(e) => setQuery(e.currentTarget.value)}
                 aria-label="Filter robots rules"
@@ -306,6 +306,7 @@ function RobotsSummary({
                 </InputGroupAddon>
               ) : null}
             </InputGroup>
+
             <ButtonGroup>
               <Button
                 type="button"
