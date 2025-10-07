@@ -368,7 +368,7 @@ function RobotsSummary({
           {robots?.sitemaps?.length ? (
             <>
               <Separator />
-              <SitemapsList items={robots.sitemaps} query={query} />
+              <SitemapsList items={robots.sitemaps} />
             </>
           ) : null}
         </div>
@@ -405,6 +405,59 @@ function GroupsAccordion({
     [groups],
   );
   const defaultValue = defaultIdx >= 0 ? `g-${defaultIdx}` : undefined;
+  const openValues = React.useMemo(
+    () => (query ? groups.map((_, idx) => `g-${idx}`) : undefined),
+    [groups, query],
+  );
+  if (query) {
+    return (
+      <Accordion type="multiple" value={openValues as string[]}>
+        {groups.map((g, idx) => {
+          const allowN = g.rules.filter((r) => r.type === "allow").length;
+          const disallowN = g.rules.filter((r) => r.type === "disallow").length;
+          // neutral group styling, no left accent color
+          return (
+            <AccordionItem
+              key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
+              value={`g-${idx}`}
+            >
+              <AccordionTrigger className="group/accordion py-2 hover:no-underline [&>svg]:hidden">
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
+                    {g.userAgents.map((ua) => (
+                      <span
+                        key={ua}
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-xs",
+                          ua === "*"
+                            ? "bg-accent-purple/18 text-accent-purple"
+                            : "bg-muted",
+                        )}
+                      >
+                        {ua === "*" ? "All" : ua}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {allowN} allow · {disallowN} disallow
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-0">
+                <GroupContent
+                  rules={g.rules}
+                  query={query}
+                  highlight={highlight}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+    );
+  }
+
   return (
     <Accordion type="single" collapsible defaultValue={defaultValue}>
       {groups.map((g, idx) => {
@@ -415,20 +468,22 @@ function GroupsAccordion({
           <AccordionItem
             key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
             value={`g-${idx}`}
-            className={cn(
-              "my-1 rounded-lg border border-input bg-background/30 last:border",
-            )}
           >
-            <AccordionTrigger className="group/acc px-2 py-2 hover:no-underline [&>svg]:hidden">
+            <AccordionTrigger className="group/accordion py-2 hover:no-underline [&>svg]:hidden">
               <div className="flex w-full items-center justify-between">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/acc:rotate-90" />
+                  <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
                   {g.userAgents.map((ua) => (
                     <span
                       key={ua}
-                      className="rounded bg-muted px-1.5 py-0.5 text-xs"
+                      className={cn(
+                        "rounded px-1.5 py-0.5 text-xs",
+                        ua === "*"
+                          ? "bg-accent-purple/18 text-accent-purple"
+                          : "bg-muted",
+                      )}
                     >
-                      {ua}
+                      {ua === "*" ? "All" : ua}
                     </span>
                   ))}
                 </div>
@@ -460,6 +515,7 @@ function GroupContent({
   query: string;
   highlight: (text: string, q: string) => React.ReactNode;
 }) {
+  const isSearching = query.trim().length > 0;
   const [visible, setVisible] = React.useState(6);
   const total = rules.length;
   const more = total - visible;
@@ -471,8 +527,22 @@ function GroupContent({
     // When rules change significantly, sync the previous visible count
     prevVisibleRef.current = Math.min(visible, rules.length);
   }, [visible, rules]);
+  if (isSearching) {
+    return (
+      <div className="flex flex-col gap-1.5 py-2">
+        {rules.map((r, i) => (
+          <RuleRow
+            key={`r-${r.type}-${r.value}-all-${i}`}
+            rule={r}
+            query={query}
+            highlight={highlight}
+          />
+        ))}
+      </div>
+    );
+  }
   return (
-    <div className="flex flex-col gap-1 p-2">
+    <div className="flex flex-col gap-1.5 py-2">
       {existing.map((r, i) => (
         <RuleRow
           key={`r-${r.type}-${r.value}-existing-${i}`}
@@ -534,7 +604,7 @@ function RuleRow({
         ? "bg-rose-500"
         : "bg-amber-500";
   return (
-    <div className="group flex items-center gap-3 rounded-lg border border-input px-2 py-1 font-mono text-xs">
+    <div className="group flex items-center gap-2 rounded-lg border border-input px-2.5 py-2 font-mono text-xs">
       <span
         className={cn("inline-block size-1.5 rounded-full", dot)}
         aria-hidden="true"
@@ -544,37 +614,30 @@ function RuleRow({
   );
 }
 
-function SitemapsList({ items, query }: { items: string[]; query: string }) {
+function SitemapsList({ items }: { items: string[] }) {
   const [visible, setVisible] = React.useState(2);
-  const filtered = React.useMemo(
-    () =>
-      items.filter((u) =>
-        query ? u.toLowerCase().includes(query.toLowerCase()) : true,
-      ),
-    [items, query],
-  );
-  const total = filtered.length;
+  const total = items.length;
   const more = total - visible;
   const prevVisibleRef = React.useRef(visible);
   const prev = Math.min(prevVisibleRef.current, visible);
-  const existing = filtered.slice(0, prev);
-  const added = filtered.slice(prev, Math.min(visible, total));
+  const existing = items.slice(0, prev);
+  const added = items.slice(prev, Math.min(visible, total));
   React.useEffect(() => {
-    prevVisibleRef.current = Math.min(visible, filtered.length);
-  }, [visible, filtered]);
+    prevVisibleRef.current = Math.min(visible, items.length);
+  }, [visible, items]);
   return (
     <div className="space-y-3">
       <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
         Sitemaps
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {existing.map((u) => (
           <div
             key={`sm-ex-${u}`}
             className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
           >
             <a
-              className="flex items-center gap-1.5 truncate text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
+              className="flex items-center gap-1.5 truncate font-medium text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
               href={u}
               target="_blank"
               rel="noreferrer"
@@ -599,7 +662,7 @@ function SitemapsList({ items, query }: { items: string[]; query: string }) {
                 className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
               >
                 <a
-                  className="flex items-center gap-1.5 truncate text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
+                  className="flex items-center gap-1.5 truncate font-medium text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
                   href={u}
                   target="_blank"
                   rel="noreferrer"
