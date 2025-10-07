@@ -1,4 +1,4 @@
-import { ShoppingBasket } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DomainUnregisteredStateProps {
@@ -31,11 +31,23 @@ export function DomainUnregisteredState({
             rel="noopener"
             aria-label="Register this domain"
           >
-            <ShoppingBasket />
+            <ShoppingCart />
             Until now?
           </a>
         </Button>
       </div>
+      <p className="mt-6 text-muted-foreground text-xs">
+        This is not an affiliate link, but it{" "}
+        <a
+          href="https://jarv.is/contact"
+          target="_blank"
+          rel="noopener"
+          className="text-foreground/85 underline underline-offset-2 hover:text-foreground/60"
+        >
+          might be
+        </a>{" "}
+        in the future.
+      </p>
     </div>
   );
 }
