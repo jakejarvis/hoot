@@ -15,11 +15,14 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
     "DNS records",
     "hosting",
     "email",
+    "SEO",
     "certificates",
     "headers",
     "servers",
     "IP addresses",
     "geolocation",
+    "sitemaps",
+    "meta tags",
   ];
 
   const [index, setIndex] = useState(0);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProviderRefSchema } from "./provider";
+import { ProviderRefSchema } from "../internal/provider";
 
 export const HostingSchema = z.object({
   hostingProvider: ProviderRefSchema,

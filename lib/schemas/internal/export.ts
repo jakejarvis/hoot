@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { DnsRecordSchema, DnsResolverSchema } from "./dns";
-import { HostingSchema } from "./hosting";
-import { HttpHeadersSchema } from "./http";
-import { RegistrationSchema } from "./registration";
-import { CertificateSchema } from "./tls";
+import { CertificateSchema } from "../domain/certificates";
+import { DnsRecordSchema, DnsResolverSchema } from "../domain/dns";
+import { HostingSchema } from "../domain/hosting";
+import { HttpHeadersSchema } from "../domain/http";
+import { RegistrationSchema } from "../domain/registration";
+import { SeoResponseSchema } from "../domain/seo";
 
 export const DomainExportSchema = z.object({
   domain: z.string(),
@@ -40,6 +41,7 @@ export const DomainExportSchema = z.object({
     )
     .nullish(),
   headers: HttpHeadersSchema.nullish(),
+  seo: SeoResponseSchema.nullish(),
 });
 
 export type DomainExport = z.infer<typeof DomainExportSchema>;

@@ -28,7 +28,7 @@ vi.mock("node:tls", async () => {
 });
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCertificates, parseAltNames, toName } from "./tls";
+import { getCertificates, parseAltNames, toName } from "./certificates";
 
 afterEach(() => {
   vi.restoreAllMocks();

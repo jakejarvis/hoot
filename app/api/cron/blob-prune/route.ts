@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { UTApi } from "uploadthing/server";
 import { ns, redis } from "@/lib/redis";
+import { StorageKindSchema } from "@/lib/schemas";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ export async function GET(req: Request) {
   const batch = 500;
   const now = Date.now();
 
-  for (const kind of ["favicon", "screenshot"]) {
+  for (const kind of StorageKindSchema.options) {
     // Drain due items in batches
     // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
     while (true) {

@@ -41,6 +41,13 @@ type DomainQueriesMock = {
     isError?: boolean;
     refetch: () => void;
   };
+  seo: {
+    isLoading: boolean;
+    isFetching?: boolean;
+    data?: unknown;
+    isError?: boolean;
+    refetch: () => void;
+  };
 };
 let mockQueries: DomainQueriesMock;
 vi.mock("@/hooks/use-domain-queries", () => ({
@@ -99,6 +106,13 @@ describe("DomainReportView", () => {
         isError: false,
         refetch: vi.fn(),
       },
+      seo: {
+        isLoading: false,
+        isFetching: false,
+        data: null,
+        isError: false,
+        refetch: vi.fn(),
+      },
     };
     render(<DomainReportView domain="example.com" />);
     expect(screen.getByText("example.com")).toBeInTheDocument();
@@ -148,6 +162,13 @@ describe("DomainReportView", () => {
         isError: false,
         refetch: vi.fn(),
       },
+      seo: {
+        isLoading: false,
+        isFetching: false,
+        data: null,
+        isError: false,
+        refetch: vi.fn(),
+      },
     };
     render(<DomainReportView domain="loading.com" />);
     const exportBtn = screen.getByRole("button", { name: /Export/i });
@@ -186,6 +207,13 @@ describe("DomainReportView", () => {
         isLoading: false,
         isFetching: false,
         data: [],
+        isError: false,
+        refetch: vi.fn(),
+      },
+      seo: {
+        isLoading: false,
+        isFetching: false,
+        data: null,
         isError: false,
         refetch: vi.fn(),
       },

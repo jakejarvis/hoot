@@ -22,7 +22,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -36,7 +36,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -50,7 +50,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -64,7 +64,21 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000,
+        staleTime: 30 * 60_000, // 30 minutes
+        placeholderData: (prev) => prev,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+      },
+    ),
+  );
+
+  const seo = useQuery(
+    trpc.domain.seo.queryOptions(
+      { domain },
+      {
+        enabled: registration.data?.isRegistered,
+        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -79,5 +93,6 @@ export function useDomainQueries(domain: string) {
     hosting,
     certs,
     headers,
+    seo,
   };
 }

@@ -14,6 +14,7 @@ beforeEach(() => {
   const set = global.__redisTestHelper.zsets;
   set.set("purge:favicon", new Map([["ut-key-f1", Date.now()]]));
   set.set("purge:screenshot", new Map([["ut-key-s1", Date.now()]]));
+  set.set("purge:social", new Map([["ut-key-so1", Date.now()]]));
 });
 
 import { GET } from "./route";
