@@ -80,8 +80,8 @@ export function RegistrationSection({
               suffix={
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex text-muted-foreground/80">
-                      <BadgeCheck className="!h-3.5 !w-3.5" />
+                    <span>
+                      <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="right">

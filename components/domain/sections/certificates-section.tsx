@@ -9,6 +9,7 @@ import { KeyValue } from "@/components/domain/key-value";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { KeyValueSkeleton } from "@/components/domain/skeletons";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -105,9 +106,13 @@ export function CertificatesSection({
                     return sans.length > 0 ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="select-none font-mono text-[11px] text-muted-foreground/80 underline underline-offset-2">
-                            +{sans.length}
-                          </span>
+                          <Badge
+                            variant="outline"
+                            className="select-none gap-0 border-muted-foreground/35 px-1.5 font-mono text-[11px] text-muted-foreground/85"
+                          >
+                            <span>+</span>
+                            <span className="px-[1px]">{sans.length}</span>
+                          </Badge>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
                           {sans.join(", ")}
@@ -190,7 +195,7 @@ export function CertificatesSection({
                             suffix={
                               c.caProvider?.name &&
                               c.caProvider.name !== "Unknown" ? (
-                                <span className="flex items-center text-[11px] text-muted-foreground leading-none">
+                                <span className="text-[11px] text-muted-foreground">
                                   {c.caProvider.name}
                                 </span>
                               ) : undefined

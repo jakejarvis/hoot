@@ -49,7 +49,7 @@ export function DnsRecordList({
             r.isCloudflare ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex">
+                  <span>
                     <Favicon domain="cloudflare.com" />
                   </span>
                 </TooltipTrigger>

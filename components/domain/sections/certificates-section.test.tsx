@@ -56,8 +56,11 @@ describe("CertificatesSection", () => {
         .getAllByText("example.com")
         .some((n) => n.tagName.toLowerCase() === "span"),
     ).toBe(true);
-    // SAN count excludes subject equal altName
-    expect(screen.getByText("+1")).toBeInTheDocument();
+    // SAN count excludes subject-equal altName; badge appears twice (raw + wrapped by trigger)
+    const sanBadges = screen.getAllByText(
+      (_, element) => (element?.textContent || "").replace(/\s+/g, "") === "+1",
+    );
+    expect(sanBadges.length).toBeGreaterThan(0);
     // shows CA annotation (may appear in value, tooltip, and suffix)
     expect(screen.getAllByText("Let's Encrypt").length).toBeGreaterThan(0);
     // shows CA favicon for issuer

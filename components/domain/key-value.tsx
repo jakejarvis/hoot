@@ -39,11 +39,11 @@ export function KeyValue({
           : "border-black/10 dark:border-white/10",
       )}
     >
-      <div className="min-w-0 space-y-1">
+      <div className="flex min-w-0 flex-col space-y-1.5">
         {label && (
           <div
             className={cn(
-              "text-[10px] uppercase tracking-[0.08em]",
+              "pt-1 text-[10px] uppercase leading-none tracking-[0.08em]",
               highlight
                 ? "text-purple-700/80 dark:text-purple-300/85"
                 : "text-foreground/75 dark:text-foreground/80",
@@ -52,16 +52,16 @@ export function KeyValue({
             {label}
           </div>
         )}
-        <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-foreground/95 leading-[1.2]">
+        <div className="inline-flex min-w-0 items-center gap-1.5 text-[13px] text-foreground/95">
           {leading ? (
-            <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+            <span className="h-4 w-4 rounded leading-none [&>img]:block [&>img]:h-full [&>img]:w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
               {leading}
             </span>
           ) : null}
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <span ref={valueRef} className="block min-w-0 flex-1 truncate">
+              <span ref={valueRef} className="min-w-0 flex-1 truncate">
                 {value}
               </span>
             </TooltipTrigger>
@@ -77,7 +77,7 @@ export function KeyValue({
           </Tooltip>
 
           {suffix ? (
-            <span className="inline-flex shrink-0 items-center [&_img]:block [&_img]:h-4 [&_img]:w-4 [&_svg]:block [&_svg]:h-4 [&_svg]:w-4">
+            <span className="leading-none [&_img]:block [&_img]:h-4 [&_img]:w-4 [&_span]:leading-none [&_svg]:block [&_svg]:h-4 [&_svg]:w-4">
               {suffix}
             </span>
           ) : null}

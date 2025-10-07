@@ -47,8 +47,9 @@ describe("DnsRecordList", () => {
 
     render(<DnsRecordList records={records} type="MX" />);
 
+    // KeyValue now renders the value span with classes: "min-w-0 flex-1 truncate"
     const items = Array.from(
-      document.querySelectorAll("span.truncate.flex-1.min-w-0.block"),
+      document.querySelectorAll("span.min-w-0.flex-1.truncate"),
     ).map((el) => (el as HTMLElement).textContent);
     expect(items).toEqual([
       "mx-a.example.com",
