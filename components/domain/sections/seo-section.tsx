@@ -54,6 +54,17 @@ export function SeoSection({
     { label: "Robots", value: data?.meta?.general.robots },
   ];
 
+  // Decide which X (Twitter) card variant to display based on meta tags.
+  const twitterCard = data?.meta?.twitter?.card?.toLowerCase();
+  const xVariant: "compact" | "large" =
+    twitterCard === "summary_large_image"
+      ? "large"
+      : twitterCard === "summary"
+        ? "compact"
+        : data?.preview?.image
+          ? "large"
+          : "compact";
+
   return (
     <Section
       title={def.title}
@@ -160,24 +171,14 @@ export function SeoSection({
             <div className="grow text-start">
               <TabsContent value="x">
                 {data?.preview ? (
-                  <div className="space-y-3">
-                    <SocialPreview
-                      provider="x"
-                      title={data.preview.title ?? "No title"}
-                      description={data.preview.description ?? "No description"}
-                      image={data.preview.image}
-                      url={data.preview.canonicalUrl}
-                      variant="large"
-                    />
-                    <SocialPreview
-                      provider="x"
-                      title={data.preview.title ?? "No title"}
-                      description={data.preview.description ?? "No description"}
-                      image={data.preview.image}
-                      url={data.preview.canonicalUrl}
-                      variant="compact"
-                    />
-                  </div>
+                  <SocialPreview
+                    provider="x"
+                    title={data.preview.title ?? "No title"}
+                    description={data.preview.description ?? "No description"}
+                    image={data.preview.image}
+                    url={data.preview.canonicalUrl}
+                    variant={xVariant}
+                  />
                 ) : null}
               </TabsContent>
               <TabsContent value="slack">
