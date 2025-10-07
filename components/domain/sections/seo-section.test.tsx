@@ -203,23 +203,29 @@ describe("SeoSection RobotsSummary", () => {
       />,
     );
 
-    // Found badge and link (scope to summary header)
+    // robots.txt link in header
     expect(screen.getAllByText(/^robots\.txt$/i).length).toBeGreaterThan(0);
-    const link = screen.getByRole("link", { name: /open robots\.txt/i });
+    const link = screen.getByRole("link", { name: /robots\.txt/i });
     expect(link).toHaveAttribute("href", "https://example.com/robots.txt");
 
-    // Counts line under header
+    // Counts displayed on filter buttons (exact label match)
     expect(
-      screen.getByText(/1 allows, 1 disallows, 1 sitemaps/i),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: /^Allow \(1\)$/i }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: /^Disallow \(1\)$/i }).length,
+    ).toBeGreaterThan(0);
 
-    // Filter to Disallow only (label includes count)
-    await userEvent.click(screen.getByRole("button", { name: /Disallow/i }));
+    // Filter to Disallow only (click the filter button labeled e.g. "Disallow (1)")
+    const disallowBtn = screen.getByRole("button", {
+      name: /^Disallow \(\d+\)$/i,
+    });
+    await userEvent.click(disallowBtn);
     // Expect only disallow entries rendered (simpler: path text present)
     expect(screen.getByText(/\/private/i)).toBeInTheDocument();
   });
 
-  it("opens only wildcard group by default", () => {
+  it("opens the wildcard group by default", () => {
     const data = buildSeoData();
     render(
       <SeoSection
@@ -229,12 +235,13 @@ describe("SeoSection RobotsSummary", () => {
         onRetryAction={() => {}}
       />,
     );
-    // Wildcard group badge should be present, and at least one rule visible
-    expect(screen.getAllByText(/^\*$/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/\//)).toBeInTheDocument();
+    // Wildcard group renders as "All" in the group header and is open
+    expect(screen.getAllByText(/^All$/i).length).toBeGreaterThan(0);
+    // A visible rule from the wildcard group should be present
+    expect(screen.getByText(/\/private/i)).toBeInTheDocument();
   });
 
-  it("handles missing robots and retry action", async () => {
+  it("handles missing robots state without retry", async () => {
     const onRetry = vi.fn();
     const data = buildSeoData({ robots: null });
     render(
@@ -245,11 +252,11 @@ describe("SeoSection RobotsSummary", () => {
         onRetryAction={onRetry}
       />,
     );
+    expect(screen.getByText(/No robots\.txt found/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/No robots\.txt discovered\./i),
-    ).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Retry/i }));
-    expect(onRetry).toHaveBeenCalled();
+      screen.queryByRole("button", { name: /Retry/i }),
+    ).not.toBeInTheDocument();
+    expect(onRetry).not.toHaveBeenCalled();
   });
 
   it("shows error state and retry when overall load failed", async () => {
