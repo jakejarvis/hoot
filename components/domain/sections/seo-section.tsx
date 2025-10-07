@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronRight, ExternalLink, Filter, Plus, X } from "lucide-react";
+import {
+  ChevronRight,
+  ExternalLink,
+  FileQuestionMark,
+  Filter,
+  Plus,
+  X,
+} from "lucide-react";
 import { motion } from "motion/react";
 import * as React from "react";
 import {
@@ -20,10 +27,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
-  ButtonGroup,
-  ButtonGroupSeparator,
-} from "@/components/ui/button-group";
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   InputGroup,
   InputGroupAddon,
@@ -166,11 +177,7 @@ export function SeoSection({
 
           <Separator />
 
-          <RobotsSummary
-            robots={data.robots}
-            finalUrl={data.source.finalUrl}
-            onRetryAction={onRetryAction}
-          />
+          <RobotsSummary robots={data.robots} finalUrl={data.source.finalUrl} />
         </div>
       ) : isError ? (
         <div className="text-muted-foreground text-sm">
@@ -191,11 +198,9 @@ export function SeoSection({
 function RobotsSummary({
   robots,
   finalUrl,
-  onRetryAction,
 }: {
   robots: SeoResponse["robots"];
   finalUrl: string | null;
-  onRetryAction: () => void;
 }) {
   const has = !!robots && robots.fetched && robots.groups.length > 0;
 
@@ -268,7 +273,7 @@ function RobotsSummary({
   return (
     <div className="space-y-4 rounded-xl">
       <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-        {link ? (
+        {has && link ? (
           <a
             href={link}
             target="_blank"
@@ -278,9 +283,7 @@ function RobotsSummary({
             robots.txt
             <ExternalLink className="size-3" />
           </a>
-        ) : (
-          <span>robots.txt</span>
-        )}
+        ) : null}
       </div>
 
       {has ? (
@@ -382,16 +385,18 @@ function RobotsSummary({
           ) : null}
         </div>
       ) : (
-        <div className="text-muted-foreground text-sm">
-          No robots.txt discovered.
-          <button
-            className="ml-2 underline underline-offset-2"
-            type="button"
-            onClick={onRetryAction}
-          >
-            Retry
-          </button>
-        </div>
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileQuestionMark />
+            </EmptyMedia>
+            <EmptyTitle>No robots.txt found</EmptyTitle>
+            <EmptyDescription>
+              We didn&apos;t find a robots.txt for this site. Crawlers will use
+              default behavior until one is added.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </div>
   );
