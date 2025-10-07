@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHmac, randomBytes } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { UTApi, UTFile } from "uploadthing/server";
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
@@ -26,6 +26,32 @@ export function getSocialPreviewTtlSeconds(): number {
     process.env.SOCIAL_PREVIEW_TTL_SECONDS,
     ONE_WEEK_SECONDS,
   );
+}
+
+/**
+ * Deterministic, obfuscated hash for IDs and filenames
+ */
+export function deterministicHash(input: string, length = 32): string {
+  const secret = process.env.UPLOADTHING_SECRET || "dev-hmac-secret";
+  return createHmac("sha256", secret)
+    .update(input)
+    .digest("hex")
+    .slice(0, length);
+}
+
+/**
+ * Build a deterministic image filename for UploadThing
+ */
+export function makeImageFileName(
+  kind: "favicon" | "screenshot" | "social",
+  domain: string,
+  width: number,
+  height: number,
+  extra?: string,
+): string {
+  const base = `${kind}:${domain}:${width}x${height}${extra ? `:${extra}` : ""}`;
+  const digest = deterministicHash(base);
+  return `${kind}_${digest}.png`;
 }
 
 const utapi = new UTApi();
@@ -147,16 +173,7 @@ export async function uploadImage(options: {
   png: Buffer;
 }): Promise<{ url: string; key: string }> {
   const { kind, domain, width, height, png } = options;
-  const fileName = (() => {
-    const base = `${kind}:${domain}:${width}x${height}`;
-    const secret = process.env.UPLOADTHING_SECRET || "dev-hmac-secret";
-    const nonce = randomBytes(8).toString("hex");
-    const digest = createHmac("sha256", secret)
-      .update(`${base}:${nonce}`)
-      .digest("hex")
-      .slice(0, 32);
-    return `${kind}_${digest}.png`;
-  })();
+  const fileName = makeImageFileName(kind, domain, width, height);
   const file = new UTFile([new Uint8Array(png)], fileName, {
     type: "image/png",
   });

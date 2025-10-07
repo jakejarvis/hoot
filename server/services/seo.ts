@@ -1,11 +1,14 @@
-import { createHash } from "node:crypto";
 import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
 import { optimizePngCover } from "@/lib/image";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import type { SeoResponse } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
-import { getSocialPreviewTtlSeconds, uploadImage } from "@/lib/storage";
+import {
+  deterministicHash,
+  getSocialPreviewTtlSeconds,
+  uploadImage,
+} from "@/lib/storage";
 
 const HTML_TTL_SECONDS = 6 * 60 * 60; // 6 hours
 const ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
@@ -155,7 +158,7 @@ async function getOrCreateSocialPreviewImageUrl(
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
   const lower = domain.toLowerCase();
-  const hash = createHash("sha256").update(imageUrl).digest("hex").slice(0, 32);
+  const hash = deterministicHash(imageUrl);
 
   const indexKey = ns(
     "seo:image-url",
