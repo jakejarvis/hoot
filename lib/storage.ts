@@ -21,6 +21,13 @@ export function getScreenshotTtlSeconds(): number {
   return toPositiveInt(process.env.SCREENSHOT_TTL_SECONDS, ONE_WEEK_SECONDS);
 }
 
+export function getSocialPreviewTtlSeconds(): number {
+  return toPositiveInt(
+    process.env.SOCIAL_PREVIEW_TTL_SECONDS,
+    ONE_WEEK_SECONDS,
+  );
+}
+
 const utapi = new UTApi();
 
 type UploadThingResult =
@@ -133,7 +140,7 @@ async function uploadWithRetry(
 }
 
 export async function uploadImage(options: {
-  kind: "favicon" | "screenshot";
+  kind: "favicon" | "screenshot" | "social";
   domain: string;
   width: number;
   height: number;

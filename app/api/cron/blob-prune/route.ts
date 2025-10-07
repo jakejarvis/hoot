@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const batch = 500;
   const now = Date.now();
 
-  for (const kind of ["favicon", "screenshot"]) {
+  for (const kind of ["favicon", "screenshot", "social"]) {
     // Drain due items in batches
     // Upstash supports zrange with byScore parameter; the SDK exposes zrange with options
     while (true) {

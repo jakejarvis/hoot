@@ -3,6 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSeo } from "./seo";
 
+const utMock = vi.hoisted(() => ({
+  uploadFiles: vi.fn(async () => ({
+    data: { ufsUrl: "https://app.ufs.sh/f/mock-key", key: "mock-key" },
+    error: null,
+  })),
+}));
+vi.mock("uploadthing/server", () => ({
+  UTApi: vi.fn().mockImplementation(() => utMock),
+}));
+
 beforeEach(() => {
   globalThis.__redisTestHelper.reset();
 });
@@ -32,6 +42,16 @@ function textResponse(text: string, contentType = "text/plain") {
   } as unknown as Response;
 }
 
+function imageResponse(bytes: number[] = [137, 80, 78, 71]) {
+  return {
+    ok: true,
+    status: 200,
+    headers: new Headers({ "content-type": "image/png" }),
+    arrayBuffer: async () => Uint8Array.from(bytes).buffer,
+    url: "",
+  } as unknown as Response;
+}
+
 describe("getSeo", () => {
   it("fetches html and robots, parses and caches results", async () => {
     const fetchMock = vi
@@ -48,11 +68,12 @@ describe("getSeo", () => {
       )
       .mockResolvedValueOnce(
         textResponse("User-agent: *\nAllow: /", "text/plain"),
-      );
+      )
+      .mockResolvedValueOnce(imageResponse());
 
     const out = await getSeo("example.com");
     expect(out.preview?.title).toBe("Site");
-    expect(out.preview?.image).toBe("https://example.com/og.png");
+    expect(out.preview?.image).toBe("https://app.ufs.sh/f/mock-key");
     expect(out.robots?.fetched).toBe(true);
     // cached meta response stored
     expect(
@@ -115,6 +136,34 @@ describe("getSeo", () => {
 
     const out = await getSeo("example.com");
     expect(out.errors?.robots).toMatch(/Unexpected robots content-type/i);
+    fetchMock.mockRestore();
+  });
+
+  it("sets preview image to null when image fetch fails", async () => {
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        htmlResponse(
+          `<!doctype html><html><head>
+            <title>Site</title>
+            <meta property="og:image" content="/og.png" />
+          </head></html>`,
+          "https://example.com/",
+        ),
+      )
+      .mockResolvedValueOnce(
+        textResponse("User-agent: *\nAllow: /", "text/plain"),
+      )
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        headers: new Headers({ "content-type": "text/plain" }),
+        arrayBuffer: async () => new ArrayBuffer(0),
+        url: "",
+      } as unknown as Response);
+
+    const out = await getSeo("example.com");
+    expect(out.preview?.image).toBeNull();
     fetchMock.mockRestore();
   });
 
