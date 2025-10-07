@@ -24,7 +24,6 @@ import {
   ButtonGroup,
   ButtonGroupSeparator,
 } from "@/components/ui/button-group";
-import { Input } from "@/components/ui/input";
 import {
   InputGroup,
   InputGroupAddon,
@@ -257,6 +256,11 @@ function RobotsSummary({
   }, [robots, only, query, rankAgents]);
 
   const hasFilteredRules = filteredGroups.some((g) => g.rules.length > 0);
+  const displayGroups = React.useMemo(
+    () =>
+      query ? filteredGroups.filter((g) => g.rules.length > 0) : filteredGroups,
+    [filteredGroups, query],
+  );
 
   return (
     <div className="space-y-4 rounded-xl">
@@ -356,7 +360,7 @@ function RobotsSummary({
           ) : null}
 
           <GroupsAccordion
-            groups={filteredGroups}
+            groups={displayGroups}
             query={query}
             highlight={highlight}
           />
