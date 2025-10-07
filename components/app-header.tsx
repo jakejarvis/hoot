@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Bookmarklet } from "@/components/bookmarklet";
 import { HeaderSearch } from "@/components/domain/header-search";
 import { GithubStars } from "@/components/github-stars";
 import { Logo } from "@/components/logo";
@@ -19,6 +20,10 @@ export function AppHeader() {
       <div className="flex h-full items-center gap-1.5 justify-self-end">
         {/* Server-fetched star count with link */}
         <GithubStars />
+        {/* The bookmarklet is practially uselesss on mobile */}
+        <Separator orientation="vertical" className="!h-4 hidden sm:block" />
+        <Bookmarklet className="hidden sm:block" />
+        {/* Theme toggle is always shown */}
         <Separator orientation="vertical" className="!h-4" />
         <ThemeToggle />
       </div>

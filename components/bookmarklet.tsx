@@ -1,0 +1,59 @@
+"use client";
+
+import { Bookmark, MousePointerClick } from "lucide-react";
+import { useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+export function Bookmarklet({ className }: { className?: string }) {
+  // a little hack to "unsafely" use raw javascript as a link
+  const hrefScript = useCallback((element: HTMLAnchorElement | null) => {
+    if (!element) return;
+    const openScript = `var t=window.open("${location.origin}/"+location.hostname,"_blank");t.focus()`;
+    element.href = `javascript:(function(){${openScript}})();`;
+  }, []);
+
+  return (
+    <Dialog>
+      <DialogTrigger className={className} asChild>
+        <Button aria-label="Open bookmarklet info" variant="ghost" size="sm">
+          <Bookmark />
+          <span className="sr-only">Open bookmarklet info</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="flex items-center gap-1.5">
+            <MousePointerClick className="h-4.5 w-4.5" />
+            Bookmarklet
+          </DialogTitle>
+          <DialogDescription>
+            Drag the button below to your bookmarks bar. Then, press it on any
+            site and the Hoot report for that domain will open in a new tab,
+            like magic!
+          </DialogDescription>
+        </DialogHeader>
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-fit"
+          onClick={(e) => e.preventDefault()}
+          asChild
+        >
+          {/** biome-ignore lint/a11y/useValidAnchor: we set the href above */}
+          <a ref={hrefScript}>
+            <Bookmark />
+            <span>Inspect Domain</span>
+          </a>
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
