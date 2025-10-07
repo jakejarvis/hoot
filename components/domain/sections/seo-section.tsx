@@ -155,7 +155,7 @@ export function SeoSection({
                   <span className="hidden text-[13px] md:inline">Slack</span>
                 </TabsTrigger>
               </TabsList>
-              <div className="mx-auto w-full max-w-[480px] md:max-w-[640px]">
+              <div className="mx-auto mt-4 mb-2 w-full max-w-[480px] md:max-w-[640px]">
                 <TabsContent
                   value={selectedTab}
                   className="grid place-items-center"

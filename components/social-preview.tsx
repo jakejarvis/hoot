@@ -38,7 +38,7 @@ export function SocialPreview({
       card = (
         <div className="overflow-hidden rounded-2xl border border-[#eff3f4] bg-white text-black dark:border-[#2f3336] dark:bg-black dark:text-white">
           <div className="flex items-stretch">
-            <div className="relative w-24 shrink-0 self-stretch bg-[#f1f5f9] dark:bg-[#0f1419]">
+            <div className="relative min-h-[96px] w-24 shrink-0 self-stretch bg-[#f1f5f9] dark:bg-[#0f1419]">
               {image ? (
                 <Image
                   src={image}
@@ -77,7 +77,7 @@ export function SocialPreview({
     card = (
       <div className="overflow-hidden rounded-2xl border border-[#eff3f4] bg-white text-black dark:border-[#2f3336] dark:bg-black dark:text-white">
         <div className="relative w-full overflow-hidden bg-[#f1f5f9] dark:bg-[#0f1419]">
-          <div className="aspect-[16/9] w-full">
+          <div className="aspect-[16/9] min-h-[160px] w-full">
             {image ? (
               <Image
                 src={image}
@@ -115,7 +115,7 @@ export function SocialPreview({
     card = (
       <div className="overflow-hidden rounded-md border border-[#e4e6eb] bg-white text-black dark:border-[#3a3b3c] dark:bg-[#18191a] dark:text-white">
         <div className="relative w-full bg-[#f0f2f5] dark:bg-[#242526]">
-          <div className="aspect-[1.91/1] w-full">
+          <div className="aspect-[1.91/1] min-h-[150px] w-full">
             {image ? (
               <Image
                 src={image}
@@ -153,7 +153,7 @@ export function SocialPreview({
     card = (
       <div className="overflow-hidden border border-[#dde6f2] bg-white text-black dark:border-[#2e3a44] dark:bg-[#1d2226] dark:text-white">
         <div className="relative w-full bg-[#eef3f8] dark:bg-[#0b0f12]">
-          <div className="aspect-[1200/627] w-full">
+          <div className="aspect-[1200/627] min-h-[150px] w-full">
             {image ? (
               <Image
                 src={image}
@@ -199,7 +199,7 @@ export function SocialPreview({
           </div>
         )}
         <div className="mt-3 overflow-hidden rounded-[6px] bg-[#f6f6f6] dark:bg-[#222529]">
-          <div className="aspect-[16/9] w-full">
+          <div className="aspect-[16/9] min-h-[150px] w-full">
             {image ? (
               <Image
                 src={image}
@@ -236,7 +236,7 @@ export function SocialPreview({
           </div>
         )}
         <div className="mt-3 overflow-hidden rounded-md bg-[#1f2124]">
-          <div className="aspect-[1200/628] w-full">
+          <div className="aspect-[1200/628] min-h-[150px] w-full">
             {image ? (
               <Image
                 src={image}
