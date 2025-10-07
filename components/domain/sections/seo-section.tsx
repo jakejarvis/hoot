@@ -16,12 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+// tooltips removed for tabs
 import type { SeoResponse } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
@@ -91,85 +86,34 @@ export function SeoSection({
 
           <Separator />
 
-          <Tabs
-            defaultValue="x"
-            orientation="vertical"
-            className="w-full flex-row"
-          >
-            <TabsList className="h-auto flex-col">
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <TabsTrigger value="x" className="py-3">
-                        <TwitterIcon className="h-4 w-4" aria-hidden="true" />
-                      </TabsTrigger>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    X (Twitter)
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <TabsTrigger value="slack" className="py-3">
-                        <SlackIcon className="h-4 w-4" aria-hidden="true" />
-                      </TabsTrigger>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    Slack
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <TabsTrigger value="facebook" className="py-3">
-                        <FacebookIcon className="h-4 w-4" aria-hidden="true" />
-                      </TabsTrigger>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    Facebook
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <TabsTrigger value="linkedin" className="py-3">
-                        <LinkedinIcon className="h-4 w-4" aria-hidden="true" />
-                      </TabsTrigger>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    LinkedIn
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <TabsTrigger value="discord" className="py-3">
-                        <DiscordIcon className="h-4 w-4" aria-hidden="true" />
-                      </TabsTrigger>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    Discord
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          <Tabs defaultValue="x">
+            <TabsList className="h-auto w-full gap-1 md:justify-start">
+              <TabsTrigger value="x" className="h-9 flex-1 px-2 py-1.5">
+                <TwitterIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden md:inline">X</span>
+              </TabsTrigger>
+              <TabsTrigger value="slack" className="h-9 flex-1 px-2 py-1.5">
+                <SlackIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden md:inline">Slack</span>
+              </TabsTrigger>
+              <TabsTrigger value="facebook" className="h-9 flex-1 px-2 py-1.5">
+                <FacebookIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden md:inline">Facebook</span>
+              </TabsTrigger>
+              <TabsTrigger value="linkedin" className="h-9 flex-1 px-2 py-1.5">
+                <LinkedinIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden md:inline">LinkedIn</span>
+              </TabsTrigger>
+              <TabsTrigger value="discord" className="h-9 flex-1 px-2 py-1.5">
+                <DiscordIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden md:inline">Discord</span>
+              </TabsTrigger>
             </TabsList>
-            <div className="grow text-start">
-              <TabsContent value="x">
+            <div
+              className="mx-auto w-full max-w-[900px]"
+              style={{ maxHeight: "min(60vh, 520px)" }}
+            >
+              <TabsContent value="x" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
                     provider="x"
@@ -181,7 +125,7 @@ export function SeoSection({
                   />
                 ) : null}
               </TabsContent>
-              <TabsContent value="slack">
+              <TabsContent value="slack" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
                     provider="slack"
@@ -192,7 +136,7 @@ export function SeoSection({
                   />
                 ) : null}
               </TabsContent>
-              <TabsContent value="facebook">
+              <TabsContent value="facebook" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
                     provider="facebook"
@@ -203,7 +147,7 @@ export function SeoSection({
                   />
                 ) : null}
               </TabsContent>
-              <TabsContent value="linkedin">
+              <TabsContent value="linkedin" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
                     provider="linkedin"
@@ -214,7 +158,7 @@ export function SeoSection({
                   />
                 ) : null}
               </TabsContent>
-              <TabsContent value="discord">
+              <TabsContent value="discord" className="grid place-items-center">
                 {data?.preview ? (
                   <SocialPreview
                     provider="discord"
