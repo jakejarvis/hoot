@@ -9,6 +9,7 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     css: true,
     globals: true,
+    silent: "passed-only",
     exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**"],
     coverage: {
       provider: "v8",
