@@ -1,7 +1,8 @@
 "use client";
 
+import { CircleX } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { captureClient } from "@/lib/analytics/client";
@@ -107,7 +108,10 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
       if (showInvalidToast) {
         const friendlyMessage =
           firstIssue?.message ?? "Please enter a valid domain.";
-        toast.error(friendlyMessage);
+        toast.error(friendlyMessage, {
+          icon: createElement(CircleX, { className: "h-4 w-4" }),
+          position: "top-center",
+        });
         inputRef.current?.focus();
       }
       return;

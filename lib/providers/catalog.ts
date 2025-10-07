@@ -303,7 +303,7 @@ export const EMAIL_PROVIDERS: Array<
     },
   },
   {
-    name: "Proton",
+    name: "Proton Mail",
     domain: "proton.me",
     category: "email",
     rule: {
@@ -1146,6 +1146,12 @@ export const CA_PROVIDERS: Array<
     domain: "buypass.com",
     category: "ca",
     rule: { kind: "issuerIncludes", substr: "buypass" },
+  },
+  {
+    name: "Verisign",
+    domain: "verisign.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "verisign" },
   },
   {
     name: "HARICA",

@@ -19,6 +19,7 @@ export function CopyButton({ value, label }: CopyButtonProps) {
     navigator.clipboard.writeText(value);
     toast.success("Copied!", {
       icon: <ClipboardCheck className="h-4 w-4" />,
+      position: "bottom-center",
     });
     captureClient("copy_clicked", {
       label: label ?? null,
