@@ -310,36 +310,40 @@ function RobotsSummary({
               ) : null}
             </InputGroup>
 
-            <ButtonGroup>
+            <ButtonGroup className="h-9 items-stretch">
               <Button
                 type="button"
-                variant={only === "all" ? "outline" : "ghost"}
-                size="sm"
+                variant="outline"
                 aria-pressed={only === "all"}
                 onClick={() => setOnly("all")}
-                className="text-[13px]"
+                className={cn(
+                  "h-9 px-3 text-[13px]",
+                  only === "all" && "!bg-accent hover:!bg-accent/90",
+                )}
               >
                 All
               </Button>
-              <ButtonGroupSeparator />
               <Button
                 type="button"
-                variant={only === "allow" ? "outline" : "ghost"}
-                size="sm"
+                variant="outline"
                 aria-pressed={only === "allow"}
                 onClick={() => setOnly("allow")}
-                className="text-[13px]"
+                className={cn(
+                  "h-9 px-3 text-[13px]",
+                  only === "allow" && "!bg-accent hover:!bg-accent/90",
+                )}
               >
                 Allow ({counts.allows})
               </Button>
-              <ButtonGroupSeparator />
               <Button
                 type="button"
-                variant={only === "disallow" ? "outline" : "ghost"}
-                size="sm"
+                variant="outline"
                 aria-pressed={only === "disallow"}
                 onClick={() => setOnly("disallow")}
-                className="text-[13px]"
+                className={cn(
+                  "h-9 px-3 text-[13px]",
+                  only === "disallow" && "!bg-accent hover:!bg-accent/90",
+                )}
               >
                 Disallow ({counts.disallows})
               </Button>
