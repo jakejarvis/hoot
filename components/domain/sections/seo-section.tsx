@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import * as React from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DiscordIcon,
   FacebookIcon,
@@ -43,6 +43,12 @@ import {
 } from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useProgressiveReveal } from "@/hooks/use-progressive-reveal";
 import type { SeoResponse, SocialPreviewProvider } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
@@ -79,7 +85,7 @@ export function SeoSection({
 
   // Single SocialPreview approach: control the active tab and render one preview.
   const [selectedTab, setSelectedTab] =
-    React.useState<SocialPreviewProvider>("twitter");
+    useState<SocialPreviewProvider>("twitter");
 
   return (
     <Section {...SECTION_DEFS.seo} isError={isError} isLoading={isLoading}>
@@ -207,7 +213,7 @@ function RobotsSummary({
     robots.fetched &&
     ((robots.groups?.length ?? 0) > 0 || (robots.sitemaps?.length ?? 0) > 0);
 
-  const counts = React.useMemo(() => {
+  const counts = useMemo(() => {
     const disallows =
       robots?.groups.reduce(
         (acc, g) => acc + g.rules.filter((r) => r.type === "disallow").length,
@@ -222,10 +228,10 @@ function RobotsSummary({
   }, [robots]);
 
   const link = finalUrl ? new URL("/robots.txt", finalUrl).toString() : null;
-  const [query, setQuery] = React.useState("");
-  const [only, setOnly] = React.useState<"all" | "allow" | "disallow">("all");
+  const [query, setQuery] = useState("");
+  const [only, setOnly] = useState<"all" | "allow" | "disallow">("all");
 
-  const rankAgents = React.useCallback((agents: string[]): number => {
+  const rankAgents = useCallback((agents: string[]): number => {
     const joined = agents.join(",").toLowerCase();
     if (agents.includes("*")) return 0;
     if (/googlebot/.test(joined)) return 1;
@@ -248,7 +254,7 @@ function RobotsSummary({
     );
   }
 
-  const filteredGroups = React.useMemo(() => {
+  const filteredGroups = useMemo(() => {
     const base = robots?.groups?.slice() ?? [];
     const sorted = base.sort(
       (a, b) => rankAgents(a.userAgents) - rankAgents(b.userAgents),
@@ -265,7 +271,7 @@ function RobotsSummary({
 
   const hasFilteredRules = filteredGroups.some((g) => g.rules.length > 0);
   const filtersActive = query.trim().length > 0 || only !== "all";
-  const displayGroups = React.useMemo(
+  const displayGroups = useMemo(
     () =>
       filtersActive
         ? filteredGroups.filter((g) => g.rules.length > 0)
@@ -405,6 +411,46 @@ function RobotsSummary({
   );
 }
 
+function RobotsGroupHeader({
+  userAgents,
+  allowN,
+  disallowN,
+  showAllow = true,
+  showDisallow = true,
+}: {
+  userAgents: string[];
+  allowN: number;
+  disallowN: number;
+  showAllow?: boolean;
+  showDisallow?: boolean;
+}) {
+  return (
+    <div className="flex w-full items-center justify-between">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
+        {userAgents.map((ua) => (
+          <span
+            key={ua}
+            className={cn(
+              "rounded px-1.5 py-0.5 text-xs",
+              ua === "*"
+                ? "bg-accent-purple/18 text-accent-purple"
+                : "bg-muted",
+            )}
+          >
+            {ua === "*" ? "All" : ua}
+          </span>
+        ))}
+      </div>
+      <div className="text-muted-foreground text-xs">
+        {showAllow ? `${allowN} allow` : null}
+        {showAllow && showDisallow ? " · " : null}
+        {showDisallow ? `${disallowN} disallow` : null}
+      </div>
+    </div>
+  );
+}
+
 function GroupsAccordion({
   groups,
   query,
@@ -419,112 +465,50 @@ function GroupsAccordion({
   highlight: (text: string, q: string) => React.ReactNode;
   only?: "all" | "allow" | "disallow";
 }) {
-  const defaultIdx = React.useMemo(
+  const defaultIdx = useMemo(
     () => groups.findIndex((g) => g.userAgents.includes("*")),
     [groups],
   );
   const defaultValue = defaultIdx >= 0 ? `g-${defaultIdx}` : undefined;
-  const openValues = React.useMemo(
-    () => (query ? groups.map((_, idx) => `g-${idx}`) : undefined),
-    [groups, query],
+  const isSearching = Boolean(query);
+  const openValues = useMemo(
+    () => (isSearching ? groups.map((_, idx) => `g-${idx}`) : undefined),
+    [groups, isSearching],
   );
-  if (query) {
-    return (
-      <Accordion type="multiple" value={openValues as string[]}>
-        {groups.map((g, idx) => {
-          const allowN = g.rules.filter((r) => r.type === "allow").length;
-          const disallowN = g.rules.filter((r) => r.type === "disallow").length;
-          // neutral group styling, no left accent color
-          return (
-            <AccordionItem
-              key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
-              value={`g-${idx}`}
-            >
-              <AccordionTrigger className="group/accordion py-2 hover:no-underline [&>svg]:hidden">
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
-                    {g.userAgents.map((ua) => (
-                      <span
-                        key={ua}
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-xs",
-                          ua === "*"
-                            ? "bg-accent-purple/18 text-accent-purple"
-                            : "bg-muted",
-                        )}
-                      >
-                        {ua === "*" ? "All" : ua}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    {allowN} allow · {disallowN} disallow
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="p-0">
-                <GroupContent
-                  rules={g.rules}
-                  query={query}
-                  highlight={highlight}
-                />
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-    );
-  }
 
-  return (
+  const content = groups.map((g, idx) => {
+    const allowN = g.rules.filter((r) => r.type === "allow").length;
+    const disallowN = g.rules.filter((r) => r.type === "disallow").length;
+    const showAllow = isSearching ? true : only !== "disallow";
+    const showDisallow = isSearching ? true : only !== "allow";
+    return (
+      <AccordionItem
+        key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
+        value={`g-${idx}`}
+      >
+        <AccordionTrigger className="group/accordion py-2 hover:no-underline [&>svg]:hidden">
+          <RobotsGroupHeader
+            userAgents={g.userAgents}
+            allowN={allowN}
+            disallowN={disallowN}
+            showAllow={showAllow}
+            showDisallow={showDisallow}
+          />
+        </AccordionTrigger>
+        <AccordionContent className="p-0">
+          <GroupContent rules={g.rules} query={query} highlight={highlight} />
+        </AccordionContent>
+      </AccordionItem>
+    );
+  });
+
+  return isSearching ? (
+    <Accordion type="multiple" value={openValues as string[]}>
+      {content}
+    </Accordion>
+  ) : (
     <Accordion type="single" collapsible defaultValue={defaultValue}>
-      {groups.map((g, idx) => {
-        const allowN = g.rules.filter((r) => r.type === "allow").length;
-        const disallowN = g.rules.filter((r) => r.type === "disallow").length;
-        const showAllow = only !== "disallow";
-        const showDisallow = only !== "allow";
-        // neutral group styling, no left accent color
-        return (
-          <AccordionItem
-            key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
-            value={`g-${idx}`}
-          >
-            <AccordionTrigger className="group/accordion py-2 hover:no-underline [&>svg]:hidden">
-              <div className="flex w-full items-center justify-between">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
-                  {g.userAgents.map((ua) => (
-                    <span
-                      key={ua}
-                      className={cn(
-                        "rounded px-1.5 py-0.5 text-xs",
-                        ua === "*"
-                          ? "bg-accent-purple/18 text-accent-purple"
-                          : "bg-muted",
-                      )}
-                    >
-                      {ua === "*" ? "All" : ua}
-                    </span>
-                  ))}
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {showAllow ? `${allowN} allow` : null}
-                  {showAllow && showDisallow ? " · " : null}
-                  {showDisallow ? `${disallowN} disallow` : null}
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="p-0">
-              <GroupContent
-                rules={g.rules}
-                query={query}
-                highlight={highlight}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
+      {content}
     </Accordion>
   );
 }
@@ -539,17 +523,8 @@ function GroupContent({
   highlight: (text: string, q: string) => React.ReactNode;
 }) {
   const isSearching = query.trim().length > 0;
-  const [visible, setVisible] = React.useState(6);
-  const total = rules.length;
-  const more = total - visible;
-  const prevVisibleRef = React.useRef(visible);
-  const prev = Math.min(prevVisibleRef.current, visible);
-  const existing = rules.slice(0, prev);
-  const added = rules.slice(prev, Math.min(visible, total));
-  React.useEffect(() => {
-    // When rules change significantly, sync the previous visible count
-    prevVisibleRef.current = Math.min(visible, rules.length);
-  }, [visible, rules]);
+  const { existing, added, more, total, visible, setVisible } =
+    useProgressiveReveal(rules, 6);
   if (isSearching) {
     return (
       <div className="flex flex-col gap-1.5 py-2">
@@ -620,34 +595,44 @@ function RuleRow({
   query: string;
   highlight: (text: string, q: string) => React.ReactNode;
 }) {
-  const dot =
-    rule.type === "allow"
-      ? "bg-emerald-500"
-      : rule.type === "disallow"
-        ? "bg-rose-500"
-        : "bg-amber-500";
   return (
     <div className="group flex items-center gap-2 rounded-lg border border-input px-2.5 py-2 font-mono text-xs">
-      <span
-        className={cn("inline-block size-1.5 rounded-full", dot)}
-        aria-hidden="true"
-      />
+      <RuleTypeDot type={rule.type} />
       <span className="truncate">{highlight(rule.value, query)}</span>
     </div>
   );
 }
 
+function RuleTypeDot({ type }: { type: "allow" | "disallow" | "crawlDelay" }) {
+  const color =
+    type === "allow"
+      ? "bg-emerald-500"
+      : type === "disallow"
+        ? "bg-rose-500"
+        : "bg-amber-500";
+  const label =
+    type === "allow"
+      ? "Allow"
+      : type === "disallow"
+        ? "Disallow"
+        : "Crawl delay";
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn("inline-block size-1.5 rounded-full", color)}
+          role="img"
+          aria-label={label}
+        />
+      </TooltipTrigger>
+      <TooltipContent sideOffset={6}>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function SitemapsList({ items }: { items: string[] }) {
-  const [visible, setVisible] = React.useState(2);
-  const total = items.length;
-  const more = total - visible;
-  const prevVisibleRef = React.useRef(visible);
-  const prev = Math.min(prevVisibleRef.current, visible);
-  const existing = items.slice(0, prev);
-  const added = items.slice(prev, Math.min(visible, total));
-  React.useEffect(() => {
-    prevVisibleRef.current = Math.min(visible, items.length);
-  }, [visible, items]);
+  const { existing, added, more, total, visible, setVisible } =
+    useProgressiveReveal(items, 2);
   return (
     <div className="space-y-3">
       <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
