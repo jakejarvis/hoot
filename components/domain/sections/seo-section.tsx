@@ -214,14 +214,19 @@ function RobotsSummary({
     ((robots.groups?.length ?? 0) > 0 || (robots.sitemaps?.length ?? 0) > 0);
 
   const counts = useMemo(() => {
+    const isNonEmpty = (r: { value: string }) => r.value.trim() !== "";
     const disallows =
       robots?.groups.reduce(
-        (acc, g) => acc + g.rules.filter((r) => r.type === "disallow").length,
+        (acc, g) =>
+          acc +
+          g.rules.filter((r) => r.type === "disallow" && isNonEmpty(r)).length,
         0,
       ) ?? 0;
     const allows =
       robots?.groups.reduce(
-        (acc, g) => acc + g.rules.filter((r) => r.type === "allow").length,
+        (acc, g) =>
+          acc +
+          g.rules.filter((r) => r.type === "allow" && isNonEmpty(r)).length,
         0,
       ) ?? 0;
     return { allows, disallows };
@@ -259,14 +264,27 @@ function RobotsSummary({
     const sorted = base.sort(
       (a, b) => rankAgents(a.userAgents) - rankAgents(b.userAgents),
     );
-    return sorted.map((g) => ({
-      ...g,
-      rules: g.rules
+    const isNonEmpty = (r: { value: string }) => r.value.trim() !== "";
+    return sorted.map((g) => {
+      const hasEmptyAllow = g.rules.some(
+        (r) => r.type === "allow" && !isNonEmpty(r),
+      );
+      const hasEmptyDisallow = g.rules.some(
+        (r) => r.type === "disallow" && !isNonEmpty(r),
+      );
+      const visible = g.rules
+        .filter(isNonEmpty)
         .filter((r) => (only === "all" ? true : r.type === only))
         .filter((r) =>
           query ? r.value.toLowerCase().includes(query.toLowerCase()) : true,
-        ),
-    }));
+        );
+      return { ...g, rules: visible, hasEmptyAllow, hasEmptyDisallow } as {
+        userAgents: string[];
+        rules: { type: "allow" | "disallow" | "crawlDelay"; value: string }[];
+        hasEmptyAllow: boolean;
+        hasEmptyDisallow: boolean;
+      };
+    });
   }, [robots, only, query, rankAgents]);
 
   const hasFilteredRules = filteredGroups.some((g) => g.rules.length > 0);
@@ -460,6 +478,8 @@ function GroupsAccordion({
   groups: {
     userAgents: string[];
     rules: { type: "allow" | "disallow" | "crawlDelay"; value: string }[];
+    hasEmptyAllow: boolean;
+    hasEmptyDisallow: boolean;
   }[];
   query: string;
   highlight: (text: string, q: string) => React.ReactNode;
@@ -496,7 +516,14 @@ function GroupsAccordion({
           />
         </AccordionTrigger>
         <AccordionContent className="p-0">
-          <GroupContent rules={g.rules} query={query} highlight={highlight} />
+          <GroupContent
+            rules={g.rules}
+            query={query}
+            highlight={highlight}
+            only={only}
+            hasEmptyAllow={g.hasEmptyAllow}
+            hasEmptyDisallow={g.hasEmptyDisallow}
+          />
         </AccordionContent>
       </AccordionItem>
     );
@@ -517,10 +544,16 @@ function GroupContent({
   rules,
   query,
   highlight,
+  only,
+  hasEmptyAllow,
+  hasEmptyDisallow,
 }: {
   rules: { type: "allow" | "disallow" | "crawlDelay"; value: string }[];
   query: string;
   highlight: (text: string, q: string) => React.ReactNode;
+  only?: "all" | "allow" | "disallow";
+  hasEmptyAllow: boolean;
+  hasEmptyDisallow: boolean;
 }) {
   const isSearching = query.trim().length > 0;
   const { existing, added, more, total, visible, setVisible } =
@@ -541,6 +574,16 @@ function GroupContent({
   }
   return (
     <div className="flex flex-col gap-1.5 py-2">
+      {rules.length === 0 && hasEmptyDisallow && only !== "allow" ? (
+        <div className="rounded-md bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground/90">
+          No disallow restrictions (allow all)
+        </div>
+      ) : null}
+      {rules.length === 0 && hasEmptyAllow && only !== "disallow" ? (
+        <div className="rounded-md bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground/90">
+          No explicit allow paths
+        </div>
+      ) : null}
       {existing.map((r, i) => (
         <RuleRow
           key={`r-${r.type}-${r.value}-existing-${i}`}
