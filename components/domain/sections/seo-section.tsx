@@ -1,7 +1,10 @@
 "use client";
 
 import {
+  Ban,
   ChevronRight,
+  CircleCheck,
+  ClockFading,
   ExternalLink,
   FileQuestionMark,
   Filter,
@@ -389,14 +392,12 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                     aria-pressed={only === "allow"}
                     onClick={() => setOnly("allow")}
                     className={cn(
-                      "h-9 gap-2.5 px-3 text-[13px]",
+                      "h-9 gap-2 px-3 text-[13px]",
                       only === "allow" && "!bg-accent hover:!bg-accent/90",
                     )}
                   >
-                    <span
-                      className={
-                        "inline-block size-1.5 rounded-full bg-emerald-500"
-                      }
+                    <CircleCheck
+                      className="size-3.5 text-emerald-500"
                       aria-hidden="true"
                     />
                     <span>Allow</span>
@@ -408,14 +409,12 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                     aria-pressed={only === "disallow"}
                     onClick={() => setOnly("disallow")}
                     className={cn(
-                      "h-9 gap-2.5 px-3 text-[13px]",
+                      "h-9 gap-2 px-3 text-[13px]",
                       only === "disallow" && "!bg-accent hover:!bg-accent/90",
                     )}
                   >
-                    <span
-                      className={
-                        "inline-block size-1.5 rounded-full bg-rose-500"
-                      }
+                    <Ban
+                      className="size-3.5 text-rose-500"
                       aria-hidden="true"
                     />
                     <span>Disallow</span>
@@ -694,12 +693,8 @@ function RuleRow({
 }
 
 function RuleTypeDot({ type }: { type: "allow" | "disallow" | "crawlDelay" }) {
-  const color =
-    type === "allow"
-      ? "bg-emerald-500"
-      : type === "disallow"
-        ? "bg-rose-500"
-        : "bg-amber-500";
+  const Icon =
+    type === "allow" ? CircleCheck : type === "disallow" ? Ban : ClockFading;
   const label =
     type === "allow"
       ? "Allow"
@@ -710,10 +705,16 @@ function RuleTypeDot({ type }: { type: "allow" | "disallow" | "crawlDelay" }) {
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex h-4 w-4 items-center justify-center">
-          <span
-            className={cn("inline-block size-1.5 rounded-full", color)}
-            role="img"
-            aria-label={label}
+          <Icon
+            className={cn(
+              "size-3.5",
+              type === "allow"
+                ? "text-emerald-500"
+                : type === "disallow"
+                  ? "text-rose-500"
+                  : "text-amber-500",
+            )}
+            aria-hidden
           />
         </div>
       </TooltipTrigger>
