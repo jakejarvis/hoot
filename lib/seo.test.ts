@@ -256,6 +256,47 @@ describe("robots.txt parsing", () => {
     ).toBe(true);
   });
 
+  it("combines duplicate user-agent groups (e.g., multiple all-* groups)", () => {
+    const text = [
+      "Sitemap: https://wordpress.org/sitemap.xml",
+      "User-agent: *",
+      "Disallow: /wp-admin/",
+      "Allow: /wp-admin/admin-ajax.php",
+      "",
+      "User-agent: *",
+      "Disallow: /search",
+      "Disallow: /?s=",
+      "",
+      "User-agent: *",
+      "Disallow: /plugins/search/",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.sitemaps).toContain("https://wordpress.org/sitemap.xml");
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    expect(g.userAgents).toEqual(["*"]);
+    // Should contain all rules from the three groups
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/wp-admin/"),
+    ).toBe(true);
+    expect(
+      g.rules.some(
+        (r) => r.type === "allow" && r.value === "/wp-admin/admin-ajax.php",
+      ),
+    ).toBe(true);
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/search"),
+    ).toBe(true);
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/?s="),
+    ).toBe(true);
+    expect(
+      g.rules.some(
+        (r) => r.type === "disallow" && r.value === "/plugins/search/",
+      ),
+    ).toBe(true);
+  });
+
   it("handles blank line and comments after User-agent and parses vercel-style sample", () => {
     const text = [
       "User-Agent: *",

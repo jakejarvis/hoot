@@ -201,5 +201,48 @@ export function parseRobotsTxt(text: string): RobotsTxt {
   }
   flushGroup();
 
+  // Merge duplicate user-agent groups (e.g., multiple "User-agent: *" groups)
+  if (groups.length > 1) {
+    const mergedByKey = new Map<string, RobotsGroup>();
+    const order: string[] = [];
+    function toKey(agents: string[]): string {
+      return agents
+        .map((a) => a.toLowerCase())
+        .sort()
+        .join("\n");
+    }
+    function mergeAgents(existing: string[], incoming: string[]): string[] {
+      const seen = new Set(existing.map((a) => a.toLowerCase()));
+      const out = existing.slice();
+      for (const a of incoming) {
+        const k = a.toLowerCase();
+        if (!seen.has(k)) {
+          seen.add(k);
+          out.push(a);
+        }
+      }
+      return out;
+    }
+    for (const g of groups) {
+      const key = toKey(g.userAgents);
+      if (!mergedByKey.has(key)) {
+        mergedByKey.set(key, {
+          userAgents: g.userAgents.slice(),
+          rules: g.rules.slice(),
+        });
+        order.push(key);
+      } else {
+        const existing = mergedByKey.get(key);
+        if (!existing) continue;
+        existing.userAgents = mergeAgents(existing.userAgents, g.userAgents);
+        existing.rules.push(...g.rules);
+      }
+    }
+    const mergedGroups: RobotsGroup[] = order
+      .map((k) => mergedByKey.get(k))
+      .filter((x): x is RobotsGroup => Boolean(x));
+    return { fetched: true, groups: mergedGroups, sitemaps };
+  }
+
   return { fetched: true, groups, sitemaps };
 }
