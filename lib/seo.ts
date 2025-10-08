@@ -160,10 +160,14 @@ export function parseRobotsTxt(text: string): RobotsTxt {
   }
 
   for (const rawLine of lines) {
-    const line = rawLine.split("#")[0]?.trim() ?? "";
+    // Remove invisible Unicode control chars (including BOM) before parsing
+    const cleaned = rawLine.replace(
+      /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,
+      "",
+    );
+    const line = cleaned.split("#")[0]?.trim() ?? "";
     if (line === "") {
-      // Blank line separates groups in common parsers
-      flushGroup();
+      // Treat blank lines as whitespace; do not flush the current group
       continue;
     }
     const idx = line.indexOf(":");

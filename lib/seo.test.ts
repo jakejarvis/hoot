@@ -111,4 +111,66 @@ describe("robots.txt parsing", () => {
     expect(google.userAgents).toContain("Googlebot");
     expect(google.rules[0]).toEqual({ type: "disallow", value: "/private" });
   });
+
+  it("handles blank line and comments after User-agent and parses vercel-style sample", () => {
+    const text = [
+      "User-Agent: *",
+      "",
+      "# Allow robots to be able to crawl the OG Image API route and all the subpaths",
+      "Allow: /api/og/*",
+      "Allow: /api/product-og*",
+      "Allow: /api/templates/og*",
+      "Allow: /api/dynamic-og*",
+      "Allow: /api/www/avatar/*",
+      "",
+      "Disallow:",
+      "Disallow: /api/",
+      "Disallow: /oauth",
+      "",
+      "Sitemap: https://vercel.com/sitemap.xml",
+    ].join("\n");
+
+    const robots = parseRobotsTxt(text);
+    expect(robots.fetched).toBe(true);
+    expect(robots.sitemaps).toContain("https://vercel.com/sitemap.xml");
+    expect(robots.groups.length).toBe(1);
+    const any = robots.groups[0];
+    expect(any.userAgents).toEqual(["*"]);
+    // empty Disallow captured as a rule with empty value
+    expect(any.rules.some((r) => r.type === "disallow" && r.value === "")).toBe(
+      true,
+    );
+    // a few representative rules parsed
+    expect(
+      any.rules.some((r) => r.type === "allow" && r.value === "/api/og/*"),
+    ).toBe(true);
+    expect(
+      any.rules.some((r) => r.type === "disallow" && r.value === "/api/"),
+    ).toBe(true);
+  });
+
+  it("captures empty Disallow explicitly and non-empty alongside it", () => {
+    const text = [
+      "User-agent: *",
+      "Disallow:",
+      "Disallow: /admin",
+      "Allow: /",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    const g = robots.groups[0];
+    const empty = g.rules.find((r) => r.type === "disallow" && r.value === "");
+    expect(empty).toBeTruthy();
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/admin"),
+    ).toBe(true);
+  });
+
+  it("tolerates BOM at the start of file before first directive", () => {
+    const text = ["\uFEFFUser-agent: *", "Disallow: /private"].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    expect(g.userAgents).toEqual(["*"]);
+    expect(g.rules[0]).toEqual({ type: "disallow", value: "/private" });
+  });
 });
