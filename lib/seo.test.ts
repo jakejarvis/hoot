@@ -112,6 +112,150 @@ describe("robots.txt parsing", () => {
     expect(google.rules[0]).toEqual({ type: "disallow", value: "/private" });
   });
 
+  it("ignores comments/whitespace and supports CRLF newlines", () => {
+    const text = [
+      "  # leading comment\r",
+      "User-Agent:*  \t # inline ua comment\r",
+      "Allow:   /public  # inline allow\r",
+      "Disallow:   /private  \r",
+      "Crawl-Delay:  5\r",
+      "Sitemap: https://a.example/sitemap.xml\r",
+      "\r",
+      "# another comment\r",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    expect(g.userAgents).toEqual(["*"]);
+    expect(g.rules.find((r) => r.type === "allow")?.value).toBe("/public");
+    expect(g.rules.find((r) => r.type === "disallow")?.value).toBe("/private");
+    expect(g.rules.find((r) => r.type === "crawlDelay")?.value).toBe("5");
+    expect(robots.sitemaps).toContain("https://a.example/sitemap.xml");
+  });
+
+  it("supports multiple user-agent lines, and starts a new group when user-agent appears after rules", () => {
+    const text = [
+      "User-agent: Googlebot",
+      "User-agent: Bingbot",
+      "Disallow: /private",
+      "Allow: /public",
+      "User-agent: DuckDuckBot",
+      "Disallow: /ducks",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(2);
+    const g1 = robots.groups[0];
+    expect(g1.userAgents).toEqual(["Googlebot", "Bingbot"]);
+    expect(g1.rules.find((r) => r.type === "disallow")?.value).toBe("/private");
+    expect(g1.rules.find((r) => r.type === "allow")?.value).toBe("/public");
+    const g2 = robots.groups[1];
+    expect(g2.userAgents).toEqual(["DuckDuckBot"]);
+    expect(g2.rules[0]).toEqual({ type: "disallow", value: "/ducks" });
+  });
+
+  it("parses keys case-insensitively and tolerates spacing around colon", () => {
+    const text = ["uSeR-AgEnT :*", "DISALLOW:   /Admin", "allow:/"].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    expect(g.userAgents).toEqual(["*"]);
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/Admin"),
+    ).toBe(true);
+    expect(g.rules.some((r) => r.type === "allow" && r.value === "/")).toBe(
+      true,
+    );
+  });
+
+  it("ignores unknown directives", () => {
+    const text = ["User-agent:*", "Foo: bar", "Disallow: /x", "Bar: baz"].join(
+      "\n",
+    );
+    const robots = parseRobotsTxt(text);
+    const g = robots.groups[0];
+    expect(g.rules.length).toBe(1);
+    expect(g.rules[0]).toEqual({ type: "disallow", value: "/x" });
+  });
+
+  it("accumulates multiple Sitemap directives anywhere in the file", () => {
+    const text = [
+      "Sitemap: https://a.example/sitemap.xml",
+      "User-agent:*",
+      "Disallow: /private",
+      "Sitemap: https://a.example/sitemap-news.xml",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.sitemaps).toEqual([
+      "https://a.example/sitemap.xml",
+      "https://a.example/sitemap-news.xml",
+    ]);
+  });
+
+  it("preserves wildcard and anchor characters in values", () => {
+    const text = ["User-agent:*", "Disallow: /*.php$", "Allow: /search/*"].join(
+      "\n",
+    );
+    const robots = parseRobotsTxt(text);
+    const g = robots.groups[0];
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/*.php$"),
+    ).toBe(true);
+    expect(
+      g.rules.some((r) => r.type === "allow" && r.value === "/search/*"),
+    ).toBe(true);
+  });
+
+  it("handles unicode in values and strips invisibles in lines", () => {
+    const text = [
+      "User-agent:*",
+      "Allow: /caf\u00E9/\u8DEF\u5F84",
+      "Disallow: /private\u200B",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    const g = robots.groups[0];
+    expect(
+      g.rules.some(
+        (r) => r.type === "allow" && r.value === "/caf3/\u8DEF\u5F84",
+      ),
+    ).toBe(false); // sanity check for encoding mistake
+    expect(
+      g.rules.some(
+        (r) => r.type === "allow" && r.value === "/caf\u00E9/\u8DEF\u5F84",
+      ),
+    ).toBe(true);
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/private"),
+    ).toBe(true);
+  });
+
+  it("ignores rules before any user-agent group", () => {
+    const text = [
+      "Disallow: /x",
+      "Allow: /",
+      "User-agent:*",
+      "Disallow: /y",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    expect(g.rules.length).toBe(1);
+    expect(g.rules[0]).toEqual({ type: "disallow", value: "/y" });
+  });
+
+  it("parses last group without trailing newline at EOF", () => {
+    const text = "User-agent:*\nAllow:/public\nDisallow:/private"; // no trailing NL
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    expect(g.userAgents).toEqual(["*"]);
+    expect(
+      g.rules.some((r) => r.type === "allow" && r.value === "/public"),
+    ).toBe(true);
+    expect(
+      g.rules.some((r) => r.type === "disallow" && r.value === "/private"),
+    ).toBe(true);
+  });
+
   it("handles blank line and comments after User-agent and parses vercel-style sample", () => {
     const text = [
       "User-Agent: *",

@@ -39,8 +39,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(next@15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       '@vercel/functions':
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.1.2
+        version: 3.1.2
       cheerio:
         specifier: ^1.1.2
         version: 1.1.2
@@ -81,8 +81,8 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       posthog-js:
-        specifier: ^1.272.0
-        version: 1.272.0
+        specifier: ^1.273.0
+        version: 1.273.0
       posthog-node:
         specifier: ^5.9.3
         version: 5.9.3
@@ -1963,8 +1963,8 @@ packages:
       vue-router:
         optional: true
 
-  '@vercel/functions@3.1.1':
-    resolution: {integrity: sha512-pMum41m6DtMGWZuCPy99mCE40shLvoxawOhetkTGq/HslY7J7weMOV+TeWcfWO6acDabDqDcb6bapWBQ+tNA3w==}
+  '@vercel/functions@3.1.2':
+    resolution: {integrity: sha512-40e6kGm80vL0dYDugaB2Z57cM4cscfW+NvD4ZhRlplVNqTIhWWBHl447hZXPJD9NAwWTJGShGbxBj3Mdw26u4g==}
     engines: {node: '>= 20'}
     peerDependencies:
       '@aws-sdk/credential-provider-web-identity': '*'
@@ -2165,8 +2165,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.8.12:
-    resolution: {integrity: sha512-vAPMQdnyKCBtkmQA6FMCBvU9qFIppS3nzyXnEM+Lo2IAhG4Mpjv9cCxMudhgV3YdNNJv6TNqXy97dfRVL2LmaQ==}
+  baseline-browser-mapping@2.8.13:
+    resolution: {integrity: sha512-7s16KR8io8nIBWQyCYhmFhd+ebIzb9VKTzki+wOJXHTxTnV6+mFGH3+Jwn1zoKaY9/H9T/0BcKCZnzXljPnpSQ==}
     hasBin: true
 
   basic-ftp@5.0.5:
@@ -2415,8 +2415,8 @@ packages:
   effect@3.17.7:
     resolution: {integrity: sha512-dpt0ONUn3zzAuul6k4nC/coTTw27AL5nhkORXgTi6NfMPzqWYa1M05oKmOMTxpVSTKepqXVcW9vIwkuaaqx9zA==}
 
-  electron-to-chromium@1.5.231:
-    resolution: {integrity: sha512-cyl6vqZGkEBnz/PmvFHn/u9G/hbo+FF2CNAOXriG87QOeLsUdifCZ9UbHNscE9wGdrC8XstNMli0CbQnZQ+fkA==}
+  electron-to-chromium@1.5.232:
+    resolution: {integrity: sha512-ENirSe7wf8WzyPCibqKUG1Cg43cPaxH4wRR7AJsX7MCABCHBIOFqvaYODSLKUuZdraxUTHRE/0A2Aq8BYKEHOg==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -3150,8 +3150,8 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.272.0:
-    resolution: {integrity: sha512-q8vegjiB7PQSjo2sgRBf1lie0bPnBgqIyWCXHvH6U5BEqTV5fr3Zr+iv7KXL/sVP+g4xp4lEjbKmyLENz2Iybw==}
+  posthog-js@1.273.0:
+    resolution: {integrity: sha512-ZpRZjZeoihgkUIWj0OwjXwuE+4FVFm2I0gaJsCGwdeyNZOZk54BWLLZ39+4hWi16s0o0fsdCfp1qpRXvpD89OQ==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -3351,8 +3351,8 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  semver@7.7.2:
-    resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
+  semver@7.7.3:
+    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -4473,7 +4473,7 @@ snapshots:
     dependencies:
       '@posthog/cli': 0.4.8
       next: 15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      semver: 7.7.2
+      semver: 7.7.3
     transitivePeerDependencies:
       - debug
 
@@ -4483,7 +4483,7 @@ snapshots:
       extract-zip: 2.0.1
       progress: 2.0.3
       proxy-agent: 6.5.0
-      semver: 7.7.2
+      semver: 7.7.3
       tar-fs: 3.1.1
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -5547,7 +5547,7 @@ snapshots:
       next: 15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react: 19.1.1
 
-  '@vercel/functions@3.1.1':
+  '@vercel/functions@3.1.2':
     dependencies:
       '@vercel/oidc': 3.0.1
 
@@ -5755,7 +5755,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.8.12: {}
+  baseline-browser-mapping@2.8.13: {}
 
   basic-ftp@5.0.5: {}
 
@@ -5773,9 +5773,9 @@ snapshots:
 
   browserslist@4.26.3:
     dependencies:
-      baseline-browser-mapping: 2.8.12
+      baseline-browser-mapping: 2.8.13
       caniuse-lite: 1.0.30001748
-      electron-to-chromium: 1.5.231
+      electron-to-chromium: 1.5.232
       node-releases: 2.0.23
       update-browserslist-db: 1.1.3(browserslist@4.26.3)
 
@@ -6028,7 +6028,7 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       fast-check: 3.23.2
 
-  electron-to-chromium@1.5.231: {}
+  electron-to-chromium@1.5.232: {}
 
   emoji-regex@8.0.0: {}
 
@@ -6531,7 +6531,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.7.2
+      semver: 7.7.3
 
   mapbox-gl@3.15.0:
     dependencies:
@@ -6772,7 +6772,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.272.0:
+  posthog-js@1.273.0:
     dependencies:
       '@posthog/core': 1.2.2
       core-js: 3.45.1
@@ -7038,7 +7038,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.7.2: {}
+  semver@7.7.3: {}
 
   serialize-to-js@3.1.2: {}
 
@@ -7055,7 +7055,7 @@ snapshots:
     dependencies:
       '@img/colour': 1.0.0
       detect-libc: 2.1.2
-      semver: 7.7.2
+      semver: 7.7.3
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.34.4
       '@img/sharp-darwin-x64': 0.34.4

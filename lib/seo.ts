@@ -182,15 +182,17 @@ export function parseRobotsTxt(text: string): RobotsTxt {
       continue;
     }
     if (key === "allow") {
-      currentRules.push({ type: "allow", value });
+      if (currentAgents.length > 0) currentRules.push({ type: "allow", value });
       continue;
     }
     if (key === "disallow") {
-      currentRules.push({ type: "disallow", value });
+      if (currentAgents.length > 0)
+        currentRules.push({ type: "disallow", value });
       continue;
     }
     if (key === "crawl-delay") {
-      currentRules.push({ type: "crawlDelay", value });
+      if (currentAgents.length > 0)
+        currentRules.push({ type: "crawlDelay", value });
       continue;
     }
     if (key === "sitemap") {
