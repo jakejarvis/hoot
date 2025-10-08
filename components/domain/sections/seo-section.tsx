@@ -72,6 +72,7 @@ export function SeoSection({
     { label: "Image", value: data?.preview?.image },
     { label: "Robots", value: data?.meta?.general.robots },
   ];
+  const metaTagCount = metaTagValues.filter((t) => t.value != null).length;
 
   // Decide which X (Twitter) card variant to display based on meta tags.
   const twitterCard = data?.meta?.twitter?.card?.toLowerCase();
@@ -95,8 +96,16 @@ export function SeoSection({
       ) : data ? (
         <div className="space-y-4">
           <div className="space-y-3">
-            <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-              Meta Tags
+            <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+              <span>Meta Tags</span>
+              <span
+                className={cn(
+                  "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]",
+                  "bg-accent-orange/18 text-accent-orange",
+                )}
+              >
+                {metaTagCount}
+              </span>
             </div>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {metaTagValues
@@ -707,8 +716,16 @@ function SitemapsList({ items }: { items: string[] }) {
     useProgressiveReveal(items, 2);
   return (
     <div className="space-y-3">
-      <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-        Sitemaps
+      <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+        <span>Sitemaps</span>
+        <span
+          className={cn(
+            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]",
+            "bg-accent-indigo/18 text-accent-indigo",
+          )}
+        >
+          {items.length}
+        </span>
       </div>
       <div className="flex flex-col gap-2.5">
         {existing.map((u) => (
@@ -773,8 +790,9 @@ function SeoSkeleton() {
     <div className="space-y-4">
       {/* Meta Tags */}
       <div className="space-y-3">
-        <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-          Meta Tags
+        <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+          <span>Meta Tags</span>
+          <Skeleton className="h-5 w-6 rounded-full" />
         </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <KeyValueSkeleton label="Title" widthClass="w-[220px]" />
@@ -829,8 +847,9 @@ function SeoSkeleton() {
 
         {/* Sitemaps */}
         <div className="space-y-3">
-          <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-            Sitemaps
+          <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+            <span>Sitemaps</span>
+            <Skeleton className="h-5 w-6 rounded-full" />
           </div>
           <div className="flex flex-col gap-1.5">
             {["sm-0", "sm-1"].map((sid) => (
