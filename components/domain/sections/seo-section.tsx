@@ -344,8 +344,8 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
         <div className="space-y-4">
           {hasAnyListedRules ? (
             <>
-              <div className="flex flex-row items-center gap-2">
-                <InputGroup>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <InputGroup className="sm:flex-1">
                   <InputGroupInput
                     name="robots-filter"
                     placeholder="Filter rules…"
@@ -370,7 +370,7 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                   ) : null}
                 </InputGroup>
 
-                <ButtonGroup className="h-9 items-stretch">
+                <ButtonGroup className="!w-full sm:!w-auto h-9 items-stretch [&>*]:flex-1 sm:[&>*]:flex-none">
                   <Button
                     type="button"
                     variant="outline"
@@ -833,12 +833,12 @@ function SeoSkeleton() {
         </div>
 
         {/* Filters row */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Skeleton className="h-9 w-full rounded-md" />
-          <div className="hidden h-9 items-stretch gap-2 sm:flex">
-            <Skeleton className="h-9 w-16 rounded-md" />
-            <Skeleton className="h-9 w-24 rounded-md" />
-            <Skeleton className="h-9 w-28 rounded-md" />
+          <div className="h-9 w-full items-stretch gap-2 sm:flex sm:w-auto">
+            <Skeleton className="h-9 w-full rounded-md sm:w-16" />
+            <Skeleton className="h-9 w-full rounded-md sm:w-24" />
+            <Skeleton className="h-9 w-full rounded-md sm:w-28" />
           </div>
         </div>
 
