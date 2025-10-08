@@ -258,6 +258,21 @@ function RobotsSummary({
     return { allows, disallows };
   }, [robots]);
 
+  const hasAnyListedRules = useMemo(() => {
+    const groups = robots?.groups ?? [];
+    for (const g of groups) {
+      for (const r of g.rules) {
+        if (
+          (r.type === "allow" || r.type === "disallow") &&
+          r.value.trim() !== ""
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [robots]);
+
   const link = finalUrl ? new URL("/robots.txt", finalUrl).toString() : null;
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<"all" | "allow" | "disallow">("all");
@@ -341,105 +356,115 @@ function RobotsSummary({
 
       {has ? (
         <div className="space-y-4">
-          <div className="flex flex-row items-center gap-2">
-            <InputGroup>
-              <InputGroupInput
-                name="robots-filter"
-                placeholder="Filter rules…"
-                value={query}
-                onChange={(e) => setQuery(e.currentTarget.value)}
-                aria-label="Filter robots rules"
-              />
-              <InputGroupAddon>
-                <Filter />
-              </InputGroupAddon>
-              {query ? (
-                <InputGroupAddon align="inline-end">
-                  <InputGroupButton
+          {hasAnyListedRules ? (
+            <>
+              <div className="flex flex-row items-center gap-2">
+                <InputGroup>
+                  <InputGroupInput
+                    name="robots-filter"
+                    placeholder="Filter rules…"
+                    value={query}
+                    onChange={(e) => setQuery(e.currentTarget.value)}
+                    aria-label="Filter robots rules"
+                  />
+                  <InputGroupAddon>
+                    <Filter />
+                  </InputGroupAddon>
+                  {query ? (
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setQuery("")}
+                      >
+                        <X />
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  ) : null}
+                </InputGroup>
+
+                <ButtonGroup className="h-9 items-stretch">
+                  <Button
                     type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setQuery("")}
+                    variant="outline"
+                    aria-pressed={only === "all"}
+                    onClick={() => setOnly("all")}
+                    className={cn(
+                      "h-9 px-3 text-[13px]",
+                      only === "all" && "!bg-accent hover:!bg-accent/90",
+                    )}
                   >
-                    <X />
-                  </InputGroupButton>
-                </InputGroupAddon>
+                    All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-pressed={only === "allow"}
+                    onClick={() => setOnly("allow")}
+                    className={cn(
+                      "h-9 gap-2.5 px-3 text-[13px]",
+                      only === "allow" && "!bg-accent hover:!bg-accent/90",
+                    )}
+                  >
+                    <span
+                      className={
+                        "inline-block size-1.5 rounded-full bg-emerald-500"
+                      }
+                      aria-hidden="true"
+                    />
+                    Allow ({counts.allows})
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-pressed={only === "disallow"}
+                    onClick={() => setOnly("disallow")}
+                    className={cn(
+                      "h-9 gap-2.5 px-3 text-[13px]",
+                      only === "disallow" && "!bg-accent hover:!bg-accent/90",
+                    )}
+                  >
+                    <span
+                      className={
+                        "inline-block size-1.5 rounded-full bg-rose-500"
+                      }
+                      aria-hidden="true"
+                    />
+                    Disallow ({counts.disallows})
+                  </Button>
+                </ButtonGroup>
+              </div>
+
+              {filtersActive && !hasFilteredRules ? (
+                <div className="text-muted-foreground text-sm">
+                  No matching rules.
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="px-1"
+                    onClick={() => {
+                      setQuery("");
+                      setOnly("all");
+                    }}
+                  >
+                    Reset filters
+                  </Button>
+                </div>
               ) : null}
-            </InputGroup>
 
-            <ButtonGroup className="h-9 items-stretch">
-              <Button
-                type="button"
-                variant="outline"
-                aria-pressed={only === "all"}
-                onClick={() => setOnly("all")}
-                className={cn(
-                  "h-9 px-3 text-[13px]",
-                  only === "all" && "!bg-accent hover:!bg-accent/90",
-                )}
-              >
-                All
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                aria-pressed={only === "allow"}
-                onClick={() => setOnly("allow")}
-                className={cn(
-                  "h-9 gap-2.5 px-3 text-[13px]",
-                  only === "allow" && "!bg-accent hover:!bg-accent/90",
-                )}
-              >
-                <span
-                  className={
-                    "inline-block size-1.5 rounded-full bg-emerald-500"
-                  }
-                  aria-hidden="true"
-                />
-                Allow ({counts.allows})
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                aria-pressed={only === "disallow"}
-                onClick={() => setOnly("disallow")}
-                className={cn(
-                  "h-9 gap-2.5 px-3 text-[13px]",
-                  only === "disallow" && "!bg-accent hover:!bg-accent/90",
-                )}
-              >
-                <span
-                  className={"inline-block size-1.5 rounded-full bg-rose-500"}
-                  aria-hidden="true"
-                />
-                Disallow ({counts.disallows})
-              </Button>
-            </ButtonGroup>
-          </div>
-
-          {filtersActive && !hasFilteredRules ? (
+              <GroupsAccordion
+                groups={displayGroups}
+                query={query}
+                highlight={highlight}
+                only={only}
+              />
+            </>
+          ) : robots?.sitemaps?.length ? (
             <div className="text-muted-foreground text-sm">
-              No matching rules.
-              <Button
-                type="button"
-                variant="link"
-                className="px-1"
-                onClick={() => {
-                  setQuery("");
-                  setOnly("all");
-                }}
-              >
-                Reset filters
-              </Button>
+              This robots.txt only declares sitemaps; no crawl rules specified.
             </div>
           ) : null}
-
-          <GroupsAccordion
-            groups={displayGroups}
-            query={query}
-            highlight={highlight}
-            only={only}
-          />
 
           {robots?.sitemaps?.length ? (
             <SitemapsList items={robots.sitemaps} />
