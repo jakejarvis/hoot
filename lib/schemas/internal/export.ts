@@ -41,7 +41,7 @@ export const DomainExportSchema = z.object({
     )
     .nullish(),
   headers: HttpHeadersSchema.nullish(),
-  seo: SeoResponseSchema.nullish(),
+  seo: SeoResponseSchema.omit({ preview: true, source: true }).nullish(),
 });
 
 export type DomainExport = z.infer<typeof DomainExportSchema>;

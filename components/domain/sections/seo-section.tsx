@@ -631,7 +631,7 @@ function GroupContent({
           animate={{ height: "auto", opacity: 1 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           style={{ overflow: "hidden" }}
-          className="flex flex-col gap-1"
+          className="flex flex-col gap-1.5"
         >
           {added.map((r, i) => (
             <RuleRow
@@ -738,7 +738,7 @@ function SitemapsList({ items }: { items: string[] }) {
             animate={{ height: "auto", opacity: 1 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
             style={{ overflow: "hidden" }}
-            className="flex flex-col gap-1"
+            className="flex flex-col gap-2.5"
           >
             {added.map((u) => (
               <div key={`sm-add-${u}`} className="flex items-center">
@@ -801,7 +801,10 @@ function SeoSkeleton() {
         {/* Tabs row skeleton */}
         <div className="flex h-auto w-full flex-wrap gap-1 rounded-md border border-muted-foreground/15 p-1 md:justify-start">
           {["twitter", "facebook", "linkedin", "discord", "slack"].map((id) => (
-            <Skeleton key={`og-tab-${id}`} className="h-9 w-24 rounded-md" />
+            <Skeleton
+              key={`og-tab-${id}`}
+              className="h-9 flex-1 basis-0 rounded-md"
+            />
           ))}
         </div>
         {/* Preview skeleton */}
@@ -843,12 +846,7 @@ function SeoSkeleton() {
           </div>
           <div className="flex flex-col gap-1.5">
             {["sm-0", "sm-1"].map((sid) => (
-              <div
-                key={sid}
-                className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
-              >
-                <Skeleton className="h-3 w-56" />
-              </div>
+              <Skeleton key={sid} className="h-3 w-56" />
             ))}
             <div className="mt-4 flex justify-center">
               <Skeleton className="h-7 w-28 rounded-md" />
