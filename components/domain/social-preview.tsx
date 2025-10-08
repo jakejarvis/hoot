@@ -1,3 +1,4 @@
+import { ImageOff } from "lucide-react";
 import Image from "next/image";
 import type {
   SocialPreviewProvider,
@@ -50,7 +51,8 @@ export function SocialPreview({
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[#64748b] text-[11px] dark:text-[#8b98a5]">
-                  No image
+                  <ImageOff className="h-5 w-5" aria-hidden="true" />
+                  <span className="sr-only">No image</span>
                 </div>
               )}
             </div>
@@ -88,7 +90,8 @@ export function SocialPreview({
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[#64748b] text-[12px] dark:text-[#8b98a5]">
-                  No image
+                  <ImageOff className="h-5 w-5" aria-hidden="true" />
+                  <span className="sr-only">No image</span>
                 </div>
               )}
             </div>
@@ -127,7 +130,8 @@ export function SocialPreview({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[#606770] text-[12px] dark:text-[#b0b3b8]">
-                No image
+                <ImageOff className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">No image</span>
               </div>
             )}
           </div>
@@ -165,7 +169,8 @@ export function SocialPreview({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[#6e7781] text-[12px] dark:text-[#9aa6b2]">
-                No image
+                <ImageOff className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">No image</span>
               </div>
             )}
           </div>
@@ -198,7 +203,7 @@ export function SocialPreview({
             {description}
           </div>
         )}
-        <div className="mt-3 overflow-hidden rounded-[6px] bg-[#f6f6f6] dark:bg-[#222529]">
+        <div className="mt-3 overflow-hidden rounded-[6px] bg-[#ecebeb] dark:bg-[#393d42]">
           <div className="aspect-[16/9] min-h-[150px] w-full">
             {image ? (
               <Image
@@ -211,7 +216,8 @@ export function SocialPreview({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[#6b7075] text-[12px] dark:text-[#9aa6b2]">
-                No image
+                <ImageOff className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">No image</span>
               </div>
             )}
           </div>
@@ -248,7 +254,8 @@ export function SocialPreview({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[#99a1ab] text-[12px]">
-                No image
+                <ImageOff className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">No image</span>
               </div>
             )}
           </div>

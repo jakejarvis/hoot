@@ -38,7 +38,7 @@ export function SubheadCount({
   return (
     <span
       className={cn(
-        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono font-semibold text-[10px]",
         colorToClasses(color),
         className,
       )}

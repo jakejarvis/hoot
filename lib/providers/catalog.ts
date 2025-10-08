@@ -539,9 +539,18 @@ export const DNS_PROVIDERS: Array<
     domain: "aws.amazon.com",
     category: "dns",
     rule: {
-      kind: "nsRegex",
-      pattern: "^ns-\\d+\\.awsdns-\\d+\\.(com|net|org|co\\.uk)$",
-      flags: "i",
+      any: [
+        {
+          kind: "nsRegex",
+          pattern: "^ns-\\d+\\.awsdns-\\d+\\.(com|net|org|co\\.uk)$",
+          flags: "i",
+        },
+        {
+          kind: "nsRegex",
+          pattern: "^ns\\d+\\.amzndns.(com|net|org|co\\.uk)$",
+          flags: "i",
+        },
+      ],
     },
   },
   {
@@ -1011,6 +1020,12 @@ export const REGISTRAR_PROVIDERS: Array<
     domain: "dreamhost.com",
     category: "registrar",
     rule: { kind: "registrarIncludes", substr: "dreamhost" },
+  },
+  {
+    name: "SafeNames",
+    domain: "safenames.net",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "safenames" },
   },
 ];
 

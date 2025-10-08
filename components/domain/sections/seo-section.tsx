@@ -5,10 +5,10 @@ import {
   ChevronRight,
   CircleCheck,
   ClockFading,
+  EllipsisVertical,
   ExternalLink,
   FileQuestionMark,
   Filter,
-  Plus,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -146,7 +146,7 @@ export function SeoSection({
               value={selectedTab}
               onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}
             >
-              <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 md:justify-start">
+              <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 bg-muted/30 md:justify-start dark:bg-muted/50">
                 <TabsTrigger value="twitter" className="h-9 flex-1 px-2 py-1.5">
                   <TwitterIcon
                     className="md:!h-3.5 md:!w-3.5 h-4 w-4"
@@ -658,15 +658,15 @@ function GroupContent({
         </motion.div>
       ) : null}
       {more > 0 ? (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-1 flex justify-start">
           <Button
             type="button"
             size="sm"
-            variant="ghost"
-            className="gap-2 px-3 text-[13px]"
+            variant="outline"
+            className="text-[12px]"
             onClick={() => setVisible(total)}
           >
-            <Plus className="h-4 w-4" aria-hidden />
+            <EllipsisVertical className="!h-3.5 !w-3.5" aria-hidden />
             <span>Show {more} more</span>
           </Button>
         </div>
@@ -732,7 +732,7 @@ function SitemapsList({ items }: { items: string[] }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
         <span>Sitemaps</span>
-        <SubheadCount count={items.length} color="indigo" />
+        <SubheadCount count={items.length} color="green" />
       </div>
       <div className="flex flex-col gap-2.5">
         {existing.map((u) => (
@@ -773,15 +773,15 @@ function SitemapsList({ items }: { items: string[] }) {
           </motion.div>
         ) : null}
         {more > 0 ? (
-          <div className="mt-2 flex justify-center">
+          <div className="mt-1 flex justify-start">
             <Button
               type="button"
               size="sm"
-              variant="ghost"
-              className="gap-2 px-3 text-[13px]"
+              variant="outline"
+              className="text-[12px]"
               onClick={() => setVisible(total)}
             >
-              <Plus className="h-4 w-4" aria-hidden />
+              <EllipsisVertical className="!h-3.5 !w-3.5" aria-hidden />
               <span>Show {more} more</span>
             </Button>
           </div>

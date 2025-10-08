@@ -28,7 +28,7 @@ export function Bookmarklet({ className }: { className?: string }) {
           <span className="sr-only">Open bookmarklet info</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="border-border/80 dark:border-border/50">
         <DialogHeader className="space-y-2">
           <DialogTitle className="flex items-center gap-1.5">
             <MousePointerClick className="h-4.5 w-4.5" />
