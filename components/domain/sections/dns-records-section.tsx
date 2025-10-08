@@ -5,6 +5,7 @@ import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
+import { SubheadCountSkeleton } from "@/components/domain/subhead-count";
 import type { DnsRecord } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -17,11 +18,11 @@ function DnsGroupSkeleton({
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 leading-none">
         <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
           {title}
         </div>
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground/10 px-1.5 text-[10px] text-foreground/60" />
+        <SubheadCountSkeleton />
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {Array.from(

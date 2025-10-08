@@ -22,6 +22,10 @@ import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import { SocialPreview } from "@/components/domain/social-preview";
 import {
+  SubheadCount,
+  SubheadCountSkeleton,
+} from "@/components/domain/subhead-count";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -98,14 +102,7 @@ export function SeoSection({
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
               <span>Meta Tags</span>
-              <span
-                className={cn(
-                  "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]",
-                  "bg-accent-orange/18 text-accent-orange",
-                )}
-              >
-                {metaTagCount}
-              </span>
+              <SubheadCount count={metaTagCount} color="orange" />
             </div>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {metaTagValues
@@ -333,8 +330,14 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
 
   return (
     <div className="space-y-4 rounded-xl">
-      <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-        robots.txt
+      <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+        <span>robots.txt</span>
+        {has ? (
+          <SubheadCount
+            count={(counts.allows + counts.disallows) as number}
+            color="blue"
+          />
+        ) : null}
       </div>
 
       {has ? (
@@ -396,7 +399,8 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                       }
                       aria-hidden="true"
                     />
-                    Allow ({counts.allows})
+                    <span>Allow</span>
+                    <SubheadCount count={counts.allows} color="slate" />
                   </Button>
                   <Button
                     type="button"
@@ -414,7 +418,8 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                       }
                       aria-hidden="true"
                     />
-                    Disallow ({counts.disallows})
+                    <span>Disallow</span>
+                    <SubheadCount count={counts.disallows} color="slate" />
                   </Button>
                 </ButtonGroup>
               </div>
@@ -724,16 +729,9 @@ function SitemapsList({ items }: { items: string[] }) {
     useProgressiveReveal(items, 2);
   return (
     <div className="space-y-3">
-      <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+      <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
         <span>Sitemaps</span>
-        <span
-          className={cn(
-            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]",
-            "bg-accent-indigo/18 text-accent-indigo",
-          )}
-        >
-          {items.length}
-        </span>
+        <SubheadCount count={items.length} color="indigo" />
       </div>
       <div className="flex flex-col gap-2.5">
         {existing.map((u) => (
@@ -798,10 +796,7 @@ function SeoSkeleton() {
     <div className="space-y-4">
       {/* Meta Tags */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-          <span>Meta Tags</span>
-          <Skeleton className="h-5 w-6 rounded-full" />
-        </div>
+        <SubheadCountSkeleton />
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <KeyValueSkeleton label="Title" widthClass="w-[220px]" />
           <KeyValueSkeleton label="Description" widthClass="w-[260px]" />
@@ -832,8 +827,9 @@ function SeoSkeleton() {
 
       {/* Robots summary */}
       <div className="space-y-4 rounded-xl">
-        <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
+        <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
           <Skeleton className="h-3 w-20 rounded" />
+          <SubheadCountSkeleton />
         </div>
 
         {/* Filters row */}
@@ -855,9 +851,8 @@ function SeoSkeleton() {
 
         {/* Sitemaps */}
         <div className="space-y-3">
-          <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-            <span>Sitemaps</span>
-            <Skeleton className="h-5 w-6 rounded-full" />
+          <div className="mt-5">
+            <SubheadCountSkeleton />
           </div>
           <div className="flex flex-col gap-1.5">
             {["sm-0", "sm-1"].map((sid) => (
