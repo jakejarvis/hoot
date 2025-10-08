@@ -93,7 +93,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
         const ct = res.headers.get("content-type") ?? "";
         if (ct.includes("text/plain") || ct.includes("text/")) {
           const txt = await res.text();
-          robots = parseRobotsTxt(txt);
+          robots = parseRobotsTxt(txt, { baseUrl: robotsUrl });
           await redis.set(robotsKey, robots, { ex: ROBOTS_TTL_SECONDS });
         } else {
           robotsError = `Unexpected robots content-type: ${ct}`;

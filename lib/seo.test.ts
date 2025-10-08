@@ -184,11 +184,63 @@ describe("robots.txt parsing", () => {
       "Disallow: /private",
       "Sitemap: https://a.example/sitemap-news.xml",
     ].join("\n");
-    const robots = parseRobotsTxt(text);
+    const robots = parseRobotsTxt(text, {
+      baseUrl: "https://a.example/robots.txt",
+    });
     expect(robots.sitemaps).toEqual([
       "https://a.example/sitemap.xml",
       "https://a.example/sitemap-news.xml",
     ]);
+  });
+
+  it("dedupes and resolves relative sitemaps with baseUrl, ignoring invalid schemes", () => {
+    const text = [
+      "Sitemap: /sitemap.xml",
+      "Sitemap: /sitemap.xml", // duplicate
+      "Sitemap: ftp://example.com/ignored.xml", // non-http(s), ignored
+      "User-agent:*",
+      "Disallow: /x",
+    ].join("\n");
+    const robots = parseRobotsTxt(text, {
+      baseUrl: "https://a.example/robots.txt",
+    });
+    expect(robots.sitemaps).toEqual(["https://a.example/sitemap.xml"]);
+  });
+
+  it("treats blank line between explicit UA groups as separator (still two groups)", () => {
+    const text = [
+      "User-agent: a",
+      "Disallow: /one",
+      "",
+      "User-agent: b",
+      "Disallow: /two",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(2);
+    expect(robots.groups[0].userAgents).toEqual(["a"]);
+    expect(robots.groups[1].userAgents).toEqual(["b"]);
+  });
+
+  it("collects Sitemap inside group globally (not scoped to group)", () => {
+    const text = [
+      "User-agent: a",
+      "Sitemap: https://example.com/x.xml",
+      "Disallow: /a",
+      "User-agent: b",
+      "Disallow: /b",
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.sitemaps).toEqual(["https://example.com/x.xml"]);
+    expect(robots.groups.length).toBe(2);
+  });
+
+  it("caps parsing size to ~500KiB without throwing", () => {
+    const big = "#".repeat(600 * 1024);
+    const text = `User-agent: *\nDisallow: /x\n${big}\nAllow: /y`;
+    const robots = parseRobotsTxt(text, { sizeCapBytes: 500 * 1024 });
+    expect(robots.fetched).toBe(true);
+    // Exact presence of trailing rule after cap is implementation-defined; ensure no crash
+    expect(Array.isArray(robots.groups)).toBe(true);
   });
 
   it("preserves wildcard and anchor characters in values", () => {
@@ -244,7 +296,9 @@ describe("robots.txt parsing", () => {
 
   it("parses last group without trailing newline at EOF", () => {
     const text = "User-agent:*\nAllow:/public\nDisallow:/private"; // no trailing NL
-    const robots = parseRobotsTxt(text);
+    const robots = parseRobotsTxt(text, {
+      baseUrl: "https://e.com/robots.txt",
+    });
     expect(robots.groups.length).toBe(1);
     const g = robots.groups[0];
     expect(g.userAgents).toEqual(["*"]);
@@ -270,7 +324,9 @@ describe("robots.txt parsing", () => {
       "User-agent: *",
       "Disallow: /plugins/search/",
     ].join("\n");
-    const robots = parseRobotsTxt(text);
+    const robots = parseRobotsTxt(text, {
+      baseUrl: "https://wordpress.org/robots.txt",
+    });
     expect(robots.sitemaps).toContain("https://wordpress.org/sitemap.xml");
     expect(robots.groups.length).toBe(1);
     const g = robots.groups[0];
@@ -308,7 +364,9 @@ describe("robots.txt parsing", () => {
       "Allow: /public", // duplicate from later group
       "Disallow: /private", // duplicate again
     ].join("\n");
-    const robots = parseRobotsTxt(text);
+    const robots = parseRobotsTxt(text, {
+      baseUrl: "https://dup.example/robots.txt",
+    });
     expect(robots.groups.length).toBe(1);
     const g = robots.groups[0];
     const disallows = g.rules.filter((r) => r.type === "disallow");
@@ -337,7 +395,9 @@ describe("robots.txt parsing", () => {
       "Sitemap: https://vercel.com/sitemap.xml",
     ].join("\n");
 
-    const robots = parseRobotsTxt(text);
+    const robots = parseRobotsTxt(text, {
+      baseUrl: "https://vercel.com/robots.txt",
+    });
     expect(robots.fetched).toBe(true);
     expect(robots.sitemaps).toContain("https://vercel.com/sitemap.xml");
     expect(robots.groups.length).toBe(1);

@@ -203,11 +203,6 @@ describe("SeoSection RobotsSummary", () => {
       />,
     );
 
-    // robots.txt link in header
-    expect(screen.getAllByText(/^robots\.txt$/i).length).toBeGreaterThan(0);
-    const link = screen.getByRole("link", { name: /robots\.txt/i });
-    expect(link).toHaveAttribute("href", "https://example.com/robots.txt");
-
     // Counts displayed on filter buttons (exact label match)
     expect(
       screen.getAllByRole("button", { name: /^Allow \(1\)$/i }).length,

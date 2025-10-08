@@ -140,10 +140,17 @@ export function selectPreview(
   return { title, description, image, imageUploaded: null, canonicalUrl };
 }
 
-export function parseRobotsTxt(text: string): RobotsTxt {
-  const lines = text.split(/\r?\n/);
+export function parseRobotsTxt(
+  text: string,
+  opts?: { baseUrl?: string; sizeCapBytes?: number },
+): RobotsTxt {
+  // Cap processing to avoid huge files (align with Google ~500 KiB)
+  const capBytes = opts?.sizeCapBytes ?? 500 * 1024;
+  const capped = text.length > capBytes ? text.slice(0, capBytes) : text;
+  const lines = capped.split(/\r?\n/);
   const groups: RobotsGroup[] = [];
   const sitemaps: string[] = [];
+  const sitemapSeen = new Set<string>();
 
   let currentAgents: string[] = [];
   let currentRules: RobotsRule[] = [];
@@ -196,7 +203,27 @@ export function parseRobotsTxt(text: string): RobotsTxt {
       continue;
     }
     if (key === "sitemap") {
-      if (value) sitemaps.push(value);
+      if (value) {
+        let url = value;
+        if (opts?.baseUrl) {
+          try {
+            const abs = new URL(value, opts.baseUrl);
+            if (abs.protocol === "http:" || abs.protocol === "https:") {
+              url = abs.toString();
+            } else {
+              // Ignore non-http(s)
+              url = "";
+            }
+          } catch {
+            // Ignore invalid URL
+            url = "";
+          }
+        }
+        if (url && !sitemapSeen.has(url)) {
+          sitemapSeen.add(url);
+          sitemaps.push(url);
+        }
+      }
     }
   }
   flushGroup();

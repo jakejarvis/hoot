@@ -209,7 +209,7 @@ export function SeoSection({
             </Tabs>
           </div>
 
-          <RobotsSummary robots={data.robots} finalUrl={data.source.finalUrl} />
+          <RobotsSummary robots={data.robots} />
         </div>
       ) : isError ? (
         <div className="text-muted-foreground text-sm">
@@ -227,13 +227,7 @@ export function SeoSection({
   );
 }
 
-function RobotsSummary({
-  robots,
-  finalUrl,
-}: {
-  robots: SeoResponse["robots"];
-  finalUrl: string | null;
-}) {
+function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
   const has =
     !!robots &&
     robots.fetched &&
@@ -273,7 +267,6 @@ function RobotsSummary({
     return false;
   }, [robots]);
 
-  const link = finalUrl ? new URL("/robots.txt", finalUrl).toString() : null;
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<"all" | "allow" | "disallow">("all");
 
@@ -341,17 +334,7 @@ function RobotsSummary({
   return (
     <div className="space-y-4 rounded-xl">
       <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
-        {has && link ? (
-          <a
-            href={link}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 leading-none"
-          >
-            robots.txt
-            <ExternalLink className="size-3" />
-          </a>
-        ) : null}
+        robots.txt
       </div>
 
       {has ? (
