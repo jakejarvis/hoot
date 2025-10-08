@@ -60,6 +60,7 @@ export const SeoPreviewSchema = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
   image: z.string().url().nullable(),
+  imageUploaded: z.string().url().nullable().optional(),
   canonicalUrl: z.string().url(),
 });
 

@@ -137,7 +137,7 @@ export function selectPreview(
   const image = meta?.openGraph.images?.[0] || meta?.twitter.image || null;
   const canonicalUrl =
     meta?.general.canonical || meta?.openGraph.url || finalUrl;
-  return { title, description, image, canonicalUrl };
+  return { title, description, image, imageUploaded: null, canonicalUrl };
 }
 
 export function parseRobotsTxt(text: string): RobotsTxt {

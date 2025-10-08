@@ -106,7 +106,7 @@ describe("getSeo", () => {
     fetchMock.mockRestore();
   });
 
-  it("sets preview image to null when image fetch fails", async () => {
+  it("sets preview.imageUploaded to null when image fetch fails and preserves original", async () => {
     const fetchMock = vi
       .spyOn(global, "fetch")
       .mockResolvedValueOnce(
@@ -130,7 +130,10 @@ describe("getSeo", () => {
       } as unknown as Response);
 
     const out = await getSeo("example.com");
-    expect(out.preview?.image).toBeNull();
+    // original image remains for Meta Tags display
+    expect(out.preview?.image).toBe("https://example.com/og.png");
+    // uploaded url is null on failure for privacy-safe rendering
+    expect(out.preview?.imageUploaded ?? null).toBeNull();
     fetchMock.mockRestore();
   });
 

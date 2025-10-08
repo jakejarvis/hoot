@@ -107,6 +107,24 @@ export function SeoSection({
                     key={t.label}
                     label={t.label}
                     value={String(t.value)}
+                    suffix={
+                      String(t.value).startsWith("http://") ||
+                      String(t.value).startsWith("https://") ? (
+                        <a
+                          href={String(t.value)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-muted-foreground hover:text-foreground"
+                          title="Open URL in new tab"
+                        >
+                          <ExternalLink
+                            className="!h-3.5 !w-3.5"
+                            aria-hidden="true"
+                          />
+                        </a>
+                      ) : null
+                    }
+                    copyable
                   />
                 ))}
             </div>
@@ -175,7 +193,7 @@ export function SeoSection({
                       provider={selectedTab}
                       title={data.preview.title}
                       description={data.preview.description}
-                      image={data.preview.image}
+                      image={data.preview.imageUploaded ?? null}
                       url={data.preview.canonicalUrl}
                       variant={selectedTab === "twitter" ? xVariant : undefined}
                     />
@@ -363,10 +381,16 @@ function RobotsSummary({
                 aria-pressed={only === "allow"}
                 onClick={() => setOnly("allow")}
                 className={cn(
-                  "h-9 px-3 text-[13px]",
+                  "h-9 gap-2.5 px-3 text-[13px]",
                   only === "allow" && "!bg-accent hover:!bg-accent/90",
                 )}
               >
+                <span
+                  className={
+                    "inline-block size-1.5 rounded-full bg-emerald-500"
+                  }
+                  aria-hidden="true"
+                />
                 Allow ({counts.allows})
               </Button>
               <Button
@@ -375,10 +399,14 @@ function RobotsSummary({
                 aria-pressed={only === "disallow"}
                 onClick={() => setOnly("disallow")}
                 className={cn(
-                  "h-9 px-3 text-[13px]",
+                  "h-9 gap-2.5 px-3 text-[13px]",
                   only === "disallow" && "!bg-accent hover:!bg-accent/90",
                 )}
               >
+                <span
+                  className={"inline-block size-1.5 rounded-full bg-rose-500"}
+                  aria-hidden="true"
+                />
                 Disallow ({counts.disallows})
               </Button>
             </ButtonGroup>
@@ -447,7 +475,7 @@ function RobotsGroupHeader({
   showDisallow?: boolean;
 }) {
   return (
-    <div className="flex w-full items-center justify-between">
+    <div className="flex w-full items-center justify-between rounded-md p-1 hover:bg-accent/50">
       <div className="flex flex-wrap items-center gap-1.5">
         <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
         {userAgents.map((ua) => (
@@ -464,7 +492,7 @@ function RobotsGroupHeader({
           </span>
         ))}
       </div>
-      <div className="text-muted-foreground text-xs">
+      <div className="mr-1 text-muted-foreground text-xs">
         {showAllow ? `${allowN} allow` : null}
         {showAllow && showDisallow ? " · " : null}
         {showDisallow ? `${disallowN} disallow` : null}
@@ -519,7 +547,7 @@ function GroupsAccordion({
             showDisallow={showDisallow}
           />
         </AccordionTrigger>
-        <AccordionContent className="p-0">
+        <AccordionContent>
           <GroupContent
             rules={g.rules}
             query={query}
@@ -616,7 +644,7 @@ function GroupContent({
         </motion.div>
       ) : null}
       {more > 0 ? (
-        <div className="my-4 flex justify-center">
+        <div className="mt-4 flex justify-center">
           <Button
             type="button"
             size="sm"
@@ -666,13 +694,17 @@ function RuleTypeDot({ type }: { type: "allow" | "disallow" | "crawlDelay" }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={cn("inline-block size-1.5 rounded-full", color)}
-          role="img"
-          aria-label={label}
-        />
+        <div className="flex h-4 w-4 items-center justify-center">
+          <span
+            className={cn("inline-block size-1.5 rounded-full", color)}
+            role="img"
+            aria-label={label}
+          />
+        </div>
       </TooltipTrigger>
-      <TooltipContent sideOffset={6}>{label}</TooltipContent>
+      <TooltipContent side="left" sideOffset={6}>
+        {label}
+      </TooltipContent>
     </Tooltip>
   );
 }
@@ -685,12 +717,9 @@ function SitemapsList({ items }: { items: string[] }) {
       <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
         Sitemaps
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2.5">
         {existing.map((u) => (
-          <div
-            key={`sm-ex-${u}`}
-            className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
-          >
+          <div key={`sm-ex-${u}`} className="flex items-center">
             <a
               className="flex items-center gap-1.5 truncate font-medium text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
               href={u}
@@ -712,10 +741,7 @@ function SitemapsList({ items }: { items: string[] }) {
             className="flex flex-col gap-1"
           >
             {added.map((u) => (
-              <div
-                key={`sm-add-${u}`}
-                className="flex h-10 items-center rounded-lg border bg-background/40 px-2 py-1"
-              >
+              <div key={`sm-add-${u}`} className="flex items-center">
                 <a
                   className="flex items-center gap-1.5 truncate font-medium text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
                   href={u}
@@ -730,7 +756,7 @@ function SitemapsList({ items }: { items: string[] }) {
           </motion.div>
         ) : null}
         {more > 0 ? (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-2 flex justify-center">
             <Button
               type="button"
               size="sm"

@@ -117,10 +117,11 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
         lower,
         preview.image,
       );
-      preview.image = stored?.url ?? null;
+      // Preserve original image URL for meta display; attach uploaded URL for rendering
+      preview.imageUploaded = stored?.url ?? null;
     } catch {
-      // On failure, avoid leaking external image URL
-      preview.image = null;
+      // On failure, avoid rendering external image URL
+      preview.imageUploaded = null;
     }
   }
 
