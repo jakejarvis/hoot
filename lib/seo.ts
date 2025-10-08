@@ -240,7 +240,19 @@ export function parseRobotsTxt(text: string): RobotsTxt {
     }
     const mergedGroups: RobotsGroup[] = order
       .map((k) => mergedByKey.get(k))
-      .filter((x): x is RobotsGroup => Boolean(x));
+      .filter((x): x is RobotsGroup => Boolean(x))
+      .map((g) => {
+        // Deduplicate identical rules while preserving first occurrence order
+        const seen = new Set<string>();
+        const dedupedRules: RobotsRule[] = [];
+        for (const r of g.rules) {
+          const key = `${r.type}\n${r.value}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          dedupedRules.push(r);
+        }
+        return { ...g, rules: dedupedRules };
+      });
     return { fetched: true, groups: mergedGroups, sitemaps };
   }
 

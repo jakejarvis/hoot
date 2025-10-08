@@ -340,6 +340,7 @@ function RobotsSummary({
           <div className="flex flex-row items-center gap-2">
             <InputGroup>
               <InputGroupInput
+                name="robots-filter"
                 placeholder="Filter rules…"
                 value={query}
                 onChange={(e) => setQuery(e.currentTarget.value)}

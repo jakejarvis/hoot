@@ -297,6 +297,28 @@ describe("robots.txt parsing", () => {
     ).toBe(true);
   });
 
+  it("deduplicates identical rules within a merged group while preserving order", () => {
+    const text = [
+      "User-agent: *",
+      "Disallow: /private",
+      "Disallow: /private", // duplicate
+      "Allow: /public",
+      "",
+      "User-agent: *",
+      "Allow: /public", // duplicate from later group
+      "Disallow: /private", // duplicate again
+    ].join("\n");
+    const robots = parseRobotsTxt(text);
+    expect(robots.groups.length).toBe(1);
+    const g = robots.groups[0];
+    const disallows = g.rules.filter((r) => r.type === "disallow");
+    const allows = g.rules.filter((r) => r.type === "allow");
+    expect(disallows.length).toBe(1);
+    expect(allows.length).toBe(1);
+    expect(disallows[0].value).toBe("/private");
+    expect(allows[0].value).toBe("/public");
+  });
+
   it("handles blank line and comments after User-agent and parses vercel-style sample", () => {
     const text = [
       "User-Agent: *",
