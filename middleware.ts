@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // Matches beginning "http:" or "https:" followed by any number of slashes, e.g.:
-// "https://", "https:/", "https:////" etc. Then captures everything up to the next slash as the authority.
+// "https://", "https:/", "https:////" etc.
+// Then captures everything up to the next slash as the authority.
 const HTTP_PREFIX_CAPTURE_AUTHORITY = /^https?:[:/]+([^/]+)/i;
 
 export function middleware(request: NextRequest) {
@@ -14,48 +15,45 @@ export function middleware(request: NextRequest) {
   // Remove the leading "/" so we can inspect the raw string the user pasted after the host
   const afterSlash = path.slice(1);
 
-  // Cheap precheck to avoid work for most routes
-  const lower = afterSlash.toLowerCase();
-  const looksHttpLike =
-    lower.startsWith("http") ||
-    lower.startsWith("https%3a") ||
-    lower.startsWith("http%3a");
-  if (!looksHttpLike) return NextResponse.next();
-
-  // If it looks URL-encoded, decode once (fast path, no validation)
+  // Decode once if possible; fall back to raw on failure
   let candidate = afterSlash;
-  if (lower.includes("%3a") || lower.includes("%2f")) {
-    try {
-      candidate = decodeURIComponent(afterSlash);
-    } catch {
-      // ignore decoding failures; fall back to raw
-    }
+  try {
+    candidate = decodeURIComponent(afterSlash);
+  } catch {
+    // ignore decoding failures; fall back to raw
   }
 
-  // Must start with "http:" or "https:" to be considered
-  if (!/^https?:/i.test(candidate)) return NextResponse.next();
-
+  // Match the pattern at the top
   const match = candidate.match(HTTP_PREFIX_CAPTURE_AUTHORITY);
   if (!match) return NextResponse.next();
 
   // May include userinfo@host:port; we only want the host
   let authority = match[1];
+
+  // Strip userinfo@ if present
   const atIndex = authority.lastIndexOf("@");
   if (atIndex !== -1) authority = authority.slice(atIndex + 1);
 
-  // IPv6 in brackets
-  if (authority.startsWith("[") && authority.includes("]")) {
-    authority = authority.slice(1, authority.indexOf("]"));
-  }
-
   // Strip port if present
   const colonIndex = authority.indexOf(":");
-  let hostname = colonIndex === -1 ? authority : authority.slice(0, colonIndex);
-  hostname = hostname.trim();
-  if (!hostname) return NextResponse.next();
+  if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
+
+  // Trim whitespace before last checks
+  authority = authority.trim();
+
+  // Normalize common "www." prefix
+  if (/^www\./i.test(authority)) authority = authority.slice(4);
+
+  // Skip IP addresses entirely (unsupported)
+  const isIPv4Like = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(authority);
+  if (isIPv4Like) return NextResponse.next();
+
+  // The final bailout: if we end up with an empty string by here, it's not a valid domain
+  if (!authority) return NextResponse.next();
 
   const url = request.nextUrl.clone();
-  url.pathname = `/${encodeURIComponent(hostname.toLowerCase())}`;
+  const hostLower = authority.toLowerCase();
+  url.pathname = `/${encodeURIComponent(hostLower)}`;
   url.search = ""; // remove any irrelevant query string from the pasted URL carrier path
   url.hash = "";
   return NextResponse.redirect(url);
