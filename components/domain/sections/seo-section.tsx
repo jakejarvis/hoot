@@ -42,7 +42,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -130,9 +129,7 @@ export function SeoSection({
             </div>
           </div>
 
-          <Separator />
-
-          <div className="space-y-3">
+          <div className="mt-6 space-y-3">
             <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
               Open Graph
             </div>
@@ -202,8 +199,6 @@ export function SeoSection({
               </div>
             </Tabs>
           </div>
-
-          <Separator />
 
           <RobotsSummary robots={data.robots} finalUrl={data.source.finalUrl} />
         </div>
@@ -413,7 +408,7 @@ function RobotsSummary({
             </ButtonGroup>
           </div>
 
-          {!hasFilteredRules ? (
+          {filtersActive && !hasFilteredRules ? (
             <div className="text-muted-foreground text-sm">
               No matching rules.
               <Button
@@ -438,10 +433,7 @@ function RobotsSummary({
           />
 
           {robots?.sitemaps?.length ? (
-            <>
-              <Separator />
-              <SitemapsList items={robots.sitemaps} />
-            </>
+            <SitemapsList items={robots.sitemaps} />
           ) : null}
         </div>
       ) : (
@@ -608,12 +600,12 @@ function GroupContent({
   return (
     <div className="flex flex-col gap-1.5 py-2">
       {rules.length === 0 && hasEmptyDisallow && only !== "allow" ? (
-        <div className="rounded-md bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground/90">
+        <div className="rounded-md bg-muted/30 px-2 py-1 text-[13px] text-muted-foreground/90">
           No disallow restrictions (allow all)
         </div>
       ) : null}
       {rules.length === 0 && hasEmptyAllow && only !== "disallow" ? (
-        <div className="rounded-md bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground/90">
+        <div className="rounded-md bg-muted/30 px-2 py-1 text-[13px] text-muted-foreground/90">
           No explicit allow paths
         </div>
       ) : null}
@@ -722,7 +714,7 @@ function SitemapsList({ items }: { items: string[] }) {
         {existing.map((u) => (
           <div key={`sm-ex-${u}`} className="flex items-center">
             <a
-              className="flex items-center gap-1.5 truncate font-medium text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
+              className="flex items-center gap-1.5 truncate font-medium text-[13px] text-foreground/85 hover:text-foreground/60 hover:no-underline"
               href={u}
               target="_blank"
               rel="noreferrer"
@@ -744,7 +736,7 @@ function SitemapsList({ items }: { items: string[] }) {
             {added.map((u) => (
               <div key={`sm-add-${u}`} className="flex items-center">
                 <a
-                  className="flex items-center gap-1.5 truncate font-medium text-foreground/85 text-xs hover:text-foreground/60 hover:no-underline"
+                  className="flex items-center gap-1.5 truncate font-medium text-[13px] text-foreground/85 hover:text-foreground/60 hover:no-underline"
                   href={u}
                   target="_blank"
                   rel="noreferrer"
@@ -792,10 +784,8 @@ function SeoSkeleton() {
         </div>
       </div>
 
-      <Separator />
-
       {/* Open Graph */}
-      <div className="space-y-3">
+      <div className="mt-6 space-y-3">
         <div className="text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
           Open Graph
         </div>
@@ -813,8 +803,6 @@ function SeoSkeleton() {
           <SocialPreviewSkeletonLarge />
         </div>
       </div>
-
-      <Separator />
 
       {/* Robots summary */}
       <div className="space-y-4 rounded-xl">
@@ -840,7 +828,6 @@ function SeoSkeleton() {
         </div>
 
         {/* Sitemaps */}
-        <Separator />
         <div className="space-y-3">
           <div className="mt-5 text-[11px] text-foreground/70 uppercase tracking-[0.08em] dark:text-foreground/80">
             Sitemaps
