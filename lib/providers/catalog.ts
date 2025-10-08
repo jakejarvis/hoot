@@ -65,7 +65,12 @@ export const HOSTING_PROVIDERS: Array<
     name: "Netlify",
     domain: "netlify.com",
     category: "hosting",
-    rule: { kind: "headerEquals", name: "server", value: "netlify" },
+    rule: {
+      any: [
+        { kind: "headerIncludes", name: "server", substr: "netlify" },
+        { kind: "headerPresent", name: "x-nf-request-id" },
+      ],
+    },
   },
   {
     name: "GitHub Pages",
@@ -219,7 +224,7 @@ export const HOSTING_PROVIDERS: Array<
     rule: {
       all: [
         { kind: "headerPresent", name: "cdn-cache" },
-        { kind: "headerPresent", name: "perma-cache" },
+        { kind: "headerIncludes", name: "server", substr: "bunnycdn" },
       ],
     },
   },
@@ -456,6 +461,7 @@ export const EMAIL_PROVIDERS: Array<
       any: [
         { kind: "mxSuffix", suffix: "registrar-servers.com" },
         { kind: "mxSuffix", suffix: "privateemail.com" },
+        { kind: "mxSuffix", suffix: "jellyfish.systems" },
       ],
     },
   },
@@ -470,6 +476,24 @@ export const EMAIL_PROVIDERS: Array<
     domain: "cisco.com",
     category: "email",
     rule: { kind: "mxSuffix", suffix: "iphmx.com" },
+  },
+  {
+    name: "MailRoute",
+    domain: "mailroute.net",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mailroute.net" },
+  },
+  {
+    name: "easyDNS easyMAIL",
+    domain: "easydns.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "easymail.ca" },
+  },
+  {
+    name: "HEY.com",
+    domain: "hey.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "hey.com" },
   },
 ];
 
@@ -656,7 +680,12 @@ export const DNS_PROVIDERS: Array<
     name: "Namecheap FreeDNS",
     domain: "namecheap.com",
     category: "dns",
-    rule: { kind: "nsSuffix", suffix: "registrar-servers.com" },
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "registrar-servers.com" },
+        { kind: "nsSuffix", suffix: "namecheaphosting.com" },
+      ],
+    },
   },
   {
     name: "Akamai Edge DNS",
@@ -722,6 +751,44 @@ export const DNS_PROVIDERS: Array<
     domain: "gandi.net",
     category: "dns",
     rule: { kind: "nsSuffix", suffix: "gandi.net" },
+  },
+  {
+    name: "Rackspace DNS",
+    domain: "rackspace.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "rackspace.com" },
+  },
+  {
+    name: "easyDNS",
+    domain: "easydns.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "easydns.com" },
+        { kind: "nsSuffix", suffix: "easydns.net" },
+        { kind: "nsSuffix", suffix: "easydns.org" },
+        { kind: "nsSuffix", suffix: "easydns.ca" },
+        { kind: "nsSuffix", suffix: "easydns.info" },
+      ],
+    },
+  },
+  {
+    name: "Bunny.net",
+    domain: "bunny.net",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "bunny.net" },
+  },
+  {
+    name: "One.com",
+    domain: "one.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "one.com" },
+  },
+  {
+    name: "Hover",
+    domain: "hover.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "hover.com" },
   },
 ];
 
@@ -1026,6 +1093,18 @@ export const REGISTRAR_PROVIDERS: Array<
     domain: "safenames.net",
     category: "registrar",
     rule: { kind: "registrarIncludes", substr: "safenames" },
+  },
+  {
+    name: "easyDNS",
+    domain: "easydns.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "easydns" },
+  },
+  {
+    name: "One.com",
+    domain: "one.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "one.com" },
   },
 ];
 
