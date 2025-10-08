@@ -203,17 +203,17 @@ describe("SeoSection RobotsSummary", () => {
       />,
     );
 
-    // Counts displayed on filter buttons (exact label match)
+    // Counts displayed on filter buttons (pill-based labels e.g., "Allow1")
     expect(
-      screen.getAllByRole("button", { name: /^Allow \(1\)$/i }).length,
+      screen.getAllByRole("button", { name: /^Allow\s*1$/i }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getAllByRole("button", { name: /^Disallow \(1\)$/i }).length,
+      screen.getAllByRole("button", { name: /^Disallow\s*1$/i }).length,
     ).toBeGreaterThan(0);
 
-    // Filter to Disallow only (click the filter button labeled e.g. "Disallow (1)")
+    // Filter to Disallow only (click the filter button labeled e.g. "Disallow1")
     const disallowBtn = screen.getByRole("button", {
-      name: /^Disallow \(\d+\)$/i,
+      name: /^Disallow\s*\d+$/i,
     });
     await userEvent.click(disallowBtn);
     // Expect only disallow entries rendered (simpler: path text present)
