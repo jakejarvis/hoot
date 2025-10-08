@@ -263,11 +263,19 @@ export function SocialPreview({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Open ${hostname} in a new tab`}
+      data-slot="social-preview"
+      data-provider={provider}
+      data-variant={variant}
     >
       {card}
     </a>
   ) : (
-    <div className="flex h-48 w-full items-center justify-center rounded-md border text-[#64748b] text-[12px] dark:text-[#8b98a5]">
+    <div
+      className="flex h-48 w-full items-center justify-center rounded-md border text-[#64748b] text-[12px] dark:text-[#8b98a5]"
+      data-slot="social-preview"
+      data-provider={provider}
+      data-variant={variant}
+    >
       No preview available.
     </div>
   );

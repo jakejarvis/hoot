@@ -3,8 +3,8 @@
 import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
+import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
-import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import type { DnsRecord } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 

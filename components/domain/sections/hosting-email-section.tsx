@@ -4,8 +4,8 @@ import dynamic from "next/dynamic";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
-import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import type { Hosting } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 

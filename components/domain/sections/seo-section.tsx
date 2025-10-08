@@ -18,9 +18,9 @@ import {
   TwitterIcon,
 } from "@/components/brand-icons";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
-import { KeyValueSkeleton } from "@/components/domain/skeletons";
-import { SocialPreview } from "@/components/social-preview";
+import { SocialPreview } from "@/components/domain/social-preview";
 import {
   Accordion,
   AccordionContent,

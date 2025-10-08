@@ -4,9 +4,9 @@ import { BadgeCheck, ExternalLink } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { KeyValueSkeleton } from "@/components/domain/skeletons";
 import {
   Tooltip,
   TooltipContent,
