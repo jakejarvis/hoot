@@ -20,10 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${GeistSans.variable} ${GeistMono.variable} font-sans tabular-nums antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable} touch-manipulation scroll-smooth`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-svh overscroll-none font-sans tabular-nums antialiased">
         <ThemeProvider>
           {/* Solid background for light/dark modes */}
           <div aria-hidden className="-z-10 fixed inset-0 bg-background" />

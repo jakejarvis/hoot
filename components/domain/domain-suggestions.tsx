@@ -63,7 +63,7 @@ export function DomainSuggestions({
           variant="secondary"
           size="sm"
           className={cn(
-            "cursor-pointer",
+            "cursor-pointer bg-muted/15 ring-1 ring-border/60 hover:bg-muted/50 dark:bg-muted/70 dark:hover:bg-muted/90",
             historyLoaded ? "visible" : "invisible",
           )}
           onClick={() => handleClick(domain)}

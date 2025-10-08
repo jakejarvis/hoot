@@ -112,7 +112,12 @@ export function DomainSearch({
         )}
 
         <div className="relative w-full flex-1">
-          <InputGroup className={cn(variant === "lg" ? "h-12" : "h-10")}>
+          <InputGroup
+            className={cn(
+              "border-none ring-1 ring-border/60",
+              variant === "lg" ? "h-12" : "h-10",
+            )}
+          >
             <InputGroupInput
               id="domain"
               ref={inputRef}
