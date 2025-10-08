@@ -2,7 +2,7 @@
 
 import { Bookmark, MousePointerClick } from "lucide-react";
 import { useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export function Bookmarklet({ className }: { className?: string }) {
   // a little hack to "unsafely" use raw javascript as a link
@@ -40,19 +41,23 @@ export function Bookmarklet({ className }: { className?: string }) {
             like magic!
           </DialogDescription>
         </DialogHeader>
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-fit"
+        <button
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "w-fit p-0 leading-none",
+          )}
           onClick={(e) => e.preventDefault()}
-          asChild
+          type="button"
         >
           {/** biome-ignore lint/a11y/useValidAnchor: we set the href above */}
-          <a ref={hrefScript}>
+          <a
+            ref={hrefScript}
+            className="flex items-center gap-1.5 px-3.5 py-1.5"
+          >
             <Bookmark />
             <span>Inspect Domain</span>
           </a>
-        </Button>
+        </button>
       </DialogContent>
     </Dialog>
   );
