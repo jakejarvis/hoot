@@ -93,6 +93,7 @@ export const HOSTING_PROVIDERS: Array<
       any: [
         { kind: "headerEquals", name: "server", value: "vegur" },
         { kind: "headerEquals", name: "server", value: "heroku" },
+        { kind: "headerIncludes", name: "via", substr: "1.1 heroku-router" },
       ],
     },
   },
@@ -204,6 +205,12 @@ export const HOSTING_PROVIDERS: Array<
     domain: "render.com",
     category: "hosting",
     rule: { kind: "headerPresent", name: "x-render-origin-server" },
+  },
+  {
+    name: "Ghost",
+    domain: "ghost.org",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "ghost-fastly" },
   },
   {
     name: "Bunny.net",
@@ -457,6 +464,12 @@ export const EMAIL_PROVIDERS: Array<
     domain: "wordpress.com",
     category: "email",
     rule: { kind: "mxSuffix", suffix: "wordpress.com" },
+  },
+  {
+    name: "Cisco Secure Email",
+    domain: "cisco.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "iphmx.com" },
   },
 ];
 
@@ -1222,5 +1235,17 @@ export const CA_PROVIDERS: Array<
     domain: "www.certum.eu",
     category: "ca",
     rule: { kind: "issuerIncludes", substr: "certum" },
+  },
+  {
+    name: "Fastly",
+    domain: "fastly.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "certainly" },
+  },
+  {
+    name: "InCommon",
+    domain: "incommon.org",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "incommon" },
   },
 ];
