@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, HatGlasses, Info } from "lucide-react";
+import { BadgeCheck, GraduationCap, HatGlasses } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -73,7 +73,7 @@ export function RegistrationSection({
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    <p className="inline-flex items-center gap-1">
+                    <p className="inline-flex items-center gap-[5px]">
                       <span>
                         Verified by{" "}
                         <span className="font-medium">
@@ -92,8 +92,9 @@ export function RegistrationSection({
                         title={`Learn about ${
                           data.source === "rdap" ? "RDAP" : "WHOIS"
                         }`}
+                        className="text-muted/80"
                       >
-                        <Info className="size-3" />
+                        <GraduationCap className="size-3" />
                       </a>
                     </p>
                   </TooltipContent>
