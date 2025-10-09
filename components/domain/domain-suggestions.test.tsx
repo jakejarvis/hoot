@@ -24,9 +24,9 @@ describe("DomainSuggestions", () => {
 
   it("renders default suggestions when there is no history", async () => {
     render(<DomainSuggestions />);
-    // Wait for a known default like google.com to appear
+    // Wait for a known default like jarv.is to appear
     expect(
-      await screen.findByRole("button", { name: /google\.com/i }),
+      await screen.findByRole("button", { name: /jarv\.is/i }),
     ).toBeInTheDocument();
     // At least one favicon placeholder should exist
     expect(
