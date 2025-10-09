@@ -48,10 +48,6 @@ export const getDistinctId = cache(async (): Promise<string> => {
   return distinctId;
 });
 
-export const getTraceId = cache(async (): Promise<string> => {
-  return uuidv4();
-});
-
 export const captureServer = async (
   event: string,
   properties: Record<string, unknown>,
@@ -63,7 +59,6 @@ export const captureServer = async (
   }
 
   const envProps = {
-    trace_id: await getTraceId(),
     env: process.env.NODE_ENV,
     next_runtime: process.env.NEXT_RUNTIME,
     vercel_region: process.env.VERCEL_REGION,
@@ -94,7 +89,6 @@ export const captureServerException = async (
   }
 
   const envProps = {
-    trace_id: await getTraceId(),
     env: process.env.NODE_ENV,
     next_runtime: process.env.NEXT_RUNTIME,
     vercel_region: process.env.VERCEL_REGION,
