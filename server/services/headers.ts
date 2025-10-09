@@ -7,8 +7,15 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
   const key = ns("headers", lower);
 
+  console.debug("[headers] start", { domain: lower });
   const cached = await redis.get<HttpHeader[]>(key);
-  if (cached) return cached;
+  if (cached) {
+    console.info("[headers] cache hit", {
+      domain: lower,
+      count: cached.length,
+    });
+    return cached;
+  }
 
   const REQUEST_TIMEOUT_MS = 5000;
   try {
@@ -63,8 +70,17 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     });
 
     await redis.set(key, normalized, { ex: 10 * 60 });
+    console.info("[headers] ok", {
+      domain: lower,
+      status: final.status,
+      count: normalized.length,
+    });
     return normalized;
   } catch (err) {
+    console.warn("[headers] error", {
+      domain: lower,
+      error: (err as Error)?.message,
+    });
     await captureServer("headers_probe", {
       domain: lower,
       status: -1,

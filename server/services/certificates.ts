@@ -8,8 +8,15 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
   const key = ns("tls", lower);
 
+  console.debug("[certificates] start", { domain: lower });
   const cached = await redis.get<Certificate[]>(key);
-  if (cached) return cached;
+  if (cached) {
+    console.info("[certificates] cache hit", {
+      domain: lower,
+      count: cached.length,
+    });
+    return cached;
+  }
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
 
@@ -76,8 +83,17 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
     const ttl = out.length > 0 ? 12 * 60 * 60 : 10 * 60;
     await redis.set(key, out, { ex: ttl });
+    console.info("[certificates] ok", {
+      domain: lower,
+      chain_length: out.length,
+      duration_ms: Date.now() - startedAt,
+    });
     return out;
   } catch (err) {
+    console.warn("[certificates] error", {
+      domain: lower,
+      error: (err as Error)?.message,
+    });
     await captureServer("tls_probe", {
       domain: lower,
       chain_length: 0,

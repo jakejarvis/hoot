@@ -11,20 +11,28 @@ import type { Registration } from "@/lib/schemas";
 // Type exported from schemas; keep alias for local file consumers if any
 
 export async function getRegistration(domain: string): Promise<Registration> {
+  const startedAt = Date.now();
+  console.debug("[registration] start", { domain });
+
   const registrable = toRegistrableDomain(domain);
   if (!registrable) throw new Error("Invalid domain");
 
   const key = ns("reg", registrable.toLowerCase());
   const cached = await redis.get<Registration>(key);
-  if (cached) return cached;
+  if (cached) {
+    console.info("[registration] cache hit", { domain: registrable });
+    return cached;
+  }
 
-  const startedAt = Date.now();
   const { ok, record, error } = await lookupDomain(registrable, {
-    timeoutMs: 15000,
-    followWhoisReferral: true,
+    timeoutMs: 5000,
   });
 
   if (!ok || !record) {
+    console.warn("[registration] error", {
+      domain: registrable,
+      error: error || "unknown",
+    });
     await captureServer("registration_lookup", {
       domain: registrable,
       outcome: "error",
@@ -33,6 +41,11 @@ export async function getRegistration(domain: string): Promise<Registration> {
     });
     throw new Error(error || "Registration lookup failed");
   }
+
+  // Log raw rdapper record for observability (safe; already public data)
+  console.debug("[registration] rdapper result", {
+    ...record,
+  });
 
   const ttl = record.isRegistered ? 24 * 60 * 60 : 60 * 60;
   let registrarName = (record.registrar?.name || "").toString();
@@ -65,6 +78,12 @@ export async function getRegistration(domain: string): Promise<Registration> {
     cached: false,
     duration_ms: Date.now() - startedAt,
     source: record.source,
+  });
+  console.info("[registration] ok", {
+    domain: registrable,
+    registered: record.isRegistered,
+    registrar: withProvider.registrarProvider.name,
+    duration_ms: Date.now() - startedAt,
   });
 
   return withProvider;

@@ -10,9 +10,12 @@ export async function lookupIpMeta(ip: string): Promise<{
   owner: string | null;
   domain: string | null;
 }> {
+  const startedAt = Date.now();
+  console.debug("[ip] start", { ip });
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
-    if (!res.ok) throw new Error("ipwho fail");
+    if (!res.ok) throw new Error("ipwho.is fail");
+
     const j = (await res.json()) as {
       city?: string;
       region?: string;
@@ -23,6 +26,9 @@ export async function lookupIpMeta(ip: string): Promise<{
       flag?: { emoji?: string };
       connection?: { org?: string; isp?: string; domain?: string };
     };
+
+    console.debug("[ip] ipwho.is result", { ip, json: j });
+
     const geo = {
       city: j.city || "",
       region: j.region || j.state || "",
@@ -35,8 +41,17 @@ export async function lookupIpMeta(ip: string): Promise<{
     const isp = j.connection?.isp?.trim();
     const owner = (org || isp || "").trim() || null;
     const domain = (j.connection?.domain || "").trim() || null;
+
+    console.info("[ip] ok", {
+      ip,
+      owner: owner || undefined,
+      domain: domain || undefined,
+      country: geo.country,
+      duration_ms: Date.now() - startedAt,
+    });
     return { geo, owner, domain };
   } catch {
+    console.warn("[ip] error", { ip });
     return {
       geo: {
         city: "",

@@ -17,7 +17,7 @@ import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
 import { getSeo } from "@/server/services/seo";
-import { createTRPCRouter, publicProcedure } from "@/trpc/init";
+import { createTRPCRouter, loggedProcedure } from "@/trpc/init";
 
 export const domainInput = z
   .object({ domain: z.string().min(1) })
@@ -28,34 +28,34 @@ export const domainInput = z
   });
 
 export const domainRouter = createTRPCRouter({
-  registration: publicProcedure
+  registration: loggedProcedure
     .input(domainInput)
     .output(RegistrationSchema)
     .query(({ input }) => getRegistration(input.domain)),
-  dns: publicProcedure
+  dns: loggedProcedure
     .input(domainInput)
     .output(DnsResolveResultSchema)
     .query(({ input }) => resolveAll(input.domain)),
-  hosting: publicProcedure
+  hosting: loggedProcedure
     .input(domainInput)
     .output(HostingSchema)
     .query(({ input }) => detectHosting(input.domain)),
-  certificates: publicProcedure
+  certificates: loggedProcedure
     .input(domainInput)
     .output(CertificatesSchema)
     .query(({ input }) => getCertificates(input.domain)),
-  headers: publicProcedure
+  headers: loggedProcedure
     .input(domainInput)
     .output(HttpHeadersSchema)
     .query(({ input }) => probeHeaders(input.domain)),
-  seo: publicProcedure
+  seo: loggedProcedure
     .input(domainInput)
     .output(SeoResponseSchema)
     .query(({ input }) => getSeo(input.domain)),
-  favicon: publicProcedure
+  favicon: loggedProcedure
     .input(domainInput)
     .query(({ input }) => getOrCreateFaviconBlobUrl(input.domain)),
-  screenshot: publicProcedure
+  screenshot: loggedProcedure
     .input(domainInput)
     .query(({ input }) => getOrCreateScreenshotBlobUrl(input.domain)),
 });

@@ -37,8 +37,16 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   const metaKey = ns(`${baseKey}:meta`, "v1");
   const robotsKey = ns(`${baseKey}:robots`, "v1");
 
+  console.debug("[seo] start", { domain: lower });
   const cached = await redis.get<SeoResponse>(metaKey);
-  if (cached) return cached;
+  if (cached) {
+    console.info("[seo] cache hit", {
+      domain: lower,
+      has_meta: !!cached.meta,
+      has_robots: !!cached.robots,
+    });
+    return cached;
+  }
 
   let finalUrl: string | null = `https://${lower}/`;
   let status: number | null = null;
@@ -143,6 +151,14 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   await redis.set(metaKey, response, { ex: HTML_TTL_SECONDS });
 
   await captureServer("seo_fetch", {
+    domain: lower,
+    status: status ?? -1,
+    has_meta: !!meta,
+    has_robots: !!robots,
+    has_errors: Boolean(htmlError || robotsError),
+  });
+
+  console.info("[seo] ok", {
     domain: lower,
     status: status ?? -1,
     has_meta: !!meta,

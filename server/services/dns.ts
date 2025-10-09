@@ -47,6 +47,7 @@ export const DOH_PROVIDERS: DohProvider[] = [
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const lower = domain.toLowerCase();
   const startedAt = Date.now();
+  console.debug("[dns] start", { domain: lower });
   const providers = providerOrderForLookup(lower);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
@@ -84,6 +85,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       provider_attempts: 0,
       duration_ms_by_provider: {},
       cache_hit: true,
+    });
+    console.info("[dns] cache hit", {
+      domain: lower,
+      counts,
+      resolver: resolverUsed,
     });
     return { records: flat, resolver: resolverUsed } as DnsResolveResult;
   }
@@ -138,8 +144,19 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         duration_ms_by_provider: durationByProvider,
         cache_hit: !usedFresh,
       });
+      console.info("[dns] ok", {
+        domain: lower,
+        counts,
+        resolver: resolverUsed,
+        duration_ms_total: Date.now() - startedAt,
+      });
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
+      console.warn("[dns] provider attempt failed", {
+        domain: lower,
+        provider: provider.key,
+        error: (err as Error)?.message,
+      });
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
       // Try next provider in rotation
@@ -152,6 +169,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     duration_ms_total: Date.now() - startedAt,
     failure: true,
     provider_attempts: providers.length,
+  });
+  console.error("[dns] all providers failed", {
+    domain: lower,
+    providers: providers.map((p) => p.key),
+    error: String(lastError),
   });
   throw new Error(
     `All DoH providers failed for ${lower}: ${String(lastError)}`,

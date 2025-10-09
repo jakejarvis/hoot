@@ -12,9 +12,16 @@ import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
 
 export async function detectHosting(domain: string): Promise<Hosting> {
+  const startedAt = Date.now();
+  console.debug("[hosting] start", { domain });
+
   const key = ns("hosting", domain.toLowerCase());
   const cached = await redis.get<Hosting>(key);
-  if (cached) return cached;
+  if (cached) {
+    console.info("[hosting] cache hit", { domain });
+    return cached;
+  }
+
   const { records: dns } = await resolveAll(domain);
   const a = dns.find((d) => d.type === "A");
   const mx = dns.filter((d) => d.type === "MX");
@@ -100,7 +107,15 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     dns_provider: dnsName,
     ip_present: Boolean(ip),
     geo_country: geo.country || "",
+    duration_ms: Date.now() - startedAt,
   });
   await redis.set(key, info, { ex: 24 * 60 * 60 });
+  console.info("[hosting] ok", {
+    domain,
+    hosting: hostingName,
+    email: emailName,
+    dns_provider: dnsName,
+    duration_ms: Date.now() - startedAt,
+  });
   return info;
 }
