@@ -36,3 +36,17 @@ export function formatTtl(ttl: number): string {
   if (!hours && !minutes) parts.push(`${seconds}s`);
   return parts.join(" ");
 }
+
+export function extractHostnameFromUrlish(
+  input: string | undefined | null,
+): string | undefined {
+  if (!input) return undefined;
+  const value = String(input).trim();
+  if (!value) return undefined;
+  try {
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.hostname || undefined;
+  } catch {
+    return undefined;
+  }
+}

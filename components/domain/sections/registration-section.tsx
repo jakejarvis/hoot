@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, ExternalLink, HatGlasses } from "lucide-react";
+import { BadgeCheck, HatGlasses, Info } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -12,27 +12,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatDate, formatDateTimeUtc } from "@/lib/format";
+import {
+  extractHostnameFromUrlish,
+  formatDate,
+  formatDateTimeUtc,
+} from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
-
-export function formatRegistrant(reg: {
-  organization: string;
-  country: string;
-  state?: string;
-}) {
-  const org = (reg.organization || "").trim();
-  const country = (reg.country || "").trim();
-  const state = (reg.state || "").trim();
-  const parts = [] as string[];
-  if (org) parts.push(org);
-  const loc = [state, country].filter(Boolean).join(", ");
-  if (loc) parts.push(loc);
-  if (parts.length === 0) return "Unavailable";
-  return parts.join(" — ");
-}
 
 export function RegistrationSection({
   data,
@@ -67,9 +55,9 @@ export function RegistrationSection({
           <>
             <KeyValue
               label="Registrar"
-              value={data?.registrarProvider?.name || ""}
+              value={data.registrarProvider?.name || ""}
               leading={
-                data?.registrarProvider?.domain ? (
+                data.registrarProvider?.domain ? (
                   <Favicon
                     domain={data.registrarProvider.domain}
                     size={16}
@@ -85,22 +73,27 @@ export function RegistrationSection({
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    <p>
-                      Source:{" "}
+                    <p className="inline-flex items-center gap-1">
+                      <span>
+                        Verified by{" "}
+                        <span className="font-medium">
+                          {formatRegistrationSourceHost(data) ??
+                            (data.source === "rdap" ? "RDAP" : "WHOIS")}
+                        </span>
+                      </span>
                       <a
                         href={
-                          data?.source === "rdap"
+                          data.source === "rdap"
                             ? "https://rdap.rcode3.com/"
                             : "https://en.wikipedia.org/wiki/WHOIS"
                         }
                         target="_blank"
                         rel="noopener"
-                        className="inline-flex items-center gap-1 font-mono underline underline-offset-2"
+                        title={`Learn about ${
+                          data.source === "rdap" ? "RDAP" : "WHOIS"
+                        }`}
                       >
-                        <span>
-                          {data?.source === "rdap" ? "RDAP" : "WHOIS"}
-                        </span>
-                        <ExternalLink className="size-3" />
+                        <Info className="size-3" />
                       </a>
                     </p>
                   </TooltipContent>
@@ -111,12 +104,12 @@ export function RegistrationSection({
             <KeyValue
               label="Registrant"
               value={
-                data?.privacyEnabled || !registrant
+                data.privacyEnabled || !registrant
                   ? "Hidden"
                   : formatRegistrant(registrant)
               }
               leading={
-                data?.privacyEnabled || !registrant ? (
+                data.privacyEnabled || !registrant ? (
                   <HatGlasses className="stroke-muted-foreground" />
                 ) : undefined
               }
@@ -163,7 +156,25 @@ export function RegistrationSection({
   );
 }
 
-function extractRegistrantView(record: Registration): RegistrantView | null {
+export function formatRegistrant(reg: {
+  organization: string;
+  country: string;
+  state?: string;
+}) {
+  const org = (reg.organization || "").trim();
+  const country = (reg.country || "").trim();
+  const state = (reg.state || "").trim();
+  const parts = [] as string[];
+  if (org) parts.push(org);
+  const loc = [state, country].filter(Boolean).join(", ");
+  if (loc) parts.push(loc);
+  if (parts.length === 0) return "Unavailable";
+  return parts.join(" — ");
+}
+
+export function extractRegistrantView(
+  record: Registration,
+): RegistrantView | null {
   const registrant = record.contacts?.find((c) => c.type === "registrant");
   if (!registrant) return null;
   const organization =
@@ -176,4 +187,16 @@ function extractRegistrantView(record: Registration): RegistrantView | null {
   ).toString();
   const state = (registrant.state || "").toString() || undefined;
   return { organization, country, state };
+}
+
+export function formatRegistrationSourceHost(
+  data: Registration,
+): string | undefined {
+  if (data.source === "rdap") {
+    const servers = data.rdapServers;
+    const last =
+      servers && servers.length > 0 ? servers[servers.length - 1] : undefined;
+    return extractHostnameFromUrlish(last);
+  }
+  return extractHostnameFromUrlish(data.whoisServer) ?? data.whoisServer;
 }
