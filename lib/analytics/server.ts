@@ -25,7 +25,7 @@ export const getServerPosthog = (): PostHog | null => {
 };
 
 export const getDistinctId = cache(async (): Promise<string> => {
-  let distinctId: string | undefined;
+  let distinctId: string | undefined | null = null;
 
   const cookieStore = await cookies();
   const phCookie = cookieStore.get(
@@ -48,6 +48,10 @@ export const getDistinctId = cache(async (): Promise<string> => {
   return distinctId;
 });
 
+export const getTraceId = cache(async (): Promise<string> => {
+  return uuidv4();
+});
+
 export const captureServer = async (
   event: string,
   properties: Record<string, unknown>,
@@ -58,10 +62,21 @@ export const captureServer = async (
     return;
   }
 
+  const envProps = {
+    trace_id: await getTraceId(),
+    env: process.env.NODE_ENV,
+    next_runtime: process.env.NEXT_RUNTIME,
+    vercel_region: process.env.VERCEL_REGION,
+  } as const;
+
+  const propsToSend = { ...properties };
+
+  const resolvedDistinctId = distinctId || (await getDistinctId());
+
   client.capture({
     event,
-    distinctId: distinctId || (await getDistinctId()) || "server",
-    properties,
+    distinctId: resolvedDistinctId,
+    properties: { ...envProps, ...propsToSend },
   });
 
   // flush events to posthog in background
@@ -78,11 +93,19 @@ export const captureServerException = async (
     return;
   }
 
-  client.captureException(
-    error,
-    distinctId || (await getDistinctId()) || "server",
-    properties,
-  );
+  const envProps = {
+    trace_id: await getTraceId(),
+    env: process.env.NODE_ENV,
+    next_runtime: process.env.NEXT_RUNTIME,
+    vercel_region: process.env.VERCEL_REGION,
+  } as const;
+
+  const resolvedDistinctId = distinctId || (await getDistinctId());
+
+  client.captureException(error, resolvedDistinctId, {
+    ...envProps,
+    ...properties,
+  });
 
   // flush events to posthog in background
   waitUntil(client.shutdown());
