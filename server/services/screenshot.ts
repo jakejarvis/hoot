@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
@@ -132,9 +133,6 @@ export async function getOrCreateScreenshotBlobUrl(
   try {
     let browser: Browser | null = null;
     try {
-      // Re-check index after acquiring lock in case another writer finished
-      // Skip index recheck
-
       browser = await launchChromium();
       console.debug("[screenshot] browser launched", { mode: "chromium" });
 
@@ -298,7 +296,7 @@ export async function getOrCreateScreenshotBlobUrl(
     } finally {
       if (browser) {
         try {
-          await browser.close();
+          waitUntil(browser.close());
         } catch {}
       }
     }
