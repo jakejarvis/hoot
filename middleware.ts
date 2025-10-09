@@ -23,7 +23,19 @@ export function middleware(request: NextRequest) {
     // ignore decoding failures; fall back to raw
   }
 
-  // Match the pattern at the top
+  // Minimal: handle scheme-less single-segment '/www.<host>' redirects
+  if (!candidate.includes("/") && /^www\./i.test(candidate)) {
+    const host = candidate.replace(/^www\./i, "").replace(/\.$/, "");
+    if (host) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${encodeURIComponent(host.toLowerCase())}`;
+      url.search = "";
+      url.hash = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Match the pattern at the top for pasted URLs with scheme
   const match = candidate.match(HTTP_PREFIX_CAPTURE_AUTHORITY);
   if (!match) return NextResponse.next();
 
