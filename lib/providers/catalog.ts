@@ -88,7 +88,13 @@ export const HOSTING_PROVIDERS: Array<
     name: "Fly.io",
     domain: "fly.io",
     category: "hosting",
-    rule: { kind: "headerIncludes", name: "server", substr: "fly/" },
+    rule: {
+      any: [
+        { kind: "headerIncludes", name: "server", substr: "fly/" },
+        { kind: "headerPresent", name: "fly-request-id" },
+        { kind: "headerIncludes", name: "via", substr: "1.1 fly.io" },
+      ],
+    },
   },
   {
     name: "Heroku",
@@ -694,14 +700,15 @@ export const DNS_PROVIDERS: Array<
     rule: { kind: "nsSuffix", suffix: "akam.net" },
   },
   {
-    name: "UltraDNS (Vercara)",
-    domain: "vercara.com",
+    name: "UltraDNS (DigiCert)",
+    domain: "digicert.com",
     category: "dns",
     rule: {
       any: [
+        { kind: "nsSuffix", suffix: "ultradns.com" },
         { kind: "nsSuffix", suffix: "ultradns.net" },
         { kind: "nsSuffix", suffix: "ultradns.org" },
-        { kind: "nsSuffix", suffix: "ultradns.com" },
+        { kind: "nsSuffix", suffix: "ultradns.co.uk" },
         { kind: "nsSuffix", suffix: "ultradns.biz" },
       ],
     },
@@ -789,6 +796,78 @@ export const DNS_PROVIDERS: Array<
     domain: "hover.com",
     category: "dns",
     rule: { kind: "nsSuffix", suffix: "hover.com" },
+  },
+  {
+    name: "ClouDNS",
+    domain: "cloudns.net",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "cloudns.net" },
+        { kind: "nsSuffix", suffix: "cloudns.uk" },
+      ],
+    },
+  },
+  {
+    name: "Rage4",
+    domain: "rage4.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "r4ns.net" },
+  },
+  {
+    name: "Vultr",
+    domain: "vultr.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "vultr.com" },
+  },
+  {
+    name: "Exoscale",
+    domain: "exoscale.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "exoscale.com" },
+        { kind: "nsSuffix", suffix: "exoscale.net" },
+        { kind: "nsSuffix", suffix: "exoscale.io" },
+        { kind: "nsSuffix", suffix: "exoscale.ch" },
+      ],
+    },
+  },
+  {
+    name: "EntryDNS",
+    domain: "entrydns.net",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "entrydns.net" },
+  },
+  {
+    name: "Dyn (Oracle)",
+    domain: "oracle.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "dns.dyn.com" },
+  },
+  {
+    name: "Oracle Cloud",
+    domain: "oracle.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "oraclecloud.net" },
+  },
+  {
+    name: "Afraid.org Free DNS",
+    domain: "afraid.org",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "afraid.org" },
+  },
+  {
+    name: "Zoneedit",
+    domain: "zoneedit.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "zoneedit.com" },
+  },
+  {
+    name: "Bluehost",
+    domain: "bluehost.com",
+    category: "dns",
+    rule: { kind: "nsSuffix", suffix: "bluehost.com" },
   },
 ];
 
