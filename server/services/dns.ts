@@ -76,7 +76,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       ((await redis.get(
         ns("dns:meta", `${lower}:resolver`),
       )) as DnsResolver | null) || "cloudflare";
-    await captureServer("dns_resolve_all", {
+    await captureServer("dns_result", {
       domain: lower,
       duration_ms_total: Date.now() - startedAt,
       counts,
@@ -134,7 +134,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         : ((await redis.get(
             ns("dns:meta", `${lower}:resolver`),
           )) as DnsResolver | null) || provider.key;
-      await captureServer("dns_resolve_all", {
+      await captureServer("dns_result", {
         domain: lower,
         duration_ms_total: Date.now() - startedAt,
         counts,
@@ -164,7 +164,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   }
 
   // All providers failed
-  await captureServer("dns_resolve_all", {
+  await captureServer("dns_result", {
     domain: lower,
     duration_ms_total: Date.now() - startedAt,
     failure: true,

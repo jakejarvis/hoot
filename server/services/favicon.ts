@@ -61,7 +61,7 @@ export async function getOrCreateFaviconBlobUrl(
         size: DEFAULT_SIZE,
         url: raw.url,
       });
-      await captureServer("favicon_fetch", {
+      await captureServer("favicon_result", {
         domain,
         size: DEFAULT_SIZE,
         source: "redis",
@@ -91,7 +91,7 @@ export async function getOrCreateFaviconBlobUrl(
         size: DEFAULT_SIZE,
         url: lockResult.cachedResult.url,
       });
-      await captureServer("favicon_fetch", {
+      await captureServer("favicon_result", {
         domain,
         size: DEFAULT_SIZE,
         source: "redis_wait",
@@ -178,7 +178,7 @@ export async function getOrCreateFaviconBlobUrl(
           // best effort
         }
 
-        await captureServer("favicon_fetch", {
+        await captureServer("favicon_result", {
           domain,
           size: DEFAULT_SIZE,
           source,
@@ -199,7 +199,7 @@ export async function getOrCreateFaviconBlobUrl(
       }
     }
 
-    await captureServer("favicon_fetch", {
+    await captureServer("favicon_result", {
       domain,
       size: DEFAULT_SIZE,
       duration_ms: Date.now() - startedAt,

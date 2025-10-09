@@ -77,7 +77,7 @@ export async function getOrCreateScreenshotBlobUrl(
         height: VIEWPORT_HEIGHT,
         url: raw.url,
       });
-      await captureServer("screenshot_capture", {
+      await captureServer("screenshot_result", {
         domain,
         width: VIEWPORT_WIDTH,
         height: VIEWPORT_HEIGHT,
@@ -113,7 +113,7 @@ export async function getOrCreateScreenshotBlobUrl(
         height: VIEWPORT_HEIGHT,
         url: lockResult.cachedResult.url,
       });
-      await captureServer("screenshot_capture", {
+      await captureServer("screenshot_result", {
         domain,
         width: VIEWPORT_WIDTH,
         height: VIEWPORT_HEIGHT,
@@ -244,7 +244,7 @@ export async function getOrCreateScreenshotBlobUrl(
                 // best effort
               }
 
-              await captureServer("screenshot_capture", {
+              await captureServer("screenshot_result", {
                 domain,
                 width: VIEWPORT_WIDTH,
                 height: VIEWPORT_HEIGHT,
@@ -301,7 +301,7 @@ export async function getOrCreateScreenshotBlobUrl(
       }
     }
 
-    await captureServer("screenshot_capture", {
+    await captureServer("screenshot_result", {
       domain,
       width: VIEWPORT_WIDTH,
       height: VIEWPORT_HEIGHT,

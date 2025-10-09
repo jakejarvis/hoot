@@ -74,7 +74,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       };
     });
 
-    await captureServer("tls_probe", {
+    await captureServer("tls_result", {
       domain: lower,
       chain_length: out.length,
       duration_ms: Date.now() - startedAt,
@@ -94,7 +94,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       domain: lower,
       error: (err as Error)?.message,
     });
-    await captureServer("tls_probe", {
+    await captureServer("tls_result", {
       domain: lower,
       chain_length: 0,
       duration_ms: Date.now() - startedAt,

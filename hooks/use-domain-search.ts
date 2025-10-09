@@ -86,7 +86,16 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
       : null;
 
     setLoading(true);
+    const start = performance.now();
     router.push(`/${encodeURIComponent(target)}`);
+    // lightweight outcome: if we remain on same domain route after 1s, consider it success
+    setTimeout(() => {
+      captureClient("search_outcome", {
+        domain: target,
+        outcome: "navigated",
+        duration_ms: Math.round(performance.now() - start),
+      });
+    }, 1000);
 
     // If pushing to the same route, Next won't navigate. Clear loading shortly
     // to avoid an infinite spinner when the path doesn't actually change.

@@ -15,17 +15,27 @@ export function CopyButton({ value, label }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const resetTimerRef = useRef<number | null>(null);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    toast.success("Copied!", {
-      icon: <ClipboardCheck className="h-4 w-4" />,
-      position: "bottom-center",
-    });
-    captureClient("copy_clicked", {
-      label: label ?? null,
-      value_length: value.length,
-    });
-    setCopied(true);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("Copied!", {
+        icon: <ClipboardCheck className="h-4 w-4" />,
+        position: "bottom-center",
+      });
+      captureClient("copy_success", {
+        label: label ?? null,
+        value_length: value.length,
+      });
+      setCopied(true);
+    } catch {
+      toast.error("Copy failed", {
+        position: "bottom-center",
+      });
+      captureClient("copy_failed", {
+        label: label ?? null,
+        value_length: value.length,
+      });
+    }
     if (resetTimerRef.current) {
       window.clearTimeout(resetTimerRef.current);
     }

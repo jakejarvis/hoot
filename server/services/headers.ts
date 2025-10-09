@@ -3,6 +3,7 @@ import { ns, redis } from "@/lib/redis";
 import type { HttpHeader } from "@/lib/schemas";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
+  const startedAt = Date.now();
   const lower = domain.toLowerCase();
   const url = `https://${domain}/`;
   const key = ns("headers", lower);
@@ -62,11 +63,12 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     });
     const normalized = normalize(headers);
 
-    await captureServer("headers_probe", {
+    await captureServer("headers_result", {
       domain: lower,
       status: final.status,
       used_method: res?.ok ? "HEAD" : "GET",
-      final_url: final.url,
+      duration_ms: Date.now() - startedAt,
+      outcome: final.ok ? "ok" : "error",
     });
 
     await redis.set(key, normalized, { ex: 10 * 60 });
@@ -81,11 +83,12 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       domain: lower,
       error: (err as Error)?.message,
     });
-    await captureServer("headers_probe", {
+    await captureServer("headers_result", {
       domain: lower,
       status: -1,
       used_method: "ERROR",
-      final_url: url,
+      duration_ms: Date.now() - startedAt,
+      outcome: "error",
       error: String(err),
     });
     // Return empty on failure without caching to avoid long-lived negatives

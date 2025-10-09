@@ -1,3 +1,4 @@
+import { captureClient } from "@/lib/analytics/client";
 import { DomainExportSchema } from "@/lib/schemas";
 
 export function exportDomainData(
@@ -20,4 +21,14 @@ export function exportDomainData(
   a.download = `${domain}-${new Date().toISOString().split("T")[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
+
+  try {
+    captureClient("export_result", {
+      domain,
+      format: "json",
+      bytes: blob.size,
+    });
+  } catch {
+    // no-op
+  }
 }

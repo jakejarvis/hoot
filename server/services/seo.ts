@@ -150,7 +150,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   await redis.set(metaKey, response, { ex: HTML_TTL_SECONDS });
 
-  await captureServer("seo_fetch", {
+  await captureServer("seo_result", {
     domain: lower,
     status: status ?? -1,
     has_meta: !!meta,
