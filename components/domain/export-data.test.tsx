@@ -37,7 +37,6 @@ describe("exportDomainData", () => {
         isRegistered: true,
         domain: "example.com",
         tld: "com",
-        fetchedAt: "2021-01-01",
         source: "rdap",
         registrar: { name: "Test Registrar" },
         warnings: [],

@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, ExternalLink } from "lucide-react";
+import { BadgeCheck, ExternalLink, HatGlasses } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
@@ -45,10 +45,10 @@ export function RegistrationSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
-  const registrar = data?.registrarProvider ?? null;
   const registrant: RegistrantView | null = data
     ? extractRegistrantView(data)
     : null;
+
   return (
     <Section
       {...SECTION_DEFS.registration}
@@ -59,19 +59,19 @@ export function RegistrationSection({
         {isLoading ? (
           <>
             <KeyValueSkeleton label="Registrar" withLeading withSuffix />
+            <KeyValueSkeleton label="Registrant" />
             <KeyValueSkeleton label="Created" />
             <KeyValueSkeleton label="Expires" withSuffix />
-            <KeyValueSkeleton label="Registrant" />
           </>
         ) : data ? (
           <>
             <KeyValue
               label="Registrar"
-              value={registrar?.name || ""}
+              value={data?.registrarProvider?.name || ""}
               leading={
-                registrar?.domain ? (
+                data?.registrarProvider?.domain ? (
                   <Favicon
-                    domain={registrar.domain}
+                    domain={data.registrarProvider.domain}
                     size={16}
                     className="rounded"
                   />
@@ -110,9 +110,16 @@ export function RegistrationSection({
 
             <KeyValue
               label="Registrant"
-              value={formatRegistrant(
-                registrant ?? { organization: "Unavailable", country: "" },
-              )}
+              value={
+                data?.privacyEnabled || !registrant
+                  ? "Hidden"
+                  : formatRegistrant(registrant)
+              }
+              leading={
+                data?.privacyEnabled || !registrant ? (
+                  <HatGlasses className="stroke-muted-foreground" />
+                ) : undefined
+              }
             />
 
             <KeyValue

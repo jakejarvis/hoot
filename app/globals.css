@@ -93,7 +93,7 @@
   --accent-cyan: oklch(64% 0.16 195);
   --accent-slate: oklch(48% 0 0);
 
-  /* Section accent glow (light) */
+  /* Section accent glows */
   --glow-blue: radial-gradient(closest-side, var(--accent-blue), transparent);
   --glow-cyan: radial-gradient(closest-side, var(--accent-cyan), transparent);
   --glow-purple: radial-gradient(
@@ -152,23 +152,6 @@
   --accent-orange: oklch(86% 0.14 70);
   --accent-cyan: oklch(78% 0.12 195);
   --accent-slate: oklch(81% 0 54.26);
-
-  /* Section accent glow (dark) */
-  --glow-blue: radial-gradient(closest-side, var(--accent-blue), transparent);
-  --glow-cyan: radial-gradient(closest-side, var(--accent-cyan), transparent);
-  --glow-purple: radial-gradient(
-    closest-side,
-    var(--accent-purple),
-    transparent
-  );
-  --glow-green: radial-gradient(closest-side, var(--accent-green), transparent);
-  --glow-orange: radial-gradient(
-    closest-side,
-    var(--accent-orange),
-    transparent
-  );
-  --glow-pink: radial-gradient(closest-side, var(--accent-pink), transparent);
-  --glow-slate: radial-gradient(closest-side, var(--accent-slate), transparent);
 }
 
 @layer base {

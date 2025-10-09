@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { ProviderRefSchema } from "../internal/provider";
 
-// typed from rdapper
-// https://chatgpt.com/s/t_68daacac17b88191b9dda5c878327209
+// https://github.com/jakejarvis/rdapper/blob/main/src/types.ts
 export const RegistrationSchema = z.object({
   domain: z.string(),
   tld: z.string(),
@@ -11,7 +10,6 @@ export const RegistrationSchema = z.object({
   unicodeName: z.string().optional(),
   punycodeName: z.string().optional(),
   registry: z.string().optional(),
-
   registrar: z
     .object({
       name: z.string().optional(),
@@ -21,9 +19,7 @@ export const RegistrationSchema = z.object({
       phone: z.string().optional(),
     })
     .optional(),
-
   reseller: z.string().optional(),
-
   statuses: z
     .array(
       z.object({
@@ -33,14 +29,11 @@ export const RegistrationSchema = z.object({
       }),
     )
     .optional(),
-
   creationDate: z.string().optional(),
   updatedDate: z.string().optional(),
   expirationDate: z.string().optional(),
   deletionDate: z.string().optional(),
-
   transferLock: z.boolean().optional(),
-
   dnssec: z
     .object({
       enabled: z.boolean(),
@@ -56,7 +49,6 @@ export const RegistrationSchema = z.object({
         .optional(),
     })
     .optional(),
-
   nameservers: z
     .array(
       z.object({
@@ -66,7 +58,6 @@ export const RegistrationSchema = z.object({
       }),
     )
     .optional(),
-
   contacts: z
     .array(
       z.object({
@@ -94,15 +85,10 @@ export const RegistrationSchema = z.object({
       }),
     )
     .optional(),
-
+  privacyEnabled: z.boolean().optional(),
   whoisServer: z.string().optional(),
   rdapServers: z.array(z.string()).optional(),
-  rawRdap: z.unknown().optional(),
-  rawWhois: z.string().optional(),
-
   source: z.enum(["rdap", "whois"]),
-  fetchedAt: z.string(), // ISO 8601
-
   warnings: z.array(z.string()).optional(),
 
   registrarProvider: ProviderRefSchema,

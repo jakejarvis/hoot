@@ -12,7 +12,6 @@ export const DomainExportSchema = z.object({
     domain: true,
     unicodeName: true,
     punycodeName: true,
-    fetchedAt: true,
     warnings: true,
   })
     .transform((r) => ({

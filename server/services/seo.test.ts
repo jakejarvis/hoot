@@ -66,7 +66,6 @@ describe("getSeo", () => {
       meta: null,
       robots: null,
       preview: null,
-      timestamps: { fetchedAt: new Date().toISOString() },
       source: { finalUrl: `https://example.com/`, status: 200 },
     });
 
