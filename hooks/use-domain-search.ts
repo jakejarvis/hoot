@@ -42,9 +42,11 @@ export function useDomainSearch(options: UseDomainSearchOptions = {}) {
   const derivedInitial = useMemo(() => {
     if (prefillFromRoute) {
       const raw = params?.domain ? decodeURIComponent(params.domain) : "";
-      return normalizeDomainInput(raw);
+      const normalized = normalizeDomainInput(raw);
+      return isValidDomain(normalized) ? normalized : "";
     }
-    return normalizeDomainInput(initialValue);
+    const normalized = normalizeDomainInput(initialValue);
+    return isValidDomain(normalized) ? normalized : "";
   }, [prefillFromRoute, params?.domain, initialValue]);
 
   const [value, setValue] = useState<string>(derivedInitial);
