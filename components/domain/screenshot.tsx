@@ -51,25 +51,27 @@ export function Screenshot({
   return (
     <div className={className}>
       {url && failedUrl !== url ? (
-        <Image
-          key={url}
-          src={url}
-          alt={`Homepage preview of ${domain}`}
-          width={width}
-          height={height}
-          className={cn(
-            "h-auto w-full object-cover",
-            aspectClassName,
-            imageClassName,
-            "transition-opacity duration-200",
-            isLoaded ? "opacity-100" : "opacity-0",
-          )}
-          unoptimized
-          priority={false}
-          draggable={false}
-          onError={() => setFailedUrl(url)}
-          onLoad={() => setIsLoaded(true)}
-        />
+        <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer">
+          <Image
+            key={url}
+            src={url}
+            alt={`Homepage preview of ${domain}`}
+            width={width}
+            height={height}
+            className={cn(
+              "h-auto w-full object-cover",
+              aspectClassName,
+              imageClassName,
+              "transition-opacity duration-200",
+              isLoaded ? "opacity-100" : "opacity-0",
+            )}
+            unoptimized
+            priority={false}
+            draggable={false}
+            onError={() => setFailedUrl(url)}
+            onLoad={() => setIsLoaded(true)}
+          />
+        </a>
       ) : (
         <div
           className={`h-auto w-full ${aspectClassName} flex items-center justify-center bg-muted/50`}

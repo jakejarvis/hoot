@@ -50,6 +50,7 @@
   "ignoreDeps": [
     "@types/node",
     "@sparticuz/chromium",
+    "puppeteer",
     "puppeteer-core",
     "lucide-react"
   ]
