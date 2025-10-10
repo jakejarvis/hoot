@@ -42,7 +42,7 @@ vi.mock("@/lib/image", () => ({
 import { getOrCreateScreenshotBlobUrl } from "./screenshot";
 
 beforeEach(() => {
-  process.env.VERCEL_ENV = ""; // force local puppeteer path in tests
+  process.env.VERCEL = "1"; // force sparticuz + puppeteer-core path in tests
 });
 
 afterEach(() => {
