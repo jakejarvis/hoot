@@ -11,6 +11,13 @@ import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -20,13 +27,6 @@ import {
 import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 
 export function CertificatesSection({
   data,

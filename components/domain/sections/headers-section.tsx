@@ -4,8 +4,6 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
-import type { HttpHeader } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
 import {
   Empty,
   EmptyDescription,
@@ -13,6 +11,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import type { HttpHeader } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function HeadersSection({
   data,
