@@ -6,8 +6,6 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import { SubheadCountSkeleton } from "@/components/domain/subhead-count";
-import type { DnsRecord } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
 import {
   Empty,
   EmptyDescription,
@@ -15,6 +13,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import type { DnsRecord } from "@/lib/schemas";
+import { SECTION_DEFS } from "@/lib/sections-meta";
 
 function DnsGroupSkeleton({
   title,
@@ -110,8 +110,8 @@ export function DnsRecordsSection({
                 <EmptyMedia variant="icon" />
                 <EmptyTitle>No DNS records found</EmptyTitle>
                 <EmptyDescription>
-                  We couldn&apos;t resolve A/AAAA, MX, TXT, or NS records for this
-                  domain. If DNS was recently updated, it may take time to
+                  We couldn&apos;t resolve A/AAAA, MX, TXT, or NS records for
+                  this domain. If DNS was recently updated, it may take time to
                   propagate.
                 </EmptyDescription>
               </EmptyHeader>
