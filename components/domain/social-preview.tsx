@@ -268,7 +268,7 @@ export function SocialPreview({
     <a
       href={url}
       target="_blank"
-      rel="noopener noreferrer"
+      rel="noopener"
       aria-label={`Open ${hostname} in a new tab`}
       data-slot="social-preview"
       data-provider={provider}

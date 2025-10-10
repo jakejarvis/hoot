@@ -121,7 +121,7 @@ export function SeoSection({
                         <a
                           href={String(t.value)}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener"
                           className="text-muted-foreground hover:text-foreground"
                           title="Open URL in new tab"
                         >
@@ -741,7 +741,7 @@ function SitemapsList({ items }: { items: string[] }) {
               className="flex items-center gap-1.5 truncate font-medium text-[13px] text-foreground/85 hover:text-foreground/60 hover:no-underline"
               href={u}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener"
             >
               {u}
               <ExternalLink className="size-3" />
@@ -763,7 +763,7 @@ function SitemapsList({ items }: { items: string[] }) {
                   className="flex items-center gap-1.5 truncate font-medium text-[13px] text-foreground/85 hover:text-foreground/60 hover:no-underline"
                   href={u}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener"
                 >
                   {u}
                   <ExternalLink className="size-3" />

@@ -51,7 +51,7 @@ export function Screenshot({
   return (
     <div className={className}>
       {url && failedUrl !== url ? (
-        <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer">
+        <a href={`https://${domain}`} target="_blank" rel="noopener">
           <Image
             key={url}
             src={url}
