@@ -77,8 +77,25 @@ export function RegistrationSection({
                       <span>
                         Verified by{" "}
                         <span className="font-medium">
-                          {formatRegistrationSourceHost(data) ??
-                            (data.source === "rdap" ? "RDAP" : "WHOIS")}
+                          {data.source === "rdap" &&
+                          Array.isArray(data.rdapServers) &&
+                          data.rdapServers.length > 0 ? (
+                            <a
+                              href={
+                                data.rdapServers[data.rdapServers.length - 1] ??
+                                "#"
+                              }
+                              target="_blank"
+                              rel="noopener"
+                              className="underline underline-offset-2"
+                            >
+                              {extractHostnameFromUrlish(
+                                data.rdapServers[data.rdapServers.length - 1],
+                              ) ?? "RDAP"}
+                            </a>
+                          ) : (
+                            (data.whoisServer ?? "WHOIS")
+                          )}
                         </span>
                       </span>
                       <a
@@ -188,16 +205,4 @@ export function extractRegistrantView(
   ).toString();
   const state = (registrant.state || "").toString() || undefined;
   return { organization, country, state };
-}
-
-export function formatRegistrationSourceHost(
-  data: Registration,
-): string | undefined {
-  if (data.source === "rdap") {
-    const servers = data.rdapServers;
-    const last =
-      servers && servers.length > 0 ? servers[servers.length - 1] : undefined;
-    return extractHostnameFromUrlish(last);
-  }
-  return extractHostnameFromUrlish(data.whoisServer) ?? data.whoisServer;
 }
