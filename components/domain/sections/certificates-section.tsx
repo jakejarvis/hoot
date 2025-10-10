@@ -20,6 +20,13 @@ import {
 import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 export function CertificatesSection({
   data,
@@ -278,7 +285,18 @@ export function CertificatesSection({
           message="Failed to load certificates."
           onRetryAction={onRetryAction}
         />
-      ) : null}
+      ) : (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" />
+            <EmptyTitle>No certificates found</EmptyTitle>
+            <EmptyDescription>
+              We couldn&apos;t retrieve a TLS certificate chain for this site.
+              Ensure the domain resolves and serves HTTPS on port 443.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </Section>
   );
 }

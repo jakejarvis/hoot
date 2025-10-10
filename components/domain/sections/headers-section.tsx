@@ -6,6 +6,13 @@ import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import type { HttpHeader } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 export function HeadersSection({
   data,
@@ -56,7 +63,18 @@ export function HeadersSection({
           message="Failed to load headers."
           onRetryAction={onRetryAction}
         />
-      ) : null}
+      ) : (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" />
+            <EmptyTitle>No HTTP headers detected</EmptyTitle>
+            <EmptyDescription>
+              We couldn&apos;t fetch any HTTP response headers for this site. It
+              may be offline or blocking requests.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </Section>
   );
 }

@@ -222,7 +222,20 @@ export function SeoSection({
             Retry
           </button>
         </div>
-      ) : null}
+      ) : (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileQuestionMark />
+            </EmptyMedia>
+            <EmptyTitle>No SEO meta detected</EmptyTitle>
+            <EmptyDescription>
+              We didn&apos;t find standard SEO meta tags (title, description,
+              canonical, or open graph). Add them to improve link previews.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </Section>
   );
 }

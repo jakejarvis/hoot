@@ -8,6 +8,13 @@ import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import type { Hosting } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 const HostingMap = dynamic(
   () => import("@/components/domain/hosting-map").then((m) => m.HostingMap),
@@ -124,7 +131,19 @@ export function HostingEmailSection({
           message="Failed to load hosting details."
           onRetryAction={onRetryAction}
         />
-      ) : null}
+      ) : (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" />
+            <EmptyTitle>No hosting details available</EmptyTitle>
+            <EmptyDescription>
+              We couldn&apos;t detect hosting, email, or DNS provider info. If the
+              domain has no A/AAAA records or blocked headers, details may be
+              unavailable.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </Section>
   );
 }
