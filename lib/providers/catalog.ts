@@ -501,6 +501,12 @@ export const EMAIL_PROVIDERS: Array<
     category: "email",
     rule: { kind: "mxSuffix", suffix: "hey.com" },
   },
+  {
+    name: "Symantec Email Security",
+    domain: "broadcom.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "messagelabs.com" },
+  },
 ];
 
 /**

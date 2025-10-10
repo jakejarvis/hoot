@@ -1,6 +1,6 @@
+import { toRegistrableDomain } from "rdapper";
 import z from "zod";
 import { normalizeDomainInput } from "@/lib/domain";
-import { isAcceptableDomainInput } from "@/lib/domain-server";
 import {
   CertificatesSchema,
   DnsResolveResultSchema,
@@ -22,7 +22,7 @@ import { createTRPCRouter, loggedProcedure } from "@/trpc/init";
 export const domainInput = z
   .object({ domain: z.string().min(1) })
   .transform(({ domain }) => ({ domain: normalizeDomainInput(domain) }))
-  .refine(({ domain }) => isAcceptableDomainInput(domain), {
+  .refine(({ domain }) => toRegistrableDomain(domain) !== null, {
     message: "Invalid domain",
     path: ["domain"],
   });

@@ -4,10 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
-import {
-  isBlacklistedDomainLike,
-  toRegistrableDomain,
-} from "@/lib/domain-server";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { getQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 
@@ -22,9 +19,8 @@ export async function generateMetadata({
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
 
-  const isBlacklisted = isBlacklistedDomainLike(normalized);
   const isRegistrable = toRegistrableDomain(normalized);
-  if (!isRegistrable || isBlacklisted) notFound();
+  if (!isRegistrable) notFound();
 
   return {
     title: `Domain Report: ${normalized} — Hoot`,
@@ -41,9 +37,8 @@ export default async function DomainPage({
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
 
-  const isBlacklisted = isBlacklistedDomainLike(normalized);
   const isRegistrable = toRegistrableDomain(normalized);
-  if (!isRegistrable || isBlacklisted) notFound();
+  if (!isRegistrable) notFound();
 
   // Canonicalize URL to the normalized domain
   if (normalized !== decoded) {
