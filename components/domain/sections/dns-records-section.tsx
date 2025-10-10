@@ -8,6 +8,13 @@ import { Section } from "@/components/domain/section";
 import { SubheadCountSkeleton } from "@/components/domain/subhead-count";
 import type { DnsRecord } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 function DnsGroupSkeleton({
   title,
@@ -59,41 +66,57 @@ export function DnsRecordsSection({
         </div>
       ) : records ? (
         <div className="space-y-4">
-          <DnsGroup
-            title="A Records"
-            color="blue"
-            count={records.filter((r) => r.type === "A").length}
-          >
-            <DnsRecordList records={records} type="A" />
-          </DnsGroup>
-          <DnsGroup
-            title="AAAA Records"
-            color="cyan"
-            count={records.filter((r) => r.type === "AAAA").length}
-          >
-            <DnsRecordList records={records} type="AAAA" />
-          </DnsGroup>
-          <DnsGroup
-            title="MX Records"
-            color="green"
-            count={records.filter((r) => r.type === "MX").length}
-          >
-            <DnsRecordList records={records} type="MX" />
-          </DnsGroup>
-          <DnsGroup
-            title="TXT Records"
-            color="orange"
-            count={records.filter((r) => r.type === "TXT").length}
-          >
-            <DnsRecordList records={records} type="TXT" />
-          </DnsGroup>
-          <DnsGroup
-            title="NS Records"
-            color="purple"
-            count={records.filter((r) => r.type === "NS").length}
-          >
-            <DnsRecordList records={records} type="NS" />
-          </DnsGroup>
+          {records.length > 0 ? (
+            <>
+              <DnsGroup
+                title="A Records"
+                color="blue"
+                count={records.filter((r) => r.type === "A").length}
+              >
+                <DnsRecordList records={records} type="A" />
+              </DnsGroup>
+              <DnsGroup
+                title="AAAA Records"
+                color="cyan"
+                count={records.filter((r) => r.type === "AAAA").length}
+              >
+                <DnsRecordList records={records} type="AAAA" />
+              </DnsGroup>
+              <DnsGroup
+                title="MX Records"
+                color="green"
+                count={records.filter((r) => r.type === "MX").length}
+              >
+                <DnsRecordList records={records} type="MX" />
+              </DnsGroup>
+              <DnsGroup
+                title="TXT Records"
+                color="orange"
+                count={records.filter((r) => r.type === "TXT").length}
+              >
+                <DnsRecordList records={records} type="TXT" />
+              </DnsGroup>
+              <DnsGroup
+                title="NS Records"
+                color="purple"
+                count={records.filter((r) => r.type === "NS").length}
+              >
+                <DnsRecordList records={records} type="NS" />
+              </DnsGroup>
+            </>
+          ) : (
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" />
+                <EmptyTitle>No DNS records found</EmptyTitle>
+                <EmptyDescription>
+                  We couldn&apos;t resolve A/AAAA, MX, TXT, or NS records for this
+                  domain. If DNS was recently updated, it may take time to
+                  propagate.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
         </div>
       ) : isError ? (
         <ErrorWithRetry
