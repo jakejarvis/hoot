@@ -11,12 +11,13 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Fast path: only act on non-root paths
-  if (path.length <= 1)
+  if (path.length <= 1) {
     return NextResponse.next({
       headers: {
         "x-middleware-verdict": "ignore",
       },
     });
+  }
 
   // Remove the leading "/" so we can inspect the raw string the user pasted after the host
   const afterSlash = path.slice(1);
@@ -58,21 +59,23 @@ export function middleware(request: NextRequest) {
     candidate = authority.trim();
   }
 
-  if (!candidate)
+  if (!candidate) {
     return NextResponse.next({
       headers: {
         "x-middleware-verdict": "ignore",
       },
     });
+  }
 
   // Determine registrable apex and subdomain presence
   const registrable = toRegistrableDomain(candidate);
-  if (!registrable)
+  if (!registrable) {
     return NextResponse.next({
       headers: {
         "x-middleware-verdict": "ignore",
       },
     });
+  }
 
   // If coming from a full URL carrier, any subdomain is present, or the host differs from registrable (case/trailing dot), redirect to apex
   const shouldRedirectToApex = Boolean(match) || candidate !== registrable;
