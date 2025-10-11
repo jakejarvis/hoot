@@ -35,6 +35,16 @@ export function middleware(request: NextRequest) {
   if (match) {
     // May include userinfo@host:port; we only want the host
     let authority = match[1];
+    // Strip any query or fragment that leaked into the authority (e.g., "example.com?x" or "example.com#y")
+    const queryIndex = authority.indexOf("?");
+    const fragmentIndex = authority.indexOf("#");
+    let cutoffIndex = -1;
+    if (queryIndex !== -1 && fragmentIndex !== -1) {
+      cutoffIndex = Math.min(queryIndex, fragmentIndex);
+    } else {
+      cutoffIndex = queryIndex !== -1 ? queryIndex : fragmentIndex;
+    }
+    if (cutoffIndex !== -1) authority = authority.slice(0, cutoffIndex).trim();
     const atIndex = authority.lastIndexOf("@");
     if (atIndex !== -1) authority = authority.slice(atIndex + 1);
     // Detect bracketed IPv6 literal and only strip port if a colon appears after the closing ']'.
