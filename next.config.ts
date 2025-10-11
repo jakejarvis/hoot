@@ -5,16 +5,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   reactCompiler: true,
   images: {
     unoptimized: true,
   },
   experimental: {
-    ppr: "incremental",
     staleTimes: {
       dynamic: 0, // disable client-side router cache for dynamic pages
     },
@@ -80,6 +76,7 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
 };
 
+// @ts-expect-error Next.js 16 types are not compatible yet
 export default withPostHogConfig(nextConfig, {
   personalApiKey: process.env.POSTHOG_API_KEY as string,
   envId: process.env.POSTHOG_ENV_ID as string,

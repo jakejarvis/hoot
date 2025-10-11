@@ -7,7 +7,7 @@ import { toRegistrableDomain } from "@/lib/domain-server";
 // Then captures everything up to the next slash as the authority.
 const HTTP_PREFIX_CAPTURE_AUTHORITY = /^https?:[:/]+([^/]+)/i;
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Fast path: only act on non-root paths

@@ -8,7 +8,7 @@ import { toRegistrableDomain } from "@/lib/domain-server";
 import { getQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 
-export const experimental_ppr = true;
+// export const experimental_ppr = true;
 
 export async function generateMetadata({
   params,
