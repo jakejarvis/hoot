@@ -35,19 +35,37 @@ export function DomainReportView({ domain }: { domain: string }) {
     registration.data?.isRegistered ?? false,
   );
 
-  // Disable export until all sections are settled (loaded or errored)
+  // Consider sections "settled" only when they have either succeeded or errored.
+  // This avoids showing empty states before a query has actually completed
+  // (including while a query is disabled/pending due to gating conditions).
+  const dnsSettled = !!(dns.isSuccess || dns.isError || dns.data !== undefined);
+  const hostingSettled = !!(
+    hosting.isSuccess ||
+    hosting.isError ||
+    hosting.data !== undefined
+  );
+  const certsSettled = !!(
+    certs.isSuccess ||
+    certs.isError ||
+    certs.data !== undefined
+  );
+  const headersSettled = !!(
+    headers.isSuccess ||
+    headers.isError ||
+    headers.data !== undefined
+  );
+  const seoSettled = !!(seo.isSuccess || seo.isError || seo.data !== undefined);
+
+  // Disable export until all secondary sections are settled
   const areSecondarySectionsLoading =
-    registration.data?.isRegistered &&
-    (dns.isLoading ||
-      hosting.isLoading ||
-      certs.isLoading ||
-      headers.isLoading ||
-      seo.isLoading ||
-      dns.isFetching ||
-      hosting.isFetching ||
-      certs.isFetching ||
-      headers.isFetching ||
-      seo.isFetching);
+    !!registration.data?.isRegistered &&
+    !(
+      dnsSettled &&
+      hostingSettled &&
+      certsSettled &&
+      headersSettled &&
+      seoSettled
+    );
 
   const handleExportJson = () => {
     captureClient("export_json_clicked", { domain });
@@ -132,7 +150,7 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <HostingEmailSection
           data={hosting.data || null}
-          isLoading={hosting.isLoading}
+          isLoading={!hostingSettled}
           isError={!!hosting.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -145,7 +163,7 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <DnsRecordsSection
           records={dns.data?.records || null}
-          isLoading={dns.isLoading}
+          isLoading={!dnsSettled}
           isError={!!dns.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -158,7 +176,7 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <CertificatesSection
           data={certs.data || null}
-          isLoading={certs.isLoading}
+          isLoading={!certsSettled}
           isError={!!certs.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -171,7 +189,7 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <HeadersSection
           data={headers.data || null}
-          isLoading={headers.isLoading}
+          isLoading={!headersSettled}
           isError={!!headers.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
@@ -184,7 +202,7 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <SeoSection
           data={seo.data || null}
-          isLoading={seo.isLoading}
+          isLoading={!seoSettled}
           isError={!!seo.isError}
           onRetryAction={() => {
             captureClient("section_refetch_clicked", {
