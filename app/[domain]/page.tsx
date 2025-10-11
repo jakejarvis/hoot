@@ -40,7 +40,7 @@ export default async function DomainPage({
   const isRegistrable = toRegistrableDomain(normalized);
   if (!isRegistrable) notFound();
 
-  // Canonicalize URL to the normalized domain
+  // Canonicalize URL to the normalized domain (middleware should already handle most cases)
   if (normalized !== decoded) {
     redirect(`/${encodeURIComponent(normalized)}`);
   }

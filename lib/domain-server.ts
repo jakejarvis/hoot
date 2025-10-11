@@ -1,7 +1,3 @@
-// Server-only domain helpers using rdapper
-// Note: Do not import this file in client components.
-import "server-only";
-
 import { toRegistrableDomain as toRegistrableDomainRdapper } from "rdapper";
 import { BLACKLISTED_SUFFIXES } from "@/lib/constants";
 
