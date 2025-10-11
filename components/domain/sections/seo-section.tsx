@@ -846,7 +846,7 @@ function SeoSkeleton() {
       {/* Robots summary */}
       <div className="space-y-4 rounded-xl">
         <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-          Robots.txt
+          robots.txt
           <SubheadCountSkeleton />
         </div>
 
