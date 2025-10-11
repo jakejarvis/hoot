@@ -810,7 +810,10 @@ function SeoSkeleton() {
     <div className="space-y-4">
       {/* Meta Tags */}
       <div className="space-y-3">
-        <SubheadCountSkeleton />
+        <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+          Meta Tags
+          <SubheadCountSkeleton />
+        </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <KeyValueSkeleton label="Title" widthClass="w-[220px]" />
           <KeyValueSkeleton label="Description" widthClass="w-[260px]" />
@@ -842,7 +845,7 @@ function SeoSkeleton() {
       {/* Robots summary */}
       <div className="space-y-4 rounded-xl">
         <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-          <Skeleton className="h-3 w-20 rounded" />
+          Robots.txt
           <SubheadCountSkeleton />
         </div>
 
@@ -865,7 +868,8 @@ function SeoSkeleton() {
 
         {/* Sitemaps */}
         <div className="space-y-3">
-          <div className="mt-5">
+          <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+            Sitemaps
             <SubheadCountSkeleton />
           </div>
           <div className="flex flex-col gap-1.5">

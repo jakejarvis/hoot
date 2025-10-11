@@ -1,5 +1,6 @@
 "use client";
 
+import { MailQuestionMark } from "lucide-react";
 import dynamic from "next/dynamic";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
@@ -134,7 +135,9 @@ export function HostingEmailSection({
       ) : (
         <Empty className="border border-dashed">
           <EmptyHeader>
-            <EmptyMedia variant="icon" />
+            <EmptyMedia variant="icon">
+              <MailQuestionMark />
+            </EmptyMedia>
             <EmptyTitle>No hosting details available</EmptyTitle>
             <EmptyDescription>
               We couldn&apos;t detect hosting, email, or DNS provider info. If

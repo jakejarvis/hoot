@@ -1,5 +1,6 @@
 "use client";
 
+import { Logs } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
@@ -66,7 +67,9 @@ export function HeadersSection({
       ) : (
         <Empty className="border border-dashed">
           <EmptyHeader>
-            <EmptyMedia variant="icon" />
+            <EmptyMedia variant="icon">
+              <Logs />
+            </EmptyMedia>
             <EmptyTitle>No HTTP headers detected</EmptyTitle>
             <EmptyDescription>
               We couldn&apos;t fetch any HTTP response headers for this site. It

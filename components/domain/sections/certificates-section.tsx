@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowDown, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  ShieldQuestionMark,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useState } from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
@@ -288,7 +293,9 @@ export function CertificatesSection({
       ) : (
         <Empty className="border border-dashed">
           <EmptyHeader>
-            <EmptyMedia variant="icon" />
+            <EmptyMedia variant="icon">
+              <ShieldQuestionMark />
+            </EmptyMedia>
             <EmptyTitle>No certificates found</EmptyTitle>
             <EmptyDescription>
               We couldn&apos;t retrieve a TLS certificate chain for this site.

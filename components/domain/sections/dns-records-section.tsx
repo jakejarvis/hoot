@@ -1,5 +1,6 @@
 "use client";
 
+import { Earth } from "lucide-react";
 import { useMemo } from "react";
 import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
@@ -122,7 +123,9 @@ export function DnsRecordsSection({
           ) : (
             <Empty className="border border-dashed">
               <EmptyHeader>
-                <EmptyMedia variant="icon" />
+                <EmptyMedia variant="icon">
+                  <Earth />
+                </EmptyMedia>
                 <EmptyTitle>No DNS records found</EmptyTitle>
                 <EmptyDescription>
                   We couldn&apos;t resolve A/AAAA, MX, TXT, or NS records for
