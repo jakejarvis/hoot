@@ -33,7 +33,7 @@ export function HeadersSection({
             <KeyValueSkeleton key={id} widthClass="w-[100px]" withTrailing />
           ))}
         </div>
-      ) : data ? (
+      ) : data && data.length > 0 ? (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(() => {
             const important = new Set([

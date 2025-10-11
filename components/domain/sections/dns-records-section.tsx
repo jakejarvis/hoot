@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { DnsGroup } from "@/components/domain/dns-group";
 import { DnsRecordList } from "@/components/domain/dns-record-list";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
@@ -54,6 +55,20 @@ export function DnsRecordsSection({
   isError: boolean;
   onRetryAction: () => void;
 }) {
+  const recordsByType = useMemo(() => {
+    const byType: Record<DnsRecord["type"], DnsRecord[]> = {
+      A: [],
+      AAAA: [],
+      MX: [],
+      TXT: [],
+      NS: [],
+    };
+    records?.forEach((r) => {
+      byType[r.type].push(r);
+    });
+    return byType;
+  }, [records]);
+
   return (
     <Section {...SECTION_DEFS.dns} isError={isError} isLoading={isLoading}>
       {isLoading ? (
@@ -71,37 +86,37 @@ export function DnsRecordsSection({
               <DnsGroup
                 title="A Records"
                 color="blue"
-                count={records.filter((r) => r.type === "A").length}
+                count={recordsByType.A.length}
               >
-                <DnsRecordList records={records} type="A" />
+                <DnsRecordList records={recordsByType.A} type="A" />
               </DnsGroup>
               <DnsGroup
                 title="AAAA Records"
                 color="cyan"
-                count={records.filter((r) => r.type === "AAAA").length}
+                count={recordsByType.AAAA.length}
               >
-                <DnsRecordList records={records} type="AAAA" />
+                <DnsRecordList records={recordsByType.AAAA} type="AAAA" />
               </DnsGroup>
               <DnsGroup
                 title="MX Records"
                 color="green"
-                count={records.filter((r) => r.type === "MX").length}
+                count={recordsByType.MX.length}
               >
-                <DnsRecordList records={records} type="MX" />
+                <DnsRecordList records={recordsByType.MX} type="MX" />
               </DnsGroup>
               <DnsGroup
                 title="TXT Records"
                 color="orange"
-                count={records.filter((r) => r.type === "TXT").length}
+                count={recordsByType.TXT.length}
               >
-                <DnsRecordList records={records} type="TXT" />
+                <DnsRecordList records={recordsByType.TXT} type="TXT" />
               </DnsGroup>
               <DnsGroup
                 title="NS Records"
                 color="purple"
-                count={records.filter((r) => r.type === "NS").length}
+                count={recordsByType.NS.length}
               >
-                <DnsRecordList records={records} type="NS" />
+                <DnsRecordList records={recordsByType.NS} type="NS" />
               </DnsGroup>
             </>
           ) : (
