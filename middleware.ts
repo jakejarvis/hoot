@@ -11,7 +11,12 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Fast path: only act on non-root paths
-  if (path.length <= 1) return NextResponse.next();
+  if (path.length <= 1)
+    return NextResponse.next({
+      headers: {
+        "x-middleware-verdict": "ignore",
+      },
+    });
 
   // Remove the leading "/" so we can inspect the raw string the user pasted after the host
   const afterSlash = path.slice(1);
@@ -31,16 +36,43 @@ export function middleware(request: NextRequest) {
     let authority = match[1];
     const atIndex = authority.lastIndexOf("@");
     if (atIndex !== -1) authority = authority.slice(atIndex + 1);
-    const colonIndex = authority.indexOf(":");
-    if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
+    // Detect bracketed IPv6 literal and only strip port if a colon appears after the closing ']'.
+    if (authority.startsWith("[")) {
+      const closingBracketIndex = authority.indexOf("]");
+      if (closingBracketIndex !== -1) {
+        const colonAfterBracketIndex = authority.indexOf(
+          ":",
+          closingBracketIndex + 1,
+        );
+        if (colonAfterBracketIndex !== -1)
+          authority = authority.slice(0, colonAfterBracketIndex);
+      } else {
+        // Malformed bracket: fall back to first colon behavior
+        const colonIndex = authority.indexOf(":");
+        if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
+      }
+    } else {
+      const colonIndex = authority.indexOf(":");
+      if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
+    }
     candidate = authority.trim();
   }
 
-  if (!candidate) return NextResponse.next();
+  if (!candidate)
+    return NextResponse.next({
+      headers: {
+        "x-middleware-verdict": "ignore",
+      },
+    });
 
   // Determine registrable apex and subdomain presence
   const registrable = toRegistrableDomain(candidate);
-  if (!registrable) return NextResponse.next();
+  if (!registrable)
+    return NextResponse.next({
+      headers: {
+        "x-middleware-verdict": "ignore",
+      },
+    });
 
   // If coming from a full URL carrier, any subdomain is present, or the host differs from registrable (case/trailing dot), redirect to apex
   const shouldRedirectToApex = Boolean(match) || candidate !== registrable;
@@ -49,11 +81,19 @@ export function middleware(request: NextRequest) {
     url.pathname = `/${encodeURIComponent(registrable)}`;
     url.search = "";
     url.hash = "";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, {
+      headers: {
+        "x-middleware-verdict": "redirect",
+      },
+    });
   }
 
   // Otherwise, it's already a bare registrable domain — proceed
-  return NextResponse.next();
+  return NextResponse.next({
+    headers: {
+      "x-middleware-verdict": "ok",
+    },
+  });
 }
 
 export const config = {
