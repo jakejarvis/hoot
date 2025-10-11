@@ -30,44 +30,58 @@ export function middleware(request: NextRequest) {
     // ignore decoding failures; fall back to raw
   }
 
-  // If the candidate contains a scheme, extract the authority; otherwise if it's a single segment, treat it as host-like
+  // If the candidate contains a scheme, extract authority; otherwise normalize the raw candidate the same way
   const match = candidate.match(HTTP_PREFIX_CAPTURE_AUTHORITY);
-  if (match) {
-    // May include userinfo@host:port; we only want the host
-    let authority = match[1];
-    // Strip any query or fragment that leaked into the authority (e.g., "example.com?x" or "example.com#y")
-    const queryIndex = authority.indexOf("?");
-    const fragmentIndex = authority.indexOf("#");
-    let cutoffIndex = -1;
-    if (queryIndex !== -1 && fragmentIndex !== -1) {
-      cutoffIndex = Math.min(queryIndex, fragmentIndex);
-    } else {
-      cutoffIndex = queryIndex !== -1 ? queryIndex : fragmentIndex;
-    }
-    if (cutoffIndex !== -1) authority = authority.slice(0, cutoffIndex).trim();
-    const atIndex = authority.lastIndexOf("@");
-    if (atIndex !== -1) authority = authority.slice(atIndex + 1);
-    // Detect bracketed IPv6 literal and only strip port if a colon appears after the closing ']'.
-    if (authority.startsWith("[")) {
-      const closingBracketIndex = authority.indexOf("]");
-      if (closingBracketIndex !== -1) {
-        const colonAfterBracketIndex = authority.indexOf(
-          ":",
-          closingBracketIndex + 1,
-        );
-        if (colonAfterBracketIndex !== -1)
-          authority = authority.slice(0, colonAfterBracketIndex);
+  let authority = match ? match[1] : candidate;
+
+  // Strip any query or fragment that may be present
+  const queryIndex = authority.indexOf("?");
+  const fragmentIndex = authority.indexOf("#");
+  let cutoffIndex = -1;
+  if (queryIndex !== -1 && fragmentIndex !== -1) {
+    cutoffIndex = Math.min(queryIndex, fragmentIndex);
+  } else {
+    cutoffIndex = queryIndex !== -1 ? queryIndex : fragmentIndex;
+  }
+  if (cutoffIndex !== -1) authority = authority.slice(0, cutoffIndex);
+
+  // For scheme-less inputs, drop any path portion after the first slash
+  if (!match) {
+    const slashIndex = authority.indexOf("/");
+    if (slashIndex !== -1) authority = authority.slice(0, slashIndex);
+  }
+
+  authority = authority.trim();
+
+  // Remove userinfo if present
+  const atIndex = authority.lastIndexOf("@");
+  if (atIndex !== -1) authority = authority.slice(atIndex + 1);
+
+  // Detect bracketed IPv6 literal and only strip port if a colon appears after the closing ']'.
+  if (authority.startsWith("[")) {
+    const closingBracketIndex = authority.indexOf("]");
+    if (closingBracketIndex !== -1) {
+      const colonAfterBracketIndex = authority.indexOf(
+        ":",
+        closingBracketIndex + 1,
+      );
+      if (colonAfterBracketIndex !== -1) {
+        authority = authority.slice(0, colonAfterBracketIndex);
       } else {
-        // Malformed bracket: fall back to first colon behavior
-        const colonIndex = authority.indexOf(":");
-        if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
+        // keep the bracketed host intact when no port is present
+        authority = authority.slice(0, closingBracketIndex + 1);
       }
     } else {
+      // Malformed bracket: fall back to first colon behavior
       const colonIndex = authority.indexOf(":");
       if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
     }
-    candidate = authority.trim();
+  } else {
+    const colonIndex = authority.indexOf(":");
+    if (colonIndex !== -1) authority = authority.slice(0, colonIndex);
   }
+
+  candidate = authority.trim();
 
   if (!candidate) {
     return NextResponse.next({
