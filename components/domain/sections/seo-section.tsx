@@ -80,6 +80,7 @@ export function SeoSection({
     { label: "Robots", value: data?.meta?.general.robots },
   ];
   const metaTagCount = metaTagValues.filter((t) => t.value != null).length;
+  const hasAnySeoMeta = metaTagCount > 0;
 
   // Decide which X (Twitter) card variant to display based on meta tags.
   const twitterCard = data?.meta?.twitter?.card?.toLowerCase();
@@ -100,7 +101,18 @@ export function SeoSection({
     <Section {...SECTION_DEFS.seo} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <SeoSkeleton />
-      ) : data ? (
+      ) : isError ? (
+        <div className="text-muted-foreground text-sm">
+          Failed to load SEO analysis.
+          <button
+            onClick={onRetryAction}
+            className="ml-2 underline underline-offset-2"
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      ) : data && hasAnySeoMeta ? (
         <div className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
@@ -210,17 +222,6 @@ export function SeoSection({
           </div>
 
           <RobotsSummary robots={data.robots} />
-        </div>
-      ) : isError ? (
-        <div className="text-muted-foreground text-sm">
-          Failed to load SEO analysis.
-          <button
-            onClick={onRetryAction}
-            className="ml-2 underline underline-offset-2"
-            type="button"
-          >
-            Retry
-          </button>
         </div>
       ) : (
         <Empty className="border border-dashed">
