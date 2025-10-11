@@ -159,4 +159,52 @@ describe("resolveAll", () => {
     expect(["cloudflare", "google"]).toContain(second.resolver);
     secondFetch.mockRestore();
   });
+
+  it("dedupes concurrent callers via aggregate cache/lock", async () => {
+    globalThis.__redisTestHelper?.reset();
+    // Prepare one set of responses for provider 1 across types
+    const dohAnswer = (
+      answers: Array<{ name: string; TTL: number; data: string }>,
+    ) =>
+      new Response(JSON.stringify({ Status: 0, Answer: answers }), {
+        status: 200,
+        headers: { "content-type": "application/dns-json" },
+      });
+
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "1.2.3.4" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "::1" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          { name: "example.com.", TTL: 300, data: "10 aspmx.l.google.com." },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 120, data: '"v=spf1"' }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          { name: "example.com.", TTL: 600, data: "ns1.cloudflare.com." },
+        ]),
+      );
+
+    // Fire several concurrent calls
+    const [r1, r2, r3] = await Promise.all([
+      resolveAll("example.com"),
+      resolveAll("example.com"),
+      resolveAll("example.com"),
+    ]);
+
+    expect(r1.records.length).toBeGreaterThan(0);
+    expect(r2.records.length).toBe(r1.records.length);
+    expect(r3.records.length).toBe(r1.records.length);
+    // Only 5 DoH fetches should have occurred for the initial provider/types
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    fetchMock.mockRestore();
+  });
 });

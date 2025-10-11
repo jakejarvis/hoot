@@ -135,7 +135,7 @@ export function RegistrationSection({
 
             <KeyValue
               label="Created"
-              value={formatDate(data.creationDate || "")}
+              value={formatDate(data.creationDate || "Unknown")}
               valueTooltip={
                 data.creationDate
                   ? formatDateTimeUtc(data.creationDate)
@@ -145,7 +145,7 @@ export function RegistrationSection({
 
             <KeyValue
               label="Expires"
-              value={formatDate(data.expirationDate || "")}
+              value={formatDate(data.expirationDate || "Unknown")}
               valueTooltip={
                 data.expirationDate
                   ? formatDateTimeUtc(data.expirationDate)

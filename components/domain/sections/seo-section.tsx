@@ -80,6 +80,7 @@ export function SeoSection({
     { label: "Robots", value: data?.meta?.general.robots },
   ];
   const metaTagCount = metaTagValues.filter((t) => t.value != null).length;
+  const hasAnySeoMeta = metaTagCount > 0;
 
   // Decide which X (Twitter) card variant to display based on meta tags.
   const twitterCard = data?.meta?.twitter?.card?.toLowerCase();
@@ -100,7 +101,18 @@ export function SeoSection({
     <Section {...SECTION_DEFS.seo} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <SeoSkeleton />
-      ) : data ? (
+      ) : isError ? (
+        <div className="text-muted-foreground text-sm">
+          Failed to load SEO analysis.
+          <button
+            onClick={onRetryAction}
+            className="ml-2 underline underline-offset-2"
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      ) : data && hasAnySeoMeta ? (
         <div className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
@@ -211,18 +223,20 @@ export function SeoSection({
 
           <RobotsSummary robots={data.robots} />
         </div>
-      ) : isError ? (
-        <div className="text-muted-foreground text-sm">
-          Failed to load SEO analysis.
-          <button
-            onClick={onRetryAction}
-            className="ml-2 underline underline-offset-2"
-            type="button"
-          >
-            Retry
-          </button>
-        </div>
-      ) : null}
+      ) : (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileQuestionMark />
+            </EmptyMedia>
+            <EmptyTitle>No SEO meta detected</EmptyTitle>
+            <EmptyDescription>
+              We didn&apos;t find standard SEO meta tags (title, description,
+              canonical, or open graph). Add them to improve link previews.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </Section>
   );
 }
@@ -797,7 +811,10 @@ function SeoSkeleton() {
     <div className="space-y-4">
       {/* Meta Tags */}
       <div className="space-y-3">
-        <SubheadCountSkeleton />
+        <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+          Meta Tags
+          <SubheadCountSkeleton />
+        </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <KeyValueSkeleton label="Title" widthClass="w-[220px]" />
           <KeyValueSkeleton label="Description" widthClass="w-[260px]" />
@@ -829,7 +846,7 @@ function SeoSkeleton() {
       {/* Robots summary */}
       <div className="space-y-4 rounded-xl">
         <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-          <Skeleton className="h-3 w-20 rounded" />
+          robots.txt
           <SubheadCountSkeleton />
         </div>
 
@@ -852,7 +869,8 @@ function SeoSkeleton() {
 
         {/* Sitemaps */}
         <div className="space-y-3">
-          <div className="mt-5">
+          <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+            Sitemaps
             <SubheadCountSkeleton />
           </div>
           <div className="flex flex-col gap-1.5">

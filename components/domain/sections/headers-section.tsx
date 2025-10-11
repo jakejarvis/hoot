@@ -1,9 +1,17 @@
 "use client";
 
+import { Logs } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import type { HttpHeader } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -26,7 +34,7 @@ export function HeadersSection({
             <KeyValueSkeleton key={id} widthClass="w-[100px]" withTrailing />
           ))}
         </div>
-      ) : data ? (
+      ) : data && data.length > 0 ? (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(() => {
             const important = new Set([
@@ -56,7 +64,20 @@ export function HeadersSection({
           message="Failed to load headers."
           onRetryAction={onRetryAction}
         />
-      ) : null}
+      ) : (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Logs />
+            </EmptyMedia>
+            <EmptyTitle>No HTTP headers detected</EmptyTitle>
+            <EmptyDescription>
+              We couldn&apos;t fetch any HTTP response headers for this site. It
+              may be offline or blocking requests.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </Section>
   );
 }
