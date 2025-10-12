@@ -1,6 +1,5 @@
 "use client";
 
-import type * as React from "react";
 import { createContext, useContext, useMemo } from "react";
 import {
   Popover as UiPopover,

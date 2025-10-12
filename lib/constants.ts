@@ -19,4 +19,28 @@ export const BLACKLISTED_SUFFIXES: readonly string[] = [
   ".ts.map",
   ".mjs.map",
   ".cjs.map",
+
+  // other
+  ".arpa",
+];
+
+// TLDs or domain suffixes that are not generally available to the public.
+// This is a small, non-exhaustive list that can be expanded over time.
+// Values should be lowercase and include the leading dot for suffix matching.
+export const NONPUBLIC_TLDS: readonly string[] = [
+  ".edu", // US accredited post-secondary institutions
+  ".gov", // US government
+  ".mil", // US military
+  ".int", // International treaty-based orgs
+  ".gov.uk", // UK government
+  ".ac.uk", // UK academia
+  ".aero",
+  ".coop",
+  ".museum",
+  ".jobs",
+  ".travel",
+  ".post",
+  ".tel",
+
+  // TODO: add brands (.google, .amazon, etc.)
 ];
