@@ -6,6 +6,7 @@ const storageMock = vi.hoisted(() => ({
     url: "https://app.ufs.sh/f/stored-url",
     key: "ut-key",
   })),
+  getFaviconTtlSeconds: vi.fn(() => 60),
 }));
 
 vi.mock("@/lib/storage", () => storageMock);
@@ -82,6 +83,24 @@ describe("getOrCreateFaviconBlobUrl", () => {
     const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(notOk);
     const out = await getOrCreateFaviconBlobUrl("nope.invalid");
     expect(out.url).toBeNull();
+    fetchSpy.mockRestore();
+  });
+
+  it("negative-caches failures to avoid repeat fetch", async () => {
+    const notOk = new Response(null, { status: 404 });
+    const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(notOk);
+
+    // First call: miss -> fetch attempts -> negative cache
+    const first = await getOrCreateFaviconBlobUrl("negcache.example");
+    expect(first.url).toBeNull();
+    expect(fetchSpy).toHaveBeenCalled();
+
+    // Second call: should hit negative cache and not fetch again
+    fetchSpy.mockClear();
+    const second = await getOrCreateFaviconBlobUrl("negcache.example");
+    expect(second.url).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
     fetchSpy.mockRestore();
   });
 });

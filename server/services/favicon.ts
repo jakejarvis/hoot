@@ -51,25 +51,43 @@ export async function getOrCreateFaviconBlobUrl(
   const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
   const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
 
-  // 1) Check Redis index first
+  // 1) Check Redis index first (supports positive and negative cache)
   try {
     console.debug("[favicon] redis get", { key: indexKey });
     const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
-    if (raw && typeof raw === "object" && typeof raw.url === "string") {
-      console.info("[favicon] cache hit", {
-        domain,
-        size: DEFAULT_SIZE,
-        url: raw.url,
-      });
-      await captureServer("favicon_fetch", {
-        domain,
-        size: DEFAULT_SIZE,
-        source: "redis",
-        duration_ms: Date.now() - startedAt,
-        outcome: "ok",
-        cache: "hit",
-      });
-      return { url: raw.url };
+    if (raw && typeof raw === "object") {
+      const cachedUrl = (raw as { url?: unknown }).url;
+      if (typeof cachedUrl === "string") {
+        console.info("[favicon] cache hit", {
+          domain,
+          size: DEFAULT_SIZE,
+          url: cachedUrl,
+        });
+        await captureServer("favicon_fetch", {
+          domain,
+          size: DEFAULT_SIZE,
+          source: "redis",
+          duration_ms: Date.now() - startedAt,
+          outcome: "ok",
+          cache: "hit",
+        });
+        return { url: cachedUrl };
+      }
+      if (cachedUrl === null) {
+        console.info("[favicon] negative cache hit", {
+          domain,
+          size: DEFAULT_SIZE,
+        });
+        await captureServer("favicon_fetch", {
+          domain,
+          size: DEFAULT_SIZE,
+          source: "redis",
+          duration_ms: Date.now() - startedAt,
+          outcome: "not_found",
+          cache: "hit",
+        });
+        return { url: null };
+      }
     }
     console.debug("[favicon] cache miss", { domain, size: DEFAULT_SIZE });
   } catch {
@@ -77,7 +95,7 @@ export async function getOrCreateFaviconBlobUrl(
   }
 
   // 2) Acquire lock or wait for another process to complete
-  const lockResult = await acquireLockOrWaitForResult<{ url: string }>({
+  const lockResult = await acquireLockOrWaitForResult<{ url: string | null }>({
     lockKey,
     resultKey: indexKey,
     lockTtl: LOCK_TTL_SECONDS,
@@ -85,21 +103,39 @@ export async function getOrCreateFaviconBlobUrl(
 
   if (!lockResult.acquired) {
     // Another process was working on it
-    if (lockResult.cachedResult?.url) {
-      console.info("[favicon] found result from other process", {
-        domain,
-        size: DEFAULT_SIZE,
-        url: lockResult.cachedResult.url,
-      });
-      await captureServer("favicon_fetch", {
-        domain,
-        size: DEFAULT_SIZE,
-        source: "redis_wait",
-        duration_ms: Date.now() - startedAt,
-        outcome: "ok",
-        cache: "wait",
-      });
-      return { url: lockResult.cachedResult.url };
+    const cached = lockResult.cachedResult as { url?: unknown } | null;
+    if (cached && "url" in (cached as object)) {
+      if (typeof cached.url === "string") {
+        console.info("[favicon] found result from other process", {
+          domain,
+          size: DEFAULT_SIZE,
+          url: cached.url,
+        });
+        await captureServer("favicon_fetch", {
+          domain,
+          size: DEFAULT_SIZE,
+          source: "redis_wait",
+          duration_ms: Date.now() - startedAt,
+          outcome: "ok",
+          cache: "wait",
+        });
+        return { url: cached.url };
+      }
+      if (cached.url === null) {
+        console.info("[favicon] found negative result from other process", {
+          domain,
+          size: DEFAULT_SIZE,
+        });
+        await captureServer("favicon_fetch", {
+          domain,
+          size: DEFAULT_SIZE,
+          source: "redis_wait",
+          duration_ms: Date.now() - startedAt,
+          outcome: "not_found",
+          cache: "wait",
+        });
+        return { url: null };
+      }
     }
     // Timeout or other process failed - return null
     console.warn("[favicon] wait timeout, no result", { domain });
@@ -207,6 +243,14 @@ export async function getOrCreateFaviconBlobUrl(
       cache: "miss",
     });
     console.warn("[favicon] not found after trying all sources", { domain });
+    // Negative cache the failure for the same TTL as success
+    try {
+      const ttl = getFaviconTtlSeconds();
+      const expiresAtMs = Date.now() + ttl * 1000;
+      await redis.set(indexKey, { url: null, expiresAtMs }, { ex: ttl });
+    } catch {
+      // best effort
+    }
     return { url: null };
   } finally {
     // Release lock (best effort)
