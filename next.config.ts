@@ -59,7 +59,7 @@ const nextConfig: NextConfig = {
                   base-uri 'self';
                   ${
                     process.env.NEXT_PUBLIC_POSTHOG_KEY
-                      ? `report-uri https://us.i.posthog.com/report/?token=${process.env.NEXT_PUBLIC_POSTHOG_KEY}; report-to posthog`
+                      ? `report-uri /_proxy/ingest/report/?token=${process.env.NEXT_PUBLIC_POSTHOG_KEY}; report-to posthog`
                       : ""
                   }
                 `
@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
               {
                 key: "Reporting-Endpoints",
                 value: process.env.NEXT_PUBLIC_POSTHOG_KEY
-                  ? `posthog="https://us.i.posthog.com/report/?token=${process.env.NEXT_PUBLIC_POSTHOG_KEY}"`
+                  ? `posthog="/_proxy/ingest/report/?token=${process.env.NEXT_PUBLIC_POSTHOG_KEY}"`
                   : "",
               },
             ],

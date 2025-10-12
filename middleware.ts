@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
   if (path.length <= 1) {
     return NextResponse.next({
       headers: {
-        "x-middleware-verdict": "ignore",
+        "x-middleware-decision": "ignore",
       },
     });
   }
@@ -86,7 +86,7 @@ export function middleware(request: NextRequest) {
   if (!candidate) {
     return NextResponse.next({
       headers: {
-        "x-middleware-verdict": "ignore",
+        "x-middleware-decision": "ignore",
       },
     });
   }
@@ -96,7 +96,7 @@ export function middleware(request: NextRequest) {
   if (!registrable) {
     return NextResponse.next({
       headers: {
-        "x-middleware-verdict": "ignore",
+        "x-middleware-decision": "ignore",
       },
     });
   }
@@ -110,7 +110,7 @@ export function middleware(request: NextRequest) {
     url.hash = "";
     return NextResponse.redirect(url, {
       headers: {
-        "x-middleware-verdict": "redirect",
+        "x-middleware-decision": "redirect",
       },
     });
   }
@@ -118,7 +118,7 @@ export function middleware(request: NextRequest) {
   // Otherwise, it's already a bare registrable domain — proceed
   return NextResponse.next({
     headers: {
-      "x-middleware-verdict": "ok",
+      "x-middleware-decision": "ok",
     },
   });
 }
