@@ -48,11 +48,11 @@
     "motion": "^12.23.24",
     "next": "15.6.0-canary.39",
     "next-themes": "^0.4.6",
-    "posthog-js": "^1.275.0",
+    "posthog-js": "^1.275.1",
     "posthog-node": "^5.9.5",
     "puppeteer-core": "24.22.3",
     "radix-ui": "^1.4.3",
-    "rdapper": "^0.5.0",
+    "rdapper": "^0.6.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-map-gl": "^8.1.0",
@@ -73,7 +73,7 @@
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
-    "@types/node": "24.7.1",
+    "@types/node": "24.7.2",
     "@types/react": "19.1.16",
     "@types/react-dom": "19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
@@ -91,5 +91,5 @@
   "engines": {
     "node": ">=22.x"
   },
-  "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34"
+  "packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd"
 }

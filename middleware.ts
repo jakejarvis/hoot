@@ -124,7 +124,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  runtime: "nodejs",
   matcher: [
     // Exclude API and Next internals/static assets for performance and to avoid side effects
     "/((?!api|_next/static|_next/image|_next/webpack-hmr|_vercel|_proxy|favicon.ico|robots.txt|sitemap.xml).*)",
