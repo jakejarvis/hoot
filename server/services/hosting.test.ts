@@ -1,5 +1,4 @@
 /* @vitest-environment node */
-
 import type { Mock } from "vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { detectHosting } from "./hosting";

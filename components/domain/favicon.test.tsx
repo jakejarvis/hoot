@@ -1,3 +1,4 @@
+/* @vitest-environment jsdom */
 import { render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import type { Mock } from "vitest";

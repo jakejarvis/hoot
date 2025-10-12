@@ -1,5 +1,4 @@
 /* @vitest-environment node */
-
 import type * as tls from "node:tls";
 
 // Hoisted mock for node:tls to avoid ESM spy limitations
