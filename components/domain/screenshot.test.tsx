@@ -64,7 +64,7 @@ describe("Screenshot", () => {
       isFetching: false,
     });
     render(<Screenshot domain="example.com" />);
-    expect(screen.getByText(/loading screenshot/i)).toBeInTheDocument();
+    expect(screen.getByText(/taking screenshot/i)).toBeInTheDocument();
   });
 
   it("renders image when url present", () => {
@@ -87,6 +87,6 @@ describe("Screenshot", () => {
       isFetching: false,
     });
     render(<Screenshot domain="example.com" />);
-    expect(screen.getByText(/unable to generate/i)).toBeInTheDocument();
+    expect(screen.getByText(/unable to take/i)).toBeInTheDocument();
   });
 });

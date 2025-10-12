@@ -70,7 +70,7 @@ describe("ScreenshotTooltip", () => {
     );
     // Simulate open by clicking the trigger
     fireEvent.click(screen.getByText("hover me"));
-    expect(screen.getByText(/loading screenshot/i)).toBeInTheDocument();
+    expect(screen.getByText(/taking screenshot/i)).toBeInTheDocument();
   });
 
   it("renders image when loaded", () => {
