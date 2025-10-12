@@ -2,6 +2,7 @@ export * from "./domain/certificates";
 export * from "./domain/dns";
 export * from "./domain/hosting";
 export * from "./domain/http";
+export * from "./domain/pricing";
 export * from "./domain/registration";
 export * from "./domain/seo";
 export * from "./internal/export";

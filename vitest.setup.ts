@@ -15,7 +15,7 @@ const __redisImpl = vi.hoisted(() => {
   const store = new Map<string, unknown>();
   // simple sorted-set implementation: key -> Map(member -> score)
   const zsets = new Map<string, Map<string, number>>();
-  const ns = (n: string, id: string) => `${n}:${id}`;
+  const ns = (n: string, id?: string) => `${n}${id ? `:${id}` : ""}`;
 
   const get = vi.fn(async (key: string) =>
     store.has(key) ? store.get(key) : null,
