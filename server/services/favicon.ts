@@ -48,8 +48,8 @@ export async function getOrCreateFaviconBlobUrl(
   const startedAt = Date.now();
   console.debug("[favicon] start", { domain, size: DEFAULT_SIZE });
 
-  const indexKey = ns("favicon:url", `${domain}:${DEFAULT_SIZE}`);
-  const lockKey = ns("lock", `favicon:${domain}:${DEFAULT_SIZE}`);
+  const indexKey = ns("favicon", "url", domain, String(DEFAULT_SIZE));
+  const lockKey = ns("lock", "favicon", domain, String(DEFAULT_SIZE));
 
   // 1) Check Redis index first (supports positive and negative cache)
   try {

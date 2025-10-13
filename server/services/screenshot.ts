@@ -58,12 +58,16 @@ export async function getOrCreateScreenshotBlobUrl(
   const backoffMaxMs = options?.backoffMaxMs ?? CAPTURE_BACKOFF_MAX_MS_DEFAULT;
 
   const indexKey = ns(
-    "screenshot:url",
-    `${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
+    "screenshot",
+    "url",
+    domain,
+    `${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
   );
   const lockKey = ns(
     "lock",
-    `screenshot:${domain}:${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
+    "screenshot",
+    domain,
+    `${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
   );
 
   // 1) Check Redis index first

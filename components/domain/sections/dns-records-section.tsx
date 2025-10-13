@@ -20,10 +20,10 @@ import { SECTION_DEFS } from "@/lib/sections-meta";
 
 function DnsGroupSkeleton({
   title,
-  rows = 2,
+  records = 2,
 }: {
   title: string;
-  rows?: number;
+  records?: number;
 }) {
   return (
     <div className="space-y-2">
@@ -35,8 +35,8 @@ function DnsGroupSkeleton({
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {Array.from(
-          { length: rows },
-          (_, n) => `dns-skel-${title}-${rows}-${n}`,
+          { length: records },
+          (_, n) => `dns-skel-${title}-${records}-${n}`,
         ).map((id) => (
           <KeyValueSkeleton key={id} withTrailing widthClass="w-[100px]" />
         ))}
@@ -76,11 +76,11 @@ export function DnsRecordsSection({
     <Section {...SECTION_DEFS.dns} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <div className="space-y-4">
-          <DnsGroupSkeleton title="A Records" rows={1} />
-          <DnsGroupSkeleton title="AAAA Records" rows={1} />
-          <DnsGroupSkeleton title="MX Records" rows={2} />
-          <DnsGroupSkeleton title="TXT Records" rows={4} />
-          <DnsGroupSkeleton title="NS Records" rows={2} />
+          <DnsGroupSkeleton title="A Records" />
+          <DnsGroupSkeleton title="AAAA Records" />
+          <DnsGroupSkeleton title="MX Records" />
+          <DnsGroupSkeleton title="TXT Records" records={4} />
+          <DnsGroupSkeleton title="NS Records" />
         </div>
       ) : records ? (
         <div className="space-y-4">

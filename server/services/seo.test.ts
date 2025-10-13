@@ -60,8 +60,7 @@ function textResponse(text: string, contentType = "text/plain") {
 describe("getSeo", () => {
   it("uses cached response when meta exists in cache", async () => {
     const { ns, redis } = await import("@/lib/redis");
-    const baseKey = ns("seo", "example.com");
-    const metaKey = ns(`${baseKey}:meta`, "v1");
+    const metaKey = ns("seo", "example.com", "meta");
     await redis.set(metaKey, {
       meta: null,
       robots: null,
@@ -138,8 +137,7 @@ describe("getSeo", () => {
 
   it("uses cached robots when present and avoids second fetch", async () => {
     const { ns, redis } = await import("@/lib/redis");
-    const baseKey = ns("seo", "example.com");
-    const robotsKey = ns(`${baseKey}:robots`, "v1");
+    const robotsKey = ns("seo", "example.com", "robots");
     await redis.set(robotsKey, {
       fetched: true,
       groups: [{ userAgents: ["*"], rules: [{ type: "allow", value: "/" }] }],

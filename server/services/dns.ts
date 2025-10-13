@@ -51,26 +51,32 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const providers = providerOrderForLookup(lower);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
-  const aggregateKey = ns("dns:all", lower);
-  const lockKey = ns("lock", `dns:${lower}`);
+  const aggregateKey = ns("dns", lower);
+  const lockKey = ns("lock", "dns", lower);
 
   // Aggregate cache fast-path
   try {
     const agg = (await redis.get(aggregateKey)) as DnsResolveResult | null;
     if (agg && Array.isArray(agg.records)) {
+      // Normalize sorting for returned aggregate in case older cache entries
+      // were stored before server-side sorting was added.
+      const sortedAggRecords = sortDnsRecordsByType(
+        agg.records,
+        DnsTypeSchema.options,
+      );
       await captureServer("dns_resolve_all", {
         domain: lower,
         duration_ms_total: Date.now() - startedAt,
         counts: ((): Record<DnsType, number> => {
           return (DnsTypeSchema.options as DnsType[]).reduce(
             (acc, t) => {
-              acc[t] = agg.records.filter((r) => r.type === t).length;
+              acc[t] = sortedAggRecords.filter((r) => r.type === t).length;
               return acc;
             },
             { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
           );
         })(),
-        cloudflare_ip_present: agg.records.some(
+        cloudflare_ip_present: sortedAggRecords.some(
           (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
         ),
         dns_provider_used: agg.resolver,
@@ -82,9 +88,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       console.info("[dns] aggregate cache hit", {
         domain: lower,
         resolver: agg.resolver,
-        total: agg.records.length,
+        total: sortedAggRecords.length,
       });
-      return agg;
+      return { records: sortedAggRecords, resolver: agg.resolver };
     }
   } catch {}
 
@@ -121,7 +127,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       lock_waited_ms: Date.now() - lockWaitStart,
     });
     console.info("[dns] waited for aggregate", { domain: lower });
-    return agg;
+    const sortedAggRecords = sortDnsRecordsByType(
+      agg.records,
+      DnsTypeSchema.options,
+    );
+    return { records: sortedAggRecords, resolver: agg.resolver };
   }
   const acquiredLock = lockResult.acquired;
   if (!acquiredLock && !lockResult.cachedResult) {
@@ -160,7 +170,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           lock_acquired: false,
           lock_waited_ms: Date.now() - start,
         });
-        return agg;
+        const sortedAggRecords = sortDnsRecordsByType(
+          agg.records,
+          DnsTypeSchema.options,
+        );
+        return { records: sortedAggRecords, resolver: agg.resolver };
       }
       await new Promise((r) => setTimeout(r, intervalMs));
     }
@@ -175,7 +189,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   );
   const allCached = cachedByType.every((arr) => Array.isArray(arr));
   if (allCached) {
-    const flat = (cachedByType as DnsRecord[][]).flat();
+    // Ensure per-type cached arrays are normalized for sorting
+    const sortedByType = (cachedByType as DnsRecord[][]).map((arr, idx) =>
+      sortDnsRecordsForType(arr.slice(), types[idx] as DnsType),
+    );
+    const flat = (sortedByType as DnsRecord[][]).flat();
     const counts = types.reduce(
       (acc, t) => {
         acc[t] = flat.filter((r) => r.type === t).length;
@@ -187,9 +205,8 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
     );
     const resolverUsed =
-      ((await redis.get(
-        ns("dns:meta", `${lower}:resolver`),
-      )) as DnsResolver | null) || "cloudflare";
+      ((await redis.get(ns("dns", lower, "resolver"))) as DnsResolver | null) ||
+      "cloudflare";
     try {
       await redis.set(
         aggregateKey,
@@ -232,9 +249,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       let usedFresh = false;
       const results = await Promise.all(
         types.map(async (type) => {
-          const key = ns("dns", `${lower}:${type}`);
+          const key = ns("dns", lower, type);
           const cached = await redis.get<DnsRecord[]>(key);
-          if (cached) return cached;
+          if (cached) {
+            return sortDnsRecordsForType(cached.slice(), type as DnsType);
+          }
           const fresh = await resolveTypeWithProvider(domain, type, provider);
           await redis.set(key, fresh, { ex: 5 * 60 });
           usedFresh = usedFresh || true;
@@ -256,14 +275,14 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       );
       // Persist the resolver metadata only when we actually fetched fresh data
       if (usedFresh) {
-        await redis.set(ns("dns:meta", `${lower}:resolver`), provider.key, {
+        await redis.set(ns("dns", `${lower}:resolver`), provider.key, {
           ex: 5 * 60,
         });
       }
       const resolverUsed = usedFresh
         ? provider.key
         : ((await redis.get(
-            ns("dns:meta", `${lower}:resolver`),
+            ns("dns", lower, "resolver"),
           )) as DnsResolver | null) || provider.key;
       try {
         await redis.set(
@@ -343,7 +362,8 @@ async function resolveTypeWithProvider(
   const normalizedRecords = await Promise.all(
     ans.map((a) => normalizeAnswer(domain, type, a)),
   );
-  return normalizedRecords.filter(Boolean) as DnsRecord[];
+  const records = normalizedRecords.filter(Boolean) as DnsRecord[];
+  return sortDnsRecordsForType(records, type);
 }
 
 async function normalizeAnswer(
@@ -386,6 +406,43 @@ function trimDot(s: string) {
 function trimQuotes(s: string) {
   // Cloudflare may return quoted strings; remove leading/trailing quotes
   return s.replace(/^"|"$/g, "");
+}
+
+function sortDnsRecordsByType(
+  records: DnsRecord[],
+  order: readonly DnsType[],
+): DnsRecord[] {
+  const byType: Record<DnsType, DnsRecord[]> = {
+    A: [],
+    AAAA: [],
+    MX: [],
+    TXT: [],
+    NS: [],
+  };
+  for (const r of records) byType[r.type].push(r);
+  const sorted: DnsRecord[] = [];
+  for (const t of order) {
+    sorted.push(...sortDnsRecordsForType(byType[t] as DnsRecord[], t));
+  }
+  return sorted;
+}
+
+function sortDnsRecordsForType(arr: DnsRecord[], type: DnsType): DnsRecord[] {
+  if (type === "MX") {
+    arr.sort((a, b) => {
+      const ap = (a.priority ?? Number.MAX_SAFE_INTEGER) as number;
+      const bp = (b.priority ?? Number.MAX_SAFE_INTEGER) as number;
+      if (ap !== bp) return ap - bp;
+      return a.value.localeCompare(b.value);
+    });
+    return arr;
+  }
+  if (type === "TXT" || type === "NS") {
+    arr.sort((a, b) => a.value.localeCompare(b.value));
+    return arr;
+  }
+  // For A/AAAA retain provider order
+  return arr;
 }
 
 type DnsJson = {

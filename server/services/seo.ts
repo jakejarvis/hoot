@@ -33,9 +33,8 @@ async function fetchWithTimeout(
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
   const lower = domain.toLowerCase();
-  const baseKey = ns("seo", lower);
-  const metaKey = ns(`${baseKey}:meta`, "v1");
-  const robotsKey = ns(`${baseKey}:robots`, "v1");
+  const metaKey = ns("seo", lower, "meta");
+  const robotsKey = ns("seo", lower, "robots");
 
   console.debug("[seo] start", { domain: lower });
   const cached = await redis.get<SeoResponse>(metaKey);
@@ -178,12 +177,18 @@ async function getOrCreateSocialPreviewImageUrl(
   const hash = deterministicHash(imageUrl);
 
   const indexKey = ns(
-    "seo:image-url",
-    `${lower}:${hash}:${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
+    "seo",
+    "image-url",
+    lower,
+    hash,
+    `${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
   );
   const lockKey = ns(
     "lock",
-    `${lower}:seo-image:${hash}:${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
+    "seo-image",
+    lower,
+    hash,
+    `${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
   );
 
   // 1) Check Redis index first

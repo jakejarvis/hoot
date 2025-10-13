@@ -6,7 +6,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const lower = domain.toLowerCase();
   const url = `https://${domain}/`;
   const key = ns("headers", lower);
-  const lockKey = ns("lock", `headers:${lower}`);
+  const lockKey = ns("lock", "headers", lower);
 
   console.debug("[headers] start", { domain: lower });
   const cached = await redis.get<HttpHeader[]>(key);
