@@ -9,9 +9,9 @@ import {
 import type {
   DetectionContext,
   HttpHeader,
-  Logic,
   Provider,
   ProviderRef,
+  Rule,
 } from "@/lib/schemas";
 
 /**
@@ -44,7 +44,7 @@ function createHeaderContext(headers: HttpHeader[]): HeaderDetectionContext {
 /**
  * Evaluate a single detection rule against the provided context.
  */
-export function evalRule(rule: Logic, ctx: DetectionContext): boolean {
+export function evalRule(rule: Rule, ctx: DetectionContext): boolean {
   const get = (name: string) => ctx.headers[name.toLowerCase()];
   const anyDns = (arr: string[], suf: string) =>
     arr.some((h) => h === suf || h.endsWith(`.${suf}`));

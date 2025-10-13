@@ -21,11 +21,11 @@ export type IssuerIncludes = { kind: "issuerIncludes"; substr: string };
 export type RegistrarEquals = { kind: "registrarEquals"; value: string };
 export type RegistrarIncludes = { kind: "registrarIncludes"; substr: string };
 
-// Compose with logic
-export type Logic =
-  | { all: Logic[] }
-  | { any: Logic[] }
-  | { not: Logic }
+// Compose with rules
+export type Rule =
+  | { all: Rule[] }
+  | { any: Rule[] }
+  | { not: Rule }
   | HeaderEquals
   | HeaderIncludes
   | HeaderPresent
@@ -52,7 +52,7 @@ export type ProviderCategory = "hosting" | "email" | "dns" | "ca" | "registrar";
 export type Provider = {
   name: string;
   domain: string;
-  rule: Logic;
+  rule: Rule;
   category: ProviderCategory;
 };
 
