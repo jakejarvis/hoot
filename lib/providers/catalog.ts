@@ -224,6 +224,17 @@ export const HOSTING_PROVIDERS: Array<
     rule: { kind: "headerPresent", name: "ghost-fastly" },
   },
   {
+    name: "Substack",
+    domain: "substack.com",
+    category: "hosting",
+    rule: {
+      all: [
+        { kind: "headerEquals", name: "x-served-by", value: "substack" },
+        { kind: "headerPresent", name: "x-sub" },
+      ],
+    },
+  },
+  {
     name: "Bunny.net",
     domain: "bunny.net",
     category: "hosting",
@@ -328,6 +339,8 @@ export const EMAIL_PROVIDERS: Array<
       any: [
         { kind: "mxSuffix", suffix: "mail.protonmail.ch" },
         { kind: "mxSuffix", suffix: "mailsec.protonmail.ch" },
+        { kind: "mxSuffix", suffix: "alias.proton.me" },
+        { kind: "mxSuffix", suffix: "simplelogin.co" },
       ],
     },
   },
@@ -424,6 +437,40 @@ export const EMAIL_PROVIDERS: Array<
     domain: "proofpoint.com",
     category: "email",
     rule: { kind: "mxSuffix", suffix: "pphosted.com" },
+  },
+  {
+    name: "Barracuda Email Essentials",
+    domain: "barracuda.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "ess.barracudanetworks.com" },
+  },
+  {
+    name: "Panda Security",
+    domain: "pandasecurity.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "mep.pandasecurity.com" },
+  },
+  {
+    name: "Hornetsecurity",
+    domain: "hornetsecurity.com",
+    category: "email",
+    rule: { kind: "mxSuffix", suffix: "hornetsecurity.com" },
+  },
+  {
+    name: "Trend Micro Email Security",
+    domain: "trendmicro.com",
+    category: "email",
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "tmes.trendmicro.com" },
+        { kind: "mxSuffix", suffix: "tmes.trendmicro.eu" },
+        { kind: "mxSuffix", suffix: "tmes-anz.trendmicro.com" },
+        { kind: "mxSuffix", suffix: "tmems-jp.trendmicro.com" },
+        { kind: "mxSuffix", suffix: "tmes-sg.trendmicro.com" },
+        { kind: "mxSuffix", suffix: "tmes-in.trendmicro.com" },
+        { kind: "mxSuffix", suffix: "tmes-uae.trendmicro.com" },
+      ],
+    },
   },
   {
     name: "Amazon WorkMail",
@@ -946,7 +993,7 @@ export const REGISTRAR_PROVIDERS: Array<
   },
   {
     name: "Tucows",
-    domain: "tucows.com",
+    domain: "tucowsdomains.com",
     category: "registrar",
     rule: {
       any: [

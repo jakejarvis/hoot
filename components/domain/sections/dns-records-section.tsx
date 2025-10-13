@@ -64,9 +64,11 @@ export function DnsRecordsSection({
       TXT: [],
       NS: [],
     };
-    records?.forEach((r) => {
-      byType[r.type].push(r);
-    });
+    records
+      ?.filter((r) => r.value !== "")
+      .forEach((r) => {
+        byType[r.type].push(r);
+      });
     return byType;
   }, [records]);
 
