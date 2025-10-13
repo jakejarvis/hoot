@@ -39,6 +39,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "country-flag-icons": "^1.5.21",
     "date-fns": "^4.1.0",
     "geist": "^1.5.1",
     "icojs": "^0.19.5",
@@ -67,7 +68,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.5",
+    "@biomejs/biome": "2.2.6",
     "@tailwindcss/postcss": "^4.1.14",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.9.1",

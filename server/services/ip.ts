@@ -16,6 +16,8 @@ export async function lookupIpMeta(ip: string): Promise<{
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
     if (!res.ok) throw new Error("ipwho.is fail");
 
+    // https://ipwhois.io/documentation
+    // https://chatgpt.com/s/t_68ed0de1e01881919c2545fe40ffc7ac
     const j = (await res.json()) as {
       ip?: string;
       success?: boolean;

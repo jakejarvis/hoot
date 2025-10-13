@@ -1,5 +1,6 @@
 "use client";
 
+import { hasFlag } from "country-flag-icons";
 import { MailQuestionMark } from "lucide-react";
 import dynamic from "next/dynamic";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/empty";
 import type { Hosting } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
+import { cn } from "@/lib/utils";
 
 const HostingMap = dynamic(
   () => import("@/components/domain/hosting-map").then((m) => m.HostingMap),
@@ -119,7 +121,18 @@ export function HostingEmailSection({
                     : ""
                 }`}
                 leading={
-                  data.geo.emoji ? <span>{data.geo.emoji}</span> : undefined
+                  data.geo.country_code &&
+                  hasFlag(data.geo.country_code.toUpperCase()) ? (
+                    <span
+                      className={cn(
+                        "!w-[15px] !h-[10px] relative top-[2px] inline-block rounded-xs",
+                        // https://gitlab.com/catamphetamine/country-flag-icons/-/tree/master/flags/3x2
+                        `flag:${data.geo.country_code.toUpperCase()}`,
+                      )}
+                      aria-hidden="true"
+                      title={data.geo.country || data.geo.country_code}
+                    />
+                  ) : undefined
                 }
               />
 
