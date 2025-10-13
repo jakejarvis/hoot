@@ -49,6 +49,9 @@ export async function GET(req: Request) {
     }
   }
 
+  console.log("deleted:", deleted);
+  console.log("errors:", errors);
+
   return NextResponse.json({
     deletedCount: deleted.length,
     errorsCount: errors.length,
