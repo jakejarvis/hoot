@@ -19,11 +19,8 @@ export async function generateMetadata({
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
 
-  const isRegistrable = toRegistrableDomain(normalized);
-  if (!isRegistrable) notFound();
-
   return {
-    title: `Domain Report: ${normalized} — Hoot`,
+    title: `${normalized} — Domain Report`,
     description: `Investigate ${normalized}'s WHOIS, DNS, SSL, headers, and more.`,
   };
 }
