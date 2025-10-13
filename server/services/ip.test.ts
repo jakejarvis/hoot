@@ -9,12 +9,12 @@ afterEach(() => {
 describe("lookupIpMeta", () => {
   it("parses ipwho.is response and derives owner and domain", async () => {
     const resp = {
-      city: "SF",
+      city: "San Francisco",
       region: "CA",
-      country: "US",
+      country: "United States",
+      country_code: "US",
       latitude: 37.7,
       longitude: -122.4,
-      flag: { emoji: "🇺🇸" },
       connection: {
         org: "Cloudflare",
         isp: "Cloudflare, Inc",
@@ -25,7 +25,7 @@ describe("lookupIpMeta", () => {
       .spyOn(global, "fetch")
       .mockResolvedValue(new Response(JSON.stringify(resp), { status: 200 }));
     const res = await lookupIpMeta("1.2.3.4");
-    expect(res.geo.city).toBe("SF");
+    expect(res.geo.city).toBe("San Francisco");
     expect(res.owner).toBe("Cloudflare");
     expect(res.domain).toBe("cloudflare.com");
     fetchMock.mockRestore();

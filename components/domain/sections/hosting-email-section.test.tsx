@@ -26,9 +26,9 @@ describe("HostingEmailSection", () => {
         city: "",
         region: "",
         country: "",
+        country_code: "",
         lat: null,
         lon: null,
-        emoji: null,
       },
     } as unknown as import("@/lib/schemas").Hosting;
     render(

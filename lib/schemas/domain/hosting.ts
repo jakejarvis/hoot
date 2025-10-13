@@ -9,9 +9,9 @@ export const HostingSchema = z.object({
     city: z.string(),
     region: z.string(),
     country: z.string(),
+    country_code: z.string(),
     lat: z.number().nullable(),
     lon: z.number().nullable(),
-    emoji: z.string().nullable(),
   }),
 });
 
