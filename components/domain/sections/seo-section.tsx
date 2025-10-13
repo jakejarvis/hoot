@@ -158,44 +158,38 @@ export function SeoSection({
               value={selectedTab}
               onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}
             >
-              <TabsList className="h-auto w-full gap-1 border border-muted-foreground/15 bg-muted/30 md:justify-start dark:bg-muted/50">
-                <TabsTrigger value="twitter" className="h-9 flex-1 px-2 py-1.5">
+              <TabsList className="h-11 w-full gap-1 border border-muted-foreground/15 bg-muted/30 md:justify-start dark:bg-muted/50 dark:*:data-[state=active]:bg-accent">
+                <TabsTrigger value="twitter">
                   <TwitterIcon
-                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    className="size-4 md:size-3.5"
                     aria-hidden="true"
                   />
                   <span className="hidden text-[13px] md:inline">Twitter</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="facebook"
-                  className="h-9 flex-1 px-2 py-1.5"
-                >
+                <TabsTrigger value="facebook">
                   <FacebookIcon
-                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    className="size-4 md:size-3.5"
                     aria-hidden="true"
                   />
                   <span className="hidden text-[13px] md:inline">Facebook</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="linkedin"
-                  className="h-9 flex-1 px-2 py-1.5"
-                >
+                <TabsTrigger value="linkedin">
                   <LinkedinIcon
-                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    className="size-4 md:size-3.5"
                     aria-hidden="true"
                   />
                   <span className="hidden text-[13px] md:inline">LinkedIn</span>
                 </TabsTrigger>
-                <TabsTrigger value="discord" className="h-9 flex-1 px-2 py-1.5">
+                <TabsTrigger value="discord">
                   <DiscordIcon
-                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    className="size-4 md:size-3.5"
                     aria-hidden="true"
                   />
                   <span className="hidden text-[13px] md:inline">Discord</span>
                 </TabsTrigger>
-                <TabsTrigger value="slack" className="h-9 flex-1 px-2 py-1.5">
+                <TabsTrigger value="slack">
                   <SlackIcon
-                    className="md:!h-3.5 md:!w-3.5 h-4 w-4"
+                    className="size-4 md:size-3.5"
                     aria-hidden="true"
                   />
                   <span className="hidden text-[13px] md:inline">Slack</span>

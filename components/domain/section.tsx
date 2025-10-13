@@ -86,7 +86,7 @@ export function Section({
                             />
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent>{help}</TooltipContent>
+                        <TooltipContent side="right">{help}</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   )}

@@ -37,7 +37,7 @@ export function SocialPreview({
   if (provider === "twitter") {
     if (variant === "compact") {
       card = (
-        <div className="overflow-hidden rounded-2xl border border-[#eff3f4] bg-white text-black dark:border-[#2f3336] dark:bg-black dark:text-white">
+        <div className="mx-auto w-full max-w-[520px] overflow-hidden rounded-2xl border border-[#eff3f4] bg-white text-black dark:border-[#2f3336] dark:bg-black dark:text-white">
           <div className="flex items-stretch">
             <div className="relative min-h-[96px] w-24 shrink-0 self-stretch bg-[#f1f5f9] dark:bg-[#0f1419]">
               {image ? (
@@ -61,7 +61,7 @@ export function SocialPreview({
               <div className="truncate text-[#536471] text-[11px] leading-4 dark:text-[#8b98a5]">
                 {hostname}
               </div>
-              <div className="mt-0.5 line-clamp-2 font-semibold text-[15px] leading-5">
+              <div className="mt-0.5 line-clamp-1 font-semibold text-[15px] leading-5">
                 {title || hostname}
               </div>
               {description && (
@@ -273,6 +273,7 @@ export function SocialPreview({
       data-slot="social-preview"
       data-provider={provider}
       data-variant={variant}
+      className="w-full"
     >
       {card}
     </a>
