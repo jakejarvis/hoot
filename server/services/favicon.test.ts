@@ -11,11 +11,11 @@ const storageMock = vi.hoisted(() => ({
 
 vi.mock("@/lib/storage", () => storageMock);
 
-// Mock sharp to return a pipeline that resolves a buffer
+// Mock sharp to return a pipeline that resolves a buffer (now using webp)
 vi.mock("sharp", () => ({
   default: (_input: unknown, _opts?: unknown) => ({
     resize: () => ({
-      png: () => ({
+      webp: () => ({
         toBuffer: async () => Buffer.from([1, 2, 3]),
       }),
     }),

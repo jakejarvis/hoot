@@ -12,18 +12,14 @@ function isIcoBuffer(buf: Buffer): boolean {
   );
 }
 
-export async function convertBufferToPngCover(
+export async function convertBufferToImageCover(
   input: Buffer,
   width: number,
   height: number,
   contentTypeHint?: string | null,
 ): Promise<Buffer | null> {
   try {
-    const img = sharp(input, { failOn: "none" });
-    const pipeline = img
-      .resize(width, height, { fit: "cover" })
-      .png({ compressionLevel: 9 });
-    return await pipeline.toBuffer();
+    return await optimizeImageCover(input, width, height);
   } catch {
     // ignore and try ICO-specific decode if it looks like ICO
   }
@@ -60,10 +56,7 @@ export async function convertBufferToPngCover(
         const arrBuf: ArrayBuffer | undefined = chosen.buffer ?? chosen.data;
         if (arrBuf) {
           const pngBuf = Buffer.from(arrBuf);
-          return await sharp(pngBuf)
-            .resize(width, height, { fit: "cover" })
-            .png({ compressionLevel: 9 })
-            .toBuffer();
+          return await optimizeImageCover(pngBuf, width, height);
         }
       }
     } catch {
@@ -74,27 +67,19 @@ export async function convertBufferToPngCover(
   return null;
 }
 
-export async function convertBufferToSquarePng(
-  input: Buffer,
-  size: number,
-  contentTypeHint?: string | null,
-): Promise<Buffer | null> {
-  return convertBufferToPngCover(input, size, size, contentTypeHint);
-}
-
-export async function optimizePngCover(
-  png: Buffer,
+export async function optimizeImageCover(
+  buffer: Buffer,
   width: number,
   height: number,
 ): Promise<Buffer> {
-  return await sharp(png)
+  return await sharp(buffer)
     .resize(width, height, { fit: "cover" })
-    .png({ compressionLevel: 9 })
+    .webp({})
     .toBuffer();
 }
 
 export async function addWatermarkToScreenshot(
-  png: Buffer,
+  buffer: Buffer,
   width: number,
   height: number,
 ): Promise<Buffer> {
@@ -120,7 +105,7 @@ export async function addWatermarkToScreenshot(
 
   const watermarkBuffer = Buffer.from(watermarkSvg);
 
-  return await sharp(png)
+  return await sharp(buffer)
     .resize(width, height, { fit: "cover" })
     .composite([
       {
@@ -128,6 +113,6 @@ export async function addWatermarkToScreenshot(
         blend: "over",
       },
     ])
-    .png({ compressionLevel: 9 })
+    .webp({})
     .toBuffer();
 }

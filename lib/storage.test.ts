@@ -33,7 +33,7 @@ describe("storage uploads", () => {
       domain: "example.com",
       width: 32,
       height: 32,
-      png: Buffer.from([1, 2, 3]),
+      buffer: Buffer.from([1, 2, 3]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
     // we return UploadThing file key for deletion
@@ -50,7 +50,7 @@ describe("storage uploads", () => {
       domain: "example.com",
       width: 1200,
       height: 630,
-      png: Buffer.from([4, 5, 6]),
+      buffer: Buffer.from([4, 5, 6]),
     });
     expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
     // we return UploadThing file key for deletion
@@ -74,7 +74,7 @@ describe("storage uploads", () => {
       domain: "retry.com",
       width: 32,
       height: 32,
-      png: Buffer.from([1, 2, 3]),
+      buffer: Buffer.from([1, 2, 3]),
     });
 
     expect(res.url).toBe("https://app.ufs.sh/f/retry-key");
@@ -98,7 +98,7 @@ describe("storage uploads", () => {
       domain: "retry.com",
       width: 32,
       height: 32,
-      png: Buffer.from([1, 2, 3]),
+      buffer: Buffer.from([1, 2, 3]),
     });
 
     expect(res.url).toBe("https://app.ufs.sh/f/retry-key");
@@ -114,7 +114,7 @@ describe("storage uploads", () => {
         domain: "fail.com",
         width: 32,
         height: 32,
-        png: Buffer.from([1, 2, 3]),
+        buffer: Buffer.from([1, 2, 3]),
       }),
     ).rejects.toThrow(/Upload failed after 3 attempts/);
 
@@ -137,7 +137,7 @@ describe("storage uploads", () => {
       domain: "error.com",
       width: 32,
       height: 32,
-      png: Buffer.from([1, 2, 3]),
+      buffer: Buffer.from([1, 2, 3]),
     });
 
     expect(res.url).toBe("https://app.ufs.sh/f/ok");
@@ -158,7 +158,7 @@ describe("hashing helpers", () => {
     const f2 = makeImageFileName("social", "example.com", 1200, 630);
     const f3 = makeImageFileName("social", "example.com", 1200, 630, "v2");
     expect(f1).toBe(f2);
-    expect(f1).toMatch(/^social_[a-f0-9]{32}\.png$/);
+    expect(f1).toMatch(/^social_[a-f0-9]{32}\.webp$/);
     expect(f3).not.toBe(f1);
   });
 });
