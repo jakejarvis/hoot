@@ -24,6 +24,14 @@
       "rangeStrategy": "pin"
     },
     {
+      "matchPackageNames": [
+        "posthog-js",
+        "posthog-node",
+        "@posthog/nextjs-config"
+      ],
+      "groupName": "posthog"
+    },
+    {
       "matchPackageNames": ["typescript"],
       "rangeStrategy": "pin"
     },
@@ -34,11 +42,6 @@
     {
       "matchPackageNames": ["node"],
       "matchDepTypes": ["engines"],
-      "enabled": false
-    },
-    {
-      "matchPackageNames": ["node"],
-      "matchManagers": ["github-actions"],
       "enabled": false
     },
     {
