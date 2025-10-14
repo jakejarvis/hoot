@@ -1,4 +1,3 @@
-import { waitUntil } from "@vercel/functions";
 import type { Browser } from "puppeteer-core";
 import { getOrCreateCachedAsset } from "@/lib/cache/cached-asset";
 import { SCREENSHOT_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
@@ -154,7 +153,7 @@ export async function getOrCreateScreenshotBlobUrl(
       } finally {
         if (browser) {
           try {
-            waitUntil(browser.close());
+            await browser.close();
           } catch {}
         }
       }
