@@ -1,5 +1,6 @@
 import { captureServer } from "@/lib/analytics/server";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import type { SeoResponse } from "@/lib/schemas";
@@ -10,22 +11,6 @@ const HTML_TTL_SECONDS = 1 * 60 * 60; // 1 hour
 const ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
-
-async function fetchWithTimeout(
-  url: string,
-  opts: RequestInit & { timeoutMs?: number },
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 10000);
-  try {
-    const res = await fetch(url, { ...opts, signal: controller.signal });
-    clearTimeout(timer);
-    return res;
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
-  }
-}
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
   const lower = domain.toLowerCase();
@@ -43,7 +28,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     return cached;
   }
 
-  let finalUrl: string | null = `https://${lower}/`;
+  let finalUrl: string = `https://${lower}/`;
   let status: number | null = null;
   let htmlError: string | undefined;
   let robotsError: string | undefined;
@@ -53,17 +38,20 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   // HTML fetch
   try {
-    const res = await fetchWithTimeout(finalUrl, {
-      method: "GET",
-      redirect: "follow",
-      timeoutMs: 10000,
-      headers: {
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en",
-        "User-Agent": USER_AGENT,
+    const res = await fetchWithTimeout(
+      finalUrl,
+      {
+        method: "GET",
+        redirect: "follow",
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en",
+          "User-Agent": USER_AGENT,
+        },
       },
-    });
+      { timeoutMs: 10000 },
+    );
     status = res.status;
     finalUrl = res.url;
     const contentType = res.headers.get("content-type") ?? "";
@@ -87,11 +75,14 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       robots = cachedRobots;
     } else {
       const robotsUrl = `https://${lower}/robots.txt`;
-      const res = await fetchWithTimeout(robotsUrl, {
-        method: "GET",
-        timeoutMs: 8000,
-        headers: { Accept: "text/plain", "User-Agent": USER_AGENT },
-      });
+      const res = await fetchWithTimeout(
+        robotsUrl,
+        {
+          method: "GET",
+          headers: { Accept: "text/plain", "User-Agent": USER_AGENT },
+        },
+        { timeoutMs: 8000 },
+      );
       if (res.ok) {
         const ct = res.headers.get("content-type") ?? "";
         if (ct.includes("text/plain") || ct.includes("text/")) {
@@ -109,9 +100,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     robotsError = String(err);
   }
 
-  const preview = meta
-    ? selectPreview(meta, finalUrl ?? `https://${lower}/`)
-    : null;
+  const preview = meta ? selectPreview(meta, finalUrl) : null;
 
   // If a social image is present, store a cached copy via UploadThing for privacy
   if (preview?.image) {
@@ -196,7 +185,11 @@ async function getOrCreateSocialPreviewImageUrl(
   // 1) Check Redis index first
   try {
     const raw = (await redis.get(indexKey)) as { url?: unknown } | null;
-    if (raw && typeof raw === "object" && typeof raw.url === "string") {
+    if (
+      raw &&
+      typeof raw === "object" &&
+      typeof (raw as { url?: unknown }).url === "string"
+    ) {
       await captureServer("seo_image", {
         domain: lower,
         width: SOCIAL_WIDTH,
@@ -206,7 +199,7 @@ async function getOrCreateSocialPreviewImageUrl(
         outcome: "ok",
         cache: "hit",
       });
-      return { url: raw.url };
+      return { url: (raw as { url: string }).url };
     }
   } catch {
     // ignore and continue
@@ -237,15 +230,18 @@ async function getOrCreateSocialPreviewImageUrl(
 
   // 3) We acquired the lock - fetch, process, upload
   try {
-    const res = await fetchWithTimeout(imageUrl, {
-      method: "GET",
-      timeoutMs: 8000,
-      headers: {
-        Accept:
-          "image/avif,image/webp,image/png,image/jpeg,image/*;q=0.9,*/*;q=0.8",
-        "User-Agent": USER_AGENT,
+    const res = await fetchWithTimeout(
+      imageUrl,
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "image/avif,image/webp,image/png,image/jpeg,image/*;q=0.9,*/*;q=0.8",
+          "User-Agent": USER_AGENT,
+        },
       },
-    });
+      { timeoutMs: 8000 },
+    );
 
     if (!res.ok) return { url: null };
     const contentType = res.headers.get("content-type") ?? "";

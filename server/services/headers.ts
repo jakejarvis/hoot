@@ -1,4 +1,5 @@
 import { captureServer } from "@/lib/analytics/server";
+import { headThenGet } from "@/lib/fetch";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import type { HttpHeader } from "@/lib/schemas";
 
@@ -48,42 +49,11 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
 
   const REQUEST_TIMEOUT_MS = 5000;
   try {
-    // Try HEAD first with timeout
-    const headController = new AbortController();
-    const headTimer = setTimeout(
-      () => headController.abort(),
-      REQUEST_TIMEOUT_MS,
+    const { response: final, usedMethod } = await headThenGet(
+      url,
+      {},
+      { timeoutMs: REQUEST_TIMEOUT_MS },
     );
-    let res: Response | null = null;
-    try {
-      res = await fetch(url, {
-        method: "HEAD",
-        redirect: "follow" as RequestRedirect,
-        signal: headController.signal,
-      });
-    } finally {
-      clearTimeout(headTimer);
-    }
-
-    let final: Response | null = res;
-    if (!res || !res.ok) {
-      const getController = new AbortController();
-      const getTimer = setTimeout(
-        () => getController.abort(),
-        REQUEST_TIMEOUT_MS,
-      );
-      try {
-        final = await fetch(url, {
-          method: "GET",
-          redirect: "follow" as RequestRedirect,
-          signal: getController.signal,
-        });
-      } finally {
-        clearTimeout(getTimer);
-      }
-    }
-
-    if (!final) throw new Error("No response");
 
     const headers: HttpHeader[] = [];
     final.headers.forEach((value, name) => {
@@ -94,7 +64,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     await captureServer("headers_probe", {
       domain: lower,
       status: final.status,
-      used_method: res?.ok ? "HEAD" : "GET",
+      used_method: usedMethod,
       final_url: final.url,
       lock_acquired: acquiredLock,
       lock_waited_ms: acquiredLock ? 0 : Date.now() - lockWaitStart,

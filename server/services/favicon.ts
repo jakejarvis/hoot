@@ -1,33 +1,12 @@
 import { getOrCreateCachedAsset } from "@/lib/cache/cached-asset";
 import { FAVICON_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { fetchWithTimeout } from "@/lib/fetch";
 import { convertBufferToImageCover } from "@/lib/image";
 import { ns } from "@/lib/redis";
 import { uploadImage } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
-
-async function fetchWithTimeout(
-  url: string,
-  init?: RequestInit,
-): Promise<Response> {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      redirect: "follow",
-      headers: {
-        Accept: "image/avif,image/webp,image/png,image/*;q=0.9,*/*;q=0.8",
-        "User-Agent": USER_AGENT,
-      },
-      signal: controller.signal,
-      ...init,
-    });
-    return res;
-  } finally {
-    clearTimeout(t);
-  }
-}
 
 function buildSources(domain: string): string[] {
   const enc = encodeURIComponent(domain);
@@ -57,7 +36,18 @@ export async function getOrCreateFaviconBlobUrl(
       const sources = buildSources(domain);
       for (const src of sources) {
         try {
-          const res = await fetchWithTimeout(src);
+          const res = await fetchWithTimeout(
+            src,
+            {
+              redirect: "follow",
+              headers: {
+                Accept:
+                  "image/avif,image/webp,image/png,image/*;q=0.9,*/*;q=0.8",
+                "User-Agent": USER_AGENT,
+              },
+            },
+            { timeoutMs: REQUEST_TIMEOUT_MS },
+          );
           if (!res.ok) continue;
           const contentType = res.headers.get("content-type");
           const ab = await res.arrayBuffer();

@@ -1,6 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
+import { fetchWithTimeout } from "@/lib/fetch";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import {
   type DnsRecord,
@@ -353,9 +354,13 @@ async function resolveTypeWithProvider(
   provider: DohProvider,
 ): Promise<DnsRecord[]> {
   const url = provider.buildUrl(domain, type);
-  const res = await fetchWithTimeout(url, {
-    headers: provider.headers,
-  });
+  const res = await fetchWithTimeout(
+    url,
+    {
+      headers: provider.headers,
+    },
+    { timeoutMs: 2000, retries: 1, backoffMs: 150 },
+  );
   if (!res.ok) throw new Error(`DoH failed: ${provider.key} ${res.status}`);
   const json = (await res.json()) as DnsJson;
   const ans = json.Answer ?? [];
@@ -366,19 +371,25 @@ async function resolveTypeWithProvider(
   return sortDnsRecordsForType(records, type);
 }
 
-async function normalizeAnswer(
+function normalizeAnswer(
   _domain: string,
   type: DnsType,
   a: DnsAnswer,
-): Promise<DnsRecord | undefined> {
+): Promise<DnsRecord | undefined> | DnsRecord | undefined {
   const name = trimDot(a.name);
   const ttl = a.TTL;
   switch (type) {
     case "A":
     case "AAAA": {
       const value = trimDot(a.data);
-      const isCloudflare = await isCloudflareIpAsync(value);
-      return { type, name, value, ttl, isCloudflare };
+      const isCloudflarePromise = isCloudflareIpAsync(value);
+      return isCloudflarePromise.then((isCloudflare) => ({
+        type,
+        name,
+        value,
+        ttl,
+        isCloudflare,
+      }));
     }
     case "NS": {
       return { type, name, value: trimDot(a.data), ttl };
@@ -466,30 +477,4 @@ function providerOrderForLookup(_domain: string): DohProvider[] {
     providers[j] = tmp;
   }
   return providers;
-}
-
-async function fetchWithTimeout(
-  input: URL | string,
-  init?: RequestInit,
-  timeoutMs: number = 2000,
-): Promise<Response> {
-  // Up to two attempts with independent timeouts
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(input, { ...init, signal: controller.signal });
-      clearTimeout(timer);
-      return res;
-    } catch (err) {
-      lastError = err;
-      clearTimeout(timer);
-      if (attempt === 0) {
-        // small backoff before retry
-        await new Promise((r) => setTimeout(r, 150));
-      }
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("fetch failed");
 }
