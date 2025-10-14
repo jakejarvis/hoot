@@ -51,13 +51,6 @@
 3. **(Optional) Configure `.env.local`:**  
    See `.env.example` for Redis and UploadThing credentials (needed for caching and favicon/screenshot features).
 
-   Useful keys:
-   - `UPLOADTHING_SECRET` (required)
-   - `UPLOADTHING_APP_ID` (recommended)
-   - `FAVICON_TTL_SECONDS`, `SCREENSHOT_TTL_SECONDS` (optional TTLs)
-   - `HOOT_USER_AGENT` (optional UA override)
-   - `PUPPETEER_SKIP_DOWNLOAD=1` on Vercel to skip full `puppeteer` download
-
 ---
 
 ## 📜 License
