@@ -11,9 +11,10 @@ import { Fragment, useState } from "react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
-import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
+import { RelativeExpiryBadge } from "@/components/domain/time-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,7 +58,7 @@ export function CertificatesSection({
       {isLoading ? (
         <>
           <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <KeyValueGrid colsSm={2}>
               <KeyValueSkeleton
                 label="Issuer"
                 widthClass="w-[100px]"
@@ -70,7 +71,7 @@ export function CertificatesSection({
                 widthClass="w-[100px]"
                 withSuffix
               />
-            </div>
+            </KeyValueGrid>
           </div>
           <div className="my-2 flex justify-center">
             <Skeleton className="h-8 w-28 rounded-md" />
@@ -82,7 +83,7 @@ export function CertificatesSection({
             key={`cert-${firstCert.subject}-${firstCert.validFrom}-${firstCert.validTo}`}
           >
             <div className="relative mb-0 overflow-hidden rounded-2xl border border-black/5 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <KeyValueGrid colsSm={2}>
                 <KeyValue
                   label="Issuer"
                   value={firstCert.issuer}
@@ -145,15 +146,14 @@ export function CertificatesSection({
                   value={formatDate(firstCert.validTo)}
                   valueTooltip={formatDateTimeUtc(firstCert.validTo)}
                   suffix={
-                    <RelativeExpiry
+                    <RelativeExpiryBadge
                       to={firstCert.validTo}
                       dangerDays={7}
                       warnDays={30}
-                      className="text-[11px]"
                     />
                   }
                 />
-              </div>
+              </KeyValueGrid>
             </div>
           </Fragment>
 
@@ -191,7 +191,7 @@ export function CertificatesSection({
                       key={`cert-${c.subject}-${c.validFrom}-${c.validTo}`}
                     >
                       <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-background/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <KeyValueGrid colsSm={2}>
                           <KeyValue
                             label="Issuer"
                             value={c.issuer}
@@ -250,15 +250,14 @@ export function CertificatesSection({
                             value={formatDate(c.validTo)}
                             valueTooltip={formatDateTimeUtc(c.validTo)}
                             suffix={
-                              <RelativeExpiry
+                              <RelativeExpiryBadge
                                 to={c.validTo}
                                 dangerDays={7}
                                 warnDays={30}
-                                className="text-[11px]"
                               />
                             }
                           />
-                        </div>
+                        </KeyValueGrid>
                       </div>
 
                       {idx < remainingCerts.length - 1 && (

@@ -3,8 +3,10 @@
 import { Logs } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
-import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
+import { KeyValueGrid } from "@/components/domain/key-value-grid";
+import { KeyValueSkeletonList } from "@/components/domain/key-value-skeletons";
 import { Section } from "@/components/domain/section";
+import { SectionContent } from "@/components/domain/section-content";
 import {
   Empty,
   EmptyDescription,
@@ -28,56 +30,67 @@ export function HeadersSection({
 }) {
   return (
     <Section {...SECTION_DEFS.headers} isError={isError} isLoading={isLoading}>
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {Array.from({ length: 12 }, (_, n) => `hdr-skel-${n}`).map((id) => (
-            <KeyValueSkeleton key={id} widthClass="w-[100px]" withTrailing />
-          ))}
-        </div>
-      ) : data && data.length > 0 ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {(() => {
-            const important = new Set([
-              "strict-transport-security",
-              "content-security-policy",
-              "content-security-policy-report-only",
-              "x-frame-options",
-              "referrer-policy",
-              "server",
-              "x-powered-by",
-              "cache-control",
-              "permissions-policy",
-            ]);
-            return data.map((h) => (
-              <KeyValue
-                key={`${h.name}:${String((h as { value: unknown }).value)}`}
-                label={h.name}
-                value={String((h as { value: unknown }).value)}
-                copyable
-                highlight={important.has(h.name)}
-              />
-            ));
-          })()}
-        </div>
-      ) : isError ? (
-        <ErrorWithRetry
-          message="Failed to load headers."
-          onRetryAction={onRetryAction}
-        />
-      ) : (
-        <Empty className="border border-dashed">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Logs />
-            </EmptyMedia>
-            <EmptyTitle>No HTTP headers detected</EmptyTitle>
-            <EmptyDescription>
-              We couldn&apos;t fetch any HTTP response headers for this site. It
-              may be offline or blocking requests.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      )}
+      <SectionContent
+        isLoading={isLoading}
+        isError={isError}
+        data={data ?? null}
+        isEmpty={(d) => !Array.isArray(d) || d.length === 0}
+        renderLoading={() => (
+          <KeyValueGrid colsSm={2}>
+            <KeyValueSkeletonList
+              count={12}
+              widthClass="w-[100px]"
+              withTrailing
+            />
+          </KeyValueGrid>
+        )}
+        renderData={(d) => (
+          <KeyValueGrid colsSm={2}>
+            {(() => {
+              const important = new Set([
+                "strict-transport-security",
+                "content-security-policy",
+                "content-security-policy-report-only",
+                "x-frame-options",
+                "referrer-policy",
+                "server",
+                "x-powered-by",
+                "cache-control",
+                "permissions-policy",
+              ]);
+              return d.map((h) => (
+                <KeyValue
+                  key={`${h.name}:${String((h as { value: unknown }).value)}`}
+                  label={h.name}
+                  value={String((h as { value: unknown }).value)}
+                  copyable
+                  highlight={important.has(h.name)}
+                />
+              ));
+            })()}
+          </KeyValueGrid>
+        )}
+        renderError={() => (
+          <ErrorWithRetry
+            message="Failed to load headers."
+            onRetryAction={onRetryAction}
+          />
+        )}
+        renderEmpty={() => (
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Logs />
+              </EmptyMedia>
+              <EmptyTitle>No HTTP headers detected</EmptyTitle>
+              <EmptyDescription>
+                We couldn&apos;t fetch any HTTP response headers for this site.
+                It may be offline or blocking requests.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+      />
     </Section>
   );
 }

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import {
@@ -44,7 +45,7 @@ export function HostingEmailSection({
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <KeyValueGrid colsSm={3}>
             <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
             <KeyValueSkeleton
               label="Hosting"
@@ -56,7 +57,7 @@ export function HostingEmailSection({
               withLeading
               widthClass="w-[100px]"
             />
-          </div>
+          </KeyValueGrid>
 
           <KeyValueSkeleton
             label="Location"
@@ -69,7 +70,7 @@ export function HostingEmailSection({
         </>
       ) : data ? (
         <>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <KeyValueGrid colsSm={3} colsMd={3}>
             <KeyValue
               label="DNS"
               value={data.dnsProvider.name}
@@ -109,7 +110,7 @@ export function HostingEmailSection({
                 ) : undefined
               }
             />
-          </div>
+          </KeyValueGrid>
 
           {data.geo.lat != null && data.geo.lon != null ? (
             <>

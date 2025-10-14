@@ -4,9 +4,11 @@ import { BadgeCheck, GraduationCap, HatGlasses } from "lucide-react";
 import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
-import { RelativeExpiry } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
+import { SectionContent } from "@/components/domain/section-content";
+import { RelativeExpiryBadge } from "@/components/domain/time-badges";
 import {
   Tooltip,
   TooltipContent,
@@ -43,23 +45,27 @@ export function RegistrationSection({
       isError={isError}
       isLoading={isLoading}
     >
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {isLoading ? (
-          <>
+      <SectionContent
+        isLoading={isLoading}
+        isError={isError}
+        data={data ?? null}
+        renderLoading={() => (
+          <KeyValueGrid colsSm={2}>
             <KeyValueSkeleton label="Registrar" withLeading withSuffix />
             <KeyValueSkeleton label="Registrant" />
             <KeyValueSkeleton label="Created" />
             <KeyValueSkeleton label="Expires" withSuffix />
-          </>
-        ) : data ? (
-          <>
+          </KeyValueGrid>
+        )}
+        renderData={(d) => (
+          <KeyValueGrid colsSm={2}>
             <KeyValue
               label="Registrar"
-              value={data.registrarProvider?.name || ""}
+              value={d.registrarProvider?.name || ""}
               leading={
-                data.registrarProvider?.domain ? (
+                d.registrarProvider?.domain ? (
                   <Favicon
-                    domain={data.registrarProvider.domain}
+                    domain={d.registrarProvider.domain}
                     size={16}
                     className="rounded"
                   />
@@ -77,37 +83,36 @@ export function RegistrationSection({
                       <span>
                         Verified by{" "}
                         <span className="font-medium">
-                          {data.source === "rdap" &&
-                          Array.isArray(data.rdapServers) &&
-                          data.rdapServers.length > 0 ? (
+                          {d.source === "rdap" &&
+                          Array.isArray(d.rdapServers) &&
+                          d.rdapServers.length > 0 ? (
                             <a
                               href={
-                                data.rdapServers[data.rdapServers.length - 1] ??
-                                "#"
+                                d.rdapServers[d.rdapServers.length - 1] ?? "#"
                               }
                               target="_blank"
                               rel="noopener"
                               className="underline underline-offset-2"
                             >
                               {extractHostnameFromUrlish(
-                                data.rdapServers[data.rdapServers.length - 1],
+                                d.rdapServers[d.rdapServers.length - 1],
                               ) ?? "RDAP"}
                             </a>
                           ) : (
-                            (data.whoisServer ?? "WHOIS")
+                            (d.whoisServer ?? "WHOIS")
                           )}
                         </span>
                       </span>
                       <a
                         href={
-                          data.source === "rdap"
+                          d.source === "rdap"
                             ? "https://rdap.rcode3.com/"
                             : "https://en.wikipedia.org/wiki/WHOIS"
                         }
                         target="_blank"
                         rel="noopener"
                         title={`Learn about ${
-                          data.source === "rdap" ? "RDAP" : "WHOIS"
+                          d.source === "rdap" ? "RDAP" : "WHOIS"
                         }`}
                         className="text-muted/80"
                       >
@@ -122,12 +127,12 @@ export function RegistrationSection({
             <KeyValue
               label="Registrant"
               value={
-                data.privacyEnabled || !registrant
+                d.privacyEnabled || !registrant
                   ? "Hidden"
                   : formatRegistrant(registrant)
               }
               leading={
-                data.privacyEnabled || !registrant ? (
+                d.privacyEnabled || !registrant ? (
                   <HatGlasses className="stroke-muted-foreground" />
                 ) : undefined
               }
@@ -135,41 +140,39 @@ export function RegistrationSection({
 
             <KeyValue
               label="Created"
-              value={formatDate(data.creationDate || "Unknown")}
+              value={formatDate(d.creationDate || "Unknown")}
               valueTooltip={
-                data.creationDate
-                  ? formatDateTimeUtc(data.creationDate)
-                  : undefined
+                d.creationDate ? formatDateTimeUtc(d.creationDate) : undefined
               }
             />
 
             <KeyValue
               label="Expires"
-              value={formatDate(data.expirationDate || "Unknown")}
+              value={formatDate(d.expirationDate || "Unknown")}
               valueTooltip={
-                data.expirationDate
-                  ? formatDateTimeUtc(data.expirationDate)
+                d.expirationDate
+                  ? formatDateTimeUtc(d.expirationDate)
                   : undefined
               }
               suffix={
-                data.expirationDate ? (
-                  <RelativeExpiry
-                    to={data.expirationDate}
+                d.expirationDate ? (
+                  <RelativeExpiryBadge
+                    to={d.expirationDate}
                     dangerDays={30}
                     warnDays={60}
-                    className="text-[11px]"
                   />
                 ) : null
               }
             />
-          </>
-        ) : isError ? (
+          </KeyValueGrid>
+        )}
+        renderError={() => (
           <ErrorWithRetry
             message="Failed to load WHOIS."
             onRetryAction={onRetryAction}
           />
-        ) : null}
-      </div>
+        )}
+      />
     </Section>
   );
 }

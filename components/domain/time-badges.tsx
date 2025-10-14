@@ -1,26 +1,31 @@
 "use client";
 
 import { formatDistanceToNowStrict } from "date-fns";
+import { ClockFading } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { formatTtl } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export type RelativeExpiryProps = {
-  /** ISO date string */
-  to: string;
+export function RelativeExpiryBadge({
+  to,
+  dangerDays = 7,
+  warnDays = 30,
+  className,
+}: {
+  /** ISO date string */ to: string;
   /** days threshold for red (imminent) */
   dangerDays?: number;
   /** days threshold for yellow (soon) */
   warnDays?: number;
   /** className applied to the wrapper span */
   className?: string;
-};
-
-export function RelativeExpiry({
-  to,
-  dangerDays = 7,
-  warnDays = 30,
-  className,
-}: RelativeExpiryProps) {
+}) {
   const [text, setText] = useState<string | null>(null);
   const [status, setStatus] = useState<"danger" | "warn" | "ok" | null>(null);
 
@@ -51,4 +56,23 @@ export function RelativeExpiry({
         : "text-muted-foreground";
 
   return <span className={cn(colorClass, className)}>({text})</span>;
+}
+
+export function TtlTimeBadge({ ttl }: { ttl: number }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge
+          variant="outline"
+          className="cursor-default text-[11px] text-muted-foreground"
+        >
+          <ClockFading />
+          {formatTtl(ttl)}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <span className="font-mono">{ttl}</span>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
