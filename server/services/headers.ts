@@ -1,6 +1,7 @@
 import { captureServer } from "@/lib/analytics/server";
+import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { headThenGet } from "@/lib/fetch";
-import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import type { HttpHeader } from "@/lib/schemas";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {

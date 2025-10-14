@@ -7,12 +7,8 @@ export function useDomainQueries(domain: string) {
     trpc.domain.registration.queryOptions(
       { domain },
       {
-        staleTime: 30 * 60_000, // 30 minutes, avoid churn
         // Keep UI stable during transitions by reusing previous data
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );
@@ -22,11 +18,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );
@@ -39,11 +31,7 @@ export function useDomainQueries(domain: string) {
         // reuse warm caches server-side. If DNS errored, still allow hosting to run.
         enabled:
           registration.data?.isRegistered && (dns.isSuccess || dns.isError),
-        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );
@@ -53,11 +41,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );
@@ -67,11 +51,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );
@@ -81,11 +61,7 @@ export function useDomainQueries(domain: string) {
       { domain },
       {
         enabled: registration.data?.isRegistered,
-        staleTime: 30 * 60_000, // 30 minutes
         placeholderData: (prev) => prev,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        refetchOnMount: false,
       },
     ),
   );

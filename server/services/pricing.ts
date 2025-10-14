@@ -1,4 +1,5 @@
-import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
+import { acquireLockOrWaitForResult } from "@/lib/cache";
+import { ns, redis } from "@/lib/redis";
 import type { Pricing } from "@/lib/schemas";
 
 type DomainPricingResponse = {

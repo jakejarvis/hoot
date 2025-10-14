@@ -1,5 +1,5 @@
 import type { Browser } from "puppeteer-core";
-import { getOrCreateCachedAsset } from "@/lib/cache/cached-asset";
+import { getOrCreateCachedAsset } from "@/lib/cache";
 import { SCREENSHOT_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizeImageCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";

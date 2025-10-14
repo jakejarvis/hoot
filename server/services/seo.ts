@@ -1,8 +1,9 @@
 import { captureServer } from "@/lib/analytics/server";
+import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
-import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import type { SeoResponse } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { makeImageFileName, uploadImage } from "@/lib/storage";

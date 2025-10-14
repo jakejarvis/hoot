@@ -1,8 +1,9 @@
 import { captureServer } from "@/lib/analytics/server";
+import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import {
   type DnsRecord,
   type DnsResolveResult,

@@ -9,7 +9,10 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         // Avoid immediate client refetch after hydration
-        staleTime: 60 * 1000,
+        staleTime: 5 * 60_000, // 5 minutes
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
       },
       dehydrate: {
         // Include pending queries so streaming works smoothly

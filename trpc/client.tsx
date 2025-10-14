@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  isServer,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { isServer, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createTRPCClient,
@@ -15,27 +11,13 @@ import { useState } from "react";
 import superjson from "superjson";
 import { TRPCProvider as Provider } from "@/lib/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
+import { getQueryClient } from "@/trpc/query-client";
 
-let browserQueryClient: QueryClient | undefined;
+let browserQueryClient: ReturnType<typeof getQueryClient> | undefined;
 
-function makeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        // Avoid immediate refetch after hydration
-        staleTime: 60 * 1000,
-        gcTime: 60 * 60 * 1000,
-        refetchOnMount: false,
-        refetchOnReconnect: false,
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
-}
-
-function getQueryClient() {
-  if (isServer) return makeQueryClient();
-  if (!browserQueryClient) browserQueryClient = makeQueryClient();
+function getStableQueryClient() {
+  if (isServer) return getQueryClient();
+  if (!browserQueryClient) browserQueryClient = getQueryClient();
   return browserQueryClient;
 }
 
@@ -46,7 +28,7 @@ const getBaseUrl = () => {
 };
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-  const queryClient = getQueryClient();
+  const queryClient = getStableQueryClient();
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [

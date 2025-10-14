@@ -29,9 +29,8 @@ export function Favicon({
     trpc.domain.favicon.queryOptions(
       { domain },
       {
-        staleTime: 60 * 60_000, // 1 hour
-        placeholderData: (prev) => prev,
         enabled: isHydrated,
+        placeholderData: (prev) => prev,
       },
     ),
   );
