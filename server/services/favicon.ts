@@ -1,6 +1,6 @@
 import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
-import { convertBufferToSquarePng } from "@/lib/image";
+import { convertBufferToImageCover } from "@/lib/image";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import { getFaviconTtlSeconds, uploadImage } from "@/lib/storage";
 
@@ -39,8 +39,6 @@ function buildSources(domain: string): string[] {
     `http://${domain}/favicon.ico`,
   ];
 }
-
-// Legacy getFaviconPngForDomain removed
 
 export async function getOrCreateFaviconBlobUrl(
   domain: string,
@@ -160,15 +158,16 @@ export async function getOrCreateFaviconBlobUrl(
           bytes: buf.length,
         });
 
-        const png = await convertBufferToSquarePng(
+        const webp = await convertBufferToImageCover(
           buf,
+          DEFAULT_SIZE,
           DEFAULT_SIZE,
           contentType,
         );
-        if (!png) continue;
-        console.debug("[favicon] converted to png", {
+        if (!webp) continue;
+        console.debug("[favicon] converted to webp", {
           size: DEFAULT_SIZE,
-          bytes: png.length,
+          bytes: webp.length,
         });
 
         const source = (() => {
@@ -185,7 +184,7 @@ export async function getOrCreateFaviconBlobUrl(
           domain,
           width: DEFAULT_SIZE,
           height: DEFAULT_SIZE,
-          png,
+          buffer: webp,
         });
         console.info("[favicon] uploaded", { url, key });
 

@@ -2,7 +2,7 @@ import { waitUntil } from "@vercel/functions";
 import type { Browser } from "puppeteer-core";
 import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
-import { addWatermarkToScreenshot, optimizePngCover } from "@/lib/image";
+import { addWatermarkToScreenshot, optimizeImageCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import { getScreenshotTtlSeconds, uploadImage } from "@/lib/storage";
@@ -190,7 +190,7 @@ export async function getOrCreateScreenshotBlobUrl(
               bytes: rawPng.length,
             });
 
-            const png = await optimizePngCover(
+            const png = await optimizeImageCover(
               rawPng,
               VIEWPORT_WIDTH,
               VIEWPORT_HEIGHT,
@@ -199,13 +199,13 @@ export async function getOrCreateScreenshotBlobUrl(
               console.debug("[screenshot] optimized png bytes", {
                 bytes: png.length,
               });
-              const pngWithWatermark = await addWatermarkToScreenshot(
+              const withWatermark = await addWatermarkToScreenshot(
                 png,
                 VIEWPORT_WIDTH,
                 VIEWPORT_HEIGHT,
               );
-              console.debug("[screenshot] watermarked png bytes", {
-                bytes: pngWithWatermark.length,
+              console.debug("[screenshot] watermarked bytes", {
+                bytes: withWatermark.length,
               });
               console.info("[screenshot] uploading via uploadthing");
               const { url: storedUrl, key: fileKey } = await uploadImage({
@@ -213,7 +213,7 @@ export async function getOrCreateScreenshotBlobUrl(
                 domain,
                 width: VIEWPORT_WIDTH,
                 height: VIEWPORT_HEIGHT,
-                png: pngWithWatermark,
+                buffer: withWatermark,
               });
               console.info("[screenshot] uploaded", {
                 url: storedUrl,

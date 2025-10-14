@@ -52,7 +52,7 @@ export function makeImageFileName(
 ): string {
   const base = `${kind}:${domain}:${width}x${height}${extra ? `:${extra}` : ""}`;
   const digest = deterministicHash(base);
-  return `${kind}_${digest}.png`;
+  return `${kind}_${digest}.webp`;
 }
 
 const utapi = new UTApi();
@@ -171,13 +171,11 @@ export async function uploadImage(options: {
   domain: string;
   width: number;
   height: number;
-  png: Buffer;
+  buffer: Buffer;
 }): Promise<{ url: string; key: string }> {
-  const { kind, domain, width, height, png } = options;
+  const { kind, domain, width, height, buffer } = options;
   const fileName = makeImageFileName(kind, domain, width, height);
-  const file = new UTFile([new Uint8Array(png)], fileName, {
-    type: "image/png",
-  });
+  const file = new UTFile([new Uint8Array(buffer)], fileName);
 
   return await uploadWithRetry(file);
 }

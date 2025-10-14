@@ -1,6 +1,6 @@
 import { captureServer } from "@/lib/analytics/server";
 import { USER_AGENT } from "@/lib/constants";
-import { optimizePngCover } from "@/lib/image";
+import { optimizeImageCover } from "@/lib/image";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import type { SeoResponse } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
@@ -252,15 +252,15 @@ async function getOrCreateSocialPreviewImageUrl(
     const ab = await res.arrayBuffer();
     const raw = Buffer.from(ab);
 
-    const png = await optimizePngCover(raw, SOCIAL_WIDTH, SOCIAL_HEIGHT);
-    if (!png || png.length === 0) return { url: null };
+    const image = await optimizeImageCover(raw, SOCIAL_WIDTH, SOCIAL_HEIGHT);
+    if (!image || image.length === 0) return { url: null };
 
     const { url, key } = await uploadImage({
       kind: "social",
       domain: lower,
       width: SOCIAL_WIDTH,
       height: SOCIAL_HEIGHT,
-      png,
+      buffer: image,
     });
 
     try {
