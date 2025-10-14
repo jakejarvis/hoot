@@ -36,7 +36,7 @@ export function HeadersSection({
         data={data ?? null}
         isEmpty={(d) => !Array.isArray(d) || d.length === 0}
         renderLoading={() => (
-          <KeyValueGrid colsSm={2}>
+          <KeyValueGrid colsDesktop={2}>
             <KeyValueSkeletonList
               count={12}
               widthClass="w-[100px]"
@@ -45,7 +45,7 @@ export function HeadersSection({
           </KeyValueGrid>
         )}
         renderData={(d) => (
-          <KeyValueGrid colsSm={2}>
+          <KeyValueGrid colsDesktop={2}>
             {(() => {
               const important = new Set([
                 "strict-transport-security",

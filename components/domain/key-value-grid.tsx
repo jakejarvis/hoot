@@ -3,29 +3,30 @@ import { cn } from "@/lib/utils";
 export function KeyValueGrid({
   children,
   className,
-  colsSm = 2,
-  colsMd,
-  colsLg,
+  colsMobile = 1,
+  colsDesktop,
 }: {
   children: React.ReactNode;
   className?: string;
-  colsSm?: 1 | 2 | 3 | 4;
-  colsMd?: 1 | 2 | 3 | 4;
-  colsLg?: 1 | 2 | 3 | 4;
+  colsMobile?: 1 | 2 | 3;
+  colsDesktop?: 1 | 2 | 3;
 }) {
-  const smClass = `sm:grid-cols-${colsSm}`;
-  const mdClass = colsMd ? `md:grid-cols-${colsMd}` : undefined;
-  const lgClass = colsLg ? `lg:grid-cols-${colsLg}` : undefined;
+  // Tailwind requires static class names; map numeric props to explicit classes
+  const baseClassMap: Record<1 | 2 | 3, string> = {
+    1: "grid-cols-1",
+    2: "grid-cols-2",
+    3: "grid-cols-3",
+  };
+  const desktopClassMap: Record<1 | 2 | 3, string> = {
+    1: "sm:grid-cols-1",
+    2: "sm:grid-cols-2",
+    3: "sm:grid-cols-3",
+  };
+
+  const mobileClass = baseClassMap[colsMobile];
+  const desktopClass = colsDesktop ? desktopClassMap[colsDesktop] : undefined;
   return (
-    <div
-      className={cn(
-        "grid grid-cols-1 gap-2",
-        smClass,
-        mdClass,
-        lgClass,
-        className,
-      )}
-    >
+    <div className={cn("grid gap-2", mobileClass, desktopClass, className)}>
       {children}
     </div>
   );

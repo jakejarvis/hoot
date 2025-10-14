@@ -120,7 +120,7 @@ export function SeoSection({
               <span>Meta Tags</span>
               <SubheadCount count={metaTagCount} color="orange" />
             </div>
-            <KeyValueGrid colsSm={2} colsMd={2}>
+            <KeyValueGrid colsDesktop={2}>
               {metaTagValues
                 .filter((t) => t.value != null)
                 .map((t) => (
@@ -810,7 +810,7 @@ function SeoSkeleton() {
           Meta Tags
           <SubheadCountSkeleton />
         </div>
-        <KeyValueGrid colsSm={2} colsMd={2}>
+        <KeyValueGrid colsDesktop={2}>
           <KeyValueSkeleton label="Title" widthClass="w-[220px]" />
           <KeyValueSkeleton label="Description" widthClass="w-[260px]" />
           <KeyValueSkeleton label="Canonical" widthClass="w-[200px]" />

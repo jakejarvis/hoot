@@ -45,7 +45,7 @@ export function HostingEmailSection({
     <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
       {isLoading ? (
         <>
-          <KeyValueGrid colsSm={3}>
+          <KeyValueGrid colsDesktop={3}>
             <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
             <KeyValueSkeleton
               label="Hosting"
@@ -70,7 +70,7 @@ export function HostingEmailSection({
         </>
       ) : data ? (
         <>
-          <KeyValueGrid colsSm={3} colsMd={3}>
+          <KeyValueGrid colsDesktop={3}>
             <KeyValue
               label="DNS"
               value={data.dnsProvider.name}

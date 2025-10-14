@@ -50,7 +50,7 @@ export function RegistrationSection({
         isError={isError}
         data={data ?? null}
         renderLoading={() => (
-          <KeyValueGrid colsSm={2}>
+          <KeyValueGrid colsDesktop={2}>
             <KeyValueSkeleton label="Registrar" withLeading withSuffix />
             <KeyValueSkeleton label="Registrant" />
             <KeyValueSkeleton label="Created" />
@@ -58,7 +58,7 @@ export function RegistrationSection({
           </KeyValueGrid>
         )}
         renderData={(d) => (
-          <KeyValueGrid colsSm={2}>
+          <KeyValueGrid colsDesktop={2}>
             <KeyValue
               label="Registrar"
               value={d.registrarProvider?.name || ""}
