@@ -1,6 +1,11 @@
 export const USER_AGENT =
   process.env.HOOT_USER_AGENT || "hoot.sh/0.1 (+https://hoot.sh)";
 
+// Cache TTLs
+export const FAVICON_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
+export const SCREENSHOT_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
+export const SOCIAL_PREVIEW_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
+
 export const DEFAULT_SUGGESTIONS = [
   "github.com",
   "reddit.com",

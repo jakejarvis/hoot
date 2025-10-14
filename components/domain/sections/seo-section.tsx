@@ -21,6 +21,7 @@ import {
   TwitterIcon,
 } from "@/components/brand-icons";
 import { KeyValue } from "@/components/domain/key-value";
+import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import { SocialPreview } from "@/components/domain/social-preview";
@@ -119,7 +120,7 @@ export function SeoSection({
               <span>Meta Tags</span>
               <SubheadCount count={metaTagCount} color="orange" />
             </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <KeyValueGrid colsSm={2} colsMd={2}>
               {metaTagValues
                 .filter((t) => t.value != null)
                 .map((t) => (
@@ -147,7 +148,7 @@ export function SeoSection({
                     copyable
                   />
                 ))}
-            </div>
+            </KeyValueGrid>
           </div>
 
           <div className="mt-6 space-y-3">
@@ -809,12 +810,12 @@ function SeoSkeleton() {
           Meta Tags
           <SubheadCountSkeleton />
         </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <KeyValueGrid colsSm={2} colsMd={2}>
           <KeyValueSkeleton label="Title" widthClass="w-[220px]" />
           <KeyValueSkeleton label="Description" widthClass="w-[260px]" />
           <KeyValueSkeleton label="Canonical" widthClass="w-[200px]" />
           <KeyValueSkeleton label="Image" widthClass="w-[260px]" />
-        </div>
+        </KeyValueGrid>
       </div>
 
       {/* Open Graph */}

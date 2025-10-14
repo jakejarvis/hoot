@@ -1,14 +1,10 @@
 import { captureServer } from "@/lib/analytics/server";
-import { USER_AGENT } from "@/lib/constants";
+import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { optimizeImageCover } from "@/lib/image";
 import { acquireLockOrWaitForResult, ns, redis } from "@/lib/redis";
 import type { SeoResponse } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
-import {
-  deterministicHash,
-  getSocialPreviewTtlSeconds,
-  uploadImage,
-} from "@/lib/storage";
+import { makeImageFileName, uploadImage } from "@/lib/storage";
 
 const HTML_TTL_SECONDS = 1 * 60 * 60; // 1 hour
 const ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
@@ -174,20 +170,26 @@ async function getOrCreateSocialPreviewImageUrl(
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
   const lower = domain.toLowerCase();
-  const hash = deterministicHash(imageUrl);
+  const fileId = makeImageFileName(
+    "social",
+    lower,
+    SOCIAL_WIDTH,
+    SOCIAL_HEIGHT,
+    imageUrl,
+  );
 
   const indexKey = ns(
     "seo",
     "image-url",
     lower,
-    hash,
+    fileId,
     `${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
   );
   const lockKey = ns(
     "lock",
     "seo-image",
     lower,
-    hash,
+    fileId,
     `${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
   );
 
@@ -264,7 +266,7 @@ async function getOrCreateSocialPreviewImageUrl(
     });
 
     try {
-      const ttl = getSocialPreviewTtlSeconds();
+      const ttl = SOCIAL_PREVIEW_TTL_SECONDS;
       const expiresAtMs = Date.now() + ttl * 1000;
       await redis.set(indexKey, { url, key, expiresAtMs }, { ex: ttl });
       await redis.zadd(ns("purge", "social"), {

@@ -4,30 +4,11 @@ import { createHmac } from "node:crypto";
 import { UTApi, UTFile } from "uploadthing/server";
 import type { StorageKind } from "@/lib/schemas";
 
-const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 const UPLOAD_MAX_ATTEMPTS = 3;
 const UPLOAD_BACKOFF_BASE_MS = 100;
 const UPLOAD_BACKOFF_MAX_MS = 2000;
 
-function toPositiveInt(value: unknown, fallback: number): number {
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
-}
-
-export function getFaviconTtlSeconds(): number {
-  return toPositiveInt(process.env.FAVICON_TTL_SECONDS, ONE_WEEK_SECONDS);
-}
-
-export function getScreenshotTtlSeconds(): number {
-  return toPositiveInt(process.env.SCREENSHOT_TTL_SECONDS, ONE_WEEK_SECONDS);
-}
-
-export function getSocialPreviewTtlSeconds(): number {
-  return toPositiveInt(
-    process.env.SOCIAL_PREVIEW_TTL_SECONDS,
-    ONE_WEEK_SECONDS,
-  );
-}
+// TTLs now live in lib/constants.ts
 
 /**
  * Deterministic, obfuscated hash for IDs and filenames
