@@ -150,6 +150,7 @@ export function CertificatesSection({
                       to={firstCert.validTo}
                       dangerDays={7}
                       warnDays={30}
+                      className="text-[11px] leading-none"
                     />
                   }
                 />
@@ -254,6 +255,7 @@ export function CertificatesSection({
                                 to={c.validTo}
                                 dangerDays={7}
                                 warnDays={30}
+                                className="text-[11px] leading-none"
                               />
                             }
                           />
