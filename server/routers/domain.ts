@@ -1,6 +1,6 @@
-import { toRegistrableDomain } from "rdapper";
 import z from "zod";
 import { normalizeDomainInput } from "@/lib/domain";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import {
   CertificatesSchema,
   DnsResolveResultSchema,
