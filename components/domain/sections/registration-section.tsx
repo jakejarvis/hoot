@@ -106,7 +106,7 @@ export function RegistrationSection({
                       <a
                         href={
                           d.source === "rdap"
-                            ? "https://rdap.rcode3.com/"
+                            ? "https://about.rdap.org/"
                             : "https://en.wikipedia.org/wiki/WHOIS"
                         }
                         target="_blank"

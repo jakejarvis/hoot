@@ -208,8 +208,8 @@ export const DNS_PROVIDERS: Array<
     rule: { kind: "nsSuffix", suffix: "akam.net" },
   },
   {
-    name: "UltraDNS (DigiCert)",
-    domain: "digicert.com",
+    name: "UltraDNS",
+    domain: "vercara.digicert.com",
     category: "dns",
     rule: {
       any: [
@@ -218,6 +218,7 @@ export const DNS_PROVIDERS: Array<
         { kind: "nsSuffix", suffix: "ultradns.org" },
         { kind: "nsSuffix", suffix: "ultradns.co.uk" },
         { kind: "nsSuffix", suffix: "ultradns.biz" },
+        { kind: "nsSuffix", suffix: "ultradns.info" },
       ],
     },
   },

@@ -141,7 +141,12 @@ export const EMAIL_PROVIDERS: Array<
     name: "Proofpoint",
     domain: "proofpoint.com",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "pphosted.com" },
+    rule: {
+      any: [
+        { kind: "mxSuffix", suffix: "pphosted.com" },
+        { kind: "mxSuffix", suffix: "ppe-hosted.com" },
+      ],
+    },
   },
   {
     name: "Barracuda Email Essentials",
