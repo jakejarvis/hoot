@@ -46,7 +46,10 @@ export const TwitterMetaSchema = z.object({
 export const GeneralMetaSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
+  keywords: z.string().optional(),
+  author: z.string().optional(),
   canonical: z.string().url().optional(),
+  generator: z.string().optional(),
   robots: z.string().optional(),
 });
 

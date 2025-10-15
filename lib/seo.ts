@@ -53,6 +53,9 @@ export function parseHtmlMeta(html: string, finalUrl: string): SeoMeta {
   );
   const canonicalHref = $('link[rel="canonical"]').attr("href") ?? "";
   const robotsMeta = $('meta[name="robots"]').attr("content") ?? "";
+  const generatorMeta = $('meta[name="generator"]').attr("content") ?? "";
+  const authorMeta = $('meta[name="author"]').attr("content") ?? "";
+  const keywordsMeta = $('meta[name="keywords"]').attr("content") ?? "";
 
   const og: OpenGraphMeta = {
     title: pickMetaAttr($, "property", "og:title"),
@@ -81,7 +84,10 @@ export function parseHtmlMeta(html: string, finalUrl: string): SeoMeta {
   const general: GeneralMeta = {
     title: titleTag || undefined,
     description: descriptionTag || undefined,
+    keywords: sanitizeText(keywordsMeta) || undefined,
+    author: sanitizeText(authorMeta) || undefined,
     canonical: sanitizeText(canonicalHref) || undefined,
+    generator: sanitizeText(generatorMeta) || undefined,
     robots: sanitizeText(robotsMeta) || undefined,
   };
 

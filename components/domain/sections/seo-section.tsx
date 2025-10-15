@@ -76,8 +76,11 @@ export function SeoSection({
   const metaTagValues: { label: string; value?: string | null }[] = [
     { label: "Title", value: data?.preview?.title },
     { label: "Description", value: data?.preview?.description },
+    { label: "Keywords", value: data?.meta?.general.keywords },
+    { label: "Author", value: data?.meta?.general.author },
     { label: "Canonical", value: data?.preview?.canonicalUrl },
     { label: "Image", value: data?.preview?.image },
+    { label: "Generator", value: data?.meta?.general.generator },
     { label: "Robots", value: data?.meta?.general.robots },
   ];
   const metaTagCount = metaTagValues.filter((t) => t.value != null).length;
