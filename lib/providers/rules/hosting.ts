@@ -74,9 +74,14 @@ export const HOSTING_PROVIDERS: Array<
   },
   {
     name: "GitHub Pages",
-    domain: "github.com",
+    domain: "docs.github.com",
     category: "hosting",
-    rule: { kind: "headerEquals", name: "server", value: "github.com" },
+    rule: {
+      any: [
+        { kind: "headerPresent", name: "x-github-request-id" },
+        { kind: "headerEquals", name: "server", value: "github.com" },
+      ],
+    },
   },
   {
     name: "GitLab Pages",

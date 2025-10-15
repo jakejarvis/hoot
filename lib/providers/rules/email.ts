@@ -23,7 +23,7 @@ export const EMAIL_PROVIDERS: Array<
     name: "Microsoft 365",
     domain: "office.com",
     category: "email",
-    rule: { kind: "mxSuffix", suffix: "mail.protection.outlook.com" },
+    rule: { kind: "mxSuffix", suffix: "protection.outlook.com" },
   },
   {
     name: "Zoho",
