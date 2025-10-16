@@ -20,8 +20,6 @@ import { ttlForSeo } from "@/server/db/ttl";
 import { upsertDomain } from "@/server/repos/domains";
 import { upsertSeo } from "@/server/repos/seo";
 
-const _HTML_TTL_SECONDS = 1 * 60 * 60; // 1 hour
-const _ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
