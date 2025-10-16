@@ -42,14 +42,32 @@
    pnpm install
    ```
 
-2. **Start the dev server:**  
+2. **Start local Redis (optional but recommended):**  
+   For local development with caching and screenshot features, start Redis with Docker Compose:
+   ```bash
+   docker compose up -d
+   ```
+   This starts a Redis server and Upstash-compatible REST proxy at `http://localhost:8079`.
+
+3. **Configure `.env.local`:**  
+   Copy `.env.example` to `.env.local` and configure:
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   For local development with docker-compose Redis:
+   ```env
+   KV_REST_API_URL=http://localhost:8079
+   KV_REST_API_TOKEN=local_dev_token
+   ```
+   
+   See `.env.example` for other optional credentials (UploadThing for favicon/screenshot storage, Mapbox for maps, PostHog for analytics).
+
+4. **Start the dev server:**  
    ```bash
    pnpm dev
    ```
    Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-3. **(Optional) Configure `.env.local`:**  
-   See `.env.example` for Redis and UploadThing credentials (needed for caching and favicon/screenshot features).
 
 ---
 

@@ -1,0 +1,45 @@
+# Docker Compose configuration for local development
+# This provides a Redis server with an Upstash-compatible REST API proxy
+#
+# Usage:
+#   docker compose up -d     # Start services in background
+#   docker compose down      # Stop and remove services
+#   docker compose logs      # View logs
+#
+# Configure your .env.local with:
+#   KV_REST_API_URL=http://localhost:8079
+#   KV_REST_API_TOKEN=local_dev_token
+#
+# See: https://upstash.com/docs/redis/sdks/ts/developing#via-docker-compose
+
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: hoot-redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_ARGS=--save 60 1000
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  upstash-proxy:
+    image: hiett/serverless-redis-http:latest
+    container_name: hoot-upstash-proxy
+    ports:
+      - "8079:80"
+    environment:
+      - SRH_MODE=env
+      - SRH_TOKEN=local_dev_token
+      - SRH_CONNECTION_STRING=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:
