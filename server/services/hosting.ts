@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
@@ -8,7 +9,10 @@ import {
 } from "@/lib/providers/detection";
 import type { Hosting } from "@/lib/schemas";
 import { db } from "@/server/db/client";
-import { hosting as hostingTable } from "@/server/db/schema";
+import {
+  hosting as hostingTable,
+  providers as providersTable,
+} from "@/server/db/schema";
 import { ttlForHosting } from "@/server/db/ttl";
 import { upsertDomain } from "@/server/repos/domains";
 import { upsertHosting } from "@/server/repos/hosting";
@@ -45,7 +49,64 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     .from(hostingTable)
     .where(eq(hostingTable.domainId, d.id));
   if (existing[0] && (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()) {
-    // Using providerIds would need join/lookup for names; we can regenerate names below via detection
+    // Fast path: return hydrated providers from DB when TTL is valid
+    const hp = alias(providersTable, "hp");
+    const ep = alias(providersTable, "ep");
+    const dp = alias(providersTable, "dp");
+    const hydrated = await db
+      .select({
+        hostingProviderName: hp.name,
+        hostingProviderDomain: hp.domain,
+        emailProviderName: ep.name,
+        emailProviderDomain: ep.domain,
+        dnsProviderName: dp.name,
+        dnsProviderDomain: dp.domain,
+        geoCity: hostingTable.geoCity,
+        geoRegion: hostingTable.geoRegion,
+        geoCountry: hostingTable.geoCountry,
+        geoCountryCode: hostingTable.geoCountryCode,
+        geoLat: hostingTable.geoLat,
+        geoLon: hostingTable.geoLon,
+      })
+      .from(hostingTable)
+      .leftJoin(hp, eq(hp.id, hostingTable.hostingProviderId))
+      .leftJoin(ep, eq(ep.id, hostingTable.emailProviderId))
+      .leftJoin(dp, eq(dp.id, hostingTable.dnsProviderId))
+      .where(eq(hostingTable.domainId, d.id))
+      .limit(1);
+    const row = hydrated[0];
+    if (row) {
+      const info: Hosting = {
+        hostingProvider: {
+          name: row.hostingProviderName ?? "Unknown",
+          domain: row.hostingProviderDomain ?? null,
+        },
+        emailProvider: {
+          name: row.emailProviderName ?? "Unknown",
+          domain: row.emailProviderDomain ?? null,
+        },
+        dnsProvider: {
+          name: row.dnsProviderName ?? "Unknown",
+          domain: row.dnsProviderDomain ?? null,
+        },
+        geo: {
+          city: row.geoCity ?? "",
+          region: row.geoRegion ?? "",
+          country: row.geoCountry ?? "",
+          country_code: row.geoCountryCode ?? "",
+          lat: row.geoLat ?? null,
+          lon: row.geoLon ?? null,
+        },
+      };
+      console.info("[hosting] cache", {
+        domain,
+        hosting: info.hostingProvider.name,
+        email: info.emailProvider.name,
+        dns_provider: info.dnsProvider.name,
+        duration_ms: Date.now() - startedAt,
+      });
+      return info;
+    }
   }
 
   const { records: dns } = await resolveAll(domain);
