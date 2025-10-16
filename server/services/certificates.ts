@@ -1,21 +1,51 @@
 import tls from "node:tls";
+import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
-import { ns, redis } from "@/lib/redis";
 import type { Certificate } from "@/lib/schemas";
+import { db } from "@/server/db/client";
+import { certificates as certTable } from "@/server/db/schema";
+import { ttlForCertificates } from "@/server/db/ttl";
+import { replaceCertificates } from "@/server/repos/certificates";
+import { upsertDomain } from "@/server/repos/domains";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
-  const key = ns("tls", lower);
 
   console.debug("[certificates] start", { domain: lower });
-  const cached = await redis.get<Certificate[]>(key);
-  if (cached) {
-    console.info("[certificates] cache hit", {
-      domain: lower,
-      count: cached.length,
-    });
-    return cached;
+  // Fast path: DB
+  const d = await upsertDomain({
+    name: lower,
+    tld: lower.split(".").pop() as string,
+    punycodeName: lower,
+    unicodeName: domain,
+    isIdn: /xn--/.test(lower),
+  });
+  const existing = await db
+    .select({
+      issuer: certTable.issuer,
+      subject: certTable.subject,
+      altNames: certTable.altNames,
+      validFrom: certTable.validFrom,
+      validTo: certTable.validTo,
+      expiresAt: certTable.expiresAt,
+    })
+    .from(certTable)
+    .where(eq(certTable.domainId, d.id));
+  if (existing.length > 0) {
+    const now = Date.now();
+    const fresh = existing.some((c) => (c.expiresAt?.getTime?.() ?? 0) > now);
+    if (fresh) {
+      const out: Certificate[] = existing.map((c) => ({
+        issuer: c.issuer,
+        subject: c.subject,
+        altNames: (c.altNames as unknown as string[]) ?? [],
+        validFrom: new Date(c.validFrom).toISOString(),
+        validTo: new Date(c.validTo).toISOString(),
+        caProvider: detectCertificateAuthority(c.issuer),
+      }));
+      return out;
+    }
   }
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
@@ -81,8 +111,23 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       outcome,
     });
 
-    const ttl = out.length > 0 ? 12 * 60 * 60 : 10 * 60;
-    await redis.set(key, out, { ex: ttl });
+    const now = new Date();
+    await replaceCertificates({
+      domainId: d.id,
+      chain: out.map((c) => ({
+        issuer: c.issuer,
+        subject: c.subject,
+        altNames: c.altNames as unknown as string[],
+        validFrom: new Date(c.validFrom),
+        validTo: new Date(c.validTo),
+        caProviderId: null,
+      })),
+      fetchedAt: now,
+      expiresAt:
+        out.length > 0
+          ? ttlForCertificates(now, new Date(out[0].validTo))
+          : ttlForCertificates(now, new Date(Date.now() + 3600_000)),
+    });
     console.info("[certificates] ok", {
       domain: lower,
       chain_length: out.length,

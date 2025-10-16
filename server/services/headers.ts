@@ -1,50 +1,45 @@
+import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
-import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { headThenGet } from "@/lib/fetch";
-import { ns, redis } from "@/lib/redis";
 import type { HttpHeader } from "@/lib/schemas";
+import { db } from "@/server/db/client";
+import { httpHeaders } from "@/server/db/schema";
+import { ttlForHeaders } from "@/server/db/ttl";
+import { upsertDomain } from "@/server/repos/domains";
+import { replaceHeaders } from "@/server/repos/headers";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const lower = domain.toLowerCase();
   const url = `https://${domain}/`;
-  const key = ns("headers", lower);
-  const lockKey = ns("lock", "headers", lower);
-
   console.debug("[headers] start", { domain: lower });
-  const cached = await redis.get<HttpHeader[]>(key);
-  if (cached) {
-    console.info("[headers] cache hit", {
-      domain: lower,
-      count: cached.length,
-    });
-    return cached;
-  }
-
-  // Try to acquire lock or wait for someone else's result
-  const lockWaitStart = Date.now();
-  const lockResult = await acquireLockOrWaitForResult<HttpHeader[]>({
-    lockKey,
-    resultKey: key,
-    lockTtl: 30,
+  // Fast path: read from Postgres if fresh
+  const d = await upsertDomain({
+    name: lower,
+    tld: lower.split(".").pop() as string,
+    punycodeName: lower,
+    unicodeName: domain,
+    isIdn: /xn--/.test(lower),
   });
-  if (!lockResult.acquired && Array.isArray(lockResult.cachedResult)) {
-    return lockResult.cachedResult;
-  }
-  const acquiredLock = lockResult.acquired;
-  if (!acquiredLock && !lockResult.cachedResult) {
-    // Short poll for cached result to avoid duplicate external requests when the
-    // helper cannot poll in the current environment
-    const start = Date.now();
-    const maxWaitMs = 1500;
-    const intervalMs = 25;
-    while (Date.now() - start < maxWaitMs) {
-      const result = (await redis.get<HttpHeader[]>(key)) as
-        | HttpHeader[]
-        | null;
-      if (Array.isArray(result)) {
-        return result;
-      }
-      await new Promise((r) => setTimeout(r, intervalMs));
+  const existing = await db
+    .select({
+      name: httpHeaders.name,
+      value: httpHeaders.value,
+      expiresAt: httpHeaders.expiresAt,
+    })
+    .from(httpHeaders)
+    .where(eq(httpHeaders.domainId, d.id));
+  if (existing.length > 0) {
+    const now = Date.now();
+    const fresh = existing.some((h) => (h.expiresAt?.getTime?.() ?? 0) > now);
+    if (fresh) {
+      const normalized = normalize(
+        existing.map((h) => ({ name: h.name, value: h.value })),
+      );
+      console.info("[headers] db hit", {
+        domain: lower,
+        count: normalized.length,
+      });
+      return normalized;
     }
   }
 
@@ -67,21 +62,20 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       status: final.status,
       used_method: usedMethod,
       final_url: final.url,
-      lock_acquired: acquiredLock,
-      lock_waited_ms: acquiredLock ? 0 : Date.now() - lockWaitStart,
     });
-
-    await redis.set(key, normalized, { ex: 10 * 60 });
+    // Persist to Postgres
+    const now = new Date();
+    await replaceHeaders({
+      domainId: d.id,
+      headers: normalized,
+      fetchedAt: now,
+      expiresAt: ttlForHeaders(now),
+    });
     console.info("[headers] ok", {
       domain: lower,
       status: final.status,
       count: normalized.length,
     });
-    if (acquiredLock) {
-      try {
-        await redis.del(lockKey);
-      } catch {}
-    }
     return normalized;
   } catch (err) {
     console.warn("[headers] error", {
@@ -94,15 +88,8 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       used_method: "ERROR",
       final_url: url,
       error: String(err),
-      lock_acquired: acquiredLock,
-      lock_waited_ms: acquiredLock ? 0 : Date.now() - lockWaitStart,
     });
     // Return empty on failure without caching to avoid long-lived negatives
-    if (acquiredLock) {
-      try {
-        await redis.del(lockKey);
-      } catch {}
-    }
     return [];
   }
 }
