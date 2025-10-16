@@ -111,19 +111,21 @@ vi.mock("@/lib/redis", () => __redisImpl);
 
 // Minimal Drizzle DB client mock to avoid Neon requirements in tests
 const __dbImpl = vi.hoisted(() => {
-  // Helper to create an awaitable query result that also supports chaining .limit and .where
-  function makeQueryResult<T>(rows: T[]): any {
-    const result: any = {
+  type Row = Record<string, unknown>;
+  interface QueryBuilder<T extends Row> {
+    limit: (n?: number) => Promise<T[]>;
+    where: (_cond: unknown) => QueryBuilder<T>;
+  }
+  function makeQueryResult<T extends Row>(rows: T[]): QueryBuilder<T> {
+    return {
       limit: async (n?: number) =>
         rows.slice(0, typeof n === "number" ? n : rows.length),
       where: (_cond: unknown) => makeQueryResult(rows),
-      then: (resolve: (value: T[]) => void) => resolve(rows),
-    };
-    return result;
+    } as QueryBuilder<T>;
   }
 
   const select = vi.fn(() => ({
-    from: vi.fn(() => makeQueryResult<any>([])),
+    from: vi.fn(() => makeQueryResult<Record<string, unknown>>([])),
   }));
 
   const del = vi.fn(() => ({
@@ -133,9 +135,9 @@ const __dbImpl = vi.hoisted(() => {
   const insert = vi.fn(() => ({
     values: vi.fn(() => ({
       onConflictDoUpdate: vi.fn(() => ({
-        returning: async () => [{ id: "test-id" }],
+        returning: async () => [{ id: "test-id" } as Row],
       })),
-      returning: async () => [{ id: "test-id" }],
+      returning: async () => [{ id: "test-id" } as Row],
     })),
   }));
 
@@ -155,15 +157,15 @@ declare global {
   };
 }
 // Assign to global for convenient access in tests
-// @ts-expect-error test env global
 globalThis.__redisTestHelper = {
-  store: (__redisImpl as any).store,
-  zsets: (__redisImpl as any).zsets,
-  reset: (__redisImpl as any).reset,
+  store: (__redisImpl as unknown as { store: Map<string, unknown> }).store,
+  zsets: (__redisImpl as unknown as { zsets: Map<string, Map<string, number>> })
+    .zsets,
+  reset: (__redisImpl as unknown as { reset: () => void }).reset,
 };
 // Also attach to Node's global for tests using global.__redisTestHelper
-// @ts-expect-error test env global
-global.__redisTestHelper = globalThis.__redisTestHelper;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(global as any).__redisTestHelper = globalThis.__redisTestHelper;
 
 // Note: The unstable_cache mock is intentionally a no-op. We are testing
 // function behavior, not caching semantics. If we need cache behavior,

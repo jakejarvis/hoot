@@ -141,14 +141,12 @@ describe("getSeo", () => {
       sitemaps: [],
     });
 
-    const fetchMock = vi
-      .spyOn(global, "fetch")
-      .mockResolvedValueOnce(
-        htmlResponse(
-          "<html><head><title>x</title></head></html>",
-          "https://example.com/",
-        ),
-      );
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      htmlResponse(
+        "<html><head><title>x</title></head></html>",
+        "https://example.com/",
+      ),
+    );
 
     await getSeo("example.com");
   });
