@@ -58,14 +58,22 @@ export const sectionRevalidate = inngest.createFunction(
       section: Section;
     };
     const lockKey = ns("lock", "revalidate", section, domain.toLowerCase());
+    const resultKey = ns("result", "revalidate", section, domain.toLowerCase());
     const wait = await acquireLockOrWaitForResult({
       lockKey,
-      resultKey: lockKey,
+      resultKey,
       lockTtl: 60,
     });
     if (!wait.acquired) return;
     try {
       await revalidateSection(domain, section);
+      try {
+        await redis.set(
+          resultKey,
+          JSON.stringify({ completedAt: Date.now() }),
+          { ex: 55 },
+        );
+      } catch {}
     } finally {
       try {
         await redis.del(lockKey);
