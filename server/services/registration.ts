@@ -5,7 +5,11 @@ import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
 import type { Registration } from "@/lib/schemas";
 import { db } from "@/server/db/client";
-import { registrations } from "@/server/db/schema";
+import {
+  providers,
+  registrationNameservers,
+  registrations,
+} from "@/server/db/schema";
 import { ttlForRegistration } from "@/server/db/ttl";
 import { upsertDomain } from "@/server/repos/domains";
 import { resolveProviderId } from "@/server/repos/providers";
@@ -38,7 +42,81 @@ export async function getRegistration(domain: string): Promise<Registration> {
     .limit(1);
   const now = new Date();
   if (existing[0] && existing[0].expiresAt > now) {
-    // TODO: assemble full response from DB snapshot (follow-up)
+    const row = existing[0];
+    // Resolve registrar provider details if present
+    let registrarProvider = { name: "Unknown", domain: null as string | null };
+    if (row.registrarProviderId) {
+      const prov = await db
+        .select({ name: providers.name, domain: providers.domain })
+        .from(providers)
+        .where(eq(providers.id, row.registrarProviderId))
+        .limit(1);
+      if (prov[0]) {
+        registrarProvider = {
+          name: prov[0].name,
+          domain: prov[0].domain ?? null,
+        };
+      }
+    }
+
+    // Load nameservers for this domain
+    const ns = await db
+      .select({
+        host: registrationNameservers.host,
+        ipv4: registrationNameservers.ipv4,
+        ipv6: registrationNameservers.ipv6,
+      })
+      .from(registrationNameservers)
+      .where(eq(registrationNameservers.domainId, d.id));
+
+    type ContactsJson = { contacts?: Registration["contacts"] };
+    const contactsValue = row.contacts as unknown as ContactsJson;
+    const contactsArray = Array.isArray(contactsValue?.contacts)
+      ? contactsValue.contacts
+      : undefined;
+
+    const response: Registration = {
+      domain: registrable,
+      tld: d.tld,
+      isRegistered: row.isRegistered,
+      isIDN: d.isIdn,
+      unicodeName: d.unicodeName,
+      punycodeName: d.punycodeName,
+      registry: row.registry ?? undefined,
+      // registrar object is optional; we don't persist its full details, so omit
+      statuses:
+        (row.statuses as unknown as Registration["statuses"]) ?? undefined,
+      creationDate: row.creationDate?.toISOString(),
+      updatedDate: row.updatedDate?.toISOString(),
+      expirationDate: row.expirationDate?.toISOString(),
+      deletionDate: row.deletionDate?.toISOString(),
+      transferLock: row.transferLock ?? undefined,
+      nameservers:
+        ns.length > 0
+          ? ns.map((n) => ({ host: n.host, ipv4: n.ipv4, ipv6: n.ipv6 }))
+          : undefined,
+      contacts: contactsArray as Registration["contacts"],
+      whoisServer: row.whoisServer ?? undefined,
+      rdapServers: (row.rdapServers as unknown as string[]) ?? undefined,
+      source: row.source as Registration["source"],
+      registrarProvider,
+    };
+
+    await captureServer("registration_lookup", {
+      domain: registrable,
+      outcome: row.isRegistered ? "ok" : "unregistered",
+      cached: true,
+      duration_ms: Date.now() - startedAt,
+      source: row.source,
+    });
+    console.info("[registration] ok (cached)", {
+      domain: registrable,
+      registered: row.isRegistered,
+      registrar: registrarProvider.name,
+      duration_ms: Date.now() - startedAt,
+    });
+
+    return response;
   }
 
   const { ok, record, error } = await lookupDomain(registrable, {
