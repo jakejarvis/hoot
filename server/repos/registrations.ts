@@ -54,8 +54,8 @@ export async function upsertRegistration(
         .values({
           domainId,
           host,
-          ipv4: n.ipv4 ?? [],
-          ipv6: n.ipv6 ?? [],
+          ipv4: (n.ipv4 ?? []) as string[],
+          ipv6: (n.ipv6 ?? []) as string[],
         })
         .onConflictDoUpdate({
           target: [
@@ -63,8 +63,8 @@ export async function upsertRegistration(
             registrationNameservers.host,
           ],
           set: {
-            ipv4: n.ipv4 ?? [],
-            ipv6: n.ipv6 ?? [],
+            ipv4: (n.ipv4 ?? []) as string[],
+            ipv6: (n.ipv6 ?? []) as string[],
           },
         });
     }
