@@ -67,7 +67,7 @@
 - **Services**: `server/services/*` now read/write Postgres via repos in `server/repos/*`.
 
 ### Environment
-- `NEON_DATABASE_URL` (required)
+- `DATABASE_URL` (required)
 - Redis/UploadThing/PostHog remain as before (see `.env.example`).
 
 ### Commands
