@@ -17,17 +17,18 @@ export async function upsertRegistration(
   },
 ) {
   const { domainId, nameservers: ns, ...rest } = params;
-  await db
-    .insert(registrations)
-    .values({ domainId, ...rest })
-    .onConflictDoUpdate({
-      target: registrations.domainId,
-      set: { ...rest },
-    });
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(registrations)
+      .values({ domainId, ...rest })
+      .onConflictDoUpdate({
+        target: registrations.domainId,
+        set: { ...rest },
+      });
 
-  if (ns) {
+    if (!ns) return;
     // Replace-set semantics for nameservers
-    const existing = await db
+    const existing = await tx
       .select({
         id: registrationNameservers.id,
         host: registrationNameservers.host,
@@ -35,25 +36,26 @@ export async function upsertRegistration(
       .from(registrationNameservers)
       .where(eq(registrationNameservers.domainId, domainId));
 
-    const nextByHost = new Map(ns.map((n) => [n.host.toLowerCase(), n]));
+    const nextByHost = new Map(ns.map((n) => [n.host.trim().toLowerCase(), n]));
     const toDelete = existing
       .filter((e) => !nextByHost.has(e.host.toLowerCase()))
       .map((e) => e.id);
 
     if (toDelete.length > 0) {
-      await db
+      await tx
         .delete(registrationNameservers)
         .where(inArray(registrationNameservers.id, toDelete));
     }
 
     for (const n of ns) {
-      await db
+      const host = n.host.trim().toLowerCase();
+      await tx
         .insert(registrationNameservers)
         .values({
           domainId,
-          host: n.host,
-          ipv4: (n.ipv4 ?? []) as unknown as Record<string, unknown>[],
-          ipv6: (n.ipv6 ?? []) as unknown as Record<string, unknown>[],
+          host,
+          ipv4: n.ipv4 ?? [],
+          ipv6: n.ipv6 ?? [],
         })
         .onConflictDoUpdate({
           target: [
@@ -61,10 +63,10 @@ export async function upsertRegistration(
             registrationNameservers.host,
           ],
           set: {
-            ipv4: (n.ipv4 ?? []) as unknown as Record<string, unknown>[],
-            ipv6: (n.ipv6 ?? []) as unknown as Record<string, unknown>[],
+            ipv4: n.ipv4 ?? [],
+            ipv6: n.ipv6 ?? [],
           },
         });
     }
-  }
+  });
 }

@@ -116,8 +116,8 @@ export const registrationNameservers = pgTable(
       .notNull()
       .references(() => domains.id, { onDelete: "cascade" }),
     host: text("host").notNull(),
-    ipv4: jsonb("ipv4").notNull().default(sql`'[]'::jsonb`),
-    ipv6: jsonb("ipv6").notNull().default(sql`'[]'::jsonb`),
+    ipv4: jsonb("ipv4").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    ipv6: jsonb("ipv6").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
   },
   (t) => [
     unique("u_reg_ns").on(t.domainId, t.host),
