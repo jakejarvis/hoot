@@ -26,12 +26,14 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   console.debug("[hosting] start", { domain });
 
   // Fast path: DB
+  const registrable = toRegistrableDomain(domain);
+  if (!registrable) throw new Error("Invalid domain");
   const d = await upsertDomain({
-    name: domain.toLowerCase(),
-    tld: domain.split(".").slice(1).join(".") as string,
-    punycodeName: domain.toLowerCase(),
+    name: registrable,
+    tld: registrable.split(".").pop() as string,
+    punycodeName: registrable,
     unicodeName: domain,
-    isIdn: /xn--/.test(domain),
+    isIdn: registrable !== domain.toLowerCase(),
   });
   const existing = await db
     .select({

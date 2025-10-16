@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
@@ -24,16 +25,16 @@ const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
-  const lower = domain.toLowerCase();
-
-  console.debug("[seo] start", { domain: lower });
+  console.debug("[seo] start", { domain });
   // Fast path: DB
+  const registrable = toRegistrableDomain(domain);
+  if (!registrable) throw new Error("Invalid domain");
   const d = await upsertDomain({
-    name: lower,
-    tld: lower.split(".").slice(1).join(".") as string,
-    punycodeName: lower,
+    name: registrable,
+    tld: registrable.split(".").pop() as string,
+    punycodeName: registrable,
     unicodeName: domain,
-    isIdn: /xn--/.test(lower),
+    isIdn: registrable !== domain.toLowerCase(),
   });
   const existing = await db
     .select({
@@ -83,7 +84,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     return response;
   }
 
-  let finalUrl: string = `https://${lower}/`;
+  let finalUrl: string = `https://${registrable}/`;
   let status: number | null = null;
   let htmlError: string | undefined;
   let robotsError: string | undefined;
@@ -124,7 +125,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   // robots.txt fetch (no Redis cache; stored in Postgres with row TTL)
   try {
-    const robotsUrl = `https://${lower}/robots.txt`;
+    const robotsUrl = `https://${registrable}/robots.txt`;
     const res = await fetchWithTimeout(
       robotsUrl,
       {
@@ -154,7 +155,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   if (preview?.image) {
     try {
       const stored = await getOrCreateSocialPreviewImageUrl(
-        lower,
+        registrable,
         preview.image,
       );
       // Preserve original image URL for meta display; attach uploaded URL for rendering
@@ -202,7 +203,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   });
 
   await captureServer("seo_fetch", {
-    domain: lower,
+    domain: registrable,
     status: status ?? -1,
     has_meta: !!meta,
     has_robots: !!robots,
@@ -210,7 +211,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   });
 
   console.info("[seo] ok", {
-    domain: lower,
+    domain: registrable,
     status: status ?? -1,
     has_meta: !!meta,
     has_robots: !!robots,

@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { headThenGet } from "@/lib/fetch";
 import type { HttpHeader } from "@/lib/schemas";
 import { db } from "@/server/db/client";
@@ -9,16 +10,17 @@ import { upsertDomain } from "@/server/repos/domains";
 import { replaceHeaders } from "@/server/repos/headers";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
-  const lower = domain.toLowerCase();
   const url = `https://${domain}/`;
-  console.debug("[headers] start", { domain: lower });
+  console.debug("[headers] start", { domain });
   // Fast path: read from Postgres if fresh
+  const registrable = toRegistrableDomain(domain);
+  if (!registrable) throw new Error("Invalid domain");
   const d = await upsertDomain({
-    name: lower,
-    tld: lower.split(".").slice(1).join(".") as string,
-    punycodeName: lower,
+    name: registrable,
+    tld: registrable.split(".").pop() as string,
+    punycodeName: registrable,
     unicodeName: domain,
-    isIdn: /xn--/.test(lower),
+    isIdn: registrable !== domain.toLowerCase(),
   });
   const existing = await db
     .select({
@@ -36,7 +38,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
       console.info("[headers] db hit", {
-        domain: lower,
+        domain: registrable,
         count: normalized.length,
       });
       return normalized;
@@ -58,7 +60,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     const normalized = normalize(headers);
 
     await captureServer("headers_probe", {
-      domain: lower,
+      domain: registrable,
       status: final.status,
       used_method: usedMethod,
       final_url: final.url,
@@ -72,18 +74,18 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       expiresAt: ttlForHeaders(now),
     });
     console.info("[headers] ok", {
-      domain: lower,
+      domain: registrable,
       status: final.status,
       count: normalized.length,
     });
     return normalized;
   } catch (err) {
     console.warn("[headers] error", {
-      domain: lower,
+      domain: registrable,
       error: (err as Error)?.message,
     });
     await captureServer("headers_probe", {
-      domain: lower,
+      domain: registrable,
       status: -1,
       used_method: "ERROR",
       final_url: url,
@@ -95,7 +97,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
 }
 
 function normalize(h: HttpHeader[]): HttpHeader[] {
-  // sort important first
+  // Normalize header names (trim + lowercase) then sort important first
   const important = new Set([
     "strict-transport-security",
     "content-security-policy",
@@ -107,7 +109,11 @@ function normalize(h: HttpHeader[]): HttpHeader[] {
     "cache-control",
     "permissions-policy",
   ]);
-  return [...h].sort(
+  const normalized = h.map((hdr) => ({
+    name: hdr.name.trim().toLowerCase(),
+    value: hdr.value,
+  }));
+  return normalized.sort(
     (a, b) =>
       Number(important.has(b.name)) - Number(important.has(a.name)) ||
       a.name.localeCompare(b.name),

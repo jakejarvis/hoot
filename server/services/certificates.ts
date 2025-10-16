@@ -1,6 +1,7 @@
 import tls from "node:tls";
 import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
 import type { Certificate } from "@/lib/schemas";
 import { db } from "@/server/db/client";
@@ -10,16 +11,16 @@ import { replaceCertificates } from "@/server/repos/certificates";
 import { upsertDomain } from "@/server/repos/domains";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
-  const lower = domain.toLowerCase();
-
-  console.debug("[certificates] start", { domain: lower });
+  console.debug("[certificates] start", { domain });
   // Fast path: DB
+  const registrable = toRegistrableDomain(domain);
+  if (!registrable) throw new Error("Invalid domain");
   const d = await upsertDomain({
-    name: lower,
-    tld: lower.split(".").slice(1).join(".") as string,
-    punycodeName: lower,
+    name: registrable,
+    tld: registrable.split(".").pop() as string,
+    punycodeName: registrable,
     unicodeName: domain,
-    isIdn: /xn--/.test(lower),
+    isIdn: registrable !== domain.toLowerCase(),
   });
   const existing = await db
     .select({
@@ -105,7 +106,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     });
 
     await captureServer("tls_probe", {
-      domain: lower,
+      domain: registrable,
       chain_length: out.length,
       duration_ms: Date.now() - startedAt,
       outcome,
@@ -131,18 +132,18 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     });
 
     console.info("[certificates] ok", {
-      domain: lower,
+      domain: registrable,
       chain_length: out.length,
       duration_ms: Date.now() - startedAt,
     });
     return out;
   } catch (err) {
     console.warn("[certificates] error", {
-      domain: lower,
+      domain: registrable,
       error: (err as Error)?.message,
     });
     await captureServer("tls_probe", {
-      domain: lower,
+      domain: registrable,
       chain_length: 0,
       duration_ms: Date.now() - startedAt,
       outcome,

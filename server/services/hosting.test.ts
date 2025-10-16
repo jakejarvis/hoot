@@ -51,7 +51,7 @@ describe("detectHosting", () => {
     const { resolveAll } = await import("@/server/services/dns");
     const { probeHeaders } = await import("@/server/services/headers");
     const { lookupIpMeta } = await import("@/server/services/ip");
-    const { detectHosting } = await import("./hosting");
+    const { detectHosting } = await import("@/server/services/hosting");
 
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [
@@ -102,8 +102,8 @@ describe("detectHosting", () => {
   });
 
   it("sets hosting to none when no A record is present", async () => {
-    const { resolveAll } = await import("./dns");
-    const { detectHosting } = await import("./hosting");
+    const { resolveAll } = await import("@/server/services/dns");
+    const { detectHosting } = await import("@/server/services/hosting");
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [
         {
@@ -129,10 +129,10 @@ describe("detectHosting", () => {
   });
 
   it("falls back to IP owner when hosting is unknown and IP owner exists", async () => {
-    const { resolveAll } = await import("./dns");
-    const { probeHeaders } = await import("./headers");
-    const { lookupIpMeta } = await import("./ip");
-    const { detectHosting } = await import("./hosting");
+    const { resolveAll } = await import("@/server/services/dns");
+    const { probeHeaders } = await import("@/server/services/headers");
+    const { lookupIpMeta } = await import("@/server/services/ip");
+    const { detectHosting } = await import("@/server/services/hosting");
 
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [{ type: "A", name: "x", value: "9.9.9.9", ttl: 60 }],
@@ -158,9 +158,9 @@ describe("detectHosting", () => {
   });
 
   it("falls back to root domains for email and DNS when unknown", async () => {
-    const { resolveAll } = await import("./dns");
-    const { probeHeaders } = await import("./headers");
-    const { detectHosting } = await import("./hosting");
+    const { resolveAll } = await import("@/server/services/dns");
+    const { probeHeaders } = await import("@/server/services/headers");
+    const { detectHosting } = await import("@/server/services/hosting");
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [
         { type: "A", name: "example.com", value: "1.1.1.1", ttl: 60 },

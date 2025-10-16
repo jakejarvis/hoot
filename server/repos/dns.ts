@@ -32,7 +32,12 @@ export async function replaceDns(params: UpsertDnsParams) {
   for (const type of Object.keys(recordsByType) as Array<
     (typeof dnsRecordType.enumValues)[number]
   >) {
-    const next = recordsByType[type] ?? [];
+    const next = (recordsByType[type] ?? []).map((r) => ({
+      ...r,
+      // Normalize DNS record name/value for case-insensitive uniqueness
+      name: (r.name as string).trim().toLowerCase(),
+      value: (r.value as string).trim().toLowerCase(),
+    }));
     const existing = await db
       .select({
         id: dnsRecords.id,
@@ -42,13 +47,15 @@ export async function replaceDns(params: UpsertDnsParams) {
       .from(dnsRecords)
       .where(and(eq(dnsRecords.domainId, domainId), eq(dnsRecords.type, type)));
     const nextKey = (r: (typeof next)[number]) =>
-      `${type as string}|${(r.name as string).toLowerCase()}|${(r.value as string).toLowerCase()}`;
+      `${type as string}|${r.name as string}|${r.value as string}`;
     const nextMap = new Map(next.map((r) => [nextKey(r), r]));
     const toDelete = existing
       .filter(
         (e) =>
           !nextMap.has(
-            `${type}|${e.name.toLowerCase()}|${e.value.toLowerCase()}`,
+            `${type}|${e.name.trim().toLowerCase()}|${e.value
+              .trim()
+              .toLowerCase()}`,
           ),
       )
       .map((e) => e.id);

@@ -24,16 +24,15 @@ export async function getRegistration(domain: string): Promise<Registration> {
   const startedAt = Date.now();
   console.debug("[registration] start", { domain });
 
+  // Try current snapshot
   const registrable = toRegistrableDomain(domain);
   if (!registrable) throw new Error("Invalid domain");
-
-  // Try current snapshot
   const d = await upsertDomain({
-    name: registrable.toLowerCase(),
-    tld: registrable.split(".").slice(1).join(".") as string,
-    punycodeName: registrable.toLowerCase(),
-    unicodeName: registrable,
-    isIdn: /xn--/.test(registrable),
+    name: registrable,
+    tld: registrable.split(".").pop() as string,
+    punycodeName: registrable,
+    unicodeName: domain,
+    isIdn: registrable !== domain.toLowerCase(),
   });
   const existing = await db
     .select()

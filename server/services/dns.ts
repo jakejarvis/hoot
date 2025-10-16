@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { invalidateReportCache } from "@/lib/report-cache";
 import {
@@ -52,21 +53,22 @@ export const DOH_PROVIDERS: DohProvider[] = [
 ];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
-  const lower = domain.toLowerCase();
   const startedAt = Date.now();
-  console.debug("[dns] start", { domain: lower });
-  const providers = providerOrderForLookup(lower);
+  console.debug("[dns] start", { domain });
+  const providers = providerOrderForLookup(domain);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
   const types = DnsTypeSchema.options;
 
   // Read from Postgres first; return if fresh
+  const registrable = toRegistrableDomain(domain);
+  if (!registrable) throw new Error("Invalid domain");
   const d = await upsertDomain({
-    name: lower,
-    tld: lower.split(".").slice(1).join(".") as string,
-    punycodeName: lower,
+    name: registrable,
+    tld: registrable.split(".").pop() as string,
+    punycodeName: registrable,
     unicodeName: domain,
-    isIdn: /xn--/.test(lower),
+    isIdn: registrable !== domain.toLowerCase(),
   });
   const rows = await db
     .select({
@@ -121,7 +123,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const sorted = sortDnsRecordsByType(assembled, types);
     if (allPresentFresh) {
       await captureServer("dns_resolve_all", {
-        domain: lower,
+        domain: registrable,
         duration_ms_total: Date.now() - startedAt,
         counts: ((): Record<DnsType, number> => {
           return (types as DnsType[]).reduce(
@@ -149,7 +151,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     if (staleTypes.length > 0) {
       const pinnedProvider =
         DOH_PROVIDERS.find((p) => p.key === resolverHint) ??
-        providerOrderForLookup(lower)[0];
+        providerOrderForLookup(domain)[0];
       const attemptStart = Date.now();
       try {
         const fetchedStale = (
@@ -215,7 +217,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           [...cachedFresh, ...fetchedStale],
           types,
         );
-        void invalidateReportCache(lower);
+        void invalidateReportCache(registrable);
         const counts = (types as DnsType[]).reduce(
           (acc, t) => {
             acc[t] = merged.filter((r) => r.type === t).length;
@@ -227,7 +229,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
         );
         await captureServer("dns_resolve_all", {
-          domain: lower,
+          domain: registrable,
           duration_ms_total: Date.now() - startedAt,
           counts,
           cloudflare_ip_present: cloudflareIpPresent,
@@ -238,7 +240,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           cache_source: "partial",
         });
         console.info("[dns] ok (partial)", {
-          domain: lower,
+          domain: registrable,
           counts,
           resolver: pinnedProvider.key,
           duration_ms_total: Date.now() - startedAt,
@@ -249,7 +251,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         } as DnsResolveResult;
       } catch (err) {
         console.warn("[dns] partial refresh failed; falling back", {
-          domain: lower,
+          domain: registrable,
           provider: pinnedProvider.key,
           error: (err as Error)?.message,
         });
@@ -323,9 +325,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           }>
         >,
       });
-      void invalidateReportCache(lower);
+      void invalidateReportCache(registrable);
       await captureServer("dns_resolve_all", {
-        domain: lower,
+        domain: registrable,
         duration_ms_total: Date.now() - startedAt,
         counts,
         cloudflare_ip_present: cloudflareIpPresent,
@@ -336,7 +338,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         cache_source: "fresh",
       });
       console.info("[dns] ok", {
-        domain: lower,
+        domain: registrable,
         counts,
         resolver: resolverUsed,
         duration_ms_total: Date.now() - startedAt,
@@ -344,7 +346,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
       console.warn("[dns] provider attempt failed", {
-        domain: lower,
+        domain: registrable,
         provider: provider.key,
         error: (err as Error)?.message,
       });
@@ -356,18 +358,18 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
 
   // All providers failed
   await captureServer("dns_resolve_all", {
-    domain: lower,
+    domain: registrable,
     duration_ms_total: Date.now() - startedAt,
     failure: true,
     provider_attempts: providers.length,
   });
   console.error("[dns] all providers failed", {
-    domain: lower,
+    domain: registrable,
     providers: providers.map((p) => p.key),
     error: String(lastError),
   });
   throw new Error(
-    `All DoH providers failed for ${lower}: ${String(lastError)}`,
+    `All DoH providers failed for ${registrable}: ${String(lastError)}`,
   );
 }
 
