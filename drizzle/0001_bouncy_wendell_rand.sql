@@ -1,0 +1,1 @@
+DROP TABLE "provider_aliases" CASCADE;

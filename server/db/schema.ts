@@ -51,18 +51,6 @@ export const providers = pgTable(
   ],
 );
 
-export const providerAliases = pgTable(
-  "provider_aliases",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    providerId: uuid("provider_id")
-      .notNull()
-      .references(() => providers.id, { onDelete: "cascade" }),
-    alias: text("alias").notNull(),
-  },
-  () => [],
-);
-
 // Domains
 export const domains = pgTable(
   "domains",
