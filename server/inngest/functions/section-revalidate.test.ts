@@ -79,4 +79,33 @@ describe("section-revalidate", () => {
     await revalidateSection("example.com", "seo");
     expect(spy).toHaveBeenCalledWith("example.com");
   });
+
+  it("invokes registration lookup", async () => {
+    const { revalidateSection } = await import(
+      "@/server/inngest/functions/section-revalidate"
+    );
+    const mod = await import("@/server/services/registration");
+    const spy = vi.spyOn(mod, "getRegistration").mockResolvedValue({
+      domain: "example.com",
+      tld: "com",
+      isRegistered: true,
+      registry: undefined,
+      creationDate: undefined,
+      updatedDate: undefined,
+      expirationDate: undefined,
+      deletionDate: undefined,
+      transferLock: undefined,
+      statuses: [],
+      contacts: [],
+      whoisServer: undefined,
+      rdapServers: [],
+      source: "rdap",
+      registrar: undefined,
+      reseller: undefined,
+      nameservers: [],
+      registrarProvider: { name: "", domain: null },
+    });
+    await revalidateSection("example.com", "registration");
+    expect(spy).toHaveBeenCalledWith("example.com");
+  });
 });
