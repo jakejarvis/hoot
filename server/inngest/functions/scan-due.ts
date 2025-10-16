@@ -54,37 +54,37 @@ export const scanDue = inngest.createFunction(
 
     const events: Array<{
       name: string;
-      data: { domainId: string; section: string };
+      data: { domain: string; section: string };
     }> = [];
     for (const r of dueReg)
       events.push({
         name: "section/revalidate",
-        data: { domainId: r.domainId, section: "registration" },
+        data: { domain: r.domainId, section: "registration" },
       });
     for (const r of dueDns)
       events.push({
         name: "section/revalidate",
-        data: { domainId: r.domainId, section: "dns" },
+        data: { domain: r.domainId, section: "dns" },
       });
     for (const r of dueHeaders)
       events.push({
         name: "section/revalidate",
-        data: { domainId: r.domainId, section: "headers" },
+        data: { domain: r.domainId, section: "headers" },
       });
     for (const r of dueHosting)
       events.push({
         name: "section/revalidate",
-        data: { domainId: r.domainId, section: "hosting" },
+        data: { domain: r.domainId, section: "hosting" },
       });
     for (const r of dueCerts)
       events.push({
         name: "section/revalidate",
-        data: { domainId: r.domainId, section: "certificates" },
+        data: { domain: r.domainId, section: "certificates" },
       });
     for (const r of dueSeo)
       events.push({
         name: "section/revalidate",
-        data: { domainId: r.domainId, section: "seo" },
+        data: { domain: r.domainId, section: "seo" },
       });
 
     if (events.length > 0) {
