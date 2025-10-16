@@ -13,35 +13,9 @@ vi.mock("server-only", () => ({}));
 // Global Redis mock to prevent Upstash calls and reduce repetition across tests
 const __redisImpl = vi.hoisted(() => {
   const store = new Map<string, unknown>();
-  // simple sorted-set implementation: key -> Map(member -> score)
   const zsets = new Map<string, Map<string, number>>();
-  const ns = (...parts: string[]) => parts.join(":");
 
-  const get = vi.fn(async (key: string) =>
-    store.has(key) ? store.get(key) : null,
-  );
-  const set = vi.fn(
-    async (
-      key: string,
-      value: unknown,
-      opts?: { ex?: number; nx?: boolean },
-    ) => {
-      if (opts?.nx && store.has(key)) {
-        return null; // NX failed - key exists
-      }
-      store.set(key, value);
-      return "OK";
-    },
-  );
-  const del = vi.fn(async (key: string) => {
-    store.delete(key);
-  });
-
-  const exists = vi.fn(async (key: string) => {
-    return store.has(key) ? 1 : 0;
-  });
-
-  function ensureZ(key: string): Map<string, number> {
+  function getZset(key: string): Map<string, number> {
     let m = zsets.get(key);
     if (!m) {
       m = new Map<string, number>();
@@ -49,100 +23,126 @@ const __redisImpl = vi.hoisted(() => {
     }
     return m;
   }
-  const zadd = vi.fn(
-    async (key: string, arg: { score: number; member: string }) => {
-      const m = ensureZ(key);
-      m.set(arg.member, arg.score);
+
+  const ns = (...parts: string[]) => parts.join(":");
+
+  const redis = {
+    async get(key: string) {
+      return store.get(key) ?? null;
+    },
+    async set(key: string, value: unknown, _opts?: unknown) {
+      store.set(key, value);
+      return "OK" as const;
+    },
+    async del(key: string) {
+      return store.delete(key) ? 1 : 0;
+    },
+    async incr(key: string) {
+      const current = Number(store.get(key) ?? "0");
+      const next = current + 1;
+      store.set(key, String(next));
+      return next;
+    },
+    async expire(_key: string, _seconds: number) {
       return 1;
     },
-  );
-  const zrem = vi.fn(async (key: string, ...members: string[]) => {
-    const m = ensureZ(key);
-    let removed = 0;
-    for (const mem of members) {
-      if (m.delete(mem)) removed += 1;
-    }
-    return removed;
-  });
-  const zrange = vi.fn(
-    async (
+    async ttl(_key: string) {
+      return 60;
+    },
+    async exists(key: string) {
+      return store.has(key) ? 1 : 0;
+    },
+    async zadd(
+      key: string,
+      entry:
+        | { score: number; member: string }
+        | Array<{ score: number; member: string }>,
+    ) {
+      const z = getZset(key);
+      const list = Array.isArray(entry) ? entry : [entry];
+      for (const e of list) z.set(e.member, e.score);
+      return list.length;
+    },
+    async zrange(
       key: string,
       min: number,
       max: number,
-      options?: {
-        byScore?: boolean;
-        limit?: { offset: number; count: number };
-      },
-    ) => {
-      const m = zsets.get(key);
-      if (!m) return [] as string[];
-      const pairs = [...m.entries()].filter(
-        ([, score]) => score >= min && score <= max,
-      );
-      pairs.sort((a, b) => a[1] - b[1]);
-      const start = options?.limit?.offset ?? 0;
-      const end = start + (options?.limit?.count ?? pairs.length);
-      return pairs.slice(start, end).map(([member]) => member);
+      options?: { byScore?: boolean; offset?: number; count?: number },
+    ): Promise<string[]> {
+      const z = getZset(key);
+      const items = Array.from(z.entries())
+        .filter(([, score]) => score >= min && score <= max)
+        .sort((a, b) => a[1] - b[1])
+        .map(([member]) => member);
+      const offset = options?.offset ?? 0;
+      const count = options?.count ?? items.length;
+      return items.slice(offset, offset + count);
     },
-  );
-
-  const acquireLockOrWaitForResult = vi.fn(
-    async <T = unknown>(options: {
-      lockKey: string;
-      resultKey: string;
-      lockTtl?: number;
-      pollIntervalMs?: number;
-      maxWaitMs?: number;
-    }) => {
-      const { lockKey, resultKey } = options;
-
-      // Try to acquire lock
-      if (!store.has(lockKey)) {
-        store.set(lockKey, "1");
-        return { acquired: true, cachedResult: null };
+    async zrem(key: string, ...members: string[]) {
+      const z = getZset(key);
+      let removed = 0;
+      for (const m of members) {
+        if (z.delete(m)) removed++;
       }
-
-      // Lock not acquired, check for cached result
-      const result = store.get(resultKey) as T | null;
-      if (result !== null && result !== undefined) {
-        return { acquired: false, cachedResult: result };
-      }
-
-      // No result found
-      return { acquired: false, cachedResult: null };
+      return removed;
     },
-  );
+  } as const;
 
-  const reset = () => {
-    store.clear();
-    zsets.clear();
-    get.mockClear();
-    set.mockClear();
-    del.mockClear();
-    exists.mockClear();
-    zadd.mockClear();
-    zrem.mockClear();
-    zrange.mockClear();
-    acquireLockOrWaitForResult.mockClear();
-  };
-  return {
+  const __redisTestHelper = {
     store,
     zsets,
+    reset() {
+      store.clear();
+      for (const m of zsets.values()) m.clear();
+    },
+  } as const;
+
+  return {
     ns,
-    redis: { get, set, del, exists, zadd, zrem, zrange },
-    get,
-    set,
-    del,
-    exists,
-    zadd,
-    zrem,
-    zrange,
-    acquireLockOrWaitForResult,
-    reset,
-  };
+    redis,
+    __redisTestHelper,
+    store,
+    zsets,
+    reset: __redisTestHelper.reset,
+  } as const;
 });
 
 vi.mock("@/lib/redis", () => __redisImpl);
+
+// Minimal Drizzle DB client mock to avoid Neon requirements in tests
+const __dbImpl = vi.hoisted(() => {
+  // Helper to create an awaitable query result that also supports chaining .limit and .where
+  function makeQueryResult<T>(rows: T[]): any {
+    const result: any = {
+      limit: async (n?: number) =>
+        rows.slice(0, typeof n === "number" ? n : rows.length),
+      where: (_cond: unknown) => makeQueryResult(rows),
+      then: (resolve: (value: T[]) => void) => resolve(rows),
+    };
+    return result;
+  }
+
+  const select = vi.fn(() => ({
+    from: vi.fn(() => makeQueryResult<any>([])),
+  }));
+
+  const del = vi.fn(() => ({
+    where: async (_cond: unknown) => 0,
+  }));
+
+  const insert = vi.fn(() => ({
+    values: vi.fn(() => ({
+      onConflictDoUpdate: vi.fn(() => ({
+        returning: async () => [{ id: "test-id" }],
+      })),
+      returning: async () => [{ id: "test-id" }],
+    })),
+  }));
+
+  return { db: { select, delete: del, insert } };
+});
+
+vi.mock("@/server/db/client", () => __dbImpl);
 
 // Expose for tests that want to clear or assert cache interactions
 declare global {
@@ -155,11 +155,15 @@ declare global {
   };
 }
 // Assign to global for convenient access in tests
+// @ts-expect-error test env global
 globalThis.__redisTestHelper = {
-  store: __redisImpl.store,
-  zsets: __redisImpl.zsets,
-  reset: __redisImpl.reset,
+  store: (__redisImpl as any).store,
+  zsets: (__redisImpl as any).zsets,
+  reset: (__redisImpl as any).reset,
 };
+// Also attach to Node's global for tests using global.__redisTestHelper
+// @ts-expect-error test env global
+global.__redisTestHelper = globalThis.__redisTestHelper;
 
 // Note: The unstable_cache mock is intentionally a no-op. We are testing
 // function behavior, not caching semantics. If we need cache behavior,

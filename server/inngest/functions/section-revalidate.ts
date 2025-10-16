@@ -17,6 +17,32 @@ type Section =
   | "seo"
   | "registration";
 
+export async function revalidateSection(
+  domain: string,
+  section: Section,
+): Promise<void> {
+  switch (section) {
+    case "dns":
+      await resolveAll(domain);
+      return;
+    case "headers":
+      await probeHeaders(domain);
+      return;
+    case "hosting":
+      await detectHosting(domain);
+      return;
+    case "certificates":
+      await getCertificates(domain);
+      return;
+    case "seo":
+      await getSeo(domain);
+      return;
+    case "registration":
+      await getRegistration(domain);
+      return;
+  }
+}
+
 export const sectionRevalidate = inngest.createFunction(
   {
     id: "section-revalidate",
@@ -39,26 +65,7 @@ export const sectionRevalidate = inngest.createFunction(
     });
     if (!wait.acquired) return;
     try {
-      switch (section) {
-        case "dns":
-          await resolveAll(domain);
-          break;
-        case "headers":
-          await probeHeaders(domain);
-          break;
-        case "hosting":
-          await detectHosting(domain);
-          break;
-        case "certificates":
-          await getCertificates(domain);
-          break;
-        case "seo":
-          await getSeo(domain);
-          break;
-        case "registration":
-          await getRegistration(domain);
-          break;
-      }
+      await revalidateSection(domain, section);
     } finally {
       try {
         await redis.del(lockKey);

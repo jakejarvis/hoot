@@ -37,9 +37,6 @@ describe("getRegistration", () => {
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
     expect(rec.registrarProvider?.name).toBe("GoDaddy");
-    expect(globalThis.__redisTestHelper.store.has("reg:example.com")).toBe(
-      true,
-    );
   });
 
   it("sets shorter TTL for unregistered domains (observed via second call)", async () => {

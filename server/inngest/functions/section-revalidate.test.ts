@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { sectionRevalidate } from "@/server/inngest/functions/section-revalidate";
+import { revalidateSection } from "@/server/inngest/functions/section-revalidate";
 import * as dnsSvc from "@/server/services/dns";
 
 describe("section-revalidate", () => {
@@ -11,38 +11,14 @@ describe("section-revalidate", () => {
     const spy = vi
       .spyOn(dnsSvc, "resolveAll")
       .mockResolvedValue({ records: [], resolver: "cloudflare" });
-    // simulate invocation
-    // InngestFunction.fn is private; invoke the handler by importing services directly and asserting behavior.
-    await (
-      sectionRevalidate as unknown as {
-        handler: (ctx: unknown) => Promise<unknown>;
-      }
-    ).handler({
-      event: {
-        name: "section/revalidate",
-        data: { domain: "example.com", section: "dns" },
-      },
-      step: {} as unknown,
-      runId: "test",
-    } as unknown);
+    await revalidateSection("example.com", "dns");
     expect(spy).toHaveBeenCalledWith("example.com");
   });
 
   it("invokes headers probe", async () => {
     const mod = await import("@/server/services/headers");
     const spy = vi.spyOn(mod, "probeHeaders").mockResolvedValue([]);
-    await (
-      sectionRevalidate as unknown as {
-        handler: (ctx: unknown) => Promise<unknown>;
-      }
-    ).handler({
-      event: {
-        name: "section/revalidate",
-        data: { domain: "example.com", section: "headers" },
-      },
-      step: {} as unknown,
-      runId: "test",
-    } as unknown);
+    await revalidateSection("example.com", "headers");
     expect(spy).toHaveBeenCalledWith("example.com");
   });
 
@@ -61,18 +37,26 @@ describe("section-revalidate", () => {
         lon: null,
       },
     });
-    await (
-      sectionRevalidate as unknown as {
-        handler: (ctx: unknown) => Promise<unknown>;
-      }
-    ).handler({
-      event: {
-        name: "section/revalidate",
-        data: { domain: "example.com", section: "hosting" },
-      },
-      step: {} as unknown,
-      runId: "test",
-    } as unknown);
+    await revalidateSection("example.com", "hosting");
+    expect(spy).toHaveBeenCalledWith("example.com");
+  });
+
+  it("invokes certificates fetch", async () => {
+    const mod = await import("@/server/services/certificates");
+    const spy = vi.spyOn(mod, "getCertificates").mockResolvedValue([]);
+    await revalidateSection("example.com", "certificates");
+    expect(spy).toHaveBeenCalledWith("example.com");
+  });
+
+  it("invokes seo fetch", async () => {
+    const mod = await import("@/server/services/seo");
+    const spy = vi.spyOn(mod, "getSeo").mockResolvedValue({
+      meta: null,
+      robots: null,
+      preview: null,
+      source: { finalUrl: null, status: null },
+    });
+    await revalidateSection("example.com", "seo");
     expect(spy).toHaveBeenCalledWith("example.com");
   });
 });

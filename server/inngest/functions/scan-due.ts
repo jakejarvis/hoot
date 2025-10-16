@@ -92,3 +92,15 @@ export const scanDue = inngest.createFunction(
     }
   },
 );
+
+export async function countDueDns(
+  now: Date = new Date(),
+  limit = 200,
+): Promise<number> {
+  const rows = await db
+    .select({ domainId: dnsRecords.domainId })
+    .from(dnsRecords)
+    .where(lte(dnsRecords.expiresAt, now))
+    .limit(limit);
+  return rows.length;
+}
