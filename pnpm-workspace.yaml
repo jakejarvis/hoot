@@ -4,5 +4,6 @@ onlyBuiltDependencies:
   - core-js
   - esbuild
   - msgpackr-extract
+  - protobufjs
   - puppeteer
   - sharp

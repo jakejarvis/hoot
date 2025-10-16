@@ -27,8 +27,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
     "@date-fns/utc": "^2.1.1",
+    "@neondatabase/serverless": "^1.0.2",
     "@posthog/nextjs-config": "^1.3.3",
     "@sparticuz/chromium": "140.0.0",
     "@tanstack/react-query": "^5.90.3",
@@ -48,6 +48,7 @@
     "drizzle-orm": "^0.44.6",
     "geist": "^1.5.1",
     "icojs": "^0.19.5",
+    "inngest": "^3.44.3",
     "ipaddr.js": "^2.2.0",
     "lucide-react": "^0.545.0",
     "mapbox-gl": "^3.15.0",
@@ -85,8 +86,8 @@
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
-    "drizzle-kit": "^0.31.5",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
+    "drizzle-kit": "^0.31.5",
     "jsdom": "^27.0.0",
     "puppeteer": "24.22.3",
     "tailwindcss": "^4.1.14",
