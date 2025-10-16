@@ -53,31 +53,60 @@ export const sectionRevalidate = inngest.createFunction(
   },
   { event: "section/revalidate" },
   async ({ event }) => {
-    const { domain, section } = event.data as {
+    const data = event.data as unknown as {
       domain: string;
-      section: Section;
+      section?: Section;
+      sections?: Section[];
     };
-    const lockKey = ns("lock", "revalidate", section, domain.toLowerCase());
-    const resultKey = ns("result", "revalidate", section, domain.toLowerCase());
-    const wait = await acquireLockOrWaitForResult({
-      lockKey,
-      resultKey,
-      lockTtl: 60,
-    });
-    if (!wait.acquired) return;
-    try {
-      await revalidateSection(domain, section);
+    const domain = data.domain;
+    if (!domain) return;
+
+    const valid: Section[] = [
+      "dns",
+      "headers",
+      "hosting",
+      "certificates",
+      "seo",
+      "registration",
+    ];
+    const validSet = new Set<Section>(valid);
+
+    const sections: Section[] = Array.isArray(data.sections)
+      ? data.sections.filter((s): s is Section => validSet.has(s as Section))
+      : data.section && validSet.has(data.section)
+        ? [data.section]
+        : [];
+
+    if (sections.length === 0) return;
+
+    for (const section of sections) {
+      const lockKey = ns("lock", "revalidate", section, domain.toLowerCase());
+      const resultKey = ns(
+        "result",
+        "revalidate",
+        section,
+        domain.toLowerCase(),
+      );
+      const wait = await acquireLockOrWaitForResult({
+        lockKey,
+        resultKey,
+        lockTtl: 60,
+      });
+      if (!wait.acquired) continue;
       try {
-        await redis.set(
-          resultKey,
-          JSON.stringify({ completedAt: Date.now() }),
-          { ex: 55 },
-        );
-      } catch {}
-    } finally {
-      try {
-        await redis.del(lockKey);
-      } catch {}
+        await revalidateSection(domain, section);
+        try {
+          await redis.set(
+            resultKey,
+            JSON.stringify({ completedAt: Date.now() }),
+            { ex: 55 },
+          );
+        } catch {}
+      } finally {
+        try {
+          await redis.del(lockKey);
+        } catch {}
+      }
     }
   },
 );
