@@ -1,5 +1,6 @@
 import { neon, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+import * as schema from "@/server/db/schema";
 
 // Reuse fetch connections across invocations (Vercel/Edge safe)
 neonConfig.fetchConnectionCache = true;
@@ -11,4 +12,4 @@ if (!connectionString) {
 }
 
 export const sql = neon(connectionString);
-export const db = drizzle(sql);
+export const db = drizzle(sql, { schema });
