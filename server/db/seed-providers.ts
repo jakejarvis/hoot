@@ -1,7 +1,7 @@
 import 'server-only';
 import { db } from './client';
 import { providers, providerAliases, providerCategoryEnum } from './schema';
-import { eq, and, ilike, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { HOSTING_PROVIDERS } from '@/lib/providers/rules/hosting';
 import { EMAIL_PROVIDERS } from '@/lib/providers/rules/email';
 import { REGISTRAR_PROVIDERS } from '@/lib/providers/rules/registrar';
@@ -45,7 +45,9 @@ export async function seedProviders(): Promise<void> {
   }
 }
 
-if (require.main === module) {
+// Allow direct execution via: tsx server/db/seed-providers.ts
+const invokedDirectly = process.argv[1]?.includes('seed-providers') ?? false;
+if (invokedDirectly) {
   seedProviders()
     .then(() => {
       console.info('[seed] providers seeded');
