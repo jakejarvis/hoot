@@ -1,4 +1,3 @@
-import "dotenv/config";
 import type { Config } from "drizzle-kit";
 
 const url = process.env.NEON_DATABASE_URL || "";
