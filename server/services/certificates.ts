@@ -112,6 +112,10 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     });
 
     const now = new Date();
+    const earliestValidTo =
+      out.length > 0
+        ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
+        : new Date(Date.now() + 3600_000);
     await replaceCertificates({
       domainId: d.id,
       chain: out.map((c) => ({
@@ -123,11 +127,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
         caProviderId: null,
       })),
       fetchedAt: now,
-      expiresAt:
-        out.length > 0
-          ? ttlForCertificates(now, new Date(out[0].validTo))
-          : ttlForCertificates(now, new Date(Date.now() + 3600_000)),
+      expiresAt: ttlForCertificates(now, earliestValidTo),
     });
+
     console.info("[certificates] ok", {
       domain: lower,
       chain_length: out.length,
