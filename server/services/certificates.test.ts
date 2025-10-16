@@ -7,6 +7,10 @@ const tlsMock = vi.hoisted(() => ({
   callListener: true,
 }));
 
+vi.mock("@/lib/domain-server", () => ({
+  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
+}));
+
 vi.mock("node:tls", async () => {
   const actual = await vi.importActual<typeof import("node:tls")>("node:tls");
   const mockedConnect = ((...args: unknown[]) => {

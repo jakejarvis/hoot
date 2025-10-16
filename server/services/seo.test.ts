@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // getSeo is imported dynamically after mocks are applied
 let getSeo: typeof import("./seo").getSeo;
 
+vi.mock("@/lib/domain-server", () => ({
+  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
+}));
+
 const utMock = vi.hoisted(() => ({
   uploadFiles: vi.fn(async () => ({
     data: { ufsUrl: "https://app.ufs.sh/f/mock-key", key: "mock-key" },

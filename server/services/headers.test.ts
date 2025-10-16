@@ -1,6 +1,10 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/domain-server", () => ({
+  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
+}));
+
 beforeEach(async () => {
   vi.resetModules();
   const { makePGliteDb } = await import("@/server/db/pglite");
