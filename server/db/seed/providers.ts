@@ -50,7 +50,7 @@ async function main() {
         category: def.category,
         slug,
       })
-      .onConflictDoNothing();
+      .onConflictDoNothing({ target: [providers.category, providers.slug] });
   }
   console.log(`Seeded ${defs.length} provider rows (existing skipped).`);
 }
