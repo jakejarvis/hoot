@@ -56,9 +56,38 @@ describe("getRegistration", () => {
       error: null,
       record: { isRegistered: false, source: "rdap" },
     });
+    // Freeze time for deterministic TTL checks
+    vi.useFakeTimers();
+    const fixedNow = new Date("2024-01-01T00:00:00.000Z");
+    vi.setSystemTime(fixedNow);
+
     const { getRegistration } = await import("./registration");
     const rec = await getRegistration("unregistered.test");
     expect(rec.isRegistered).toBe(false);
+
+    // Verify stored TTL is 6h from now for unregistered
+    const { db } = await import("@/server/db/client");
+    const { domains, registrations } = await import("@/server/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "unregistered.test"))
+      .limit(1);
+    const row = (
+      await db
+        .select()
+        .from(registrations)
+        .where(eq(registrations.domainId, d[0].id))
+        .limit(1)
+    )[0];
+    expect(row).toBeTruthy();
+    expect(row.isRegistered).toBe(false);
+    expect(row.expiresAt.getTime() - fixedNow.getTime()).toBe(
+      6 * 60 * 60 * 1000,
+    );
+
+    +vi.useRealTimers();
   });
 
   it("throws on invalid input", async () => {
