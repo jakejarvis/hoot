@@ -17,19 +17,23 @@ export type UpsertCertificatesParams = {
 
 export async function replaceCertificates(params: UpsertCertificatesParams) {
   const { domainId } = params;
-  // Remove previous rows for this domain
-  await db.delete(certificates).where(eq(certificates.domainId, domainId));
-  for (const c of params.chain) {
-    await db.insert(certificates).values({
-      domainId,
-      issuer: c.issuer,
-      subject: c.subject,
-      altNames: c.altNames,
-      validFrom: c.validFrom,
-      validTo: c.validTo,
-      caProviderId: c.caProviderId ?? null,
-      fetchedAt: params.fetchedAt,
-      expiresAt: params.expiresAt,
-    });
-  }
+  // Atomic delete and bulk insert in a single transaction
+  await db.transaction(async (tx) => {
+    await tx.delete(certificates).where(eq(certificates.domainId, domainId));
+    if (params.chain.length > 0) {
+      await tx.insert(certificates).values(
+        params.chain.map((c) => ({
+          domainId,
+          issuer: c.issuer,
+          subject: c.subject,
+          altNames: c.altNames,
+          validFrom: c.validFrom,
+          validTo: c.validTo,
+          caProviderId: c.caProviderId ?? null,
+          fetchedAt: params.fetchedAt,
+          expiresAt: params.expiresAt,
+        })),
+      );
+    }
+  });
 }
