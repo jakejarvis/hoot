@@ -19,6 +19,7 @@ vi.mock("rdapper", () => ({
 
 describe("getRegistration", () => {
   beforeEach(async () => {
+    vi.resetModules();
     const { makePGliteDb } = await import("@/server/db/pglite");
     const { db } = await makePGliteDb();
     vi.doMock("@/server/db/client", () => ({ db }));
