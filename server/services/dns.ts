@@ -83,7 +83,32 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     .where(eq(dnsRecords.domainId, d.id));
   if (rows.length > 0) {
     const now = Date.now();
-    const fresh = rows.some((r) => (r.expiresAt?.getTime?.() ?? 0) > now);
+    // Group cached rows by type
+    const rowsByType = (rows as typeof rows).reduce(
+      (acc, r) => {
+        const t = r.type as DnsType;
+        if (!acc[t]) {
+          acc[t] = [] as typeof rows;
+        }
+        (acc[t] as typeof rows).push(r);
+        return acc;
+      },
+      {
+        // intentionally start empty; only present types will be keys
+      } as Record<DnsType, typeof rows>,
+    );
+    const presentTypes = Object.keys(rowsByType) as DnsType[];
+    const typeIsFresh = (t: DnsType) => {
+      const arr = rowsByType[t] ?? [];
+      return (
+        arr.length > 0 &&
+        arr.every((r) => (r.expiresAt?.getTime?.() ?? 0) > now)
+      );
+    };
+    const freshTypes = presentTypes.filter((t) => typeIsFresh(t));
+    const allPresentFresh =
+      presentTypes.length > 0 && freshTypes.length === presentTypes.length;
+
     const assembled: DnsRecord[] = rows.map((r) => ({
       type: r.type as DnsType,
       name: r.name,
@@ -92,9 +117,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       priority: r.priority ?? undefined,
       isCloudflare: r.isCloudflare ?? undefined,
     }));
-    const resolver = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
+    const resolverHint = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
     const sorted = sortDnsRecordsByType(assembled, types);
-    if (fresh) {
+    if (allPresentFresh) {
       await captureServer("dns_resolve_all", {
         domain: lower,
         duration_ms_total: Date.now() - startedAt,
@@ -110,13 +135,126 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         cloudflare_ip_present: sorted.some(
           (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
         ),
-        dns_provider_used: resolver,
+        dns_provider_used: resolverHint,
         provider_attempts: 0,
         duration_ms_by_provider: {},
         cache_hit: true,
         cache_source: "postgres",
       });
-      return { records: sorted, resolver };
+      return { records: sorted, resolver: resolverHint };
+    }
+
+    // Partial revalidation for stale present types using pinned provider
+    const staleTypes = presentTypes.filter((t) => !typeIsFresh(t));
+    if (staleTypes.length > 0) {
+      const pinnedProvider =
+        DOH_PROVIDERS.find((p) => p.key === resolverHint) ??
+        providerOrderForLookup(lower)[0];
+      const attemptStart = Date.now();
+      try {
+        const fetchedStale = (
+          await Promise.all(
+            staleTypes.map(async (t) => {
+              const recs = await resolveTypeWithProvider(
+                domain,
+                t,
+                pinnedProvider,
+              );
+              return recs;
+            }),
+          )
+        ).flat();
+        durationByProvider[pinnedProvider.key] = Date.now() - attemptStart;
+
+        // Persist only stale types
+        const nowDate = new Date();
+        const recordsByTypeToPersist = Object.fromEntries(
+          staleTypes.map((t) => [
+            t,
+            fetchedStale
+              .filter((r) => r.type === t)
+              .map((r) => ({
+                name: r.name,
+                value: r.value,
+                ttl: r.ttl ?? null,
+                priority: r.priority ?? null,
+                isCloudflare: r.isCloudflare ?? null,
+                expiresAt: ttlForDnsRecord(nowDate, r.ttl ?? null),
+              })),
+          ]),
+        ) as Record<
+          DnsType,
+          Array<{
+            name: string;
+            value: string;
+            ttl: number | null;
+            priority: number | null;
+            isCloudflare: boolean | null;
+            expiresAt: Date;
+          }>
+        >;
+        await replaceDns({
+          domainId: d.id,
+          resolver: pinnedProvider.key,
+          fetchedAt: nowDate,
+          recordsByType: recordsByTypeToPersist,
+        });
+
+        // Merge cached fresh + newly fetched stale
+        const cachedFresh = freshTypes.flatMap((t) =>
+          (rowsByType[t] ?? []).map((r) => ({
+            type: r.type as DnsType,
+            name: r.name,
+            value: r.value,
+            ttl: r.ttl ?? undefined,
+            priority: r.priority ?? undefined,
+            isCloudflare: r.isCloudflare ?? undefined,
+          })),
+        );
+        const merged = sortDnsRecordsByType(
+          [...cachedFresh, ...fetchedStale],
+          types,
+        );
+        void invalidateReportCache(lower);
+        const counts = (types as DnsType[]).reduce(
+          (acc, t) => {
+            acc[t] = merged.filter((r) => r.type === t).length;
+            return acc;
+          },
+          { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
+        );
+        const cloudflareIpPresent = merged.some(
+          (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
+        );
+        await captureServer("dns_resolve_all", {
+          domain: lower,
+          duration_ms_total: Date.now() - startedAt,
+          counts,
+          cloudflare_ip_present: cloudflareIpPresent,
+          dns_provider_used: pinnedProvider.key,
+          provider_attempts: 1,
+          duration_ms_by_provider: durationByProvider,
+          cache_hit: false,
+          cache_source: "partial",
+        });
+        console.info("[dns] ok (partial)", {
+          domain: lower,
+          counts,
+          resolver: pinnedProvider.key,
+          duration_ms_total: Date.now() - startedAt,
+        });
+        return {
+          records: merged,
+          resolver: pinnedProvider.key,
+        } as DnsResolveResult;
+      } catch (err) {
+        console.warn("[dns] partial refresh failed; falling back", {
+          domain: lower,
+          provider: pinnedProvider.key,
+          error: (err as Error)?.message,
+        });
+        // Fall through to full provider loop below
+      }
     }
   }
 
