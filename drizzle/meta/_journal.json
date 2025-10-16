@@ -8,6 +8,13 @@
       "when": 1760573635019,
       "tag": "0000_safe_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760575615688,
+      "tag": "0001_aromatic_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }

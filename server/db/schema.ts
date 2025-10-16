@@ -103,6 +103,10 @@ export const domains = pgTable(
     punycodeName: text('punycode_name'),
     unicodeName: text('unicode_name'),
     isIdn: boolean('is_idn').notNull().default(false),
+    // Favicon (1:1)
+    faviconUrl: text('favicon_url'),
+    faviconKey: text('favicon_key'),
+    faviconExpiresAt: timestamp('favicon_expires_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -322,6 +326,40 @@ export const seo = pgTable(
   (t) => ({
     finalUrlIdx: index('seo_final_url_idx').on(t.sourceFinalUrl),
     canonicalIdx: index('seo_canonical_idx').on(t.canonicalUrl),
+  }),
+);
+
+// Screenshots / assets table for multiple variants
+export const domainAssets = pgTable(
+  'domain_assets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    domainId: uuid('domain_id')
+      .references(() => domains.id, { onDelete: 'cascade' })
+      .notNull(),
+    kind: text('kind').notNull(), // 'screenshot' | 'social' | future variants
+    variant: text('variant').notNull().default('default'), // e.g. 'default', 'dark'
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    url: text('url'),
+    key: text('key'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    byDomainKind: index('asset_domain_kind_idx').on(t.domainId, t.kind),
+    uniqVariant: uniqueIndex('asset_unique_variant').on(
+      t.domainId,
+      t.kind,
+      t.variant,
+      t.width,
+      t.height,
+    ),
   }),
 );
 
