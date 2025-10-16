@@ -5,7 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Import lazily inside tests after DB injection to avoid importing the client early
 
 vi.mock("@/lib/domain-server", () => ({
-  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
+  toRegistrableDomain: (d: string) => {
+    const value = (d ?? "").trim().toLowerCase().replace(/\.$/, "");
+    if (value === "") return null;
+    const parts = value.split(".");
+    return parts.length >= 2
+      ? `${parts[parts.length - 2]}.${parts[parts.length - 1]}`
+      : null;
+  },
 }));
 
 // Mocks for dependencies used by detectHosting

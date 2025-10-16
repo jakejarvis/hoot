@@ -5,7 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 let getSeo: typeof import("./seo").getSeo;
 
 vi.mock("@/lib/domain-server", () => ({
-  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
+  toRegistrableDomain: (d: string) => {
+    const value = (d ?? "").trim().toLowerCase().replace(/\.$/, "");
+    if (value === "") return null;
+    const parts = value.split(".");
+    return parts.length >= 2
+      ? `${parts[parts.length - 2]}.${parts[parts.length - 1]}`
+      : null;
+  },
 }));
 
 const utMock = vi.hoisted(() => ({
@@ -67,13 +74,35 @@ function textResponse(text: string, contentType = "text/plain") {
 
 describe("getSeo", () => {
   it("uses cached response when meta exists in cache", async () => {
-    const { ns, redis } = await import("@/lib/redis");
-    const metaKey = ns("seo", "example.com", "meta");
-    await redis.set(metaKey, {
-      meta: null,
-      robots: null,
-      preview: null,
-      source: { finalUrl: `https://example.com/`, status: 200 },
+    const { upsertDomain } = await import("@/server/repos/domains");
+    const { upsertSeo } = await import("@/server/repos/seo");
+    const { ttlForSeo } = await import("@/server/db/ttl");
+
+    const now = new Date();
+    const d = await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      punycodeName: "example.com",
+      unicodeName: "example.com",
+      isIdn: false,
+    });
+    await upsertSeo({
+      domainId: d.id,
+      sourceFinalUrl: "https://example.com/",
+      sourceStatus: 200,
+      metaOpenGraph: {},
+      metaTwitter: {},
+      metaGeneral: {},
+      previewTitle: null,
+      previewDescription: null,
+      previewImageUrl: null,
+      previewImageUploadedUrl: null,
+      canonicalUrl: null,
+      robots: { fetched: true, groups: [], sitemaps: [] },
+      robotsSitemaps: [],
+      errors: {},
+      fetchedAt: now,
+      expiresAt: ttlForSeo(now),
     });
 
     const out = await getSeo("example.com");

@@ -8,7 +8,14 @@ const tlsMock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/domain-server", () => ({
-  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
+  toRegistrableDomain: (d: string) => {
+    const value = (d ?? "").trim().toLowerCase().replace(/\.$/, "");
+    if (value === "") return null;
+    const parts = value.split(".");
+    return parts.length >= 2
+      ? `${parts[parts.length - 2]}.${parts[parts.length - 1]}`
+      : null;
+  },
 }));
 
 vi.mock("node:tls", async () => {
