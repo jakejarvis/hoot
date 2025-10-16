@@ -16,7 +16,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   // Fast path: DB
   const d = await upsertDomain({
     name: lower,
-    tld: lower.split(".").pop() as string,
+    tld: lower.split(".").slice(1).join(".") as string,
     punycodeName: lower,
     unicodeName: domain,
     isIdn: /xn--/.test(lower),

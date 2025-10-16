@@ -28,7 +28,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   // Fast path: DB
   const d = await upsertDomain({
     name: domain.toLowerCase(),
-    tld: domain.split(".").pop() as string,
+    tld: domain.split(".").slice(1).join(".") as string,
     punycodeName: domain.toLowerCase(),
     unicodeName: domain,
     isIdn: /xn--/.test(domain),

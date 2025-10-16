@@ -63,7 +63,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   // Read from Postgres first; return if fresh
   const d = await upsertDomain({
     name: lower,
-    tld: lower.split(".").pop() as string,
+    tld: lower.split(".").slice(1).join(".") as string,
     punycodeName: lower,
     unicodeName: domain,
     isIdn: /xn--/.test(lower),

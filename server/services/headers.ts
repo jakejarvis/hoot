@@ -15,7 +15,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   // Fast path: read from Postgres if fresh
   const d = await upsertDomain({
     name: lower,
-    tld: lower.split(".").pop() as string,
+    tld: lower.split(".").slice(1).join(".") as string,
     punycodeName: lower,
     unicodeName: domain,
     isIdn: /xn--/.test(lower),

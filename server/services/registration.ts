@@ -30,7 +30,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // Try current snapshot
   const d = await upsertDomain({
     name: registrable.toLowerCase(),
-    tld: registrable.split(".").pop() as string,
+    tld: registrable.split(".").slice(1).join(".") as string,
     punycodeName: registrable.toLowerCase(),
     unicodeName: registrable,
     isIdn: /xn--/.test(registrable),
