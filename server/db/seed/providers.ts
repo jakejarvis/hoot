@@ -1,4 +1,3 @@
-import "server-only";
 import { CA_PROVIDERS } from "@/lib/providers/rules/certificate";
 import { DNS_PROVIDERS } from "@/lib/providers/rules/dns";
 import { EMAIL_PROVIDERS } from "@/lib/providers/rules/email";
