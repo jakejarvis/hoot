@@ -11,6 +11,7 @@ import {
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
+import { persistDnsToDb } from "@/server/services/dns-db";
 
 export type DohProvider = {
   key: DnsResolver;
@@ -92,6 +93,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         resolver: agg.resolver,
         total: sortedAggRecords.length,
       });
+      try { await persistDnsToDb(domain, { records: sortedAggRecords, resolver: agg.resolver }); } catch {}
       return { records: sortedAggRecords, resolver: agg.resolver };
     }
   } catch {}
@@ -133,6 +135,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       agg.records,
       DnsTypeSchema.options,
     );
+    try { await persistDnsToDb(domain, { records: sortedAggRecords, resolver: agg.resolver }); } catch {}
     return { records: sortedAggRecords, resolver: agg.resolver };
   }
   const acquiredLock = lockResult.acquired;
@@ -241,6 +244,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         await redis.del(lockKey);
       } catch {}
     }
+    try { await persistDnsToDb(domain, { records: flat, resolver: resolverUsed }); } catch {}
     return { records: flat, resolver: resolverUsed } as DnsResolveResult;
   }
 
@@ -319,6 +323,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           await redis.del(lockKey);
         } catch {}
       }
+      try { await persistDnsToDb(domain, { records: flat, resolver: resolverUsed }); } catch {}
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
       console.warn("[dns] provider attempt failed", {

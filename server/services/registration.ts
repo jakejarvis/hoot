@@ -4,6 +4,7 @@ import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
 import { ns, redis } from "@/lib/redis";
 import type { Registration } from "@/lib/schemas";
+import { persistRegistrationToDb } from "@/server/services/registration-db";
 
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
@@ -72,6 +73,9 @@ export async function getRegistration(domain: string): Promise<Registration> {
   };
 
   await redis.set(key, withProvider, { ex: ttl });
+  try {
+    await persistRegistrationToDb(registrable, withProvider);
+  } catch {}
   await captureServer("registration_lookup", {
     domain: registrable,
     outcome: record.isRegistered ? "ok" : "unregistered",

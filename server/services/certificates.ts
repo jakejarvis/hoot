@@ -3,6 +3,7 @@ import { captureServer } from "@/lib/analytics/server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { ns, redis } from "@/lib/redis";
 import type { Certificate } from "@/lib/schemas";
+import { persistCertificatesToDb } from "@/server/services/certificates-db";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   const lower = domain.toLowerCase();
@@ -83,6 +84,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
     const ttl = out.length > 0 ? 12 * 60 * 60 : 10 * 60;
     await redis.set(key, out, { ex: ttl });
+    try {
+      await persistCertificatesToDb(domain, out);
+    } catch {}
     console.info("[certificates] ok", {
       domain: lower,
       chain_length: out.length,

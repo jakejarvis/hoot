@@ -3,6 +3,7 @@ import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { headThenGet } from "@/lib/fetch";
 import { ns, redis } from "@/lib/redis";
 import type { HttpHeader } from "@/lib/schemas";
+import { persistHeadersToDb } from "@/server/services/headers-db";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const lower = domain.toLowerCase();
@@ -72,6 +73,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     });
 
     await redis.set(key, normalized, { ex: 10 * 60 });
+    try { await persistHeadersToDb(domain, normalized); } catch {}
     console.info("[headers] ok", {
       domain: lower,
       status: final.status,

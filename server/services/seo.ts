@@ -7,6 +7,7 @@ import { ns, redis } from "@/lib/redis";
 import type { SeoResponse } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { makeImageFileName, uploadImage } from "@/lib/storage";
+import { persistSeoToDb } from "@/server/services/seo-db";
 
 const HTML_TTL_SECONDS = 1 * 60 * 60; // 1 hour
 const ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
@@ -134,6 +135,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   };
 
   await redis.set(metaKey, response, { ex: HTML_TTL_SECONDS });
+  try { await persistSeoToDb(domain, response); } catch {}
 
   await captureServer("seo_fetch", {
     domain: lower,

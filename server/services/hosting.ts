@@ -6,6 +6,7 @@ import {
   detectHostingProvider,
 } from "@/lib/providers/detection";
 import { ns, redis } from "@/lib/redis";
+import { persistHostingToDb } from "@/server/services/hosting-db";
 import type { Hosting } from "@/lib/schemas";
 import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
@@ -110,6 +111,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     duration_ms: Date.now() - startedAt,
   });
   await redis.set(key, info, { ex: 24 * 60 * 60 });
+  try { await persistHostingToDb(domain, info); } catch {}
   console.info("[hosting] ok", {
     domain,
     hosting: hostingName,
