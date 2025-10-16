@@ -18,7 +18,13 @@ type Section =
   | "registration";
 
 export const sectionRevalidate = inngest.createFunction(
-  { id: "section-revalidate" },
+  {
+    id: "section-revalidate",
+    concurrency: {
+      key: "event.data.domain",
+      limit: 1,
+    },
+  },
   { event: "section/revalidate" },
   async ({ event }) => {
     const { domain, section } = event.data as {
