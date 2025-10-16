@@ -1,4 +1,5 @@
 import "server-only";
+import type { InferInsertModel } from "drizzle-orm";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
@@ -7,6 +8,8 @@ import {
   type dnsResolver,
 } from "@/server/db/schema";
 
+type DnsRecordInsert = InferInsertModel<typeof dnsRecords>;
+
 export type UpsertDnsParams = {
   domainId: string;
   resolver: (typeof dnsResolver.enumValues)[number];
@@ -14,14 +17,12 @@ export type UpsertDnsParams = {
   // complete set per type
   recordsByType: Record<
     (typeof dnsRecordType.enumValues)[number],
-    Array<{
-      name: string;
-      value: string;
-      ttl?: number | null;
-      priority?: number | null;
-      isCloudflare?: boolean | null;
-      expiresAt: Date;
-    }>
+    Array<
+      Omit<
+        DnsRecordInsert,
+        "id" | "domainId" | "type" | "resolver" | "fetchedAt"
+      >
+    >
   >;
 };
 
@@ -41,7 +42,7 @@ export async function replaceDns(params: UpsertDnsParams) {
       .from(dnsRecords)
       .where(and(eq(dnsRecords.domainId, domainId), eq(dnsRecords.type, type)));
     const nextKey = (r: (typeof next)[number]) =>
-      `${type as string}|${r.name.toLowerCase()}|${r.value.toLowerCase()}`;
+      `${type as string}|${(r.name as string).toLowerCase()}|${(r.value as string).toLowerCase()}`;
     const nextMap = new Map(next.map((r) => [nextKey(r), r]));
     const toDelete = existing
       .filter(
@@ -60,14 +61,14 @@ export async function replaceDns(params: UpsertDnsParams) {
         .values({
           domainId,
           type,
-          name: r.name,
-          value: r.value,
+          name: r.name as string,
+          value: r.value as string,
           ttl: r.ttl ?? null,
           priority: r.priority ?? null,
           isCloudflare: r.isCloudflare ?? null,
           resolver: params.resolver,
           fetchedAt: params.fetchedAt,
-          expiresAt: r.expiresAt,
+          expiresAt: r.expiresAt as Date,
         })
         .onConflictDoUpdate({
           target: [
@@ -82,7 +83,7 @@ export async function replaceDns(params: UpsertDnsParams) {
             isCloudflare: r.isCloudflare ?? null,
             resolver: params.resolver,
             fetchedAt: params.fetchedAt,
-            expiresAt: r.expiresAt,
+            expiresAt: r.expiresAt as Date,
           },
         });
     }

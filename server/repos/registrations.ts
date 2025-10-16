@@ -1,30 +1,21 @@
 import "server-only";
+import type { InferInsertModel } from "drizzle-orm";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { registrationNameservers, registrations } from "@/server/db/schema";
 
-export type UpsertRegistrationParams = {
-  domainId: string;
-  isRegistered: boolean;
-  registry: string | null;
-  creationDate?: Date | null;
-  updatedDate?: Date | null;
-  expirationDate?: Date | null;
-  deletionDate?: Date | null;
-  transferLock?: boolean | null;
-  statuses?: unknown[];
-  contacts?: Record<string, unknown>;
-  whoisServer?: string | null;
-  rdapServers?: string[];
-  source: string; // 'rdap' | 'whois'
-  registrarProviderId?: string | null;
-  resellerProviderId?: string | null;
-  fetchedAt: Date;
-  expiresAt: Date;
-  nameservers?: { host: string; ipv4?: string[]; ipv6?: string[] }[];
-};
+type RegistrationInsert = InferInsertModel<typeof registrations>;
+type RegistrationNameserverInsert = InferInsertModel<
+  typeof registrationNameservers
+>;
 
-export async function upsertRegistration(params: UpsertRegistrationParams) {
+export async function upsertRegistration(
+  params: RegistrationInsert & {
+    nameservers?: Array<
+      Pick<RegistrationNameserverInsert, "host" | "ipv4" | "ipv6">
+    >;
+  },
+) {
   const { domainId, nameservers: ns, ...rest } = params;
   await db
     .insert(registrations)

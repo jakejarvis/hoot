@@ -1,18 +1,16 @@
 import "server-only";
+import type { InferInsertModel } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { certificates } from "@/server/db/schema";
 
+type CertificateInsert = InferInsertModel<typeof certificates>;
+
 export type UpsertCertificatesParams = {
   domainId: string;
-  chain: Array<{
-    issuer: string;
-    subject: string;
-    altNames: string[];
-    validFrom: Date;
-    validTo: Date;
-    caProviderId?: string | null;
-  }>;
+  chain: Array<
+    Omit<CertificateInsert, "id" | "domainId" | "fetchedAt" | "expiresAt">
+  >;
   fetchedAt: Date;
   expiresAt: Date; // policy window for revalidation (not cert validity)
 };
@@ -26,7 +24,7 @@ export async function replaceCertificates(params: UpsertCertificatesParams) {
       domainId,
       issuer: c.issuer,
       subject: c.subject,
-      altNames: c.altNames as unknown as Record<string, unknown>[],
+      altNames: c.altNames,
       validFrom: c.validFrom,
       validTo: c.validTo,
       caProviderId: c.caProviderId ?? null,
