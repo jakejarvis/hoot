@@ -32,6 +32,8 @@ export function ttlForDnsRecord(now: Date, ttlSeconds?: number | null): Date {
 }
 
 export function ttlForCertificates(now: Date, validTo: Date): Date {
+  // Revalidate certificates within a 24h sliding window, but start checking
+  // more aggressively 48h before expiry to catch upcoming expirations.
   const window = addSeconds(now, 24 * 60 * 60);
   const revalidateBefore = new Date(validTo.getTime() - 48 * 60 * 60 * 1000);
   return clampFuture(
