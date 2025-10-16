@@ -65,7 +65,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   if (!registrable) throw new Error("Invalid domain");
   const d = await upsertDomain({
     name: registrable,
-    tld: registrable.split(".").pop() as string,
+    tld: registrable.split(".").slice(1).join(".") as string,
     punycodeName: registrable,
     unicodeName: domain,
     isIdn: registrable !== domain.toLowerCase(),
