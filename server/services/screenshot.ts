@@ -5,6 +5,7 @@ import { addWatermarkToScreenshot, optimizeImageCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { ns } from "@/lib/redis";
 import { uploadImage } from "@/lib/storage";
+import { persistScreenshotToDb } from "@/server/services/screenshot-db";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -124,6 +125,15 @@ export async function getOrCreateScreenshotBlobUrl(
                 height: VIEWPORT_HEIGHT,
                 buffer: withWatermark,
               });
+              try {
+                await persistScreenshotToDb(domain, {
+                  url: storedUrl,
+                  key: fileKey,
+                  width: VIEWPORT_WIDTH,
+                  height: VIEWPORT_HEIGHT,
+                  ttlSeconds: ttl,
+                });
+              } catch {}
               return {
                 url: storedUrl,
                 key: fileKey,

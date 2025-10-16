@@ -1,5 +1,6 @@
 import { getOrCreateCachedAsset } from "@/lib/cache";
 import { FAVICON_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { persistFaviconToDb } from "@/server/services/favicon-db";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { convertBufferToImageCover } from "@/lib/image";
 import { ns } from "@/lib/redis";
@@ -66,6 +67,10 @@ export async function getOrCreateFaviconBlobUrl(
             height: DEFAULT_SIZE,
             buffer: webp,
           });
+          // Persist to Postgres for durability
+          try {
+            await persistFaviconToDb(domain, url, key, ttl);
+          } catch {}
           const source = (() => {
             if (src.includes("icons.duckduckgo.com")) return "duckduckgo";
             if (src.includes("www.google.com/s2/favicons")) return "google";
