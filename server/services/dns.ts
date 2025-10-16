@@ -3,6 +3,7 @@ import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { invalidateReportCache } from "@/lib/report-cache";
 import {
   type DnsRecord,
   type DnsResolveResult,
@@ -184,6 +185,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           }>
         >,
       });
+      void invalidateReportCache(lower);
       await captureServer("dns_resolve_all", {
         domain: lower,
         duration_ms_total: Date.now() - startedAt,

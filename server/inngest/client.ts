@@ -1,6 +1,4 @@
 import "server-only";
 import { Inngest } from "inngest";
 
-export const inngest = new Inngest({
-  name: "Hoot",
-});
+export const inngest = new Inngest({ id: "hoot-app" });

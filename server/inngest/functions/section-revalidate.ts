@@ -1,6 +1,6 @@
 import "server-only";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
-import { ns } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import { inngest } from "@/server/inngest/client";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
@@ -60,7 +60,9 @@ export const sectionRevalidate = inngest.createFunction(
           break;
       }
     } finally {
-      // release by deleting the lock
+      try {
+        await redis.del(lockKey);
+      } catch {}
     }
   },
 );
