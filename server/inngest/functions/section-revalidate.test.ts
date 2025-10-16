@@ -1,21 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { revalidateSection } from "@/server/inngest/functions/section-revalidate";
-import * as dnsSvc from "@/server/services/dns";
+
+// Import dns lazily inside tests to avoid module-scope DB client init
 
 describe("section-revalidate", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const { makePGliteDb } = await import("@/server/db/pglite");
+    const { db } = await makePGliteDb();
+    vi.doMock("@/server/db/client", () => ({ db }));
     globalThis.__redisTestHelper.reset();
   });
 
   it("calls dns resolver for dns section", async () => {
+    const { revalidateSection } = await import(
+      "@/server/inngest/functions/section-revalidate"
+    );
+    const dnsMod = await import("@/server/services/dns");
     const spy = vi
-      .spyOn(dnsSvc, "resolveAll")
+      .spyOn(dnsMod, "resolveAll")
       .mockResolvedValue({ records: [], resolver: "cloudflare" });
     await revalidateSection("example.com", "dns");
     expect(spy).toHaveBeenCalledWith("example.com");
   });
 
   it("invokes headers probe", async () => {
+    const { revalidateSection } = await import(
+      "@/server/inngest/functions/section-revalidate"
+    );
     const mod = await import("@/server/services/headers");
     const spy = vi.spyOn(mod, "probeHeaders").mockResolvedValue([]);
     await revalidateSection("example.com", "headers");
@@ -23,6 +33,9 @@ describe("section-revalidate", () => {
   });
 
   it("invokes hosting detect", async () => {
+    const { revalidateSection } = await import(
+      "@/server/inngest/functions/section-revalidate"
+    );
     const mod = await import("@/server/services/hosting");
     const spy = vi.spyOn(mod, "detectHosting").mockResolvedValue({
       hostingProvider: { name: "", domain: null },
@@ -42,6 +55,9 @@ describe("section-revalidate", () => {
   });
 
   it("invokes certificates fetch", async () => {
+    const { revalidateSection } = await import(
+      "@/server/inngest/functions/section-revalidate"
+    );
     const mod = await import("@/server/services/certificates");
     const spy = vi.spyOn(mod, "getCertificates").mockResolvedValue([]);
     await revalidateSection("example.com", "certificates");
@@ -49,6 +65,9 @@ describe("section-revalidate", () => {
   });
 
   it("invokes seo fetch", async () => {
+    const { revalidateSection } = await import(
+      "@/server/inngest/functions/section-revalidate"
+    );
     const mod = await import("@/server/services/seo");
     const spy = vi.spyOn(mod, "getSeo").mockResolvedValue({
       meta: null,

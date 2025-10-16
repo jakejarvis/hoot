@@ -108,12 +108,8 @@
           "name": "certificates_domain_id_domains_id_fk",
           "tableFrom": "certificates",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -121,12 +117,8 @@
           "name": "certificates_ca_provider_id_providers_id_fk",
           "tableFrom": "certificates",
           "tableTo": "providers",
-          "columnsFrom": [
-            "ca_provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ca_provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -260,12 +252,8 @@
           "name": "dns_records_domain_id_domains_id_fk",
           "tableFrom": "dns_records",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -275,12 +263,7 @@
         "u_dns_record": {
           "name": "u_dns_record",
           "nullsNotDistinct": false,
-          "columns": [
-            "domain_id",
-            "type",
-            "name",
-            "value"
-          ]
+          "columns": ["domain_id", "type", "name", "value"]
         }
       },
       "policies": {},
@@ -367,9 +350,7 @@
         "u_domains_name": {
           "name": "u_domains_name",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -487,12 +468,8 @@
           "name": "hosting_domain_id_domains_id_fk",
           "tableFrom": "hosting",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -500,12 +477,8 @@
           "name": "hosting_hosting_provider_id_providers_id_fk",
           "tableFrom": "hosting",
           "tableTo": "providers",
-          "columnsFrom": [
-            "hosting_provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["hosting_provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -513,12 +486,8 @@
           "name": "hosting_email_provider_id_providers_id_fk",
           "tableFrom": "hosting",
           "tableTo": "providers",
-          "columnsFrom": [
-            "email_provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["email_provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -526,12 +495,8 @@
           "name": "hosting_dns_provider_id_providers_id_fk",
           "tableFrom": "hosting",
           "tableTo": "providers",
-          "columnsFrom": [
-            "dns_provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["dns_provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -606,12 +571,8 @@
           "name": "http_headers_domain_id_domains_id_fk",
           "tableFrom": "http_headers",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -621,10 +582,7 @@
         "u_http_header": {
           "name": "u_http_header",
           "nullsNotDistinct": false,
-          "columns": [
-            "domain_id",
-            "name"
-          ]
+          "columns": ["domain_id", "name"]
         }
       },
       "policies": {},
@@ -750,12 +708,8 @@
           "name": "registration_nameservers_domain_id_domains_id_fk",
           "tableFrom": "registration_nameservers",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -765,10 +719,7 @@
         "u_reg_ns": {
           "name": "u_reg_ns",
           "nullsNotDistinct": false,
-          "columns": [
-            "domain_id",
-            "host"
-          ]
+          "columns": ["domain_id", "host"]
         }
       },
       "policies": {},
@@ -922,12 +873,8 @@
           "name": "registrations_domain_id_domains_id_fk",
           "tableFrom": "registrations",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -935,12 +882,8 @@
           "name": "registrations_registrar_provider_id_providers_id_fk",
           "tableFrom": "registrations",
           "tableTo": "providers",
-          "columnsFrom": [
-            "registrar_provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["registrar_provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -948,12 +891,8 @@
           "name": "registrations_reseller_provider_id_providers_id_fk",
           "tableFrom": "registrations",
           "tableTo": "providers",
-          "columnsFrom": [
-            "reseller_provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reseller_provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1108,12 +1047,8 @@
           "name": "seo_domain_id_domains_id_fk",
           "tableFrom": "seo",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1129,32 +1064,17 @@
     "public.dns_record_type": {
       "name": "dns_record_type",
       "schema": "public",
-      "values": [
-        "A",
-        "AAAA",
-        "MX",
-        "TXT",
-        "NS"
-      ]
+      "values": ["A", "AAAA", "MX", "TXT", "NS"]
     },
     "public.dns_resolver": {
       "name": "dns_resolver",
       "schema": "public",
-      "values": [
-        "cloudflare",
-        "google"
-      ]
+      "values": ["cloudflare", "google"]
     },
     "public.provider_category": {
       "name": "provider_category",
       "schema": "public",
-      "values": [
-        "hosting",
-        "email",
-        "dns",
-        "ca",
-        "registrar"
-      ]
+      "values": ["hosting", "email", "dns", "ca", "registrar"]
     }
   },
   "schemas": {},

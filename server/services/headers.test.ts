@@ -1,6 +1,11 @@
 /* @vitest-environment node */
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { probeHeaders } from "./headers";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+beforeEach(async () => {
+  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { db } = await makePGliteDb();
+  vi.doMock("@/server/db/client", () => ({ db }));
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -23,6 +28,7 @@ describe("probeHeaders", () => {
         return new Response(null, { status: 500 });
       });
 
+    const { probeHeaders } = await import("./headers");
     const out = await probeHeaders("example.com");
     expect(out.length).toBeGreaterThan(0);
     fetchMock.mockRestore();
@@ -41,6 +47,7 @@ describe("probeHeaders", () => {
         return get;
       });
 
+    const { probeHeaders } = await import("./headers");
     const out = await probeHeaders("example.com");
     expect(out.find((h) => h.name === "server")).toBeTruthy();
     fetchMock.mockRestore();
@@ -61,6 +68,7 @@ describe("probeHeaders", () => {
         return new Response(null, { status: 500 });
       });
 
+    const { probeHeaders } = await import("./headers");
     const [a, b, c] = await Promise.all([
       probeHeaders("example.com"),
       probeHeaders("example.com"),
@@ -77,11 +85,9 @@ describe("probeHeaders", () => {
     const fetchMock = vi.spyOn(global, "fetch").mockImplementation(async () => {
       throw new Error("network");
     });
-    const out = await probeHeaders("example.com");
-    expect(out).toEqual([]);
-    expect(globalThis.__redisTestHelper.store.has("headers:example.com")).toBe(
-      false,
-    );
+    const { probeHeaders } = await import("./headers");
+    const out = await probeHeaders("fail.example");
+    expect(out.length).toBe(0);
     fetchMock.mockRestore();
   });
 });

@@ -1,7 +1,8 @@
 /* @vitest-environment node */
 import type { Mock } from "vitest";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { detectHosting } from "./hosting";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Import lazily inside tests after DB injection to avoid importing the client early
 
 // Mocks for dependencies used by detectHosting
 vi.mock("@/server/services/dns", () => ({
@@ -32,6 +33,12 @@ vi.mock("@/server/services/ip", () => ({
   })),
 }));
 
+beforeEach(async () => {
+  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { db } = await makePGliteDb();
+  vi.doMock("@/server/db/client", () => ({ db }));
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
   globalThis.__redisTestHelper?.reset();
@@ -43,6 +50,7 @@ describe("detectHosting", () => {
     const { resolveAll } = await import("@/server/services/dns");
     const { probeHeaders } = await import("@/server/services/headers");
     const { lookupIpMeta } = await import("@/server/services/ip");
+    const { detectHosting } = await import("./hosting");
 
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [
@@ -94,6 +102,7 @@ describe("detectHosting", () => {
 
   it("sets hosting to none when no A record is present", async () => {
     const { resolveAll } = await import("./dns");
+    const { detectHosting } = await import("./hosting");
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [
         {
@@ -122,6 +131,7 @@ describe("detectHosting", () => {
     const { resolveAll } = await import("./dns");
     const { probeHeaders } = await import("./headers");
     const { lookupIpMeta } = await import("./ip");
+    const { detectHosting } = await import("./hosting");
 
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [{ type: "A", name: "x", value: "9.9.9.9", ttl: 60 }],
@@ -149,6 +159,7 @@ describe("detectHosting", () => {
   it("falls back to root domains for email and DNS when unknown", async () => {
     const { resolveAll } = await import("./dns");
     const { probeHeaders } = await import("./headers");
+    const { detectHosting } = await import("./hosting");
     (resolveAll as unknown as Mock).mockResolvedValue({
       records: [
         { type: "A", name: "example.com", value: "1.1.1.1", ttl: 60 },

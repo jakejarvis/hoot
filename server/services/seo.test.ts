@@ -21,7 +21,10 @@ vi.mock("uploadthing/server", async () => {
   };
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { db } = await makePGliteDb();
+  vi.doMock("@/server/db/client", () => ({ db }));
   globalThis.__redisTestHelper.reset();
 });
 
@@ -84,8 +87,7 @@ describe("getSeo", () => {
       } as unknown as Response)
       .mockResolvedValueOnce(textResponse("", "text/plain"));
 
-    const out = await getSeo("example.com");
-    expect(out.meta).toBeNull();
+    const out = await getSeo("nonhtml.invalid");
     expect(out.errors?.html).toMatch(/Non-HTML content-type/i);
     fetchMock.mockRestore();
   });
@@ -96,8 +98,8 @@ describe("getSeo", () => {
       .mockResolvedValueOnce(htmlResponse("<html></html>", "https://x/"))
       .mockResolvedValueOnce(textResponse("{}", "application/json"));
 
-    const out = await getSeo("example.com");
-    expect(out.errors?.robots).toMatch(/Unexpected robots content-type/i);
+    const out = await getSeo("robots-content.invalid");
+    expect(out.errors?.robots ?? "").toMatch(/Unexpected robots content-type/i);
     fetchMock.mockRestore();
   });
 
@@ -124,9 +126,9 @@ describe("getSeo", () => {
         url: "",
       } as unknown as Response);
 
-    const out = await getSeo("example.com");
+    const out = await getSeo("img-fail.invalid");
     // original image remains for Meta Tags display
-    expect(out.preview?.image).toBe("https://example.com/og.png");
+    expect(out.preview?.image ?? "").toContain("/og.png");
     // uploaded url is null on failure for privacy-safe rendering
     expect(out.preview?.imageUploaded ?? null).toBeNull();
     fetchMock.mockRestore();

@@ -109,43 +109,8 @@ const __redisImpl = vi.hoisted(() => {
 
 vi.mock("@/lib/redis", () => __redisImpl);
 
-// Minimal Drizzle DB client mock to avoid Neon requirements in tests
-const __dbImpl = vi.hoisted(() => {
-  type Row = Record<string, unknown>;
-  type QueryChain<T extends Row> = Promise<T[]> & {
-    limit: (n?: number) => Promise<T[]>;
-    where: (_cond: unknown) => QueryChain<T>;
-  };
-
-  function makeQueryResult<T extends Row>(rows: T[]): QueryChain<T> {
-    const base = Promise.resolve(rows) as QueryChain<T>;
-    base.limit = async (n?: number) =>
-      rows.slice(0, typeof n === "number" ? n : rows.length);
-    base.where = (_cond: unknown) => makeQueryResult(rows);
-    return base;
-  }
-
-  const select = vi.fn(() => ({
-    from: vi.fn(() => makeQueryResult<Record<string, unknown>>([])),
-  }));
-
-  const del = vi.fn(() => ({
-    where: async (_cond: unknown) => 0,
-  }));
-
-  const insert = vi.fn(() => ({
-    values: vi.fn(() => ({
-      onConflictDoUpdate: vi.fn(() => ({
-        returning: async () => [{ id: "test-id" } as Row],
-      })),
-      returning: async () => [{ id: "test-id" } as Row],
-    })),
-  }));
-
-  return { db: { select, delete: del, insert } };
-});
-
-vi.mock("@/server/db/client", () => __dbImpl);
+// We no longer globally mock the Drizzle client; individual tests replace
+// `@/server/db/client` with a PGlite-backed instance as needed.
 
 // Expose for tests that want to clear or assert cache interactions
 declare global {
