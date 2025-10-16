@@ -112,16 +112,17 @@ vi.mock("@/lib/redis", () => __redisImpl);
 // Minimal Drizzle DB client mock to avoid Neon requirements in tests
 const __dbImpl = vi.hoisted(() => {
   type Row = Record<string, unknown>;
-  interface QueryBuilder<T extends Row> {
+  type QueryChain<T extends Row> = Promise<T[]> & {
     limit: (n?: number) => Promise<T[]>;
-    where: (_cond: unknown) => QueryBuilder<T>;
-  }
-  function makeQueryResult<T extends Row>(rows: T[]): QueryBuilder<T> {
-    return {
-      limit: async (n?: number) =>
-        rows.slice(0, typeof n === "number" ? n : rows.length),
-      where: (_cond: unknown) => makeQueryResult(rows),
-    } as QueryBuilder<T>;
+    where: (_cond: unknown) => QueryChain<T>;
+  };
+
+  function makeQueryResult<T extends Row>(rows: T[]): QueryChain<T> {
+    const base = Promise.resolve(rows) as QueryChain<T>;
+    base.limit = async (n?: number) =>
+      rows.slice(0, typeof n === "number" ? n : rows.length);
+    base.where = (_cond: unknown) => makeQueryResult(rows);
+    return base;
   }
 
   const select = vi.fn(() => ({
