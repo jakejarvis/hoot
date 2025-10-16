@@ -66,12 +66,6 @@ CREATE TABLE "http_headers" (
 	CONSTRAINT "u_http_header" UNIQUE("domain_id","name")
 );
 --> statement-breakpoint
-CREATE TABLE "provider_aliases" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"provider_id" uuid NOT NULL,
-	"alias" text NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "providers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"category" "provider_category" NOT NULL,
@@ -138,7 +132,6 @@ ALTER TABLE "hosting" ADD CONSTRAINT "hosting_hosting_provider_id_providers_id_f
 ALTER TABLE "hosting" ADD CONSTRAINT "hosting_email_provider_id_providers_id_fk" FOREIGN KEY ("email_provider_id") REFERENCES "public"."providers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "hosting" ADD CONSTRAINT "hosting_dns_provider_id_providers_id_fk" FOREIGN KEY ("dns_provider_id") REFERENCES "public"."providers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "http_headers" ADD CONSTRAINT "http_headers_domain_id_domains_id_fk" FOREIGN KEY ("domain_id") REFERENCES "public"."domains"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "provider_aliases" ADD CONSTRAINT "provider_aliases_provider_id_providers_id_fk" FOREIGN KEY ("provider_id") REFERENCES "public"."providers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "registration_nameservers" ADD CONSTRAINT "registration_nameservers_domain_id_domains_id_fk" FOREIGN KEY ("domain_id") REFERENCES "public"."domains"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "registrations" ADD CONSTRAINT "registrations_domain_id_domains_id_fk" FOREIGN KEY ("domain_id") REFERENCES "public"."domains"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "registrations" ADD CONSTRAINT "registrations_registrar_provider_id_providers_id_fk" FOREIGN KEY ("registrar_provider_id") REFERENCES "public"."providers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
