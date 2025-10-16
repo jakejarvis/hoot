@@ -13,19 +13,15 @@ export type UpsertDomainParams = {
 
 export async function upsertDomain(params: UpsertDomainParams) {
   const { name, tld, punycodeName, unicodeName, isIdn } = params;
-  const existing = await db
-    .select()
-    .from(domains)
-    .where(eq(domains.name, name))
-    .limit(1);
-  if (existing.length > 0) {
-    return existing[0];
-  }
-  const inserted = await db
+  const result = await db
     .insert(domains)
     .values({ name, tld, punycodeName, unicodeName, isIdn })
+    .onConflictDoUpdate({
+      target: domains.name,
+      set: { updatedAt: new Date() },
+    })
     .returning();
-  return inserted[0];
+  return result[0];
 }
 
 export async function findDomainByName(name: string) {
