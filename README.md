@@ -57,7 +57,7 @@
 
 - **Primary store**: Postgres (Neon). All domain sections persist to tables in `server/db/schema.ts` via Drizzle.
 - **Drizzle**: Schema/migrations in `drizzle/`. Config in `drizzle.config.ts`. Client at `server/db/client.ts`.
-- **Redis role**: Short-lived locks, rate limiting, and image/report caches only (no primary data). See `lib/cache.ts`, `lib/rate-limit.ts`, `lib/report-cache.ts`.
+- **Redis role**: Short-lived locks, rate limiting, and image/report caches only (no primary data). See `lib/cache.ts`, `lib/report-cache.ts`.
 - **Background jobs (Inngest)**:
   - `app/api/inngest/route.ts` serves functions.
   - `section-revalidate`: re-fetch a section for a domain.
