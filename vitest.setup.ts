@@ -164,7 +164,7 @@ globalThis.__redisTestHelper = {
   reset: (__redisImpl as unknown as { reset: () => void }).reset,
 };
 // Also attach to Node's global for tests using global.__redisTestHelper
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: fine for tests
 (global as any).__redisTestHelper = globalThis.__redisTestHelper;
 
 // Note: The unstable_cache mock is intentionally a no-op. We are testing

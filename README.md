@@ -53,6 +53,43 @@
 
 ---
 
+## 🔄 v2 Cutover: Postgres + Drizzle + Inngest
+
+- **Primary store**: Postgres (Neon). All domain sections persist to tables in `server/db/schema.ts` via Drizzle.
+- **Drizzle**: Schema/migrations in `drizzle/`. Config in `drizzle.config.ts`. Client at `server/db/client.ts`.
+- **Redis role**: Short-lived locks, rate limiting, and image/report caches only (no primary data). See `lib/cache.ts`, `lib/rate-limit.ts`, `lib/report-cache.ts`.
+- **Background jobs (Inngest)**:
+  - `app/api/inngest/route.ts` serves functions.
+  - `section-revalidate`: re-fetch a section for a domain.
+  - `domain-inspected`: fans out per-section revalidation.
+  - `scan-due`: cron to enqueue revalidations for stale rows.
+- **TTL & freshness**: Policies in `server/db/ttl.ts`. Each service reads from Postgres first and revalidates when stale.
+- **Services**: `server/services/*` now read/write Postgres via repos in `server/repos/*`.
+
+### Environment
+- `NEON_DATABASE_URL` (required)
+- Redis/UploadThing/PostHog remain as before (see `.env.example`).
+
+### Commands
+```bash
+# Drizzle
+pnpm drizzle:generate
+pnpm drizzle:migrate
+
+# Dev / checks / tests
+pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm test:run
+```
+
+### Notes
+- Provider catalog is seeded from `lib/providers/rules/*` via `server/db/seed/providers.ts`.
+- Trigram search enabled via `pg_trgm` migration in `drizzle/`.
+- No back-compat/migration from Redis snapshots; v2 is a clean switch.
+
+---
+
 ## 📜 License
 
 [MIT](LICENSE)
