@@ -53,19 +53,17 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         .from(hostingTable)
         .where(eq(hostingTable.domainId, d.id))
     : ([] as Array<{
-        hostingProviderId: number | null;
-        emailProviderId: number | null;
-        dnsProviderId: number | null;
-      }> &
-        Array<{
-          geoCity: string | null;
-          geoRegion: string | null;
-          geoCountry: string | null;
-          geoCountryCode: string | null;
-          geoLat: number | null;
-          geoLon: number | null;
-          expiresAt: Date | null;
-        }>);
+        hostingProviderId: string | null;
+        emailProviderId: string | null;
+        dnsProviderId: string | null;
+        geoCity: string | null;
+        geoRegion: string | null;
+        geoCountry: string | null;
+        geoCountryCode: string | null;
+        geoLat: number | null;
+        geoLon: number | null;
+        expiresAt: Date | null;
+      }>);
   if (
     d &&
     existing[0] &&

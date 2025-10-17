@@ -153,7 +153,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     );
     if (res.ok) {
       const ct = res.headers.get("content-type") ?? "";
-      if (ct.includes("text/plain") || ct.includes("text/")) {
+      if (/^text\/(plain|html|xml)?($|;|,)/i.test(ct)) {
         const txt = await res.text();
         robots = parseRobotsTxt(txt, { baseUrl: robotsUrl });
       } else {
@@ -172,7 +172,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   if (preview?.image) {
     try {
       const stored = await getOrCreateSocialPreviewImageUrl(
-        (registrable ?? domain) as string,
+        registrable ?? domain,
         preview.image,
       );
       // Preserve original image URL for meta display; attach uploaded URL for rendering

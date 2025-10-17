@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { ns, redis } from "@/lib/redis";
 import { inngest } from "@/server/inngest/client";
@@ -16,6 +17,21 @@ type Section =
   | "certificates"
   | "seo"
   | "registration";
+
+const SectionEnum = z.enum([
+  "dns",
+  "headers",
+  "hosting",
+  "certificates",
+  "seo",
+  "registration",
+]);
+
+const eventDataSchema = z.object({
+  domain: z.string().min(1),
+  section: SectionEnum.optional(),
+  sections: z.array(SectionEnum).optional(),
+});
 
 export async function revalidateSection(
   domain: string,
@@ -53,27 +69,12 @@ export const sectionRevalidate = inngest.createFunction(
   },
   { event: "section/revalidate" },
   async ({ event }) => {
-    const data = event.data as unknown as {
-      domain: string;
-      section?: Section;
-      sections?: Section[];
-    };
+    const data = eventDataSchema.parse(event.data);
     const domain = data.domain;
-    if (!domain) return;
-
-    const valid: Section[] = [
-      "dns",
-      "headers",
-      "hosting",
-      "certificates",
-      "seo",
-      "registration",
-    ];
-    const validSet = new Set<Section>(valid);
 
     const sections: Section[] = Array.isArray(data.sections)
-      ? data.sections.filter((s): s is Section => validSet.has(s as Section))
-      : data.section && validSet.has(data.section)
+      ? data.sections
+      : data.section
         ? [data.section]
         : [];
 
