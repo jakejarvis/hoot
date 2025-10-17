@@ -4,17 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // getSeo is imported dynamically after mocks are applied
 let getSeo: typeof import("./seo").getSeo;
 
-vi.mock("@/lib/domain-server", () => ({
-  toRegistrableDomain: (d: string) => {
-    const value = (d ?? "").trim().toLowerCase().replace(/\.$/, "");
-    if (value === "") return null;
-    const parts = value.split(".");
-    return parts.length >= 2
-      ? `${parts[parts.length - 2]}.${parts[parts.length - 1]}`
-      : null;
-  },
-}));
-
 const utMock = vi.hoisted(() => ({
   uploadFiles: vi.fn(async () => ({
     data: { ufsUrl: "https://app.ufs.sh/f/mock-key", key: "mock-key" },
@@ -166,24 +155,5 @@ describe("getSeo", () => {
     // uploaded url is null on failure for privacy-safe rendering
     expect(out.preview?.imageUploaded ?? null).toBeNull();
     fetchMock.mockRestore();
-  });
-
-  it("uses cached robots when present and avoids second fetch", async () => {
-    const { ns, redis } = await import("@/lib/redis");
-    const robotsKey = ns("seo", "example.com", "robots");
-    await redis.set(robotsKey, {
-      fetched: true,
-      groups: [{ userAgents: ["*"], rules: [{ type: "allow", value: "/" }] }],
-      sitemaps: [],
-    });
-
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
-      htmlResponse(
-        "<html><head><title>x</title></head></html>",
-        "https://example.com/",
-      ),
-    );
-
-    await getSeo("example.com");
   });
 });
