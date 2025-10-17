@@ -1,5 +1,5 @@
 {
-  "id": "60ea2f15-c310-4f18-b0b5-d642bc3e63c1",
+  "id": "e6cbfef7-b544-4293-9008-37f5041b6618",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -101,6 +101,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "i_certs_expires": {
+          "name": "i_certs_expires",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -134,7 +149,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "ck_cert_valid_window": {
+          "name": "ck_cert_valid_window",
+          "value": "\"certificates\".\"valid_to\" >= \"certificates\".\"valid_from\""
+        }
+      },
       "isRLSEnabled": false
     },
     "public.dns_records": {
@@ -244,6 +264,21 @@
             },
             {
               "expression": "value",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "i_dns_expires": {
+          "name": "i_dns_expires",
+          "columns": [
+            {
+              "expression": "expires_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -685,7 +720,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "u_providers_slug": {
+          "name": "u_providers_slug",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

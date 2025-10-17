@@ -11,7 +11,8 @@ CREATE TABLE "certificates" (
 	"valid_to" timestamp with time zone NOT NULL,
 	"ca_provider_id" uuid,
 	"fetched_at" timestamp with time zone NOT NULL,
-	"expires_at" timestamp with time zone NOT NULL
+	"expires_at" timestamp with time zone NOT NULL,
+	CONSTRAINT "ck_cert_valid_window" CHECK ("certificates"."valid_to" >= "certificates"."valid_from")
 );
 --> statement-breakpoint
 CREATE TABLE "dns_records" (
@@ -73,7 +74,8 @@ CREATE TABLE "providers" (
 	"domain" text,
 	"slug" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "u_providers_slug" UNIQUE("slug")
 );
 --> statement-breakpoint
 CREATE TABLE "registration_nameservers" (
@@ -139,8 +141,10 @@ ALTER TABLE "registrations" ADD CONSTRAINT "registrations_reseller_provider_id_p
 ALTER TABLE "seo" ADD CONSTRAINT "seo_domain_id_domains_id_fk" FOREIGN KEY ("domain_id") REFERENCES "public"."domains"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "i_certs_domain" ON "certificates" USING btree ("domain_id");--> statement-breakpoint
 CREATE INDEX "i_certs_valid_to" ON "certificates" USING btree ("valid_to");--> statement-breakpoint
+CREATE INDEX "i_certs_expires" ON "certificates" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "i_dns_domain_type" ON "dns_records" USING btree ("domain_id","type");--> statement-breakpoint
 CREATE INDEX "i_dns_type_value" ON "dns_records" USING btree ("type","value");--> statement-breakpoint
+CREATE INDEX "i_dns_expires" ON "dns_records" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "i_domains_tld" ON "domains" USING btree ("tld");--> statement-breakpoint
 CREATE INDEX "i_hosting_providers" ON "hosting" USING btree ("hosting_provider_id","email_provider_id","dns_provider_id");--> statement-breakpoint
 CREATE INDEX "i_http_name" ON "http_headers" USING btree ("name");--> statement-breakpoint

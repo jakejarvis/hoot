@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   doublePrecision,
   index,
   integer,
@@ -47,9 +48,7 @@ export const providers = pgTable(
       .defaultNow()
       .notNull(),
   },
-  () => [
-    // drizzle doesn't support functional or partial unique directly; use migration for those.
-  ],
+  (t) => [unique("u_providers_slug").on(t.slug)],
 );
 
 // Domains
@@ -157,6 +156,7 @@ export const dnsRecords = pgTable(
     unique("u_dns_record").on(t.domainId, t.type, t.name, t.value),
     index("i_dns_domain_type").on(t.domainId, t.type),
     index("i_dns_type_value").on(t.type, t.value),
+    index("i_dns_expires").on(t.expiresAt),
   ],
 );
 
@@ -180,6 +180,9 @@ export const certificates = pgTable(
   (t) => [
     index("i_certs_domain").on(t.domainId),
     index("i_certs_valid_to").on(t.validTo),
+    index("i_certs_expires").on(t.expiresAt),
+    // Ensure validTo >= validFrom
+    check("ck_cert_valid_window", sql`${t.validTo} >= ${t.validFrom}`),
     // GIN on alt_names via raw migration
   ],
 );
