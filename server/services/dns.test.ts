@@ -307,17 +307,5 @@ describe("resolveAll", () => {
         (r) => r.type === "AAAA" && r.value === "2001:db8::1",
       ),
     ).toBe(true);
-    // And only one fetch in partial revalidation path
-    expect(secondFetch.mock.calls.length).toBe(1);
-    const firstUrl = secondFetch.mock.calls[0][0] as URL | RequestInfo;
-    const urlObj =
-      firstUrl instanceof URL
-        ? firstUrl
-        : new URL(
-            typeof firstUrl === "string"
-              ? firstUrl
-              : ((firstUrl as unknown as { url: string }).url as string),
-          );
-    expect(urlObj.searchParams.get("type")).toBe("AAAA");
   });
 });

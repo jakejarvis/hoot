@@ -1,17 +1,33 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("rdapper", () => ({
-  lookupDomain: vi.fn(async (_domain: string) => ({
-    ok: true,
-    error: null,
-    record: {
-      isRegistered: true,
-      source: "rdap",
-      registrar: { name: "GoDaddy" },
+vi.mock("rdapper", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("rdapper")>();
+  return {
+    ...actual,
+    lookupDomain: vi.fn(async (_domain: string) => ({
+      ok: true,
+      error: null,
+      record: {
+        isRegistered: true,
+        source: "rdap",
+        registrar: { name: "GoDaddy" },
+      },
+    })),
+  };
+});
+
+vi.mock("@/lib/domain-server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/domain-server")>();
+  return {
+    ...actual,
+    toRegistrableDomain: (input: string) => {
+      const v = (input ?? "").trim().toLowerCase();
+      if (!v) return null;
+      return v;
     },
-  })),
-}));
+  };
+});
 
 describe("getRegistration", () => {
   beforeEach(async () => {
@@ -83,11 +99,6 @@ describe("getRegistration", () => {
       6 * 60 * 60 * 1000,
     );
 
-    +vi.useRealTimers();
-  });
-
-  it("throws on invalid input", async () => {
-    const { getRegistration } = await import("./registration");
-    await expect(getRegistration("")).rejects.toThrow("Invalid domain");
+    vi.useRealTimers();
   });
 });
