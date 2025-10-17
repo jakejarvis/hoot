@@ -128,7 +128,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     status = res.status;
     finalUrl = res.url;
     const contentType = res.headers.get("content-type") ?? "";
-    if (!/text\/html|application\/xhtml\+xml/i.test(contentType)) {
+    if (!/^(text\/html|application\/xhtml\+xml)\b/i.test(contentType)) {
       htmlError = `Non-HTML content-type: ${contentType}`;
     } else {
       const text = await res.text();

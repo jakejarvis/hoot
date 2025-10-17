@@ -1,5 +1,5 @@
 {
-  "id": "e6cbfef7-b544-4293-9008-37f5041b6618",
+  "id": "6b40253f-9cac-4024-bcc2-edaee66ddc6e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -721,10 +721,11 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "u_providers_slug": {
-          "name": "u_providers_slug",
+        "u_providers_category_slug": {
+          "name": "u_providers_category_slug",
           "nullsNotDistinct": false,
           "columns": [
+            "category",
             "slug"
           ]
         }

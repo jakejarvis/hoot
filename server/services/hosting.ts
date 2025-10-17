@@ -255,7 +255,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     });
   }
   console.info("[hosting] ok", {
-    domain,
+    domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,
     dns_provider: dnsName,

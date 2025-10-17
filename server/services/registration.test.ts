@@ -1,19 +1,23 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const hoisted = vi.hoisted(() => ({
+  lookupDomain: vi.fn(async (_domain: string) => ({
+    ok: true,
+    error: null,
+    record: {
+      isRegistered: true,
+      source: "rdap",
+      registrar: { name: "GoDaddy" },
+    },
+  })),
+}));
+
 vi.mock("rdapper", async (importOriginal) => {
   const actual = await importOriginal<typeof import("rdapper")>();
   return {
     ...actual,
-    lookupDomain: vi.fn(async (_domain: string) => ({
-      ok: true,
-      error: null,
-      record: {
-        isRegistered: true,
-        source: "rdap",
-        registrar: { name: "GoDaddy" },
-      },
-    })),
+    lookupDomain: hoisted.lookupDomain,
   };
 });
 

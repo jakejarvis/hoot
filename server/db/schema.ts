@@ -48,7 +48,7 @@ export const providers = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [unique("u_providers_slug").on(t.slug)],
+  (t) => [unique("u_providers_category_slug").on(t.category, t.slug)],
 );
 
 // Domains

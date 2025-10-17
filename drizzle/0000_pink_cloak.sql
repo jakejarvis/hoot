@@ -75,7 +75,7 @@ CREATE TABLE "providers" (
 	"slug" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "u_providers_slug" UNIQUE("slug")
+	CONSTRAINT "u_providers_category_slug" UNIQUE("category","slug")
 );
 --> statement-breakpoint
 CREATE TABLE "registration_nameservers" (
