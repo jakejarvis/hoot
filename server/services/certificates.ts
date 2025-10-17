@@ -9,6 +9,7 @@ import { certificates as certTable } from "@/server/db/schema";
 import { ttlForCertificates } from "@/server/db/ttl";
 import { replaceCertificates } from "@/server/repos/certificates";
 import { upsertDomain } from "@/server/repos/domains";
+import { resolveProviderId } from "@/server/repos/providers";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug("[certificates] start", { domain });
@@ -130,16 +131,27 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
         ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
         : new Date(Date.now() + 3600_000);
     if (d) {
+      const chainWithIds = await Promise.all(
+        out.map(async (c) => {
+          const caProviderId = await resolveProviderId({
+            category: "ca",
+            domain: c.caProvider.domain,
+            name: c.caProvider.name,
+          });
+          return {
+            issuer: c.issuer,
+            subject: c.subject,
+            altNames: c.altNames as unknown as string[],
+            validFrom: new Date(c.validFrom),
+            validTo: new Date(c.validTo),
+            caProviderId,
+          };
+        }),
+      );
+
       await replaceCertificates({
         domainId: d.id,
-        chain: out.map((c) => ({
-          issuer: c.issuer,
-          subject: c.subject,
-          altNames: c.altNames as unknown as string[],
-          validFrom: new Date(c.validFrom),
-          validTo: new Date(c.validTo),
-          caProviderId: null,
-        })),
+        chain: chainWithIds,
         fetchedAt: now,
         expiresAt: ttlForCertificates(now, earliestValidTo),
       });
