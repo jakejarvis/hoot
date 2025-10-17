@@ -12,8 +12,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       '@posthog/nextjs-config':
-        specifier: ^1.3.3
-        version: 1.3.3(next@15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
+        specifier: ^1.3.4
+        version: 1.3.4(next@15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
       '@sparticuz/chromium':
         specifier: 140.0.0
         version: 140.0.0
@@ -84,8 +84,8 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       posthog-js:
-        specifier: ^1.275.2
-        version: 1.275.2
+        specifier: ^1.276.0
+        version: 1.276.0
       posthog-node:
         specifier: ^5.10.0
         version: 5.10.0
@@ -879,16 +879,16 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@posthog/cli@0.4.8':
-    resolution: {integrity: sha512-LdPMD9vppl8TOMeG+sYsKDgs3dK8cA8vvgG65i0DrXlCPt2+lpRINtQJ+M7Bm8VZFUpzMieNOl+/o7axwxwXlw==}
+  '@posthog/cli@0.5.1':
+    resolution: {integrity: sha512-1a3zcLyP7fJp+IJ+jmodZ9poaQwGXJuz1/N9vEquudHqXi8cnhPy4OrbBoY3y1wZN4doYTwGqbfbts0662OUEw==}
     engines: {node: '>=14', npm: '>=6'}
     hasBin: true
 
   '@posthog/core@1.3.0':
     resolution: {integrity: sha512-hxLL8kZNHH098geedcxCz8y6xojkNYbmJEW+1vFXsmPcExyCXIUUJ/34X6xa9GcprKxd0Wsx3vfJQLQX4iVPhw==}
 
-  '@posthog/nextjs-config@1.3.3':
-    resolution: {integrity: sha512-kNtlD0DG1dGp9rgngRhGsLcRViduCgUmbz/huXQUjkH4FsbPzpUvXZzuYipVR3l+UREz074mNje+Y57jEWBMrQ==}
+  '@posthog/nextjs-config@1.3.4':
+    resolution: {integrity: sha512-cf1XIkK28y/5qL/as/IutH0EwysWy1gKdGM/xETZ0l25jTTN9wASx1ucP/BeE3dOYAVF039zlU9WNCFbIxW4Uw==}
     engines: {node: '>=20'}
     peerDependencies:
       next: '>12.1.0'
@@ -3209,8 +3209,8 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.275.2:
-    resolution: {integrity: sha512-g1fnV/GAcEdwwk4EVbJ1HMZhlhgKYxG1Z5KPGvr+q5re0ltyVq8jFA2PsF333jvOlI8R01LLdpYSIgU8sBiZfg==}
+  posthog-js@1.276.0:
+    resolution: {integrity: sha512-FYZE1037LrAoKKeUU0pUL7u8WwNK2BVeg5TFApwquVPUdj9h7u5Z077A313hPN19Ar+7Y+VHxqYqdHc4VNsVgw==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -4523,7 +4523,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@posthog/cli@0.4.8':
+  '@posthog/cli@0.5.1':
     dependencies:
       axios: 1.12.2
       axios-proxy-builder: 0.1.2
@@ -4535,9 +4535,9 @@ snapshots:
 
   '@posthog/core@1.3.0': {}
 
-  '@posthog/nextjs-config@1.3.3(next@15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
+  '@posthog/nextjs-config@1.3.4(next@15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
     dependencies:
-      '@posthog/cli': 0.4.8
+      '@posthog/cli': 0.5.1
       '@posthog/core': 1.3.0
       next: 15.6.0-canary.39(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       semver: 7.7.3
@@ -6892,7 +6892,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.275.2:
+  posthog-js@1.276.0:
     dependencies:
       '@posthog/core': 1.3.0
       core-js: 3.46.0
