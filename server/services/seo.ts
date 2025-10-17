@@ -81,6 +81,18 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           canonicalUrl: existing[0].canonicalUrl,
         }
       : null;
+    // Ensure uploaded image URL is still valid; refresh via Redis-backed cache
+    if (preview?.image) {
+      try {
+        const refreshed = await getOrCreateSocialPreviewImageUrl(
+          registrable ?? domain,
+          preview.image,
+        );
+        preview.imageUploaded = refreshed?.url ?? preview.imageUploaded ?? null;
+      } catch {
+        // keep as-is on transient errors
+      }
+    }
     const response: SeoResponse = {
       meta: {
         openGraph: existing[0].metaOpenGraph as OpenGraphMeta,
