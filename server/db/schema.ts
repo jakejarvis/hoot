@@ -12,6 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { Registration } from "@/lib/schemas";
 
 // Enums
 export const providerCategory = pgEnum("provider_category", [
@@ -88,10 +89,19 @@ export const registrations = pgTable(
     expirationDate: timestamp("expiration_date", { withTimezone: true }),
     deletionDate: timestamp("deletion_date", { withTimezone: true }),
     transferLock: boolean("transfer_lock"),
-    statuses: jsonb("statuses").notNull().default(sql`'[]'::jsonb`),
-    contacts: jsonb("contacts").notNull().default(sql`'{}'::jsonb`),
+    statuses: jsonb("statuses")
+      .$type<Registration["statuses"]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    contacts: jsonb("contacts")
+      .$type<{ contacts?: Registration["contacts"] }>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     whoisServer: text("whois_server"),
-    rdapServers: jsonb("rdap_servers").notNull().default(sql`'[]'::jsonb`),
+    rdapServers: jsonb("rdap_servers")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     source: text("source").notNull(),
     registrarProviderId: uuid("registrar_provider_id").references(
       () => providers.id,

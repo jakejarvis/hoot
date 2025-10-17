@@ -73,11 +73,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         .from(registrationNameservers)
         .where(eq(registrationNameservers.domainId, d.id));
 
-      type ContactsJson = { contacts?: Registration["contacts"] };
-      const contactsValue = row.contacts as unknown as ContactsJson;
-      const contactsArray = Array.isArray(contactsValue?.contacts)
-        ? contactsValue.contacts
-        : undefined;
+      const contactsArray = row.contacts.contacts;
 
       const response: Registration = {
         domain: registrable as string,
@@ -88,8 +84,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         punycodeName: d.punycodeName,
         registry: row.registry ?? undefined,
         // registrar object is optional; we don't persist its full details, so omit
-        statuses:
-          (row.statuses as unknown as Registration["statuses"]) ?? undefined,
+        statuses: row.statuses ?? undefined,
         creationDate: row.creationDate?.toISOString(),
         updatedDate: row.updatedDate?.toISOString(),
         expirationDate: row.expirationDate?.toISOString(),
@@ -99,9 +94,9 @@ export async function getRegistration(domain: string): Promise<Registration> {
           ns.length > 0
             ? ns.map((n) => ({ host: n.host, ipv4: n.ipv4, ipv6: n.ipv6 }))
             : undefined,
-        contacts: contactsArray as Registration["contacts"],
+        contacts: contactsArray,
         whoisServer: row.whoisServer ?? undefined,
-        rdapServers: (row.rdapServers as unknown as string[]) ?? undefined,
+        rdapServers: row.rdapServers ?? undefined,
         source: row.source as Registration["source"],
         registrarProvider,
       };
