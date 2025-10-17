@@ -242,4 +242,82 @@ describe("resolveAll", () => {
     // Ensure all callers see non-empty results; DoH fetch call counts and exact lengths may vary under concurrency
     fetchMock.mockRestore();
   });
+
+  it("fetches missing AAAA during partial revalidation", async () => {
+    const { resolveAll } = await import("./dns");
+    globalThis.__redisTestHelper?.reset();
+
+    // First run: full fetch; AAAA returns empty, others present
+    const firstFetch = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 60, data: "1.2.3.4" }]),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ Status: 0, Answer: [] }), {
+          status: 200,
+          headers: { "content-type": "application/dns-json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          { name: "example.com.", TTL: 300, data: "10 aspmx.l.google.com." },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "example.com.", TTL: 120, data: '"v=spf1"' }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          { name: "example.com.", TTL: 600, data: "ns1.cloudflare.com." },
+        ]),
+      );
+
+    const first = await resolveAll("example.com");
+    expect(first.records.some((r) => r.type === "AAAA")).toBe(false);
+    firstFetch.mockRestore();
+
+    // Second run: partial revalidation should fetch only AAAA
+    const secondFetch = vi
+      .spyOn(global, "fetch")
+      .mockImplementation(async (input: RequestInfo | URL) => {
+        const url =
+          input instanceof URL
+            ? input
+            : new URL(
+                typeof input === "string"
+                  ? input
+                  : ((input as unknown as { url: string }).url as string),
+              );
+        const type = url.searchParams.get("type");
+        if (type === "AAAA") {
+          return dohAnswer([
+            { name: "example.com.", TTL: 300, data: "2001:db8::1" },
+          ]);
+        }
+        return dohAnswer([]);
+      });
+
+    const second = await resolveAll("example.com");
+    secondFetch.mockRestore();
+
+    // Ensure AAAA was fetched and returned
+    expect(
+      second.records.some(
+        (r) => r.type === "AAAA" && r.value === "2001:db8::1",
+      ),
+    ).toBe(true);
+    // And only one fetch in partial revalidation path
+    expect(secondFetch.mock.calls.length).toBe(1);
+    const firstUrl = secondFetch.mock.calls[0][0] as URL | RequestInfo;
+    const urlObj =
+      firstUrl instanceof URL
+        ? firstUrl
+        : new URL(
+            typeof firstUrl === "string"
+              ? firstUrl
+              : ((firstUrl as unknown as { url: string }).url as string),
+          );
+    expect(urlObj.searchParams.get("type")).toBe("AAAA");
+  });
 });

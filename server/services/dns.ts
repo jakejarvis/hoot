@@ -120,8 +120,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       );
     };
     const freshTypes = presentTypes.filter((t) => typeIsFresh(t));
-    const allPresentFresh =
-      presentTypes.length > 0 && freshTypes.length === presentTypes.length;
+    const allFreshAcrossTypes = (types as DnsType[]).every((t) =>
+      typeIsFresh(t),
+    );
 
     const assembled: DnsRecord[] = rows.map((r) => ({
       type: r.type as DnsType,
@@ -133,11 +134,11 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     }));
     const resolverHint = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
     const sorted = sortDnsRecordsByType(assembled, types);
-    if (allPresentFresh) {
+    if (allFreshAcrossTypes) {
       await captureServer("dns_resolve_all", {
         domain: registrable ?? domain,
         duration_ms_total: Date.now() - startedAt,
-        counts: ((): Record<DnsType, number> => {
+        counts: (() => {
           return (types as DnsType[]).reduce(
             (acc, t) => {
               acc[t] = sorted.filter((r) => r.type === t).length;
@@ -158,9 +159,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       return { records: sorted, resolver: resolverHint };
     }
 
-    // Partial revalidation for stale present types using pinned provider
-    const staleTypes = presentTypes.filter((t) => !typeIsFresh(t));
-    if (staleTypes.length > 0) {
+    // Partial revalidation for stale OR missing types using pinned provider
+    const typesToFetch = (types as DnsType[]).filter((t) => !typeIsFresh(t));
+    if (typesToFetch.length > 0) {
       const pinnedProvider =
         DOH_PROVIDERS.find((p) => p.key === resolverHint) ??
         providerOrderForLookup(domain)[0];
@@ -168,7 +169,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       try {
         const fetchedStale = (
           await Promise.all(
-            staleTypes.map(async (t) => {
+            typesToFetch.map(async (t) => {
               const recs = await resolveTypeWithProvider(
                 domain,
                 t,
@@ -183,7 +184,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         // Persist only stale types
         const nowDate = new Date();
         const recordsByTypeToPersist = Object.fromEntries(
-          staleTypes.map((t) => [
+          typesToFetch.map((t) => [
             t,
             fetchedStale
               .filter((r) => r.type === t)
