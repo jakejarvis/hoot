@@ -14,8 +14,8 @@ afterEach(() => {
 });
 
 describe("probeHeaders", () => {
-  it("uses HEAD when available and caches result", async () => {
-    const head = new Response(null, {
+  it("uses GET and caches result", async () => {
+    const get = new Response(null, {
       status: 200,
       headers: {
         server: "vercel",
@@ -25,7 +25,7 @@ describe("probeHeaders", () => {
     const fetchMock = vi
       .spyOn(global, "fetch")
       .mockImplementation(async (_url, init?: RequestInit) => {
-        if ((init?.method || "HEAD") === "HEAD") return head;
+        if ((init?.method || "GET") === "GET") return get;
         return new Response(null, { status: 500 });
       });
 
@@ -40,27 +40,8 @@ describe("probeHeaders", () => {
     fetchMock.mockRestore();
   });
 
-  it("falls back to GET when HEAD fails", async () => {
+  it("handles concurrent callers and returns consistent results", async () => {
     const get = new Response(null, {
-      status: 200,
-      headers: { server: "cloudflare", "cf-ray": "id" },
-    });
-    const fetchMock = vi
-      .spyOn(global, "fetch")
-      .mockImplementation(async (_url, init?: RequestInit) => {
-        if ((init?.method || "HEAD") === "HEAD")
-          return new Response(null, { status: 500 });
-        return get;
-      });
-
-    const { probeHeaders } = await import("./headers");
-    const out = await probeHeaders("example.com");
-    expect(out.find((h) => h.name === "server")).toBeTruthy();
-    fetchMock.mockRestore();
-  });
-
-  it("dedupes concurrent callers via lock/wait", async () => {
-    const head = new Response(null, {
       status: 200,
       headers: {
         server: "vercel",
@@ -70,7 +51,7 @@ describe("probeHeaders", () => {
     const fetchMock = vi
       .spyOn(global, "fetch")
       .mockImplementation(async (_url, init?: RequestInit) => {
-        if ((init?.method || "HEAD") === "HEAD") return head;
+        if ((init?.method || "GET") === "GET") return get;
         return new Response(null, { status: 500 });
       });
 

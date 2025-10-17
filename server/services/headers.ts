@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { headThenGet } from "@/lib/fetch";
+import { fetchWithTimeout } from "@/lib/fetch";
 import type { HttpHeader } from "@/lib/schemas";
 import { db } from "@/server/db/client";
 import { httpHeaders } from "@/server/db/schema";
@@ -50,9 +50,10 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
 
   const REQUEST_TIMEOUT_MS = 5000;
   try {
-    const { response: final, usedMethod } = await headThenGet(
+    // Use GET to ensure provider-identifying headers are present on first load.
+    const final = await fetchWithTimeout(
       url,
-      {},
+      { method: "GET", redirect: "follow" },
       { timeoutMs: REQUEST_TIMEOUT_MS },
     );
 
@@ -65,7 +66,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     await captureServer("headers_probe", {
       domain: registrable ?? domain,
       status: final.status,
-      used_method: usedMethod,
+      used_method: "GET",
       final_url: final.url,
     });
     // Persist to Postgres
