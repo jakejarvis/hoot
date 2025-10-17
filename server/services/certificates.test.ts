@@ -26,7 +26,15 @@ vi.mock("node:tls", async () => {
   };
 });
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
 
 beforeEach(async () => {
   vi.resetModules();
@@ -59,9 +67,13 @@ describe("getCertificates", () => {
       subject: {
         CN: "example.com",
       } as unknown as tls.PeerCertificate["subject"],
+      valid_from: "Jan 1 00:00:00 2039 GMT",
+      valid_to: "Jan 8 00:00:00 2040 GMT",
     });
     const issuer = makePeer({
       subject: { O: "LE" } as unknown as tls.PeerCertificate["subject"],
+      valid_from: "Jan 1 00:00:00 2039 GMT",
+      valid_to: "Jan 8 00:00:00 2040 GMT",
     });
 
     const getPeerCertificate = vi
@@ -86,9 +98,32 @@ describe("getCertificates", () => {
 
     globalThis.__redisTestHelper.reset();
     const { getCertificates } = await import("./certificates");
-    const out = await getCertificates("success.test");
+    const out = await getCertificates("example.com");
     expect(out.length).toBeGreaterThan(0);
-    // no-op
+
+    // Verify DB persistence
+    const { db } = await import("@/server/db/client");
+    const { certificates, domains } = await import("@/server/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "example.com"))
+      .limit(1);
+    const rows = await db
+      .select()
+      .from(certificates)
+      .where(eq(certificates.domainId, d[0].id));
+    expect(rows.length).toBeGreaterThan(0);
+
+    // Next call should use DB fast-path: no TLS listener invocation
+    const prevCalls = (tlsMock.socketMock.getPeerCertificate as unknown as Mock)
+      .mock.calls.length;
+    const out2 = await getCertificates("example.com");
+    expect(out2.length).toBeGreaterThan(0);
+    const nextCalls = (tlsMock.socketMock.getPeerCertificate as unknown as Mock)
+      .mock.calls.length;
+    expect(nextCalls).toBe(prevCalls);
   });
 
   it("returns empty on timeout", async () => {

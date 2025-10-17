@@ -6,20 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mocks for dependencies used by detectHosting
 vi.mock("@/server/services/dns", () => ({
-  resolveAll: vi.fn(async (_domain: string) => ({
-    records: [],
-    source: "mock",
-  })),
+  resolveAll: vi.fn(async () => ({ records: [], source: "mock" })),
 }));
-
 vi.mock("@/server/services/headers", () => ({
-  probeHeaders: vi.fn(
-    async (_domain: string) => [] as { name: string; value: string }[],
-  ),
+  probeHeaders: vi.fn(async () => []),
 }));
-
 vi.mock("@/server/services/ip", () => ({
-  lookupIpMeta: vi.fn(async (_ip: string) => ({
+  lookupIpMeta: vi.fn(async () => ({
     geo: {
       city: "",
       region: "",

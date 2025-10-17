@@ -158,54 +158,19 @@ describe("resolveAll", () => {
     expect(first.records.length).toBeGreaterThan(0);
     firstFetch.mockRestore();
 
-    // Second run: should be database hit; avoid reusing exhausted body by mocking fresh resolves
-    const secondFetch = vi
-      .spyOn(global, "fetch")
-      .mockResolvedValueOnce(
-        dohAnswer([{ name: "example.com.", TTL: 60, data: "1.2.3.4" }]),
-      )
-      .mockResolvedValueOnce(
-        dohAnswer([{ name: "example.com.", TTL: 60, data: "::1" }]),
-      )
-      .mockResolvedValueOnce(
-        dohAnswer([
-          {
-            name: "example.com.",
-            TTL: 300,
-            data: "10 aspmx.l.google.com.",
-          },
-        ]),
-      )
-      .mockResolvedValueOnce(
-        dohAnswer([{ name: "example.com.", TTL: 120, data: '"v=spf1"' }]),
-      )
-      .mockResolvedValueOnce(
-        dohAnswer([
-          {
-            name: "example.com.",
-            TTL: 600,
-            data: "ns1.cloudflare.com.",
-          },
-        ]),
-      );
+    // Second run: DB hit — no network calls expected
+    const fetchSpy = vi.spyOn(global, "fetch");
     const second = await resolveAll("example.com");
     expect(second.records.length).toBe(first.records.length);
-    // Resolver should be preserved (whatever was used first)
     expect(["cloudflare", "google"]).toContain(second.resolver);
-    secondFetch.mockRestore();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 
   it("dedupes concurrent callers via aggregate cache/lock", async () => {
     const { resolveAll } = await import("./dns");
     globalThis.__redisTestHelper?.reset();
-    // Prepare one set of responses for provider 1 across types
-    const dohAnswer = (
-      answers: Array<{ name: string; TTL: number; data: string }>,
-    ) =>
-      new Response(JSON.stringify({ Status: 0, Answer: answers }), {
-        status: 200,
-        headers: { "content-type": "application/dns-json" },
-      });
+    // Use the top-level dohAnswer helper declared above
 
     const fetchMock = vi
       .spyOn(global, "fetch")

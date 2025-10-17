@@ -221,21 +221,24 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   // Persist to Postgres
   const now = new Date();
   if (d) {
-    const hostingProviderId = await resolveProviderId({
-      category: "hosting",
-      domain: hostingIconDomain,
-      name: hostingName,
-    });
-    const emailProviderId = await resolveProviderId({
-      category: "email",
-      domain: emailIconDomain,
-      name: emailName,
-    });
-    const dnsProviderId = await resolveProviderId({
-      category: "dns",
-      domain: dnsIconDomain,
-      name: dnsName,
-    });
+    const [hostingProviderId, emailProviderId, dnsProviderId] =
+      await Promise.all([
+        resolveProviderId({
+          category: "hosting",
+          domain: hostingIconDomain,
+          name: hostingName,
+        }),
+        resolveProviderId({
+          category: "email",
+          domain: emailIconDomain,
+          name: emailName,
+        }),
+        resolveProviderId({
+          category: "dns",
+          domain: dnsIconDomain,
+          name: dnsName,
+        }),
+      ]);
     await upsertHosting({
       domainId: d.id,
       hostingProviderId,

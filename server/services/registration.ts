@@ -73,7 +73,8 @@ export async function getRegistration(domain: string): Promise<Registration> {
         .from(registrationNameservers)
         .where(eq(registrationNameservers.domainId, d.id));
 
-      const contactsArray = row.contacts.contacts;
+      const contactsArray: Registration["contacts"] =
+        row.contacts?.contacts ?? [];
 
       const response: Registration = {
         domain: registrable as string,

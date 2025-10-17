@@ -30,8 +30,13 @@ describe("probeHeaders", () => {
       });
 
     const { probeHeaders } = await import("./headers");
-    const out = await probeHeaders("example.com");
-    expect(out.length).toBeGreaterThan(0);
+    const out1 = await probeHeaders("example.com");
+    expect(out1.length).toBeGreaterThan(0);
+    const fetchSpy = vi.spyOn(global, "fetch");
+    const out2 = await probeHeaders("example.com");
+    expect(out2.length).toBe(out1.length);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
     fetchMock.mockRestore();
   });
 

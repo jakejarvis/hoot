@@ -4,7 +4,6 @@ import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { invalidateReportCache } from "@/lib/report-cache";
 import {
   type DnsRecord,
   type DnsResolveResult,
@@ -232,7 +231,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           [...cachedFresh, ...fetchedStale],
           types,
         );
-        if (registrable) void invalidateReportCache(registrable);
         const counts = (types as DnsType[]).reduce(
           (acc, t) => {
             acc[t] = merged.filter((r) => r.type === t).length;
@@ -279,12 +277,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const provider = providers[attemptIndex] as DohProvider;
     const attemptStart = Date.now();
     try {
-      let usedFresh = false;
       const results = await Promise.all(
         types.map(async (type) => {
-          const fresh = await resolveTypeWithProvider(domain, type, provider);
-          usedFresh = usedFresh || true;
-          return fresh;
+          return await resolveTypeWithProvider(domain, type, provider);
         }),
       );
       const flat = results.flat();
@@ -342,7 +337,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           >,
         });
       }
-      if (registrable) void invalidateReportCache(registrable);
       await captureServer("dns_resolve_all", {
         domain: registrable ?? domain,
         duration_ms_total: Date.now() - startedAt,
@@ -386,7 +380,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     error: String(lastError),
   });
   throw new Error(
-    `All DoH providers failed for ${registrable}: ${String(lastError)}`,
+    `All DoH providers failed for ${registrable ?? domain}: ${String(lastError)}`,
   );
 }
 

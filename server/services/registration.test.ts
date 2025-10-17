@@ -42,14 +42,45 @@ describe("getRegistration", () => {
     globalThis.__redisTestHelper.reset();
   });
 
-  it("returns cached record when present", async () => {
-    globalThis.__redisTestHelper.store.set("reg:example.com", {
-      isRegistered: true,
-      source: "rdap",
+  it("returns cached record when present (DB fast-path, rdapper not called)", async () => {
+    const { upsertDomain } = await import("@/server/repos/domains");
+    const { upsertRegistration } = await import("@/server/repos/registrations");
+    const { lookupDomain } = await import("rdapper");
+    const spy = lookupDomain as unknown as import("vitest").Mock;
+    spy.mockClear();
+
+    const d = await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      punycodeName: "example.com",
+      unicodeName: "example.com",
+      isIdn: false,
     });
+    await upsertRegistration({
+      domainId: d.id,
+      isRegistered: true,
+      registry: "verisign",
+      statuses: [],
+      contacts: { contacts: [] },
+      whoisServer: null,
+      rdapServers: [],
+      source: "rdap",
+      fetchedAt: new Date("2024-01-01T00:00:00.000Z"),
+      expiresAt: new Date("2099-01-01T00:00:00.000Z"),
+      transferLock: null,
+      creationDate: null,
+      updatedDate: null,
+      expirationDate: null,
+      deletionDate: null,
+      registrarProviderId: null,
+      resellerProviderId: null,
+      nameservers: [],
+    });
+
     const { getRegistration } = await import("./registration");
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("loads via rdapper and caches on miss", async () => {
@@ -70,35 +101,37 @@ describe("getRegistration", () => {
     });
     // Freeze time for deterministic TTL checks
     vi.useFakeTimers();
-    const fixedNow = new Date("2024-01-01T00:00:00.000Z");
-    vi.setSystemTime(fixedNow);
+    try {
+      const fixedNow = new Date("2024-01-01T00:00:00.000Z");
+      vi.setSystemTime(fixedNow);
 
-    const { getRegistration } = await import("./registration");
-    const rec = await getRegistration("unregistered.test");
-    expect(rec.isRegistered).toBe(false);
+      const { getRegistration } = await import("./registration");
+      const rec = await getRegistration("unregistered.test");
+      expect(rec.isRegistered).toBe(false);
 
-    // Verify stored TTL is 6h from now for unregistered
-    const { db } = await import("@/server/db/client");
-    const { domains, registrations } = await import("@/server/db/schema");
-    const { eq } = await import("drizzle-orm");
-    const d = await db
-      .select({ id: domains.id })
-      .from(domains)
-      .where(eq(domains.name, "unregistered.test"))
-      .limit(1);
-    const row = (
-      await db
-        .select()
-        .from(registrations)
-        .where(eq(registrations.domainId, d[0].id))
-        .limit(1)
-    )[0];
-    expect(row).toBeTruthy();
-    expect(row.isRegistered).toBe(false);
-    expect(row.expiresAt.getTime() - fixedNow.getTime()).toBe(
-      6 * 60 * 60 * 1000,
-    );
-
-    vi.useRealTimers();
+      // Verify stored TTL is 6h from now for unregistered
+      const { db } = await import("@/server/db/client");
+      const { domains, registrations } = await import("@/server/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const d = await db
+        .select({ id: domains.id })
+        .from(domains)
+        .where(eq(domains.name, "unregistered.test"))
+        .limit(1);
+      const row = (
+        await db
+          .select()
+          .from(registrations)
+          .where(eq(registrations.domainId, d[0].id))
+          .limit(1)
+      )[0];
+      expect(row).toBeTruthy();
+      expect(row.isRegistered).toBe(false);
+      expect(row.expiresAt.getTime() - fixedNow.getTime()).toBe(
+        6 * 60 * 60 * 1000,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

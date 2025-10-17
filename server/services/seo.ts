@@ -123,12 +123,12 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           "User-Agent": USER_AGENT,
         },
       },
-      { timeoutMs: 10000 },
+      { timeoutMs: 10000, retries: 1, backoffMs: 200 },
     );
     status = res.status;
     finalUrl = res.url;
     const contentType = res.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
+    if (!/text\/html|application\/xhtml\+xml/i.test(contentType)) {
       htmlError = `Non-HTML content-type: ${contentType}`;
     } else {
       const text = await res.text();
@@ -214,7 +214,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       previewImageUploadedUrl: response.preview?.imageUploaded ?? null,
       canonicalUrl: response.preview?.canonicalUrl ?? null,
       robots: robots ?? ({} as RobotsTxt),
-      robotsSitemaps: [],
+      robotsSitemaps: response.robots?.sitemaps ?? [],
       errors: response.errors ?? {},
       fetchedAt: now,
       expiresAt: ttlForSeo(now),
