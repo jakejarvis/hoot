@@ -27,30 +27,50 @@ export async function detectHosting(domain: string): Promise<Hosting> {
 
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  if (!registrable) throw new Error("Invalid domain");
-  const d = await upsertDomain({
-    name: registrable,
-    tld: registrable.split(".").slice(1).join(".") as string,
-    punycodeName: registrable,
-    unicodeName: domain,
-    isIdn: registrable !== domain.toLowerCase(),
-  });
-  const existing = await db
-    .select({
-      hostingProviderId: hostingTable.hostingProviderId,
-      emailProviderId: hostingTable.emailProviderId,
-      dnsProviderId: hostingTable.dnsProviderId,
-      geoCity: hostingTable.geoCity,
-      geoRegion: hostingTable.geoRegion,
-      geoCountry: hostingTable.geoCountry,
-      geoCountryCode: hostingTable.geoCountryCode,
-      geoLat: hostingTable.geoLat,
-      geoLon: hostingTable.geoLon,
-      expiresAt: hostingTable.expiresAt,
-    })
-    .from(hostingTable)
-    .where(eq(hostingTable.domainId, d.id));
-  if (existing[0] && (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()) {
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: registrable.split(".").slice(1).join(".") as string,
+        punycodeName: registrable,
+        unicodeName: domain,
+        isIdn: registrable !== domain.toLowerCase(),
+      })
+    : null;
+  const existing = d
+    ? await db
+        .select({
+          hostingProviderId: hostingTable.hostingProviderId,
+          emailProviderId: hostingTable.emailProviderId,
+          dnsProviderId: hostingTable.dnsProviderId,
+          geoCity: hostingTable.geoCity,
+          geoRegion: hostingTable.geoRegion,
+          geoCountry: hostingTable.geoCountry,
+          geoCountryCode: hostingTable.geoCountryCode,
+          geoLat: hostingTable.geoLat,
+          geoLon: hostingTable.geoLon,
+          expiresAt: hostingTable.expiresAt,
+        })
+        .from(hostingTable)
+        .where(eq(hostingTable.domainId, d.id))
+    : ([] as Array<{
+        hostingProviderId: number | null;
+        emailProviderId: number | null;
+        dnsProviderId: number | null;
+      }> &
+        Array<{
+          geoCity: string | null;
+          geoRegion: string | null;
+          geoCountry: string | null;
+          geoCountryCode: string | null;
+          geoLat: number | null;
+          geoLon: number | null;
+          expiresAt: Date | null;
+        }>);
+  if (
+    d &&
+    existing[0] &&
+    (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()
+  ) {
     // Fast path: return hydrated providers from DB when TTL is valid
     const hp = alias(providersTable, "hp");
     const ep = alias(providersTable, "ep");
@@ -190,7 +210,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     geo,
   };
   await captureServer("hosting_detected", {
-    domain,
+    domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,
     dns_provider: dnsName,
@@ -200,35 +220,37 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   });
   // Persist to Postgres
   const now = new Date();
-  const hostingProviderId = await resolveProviderId({
-    category: "hosting",
-    domain: hostingIconDomain,
-    name: hostingName,
-  });
-  const emailProviderId = await resolveProviderId({
-    category: "email",
-    domain: emailIconDomain,
-    name: emailName,
-  });
-  const dnsProviderId = await resolveProviderId({
-    category: "dns",
-    domain: dnsIconDomain,
-    name: dnsName,
-  });
-  await upsertHosting({
-    domainId: d.id,
-    hostingProviderId,
-    emailProviderId,
-    dnsProviderId,
-    geoCity: geo.city,
-    geoRegion: geo.region,
-    geoCountry: geo.country,
-    geoCountryCode: geo.country_code,
-    geoLat: geo.lat ?? null,
-    geoLon: geo.lon ?? null,
-    fetchedAt: now,
-    expiresAt: ttlForHosting(now),
-  });
+  if (d) {
+    const hostingProviderId = await resolveProviderId({
+      category: "hosting",
+      domain: hostingIconDomain,
+      name: hostingName,
+    });
+    const emailProviderId = await resolveProviderId({
+      category: "email",
+      domain: emailIconDomain,
+      name: emailName,
+    });
+    const dnsProviderId = await resolveProviderId({
+      category: "dns",
+      domain: dnsIconDomain,
+      name: dnsName,
+    });
+    await upsertHosting({
+      domainId: d.id,
+      hostingProviderId,
+      emailProviderId,
+      dnsProviderId,
+      geoCity: geo.city,
+      geoRegion: geo.region,
+      geoCountry: geo.country,
+      geoCountryCode: geo.country_code,
+      geoLat: geo.lat ?? null,
+      geoLon: geo.lon ?? null,
+      fetchedAt: now,
+      expiresAt: ttlForHosting(now),
+    });
+  }
   console.info("[hosting] ok", {
     domain,
     hosting: hostingName,

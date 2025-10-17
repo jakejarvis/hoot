@@ -28,32 +28,49 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   console.debug("[seo] start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  if (!registrable) throw new Error("Invalid domain");
-  const d = await upsertDomain({
-    name: registrable,
-    tld: registrable.split(".").slice(1).join(".") as string,
-    punycodeName: registrable,
-    unicodeName: domain,
-    isIdn: registrable !== domain.toLowerCase(),
-  });
-  const existing = await db
-    .select({
-      sourceFinalUrl: seoTable.sourceFinalUrl,
-      sourceStatus: seoTable.sourceStatus,
-      metaOpenGraph: seoTable.metaOpenGraph,
-      metaTwitter: seoTable.metaTwitter,
-      metaGeneral: seoTable.metaGeneral,
-      previewTitle: seoTable.previewTitle,
-      previewDescription: seoTable.previewDescription,
-      previewImageUrl: seoTable.previewImageUrl,
-      previewImageUploadedUrl: seoTable.previewImageUploadedUrl,
-      canonicalUrl: seoTable.canonicalUrl,
-      robots: seoTable.robots,
-      errors: seoTable.errors,
-      expiresAt: seoTable.expiresAt,
-    })
-    .from(seoTable)
-    .where(eq(seoTable.domainId, d.id));
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: registrable.split(".").slice(1).join(".") as string,
+        punycodeName: registrable,
+        unicodeName: domain,
+        isIdn: registrable !== domain.toLowerCase(),
+      })
+    : null;
+  const existing = d
+    ? await db
+        .select({
+          sourceFinalUrl: seoTable.sourceFinalUrl,
+          sourceStatus: seoTable.sourceStatus,
+          metaOpenGraph: seoTable.metaOpenGraph,
+          metaTwitter: seoTable.metaTwitter,
+          metaGeneral: seoTable.metaGeneral,
+          previewTitle: seoTable.previewTitle,
+          previewDescription: seoTable.previewDescription,
+          previewImageUrl: seoTable.previewImageUrl,
+          previewImageUploadedUrl: seoTable.previewImageUploadedUrl,
+          canonicalUrl: seoTable.canonicalUrl,
+          robots: seoTable.robots,
+          errors: seoTable.errors,
+          expiresAt: seoTable.expiresAt,
+        })
+        .from(seoTable)
+        .where(eq(seoTable.domainId, d.id))
+    : ([] as Array<{
+        sourceFinalUrl: string | null;
+        sourceStatus: number | null;
+        metaOpenGraph: OpenGraphMeta;
+        metaTwitter: TwitterMeta;
+        metaGeneral: GeneralMeta;
+        previewTitle: string | null;
+        previewDescription: string | null;
+        previewImageUrl: string | null;
+        previewImageUploadedUrl: string | null;
+        canonicalUrl: string | null;
+        robots: RobotsTxt;
+        errors: Record<string, unknown>;
+        expiresAt: Date | null;
+      }>);
   if (existing[0] && (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()) {
     const preview = existing[0].canonicalUrl
       ? {
@@ -84,7 +101,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     return response;
   }
 
-  let finalUrl: string = `https://${registrable}/`;
+  let finalUrl: string = `https://${registrable ?? domain}/`;
   let status: number | null = null;
   let htmlError: string | undefined;
   let robotsError: string | undefined;
@@ -125,7 +142,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   // robots.txt fetch (no Redis cache; stored in Postgres with row TTL)
   try {
-    const robotsUrl = `https://${registrable}/robots.txt`;
+    const robotsUrl = `https://${registrable ?? domain}/robots.txt`;
     const res = await fetchWithTimeout(
       robotsUrl,
       {
@@ -155,7 +172,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   if (preview?.image) {
     try {
       const stored = await getOrCreateSocialPreviewImageUrl(
-        registrable,
+        (registrable ?? domain) as string,
         preview.image,
       );
       // Preserve original image URL for meta display; attach uploaded URL for rendering
@@ -181,29 +198,31 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       : {}),
   };
 
-  // Persist to Postgres
+  // Persist to Postgres only when we have a domainId
   const now = new Date();
-  await upsertSeo({
-    domainId: d.id,
-    sourceFinalUrl: response.source.finalUrl ?? null,
-    sourceStatus: response.source.status ?? null,
-    metaOpenGraph: response.meta?.openGraph ?? ({} as OpenGraphMeta),
-    metaTwitter: response.meta?.twitter ?? ({} as TwitterMeta),
-    metaGeneral: response.meta?.general ?? ({} as GeneralMeta),
-    previewTitle: response.preview?.title ?? null,
-    previewDescription: response.preview?.description ?? null,
-    previewImageUrl: response.preview?.image ?? null,
-    previewImageUploadedUrl: response.preview?.imageUploaded ?? null,
-    canonicalUrl: response.preview?.canonicalUrl ?? null,
-    robots: robots ?? ({} as RobotsTxt),
-    robotsSitemaps: [],
-    errors: response.errors ?? {},
-    fetchedAt: now,
-    expiresAt: ttlForSeo(now),
-  });
+  if (d) {
+    await upsertSeo({
+      domainId: d.id,
+      sourceFinalUrl: response.source.finalUrl ?? null,
+      sourceStatus: response.source.status ?? null,
+      metaOpenGraph: response.meta?.openGraph ?? ({} as OpenGraphMeta),
+      metaTwitter: response.meta?.twitter ?? ({} as TwitterMeta),
+      metaGeneral: response.meta?.general ?? ({} as GeneralMeta),
+      previewTitle: response.preview?.title ?? null,
+      previewDescription: response.preview?.description ?? null,
+      previewImageUrl: response.preview?.image ?? null,
+      previewImageUploadedUrl: response.preview?.imageUploaded ?? null,
+      canonicalUrl: response.preview?.canonicalUrl ?? null,
+      robots: robots ?? ({} as RobotsTxt),
+      robotsSitemaps: [],
+      errors: response.errors ?? {},
+      fetchedAt: now,
+      expiresAt: ttlForSeo(now),
+    });
+  }
 
   await captureServer("seo_fetch", {
-    domain: registrable,
+    domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,
     has_robots: !!robots,
@@ -211,7 +230,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   });
 
   console.info("[seo] ok", {
-    domain: registrable,
+    domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,
     has_robots: !!robots,

@@ -62,27 +62,39 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
 
   // Read from Postgres first; return if fresh
   const registrable = toRegistrableDomain(domain);
-  if (!registrable) throw new Error("Invalid domain");
-  const d = await upsertDomain({
-    name: registrable,
-    tld: registrable.split(".").slice(1).join(".") as string,
-    punycodeName: registrable,
-    unicodeName: domain,
-    isIdn: registrable !== domain.toLowerCase(),
-  });
-  const rows = await db
-    .select({
-      type: dnsRecords.type,
-      name: dnsRecords.name,
-      value: dnsRecords.value,
-      ttl: dnsRecords.ttl,
-      priority: dnsRecords.priority,
-      isCloudflare: dnsRecords.isCloudflare,
-      resolver: dnsRecords.resolver,
-      expiresAt: dnsRecords.expiresAt,
-    })
-    .from(dnsRecords)
-    .where(eq(dnsRecords.domainId, d.id));
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: registrable.split(".").slice(1).join(".") as string,
+        punycodeName: registrable,
+        unicodeName: domain,
+        isIdn: registrable !== domain.toLowerCase(),
+      })
+    : null;
+  const rows = d
+    ? await db
+        .select({
+          type: dnsRecords.type,
+          name: dnsRecords.name,
+          value: dnsRecords.value,
+          ttl: dnsRecords.ttl,
+          priority: dnsRecords.priority,
+          isCloudflare: dnsRecords.isCloudflare,
+          resolver: dnsRecords.resolver,
+          expiresAt: dnsRecords.expiresAt,
+        })
+        .from(dnsRecords)
+        .where(eq(dnsRecords.domainId, d.id))
+    : ([] as Array<{
+        type: DnsType;
+        name: string;
+        value: string;
+        ttl: number | null;
+        priority: number | null;
+        isCloudflare: boolean | null;
+        resolver: DnsResolver | null;
+        expiresAt: Date | null;
+      }>);
   if (rows.length > 0) {
     const now = Date.now();
     // Group cached rows by type
@@ -123,7 +135,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const sorted = sortDnsRecordsByType(assembled, types);
     if (allPresentFresh) {
       await captureServer("dns_resolve_all", {
-        domain: registrable,
+        domain: registrable ?? domain,
         duration_ms_total: Date.now() - startedAt,
         counts: ((): Record<DnsType, number> => {
           return (types as DnsType[]).reduce(
@@ -195,12 +207,14 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             expiresAt: Date;
           }>
         >;
-        await replaceDns({
-          domainId: d.id,
-          resolver: pinnedProvider.key,
-          fetchedAt: nowDate,
-          recordsByType: recordsByTypeToPersist,
-        });
+        if (d) {
+          await replaceDns({
+            domainId: d.id,
+            resolver: pinnedProvider.key,
+            fetchedAt: nowDate,
+            recordsByType: recordsByTypeToPersist,
+          });
+        }
 
         // Merge cached fresh + newly fetched stale
         const cachedFresh = freshTypes.flatMap((t) =>
@@ -217,7 +231,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           [...cachedFresh, ...fetchedStale],
           types,
         );
-        void invalidateReportCache(registrable);
+        if (registrable) void invalidateReportCache(registrable);
         const counts = (types as DnsType[]).reduce(
           (acc, t) => {
             acc[t] = merged.filter((r) => r.type === t).length;
@@ -229,7 +243,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
         );
         await captureServer("dns_resolve_all", {
-          domain: registrable,
+          domain: registrable ?? domain,
           duration_ms_total: Date.now() - startedAt,
           counts,
           cloudflare_ip_present: cloudflareIpPresent,
@@ -297,37 +311,39 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         NS: [],
       };
       for (const r of flat) recordsByType[r.type].push(r);
-      await replaceDns({
-        domainId: d.id,
-        resolver: resolverUsed,
-        fetchedAt: now,
-        recordsByType: Object.fromEntries(
-          (Object.keys(recordsByType) as DnsType[]).map((t) => [
-            t,
-            (recordsByType[t] as DnsRecord[]).map((r) => ({
-              name: r.name,
-              value: r.value,
-              ttl: r.ttl ?? null,
-              priority: r.priority ?? null,
-              isCloudflare: r.isCloudflare ?? null,
-              expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
-            })),
-          ]),
-        ) as Record<
-          DnsType,
-          Array<{
-            name: string;
-            value: string;
-            ttl: number | null;
-            priority: number | null;
-            isCloudflare: boolean | null;
-            expiresAt: Date;
-          }>
-        >,
-      });
-      void invalidateReportCache(registrable);
+      if (d) {
+        await replaceDns({
+          domainId: d.id,
+          resolver: resolverUsed,
+          fetchedAt: now,
+          recordsByType: Object.fromEntries(
+            (Object.keys(recordsByType) as DnsType[]).map((t) => [
+              t,
+              (recordsByType[t] as DnsRecord[]).map((r) => ({
+                name: r.name,
+                value: r.value,
+                ttl: r.ttl ?? null,
+                priority: r.priority ?? null,
+                isCloudflare: r.isCloudflare ?? null,
+                expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
+              })),
+            ]),
+          ) as Record<
+            DnsType,
+            Array<{
+              name: string;
+              value: string;
+              ttl: number | null;
+              priority: number | null;
+              isCloudflare: boolean | null;
+              expiresAt: Date;
+            }>
+          >,
+        });
+      }
+      if (registrable) void invalidateReportCache(registrable);
       await captureServer("dns_resolve_all", {
-        domain: registrable,
+        domain: registrable ?? domain,
         duration_ms_total: Date.now() - startedAt,
         counts,
         cloudflare_ip_present: cloudflareIpPresent,
@@ -358,7 +374,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
 
   // All providers failed
   await captureServer("dns_resolve_all", {
-    domain: registrable,
+    domain: registrable ?? domain,
     duration_ms_total: Date.now() - startedAt,
     failure: true,
     provider_attempts: providers.length,

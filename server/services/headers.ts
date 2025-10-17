@@ -14,25 +14,28 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   console.debug("[headers] start", { domain });
   // Fast path: read from Postgres if fresh
   const registrable = toRegistrableDomain(domain);
-  if (!registrable) throw new Error("Invalid domain");
-  const d = await upsertDomain({
-    name: registrable,
-    tld: registrable.split(".").slice(1).join(".") as string,
-    punycodeName: registrable,
-    unicodeName: domain,
-    isIdn: registrable !== domain.toLowerCase(),
-  });
-  const existing = await db
-    .select({
-      name: httpHeaders.name,
-      value: httpHeaders.value,
-      expiresAt: httpHeaders.expiresAt,
-    })
-    .from(httpHeaders)
-    .where(eq(httpHeaders.domainId, d.id));
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: registrable.split(".").slice(1).join(".") as string,
+        punycodeName: registrable,
+        unicodeName: domain,
+        isIdn: registrable !== domain.toLowerCase(),
+      })
+    : null;
+  const existing = d
+    ? await db
+        .select({
+          name: httpHeaders.name,
+          value: httpHeaders.value,
+          expiresAt: httpHeaders.expiresAt,
+        })
+        .from(httpHeaders)
+        .where(eq(httpHeaders.domainId, d.id))
+    : ([] as Array<{ name: string; value: string; expiresAt: Date | null }>);
   if (existing.length > 0) {
     const now = Date.now();
-    const fresh = existing.some((h) => (h.expiresAt?.getTime?.() ?? 0) > now);
+    const fresh = existing.every((h) => (h.expiresAt?.getTime?.() ?? 0) > now);
     if (fresh) {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
@@ -60,19 +63,21 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     const normalized = normalize(headers);
 
     await captureServer("headers_probe", {
-      domain: registrable,
+      domain: registrable ?? domain,
       status: final.status,
       used_method: usedMethod,
       final_url: final.url,
     });
     // Persist to Postgres
     const now = new Date();
-    await replaceHeaders({
-      domainId: d.id,
-      headers: normalized,
-      fetchedAt: now,
-      expiresAt: ttlForHeaders(now),
-    });
+    if (d) {
+      await replaceHeaders({
+        domainId: d.id,
+        headers: normalized,
+        fetchedAt: now,
+        expiresAt: ttlForHeaders(now),
+      });
+    }
     console.info("[headers] ok", {
       domain: registrable,
       status: final.status,
@@ -81,11 +86,11 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     return normalized;
   } catch (err) {
     console.warn("[headers] error", {
-      domain: registrable,
+      domain: registrable ?? domain,
       error: (err as Error)?.message,
     });
     await captureServer("headers_probe", {
-      domain: registrable,
+      domain: registrable ?? domain,
       status: -1,
       used_method: "ERROR",
       final_url: url,
