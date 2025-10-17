@@ -1,9 +1,6 @@
-import { neon, neonConfig } from "@neondatabase/serverless";
+import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "@/server/db/schema";
-
-// Reuse fetch connections across invocations (Vercel/Edge safe)
-neonConfig.fetchConnectionCache = true;
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
