@@ -14,28 +14,40 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug("[certificates] start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  if (!registrable) throw new Error("Invalid domain");
-  const d = await upsertDomain({
-    name: registrable,
-    tld: registrable.split(".").slice(1).join(".") as string,
-    punycodeName: registrable,
-    unicodeName: domain,
-    isIdn: registrable !== domain.toLowerCase(),
-  });
-  const existing = await db
-    .select({
-      issuer: certTable.issuer,
-      subject: certTable.subject,
-      altNames: certTable.altNames,
-      validFrom: certTable.validFrom,
-      validTo: certTable.validTo,
-      expiresAt: certTable.expiresAt,
-    })
-    .from(certTable)
-    .where(eq(certTable.domainId, d.id));
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: registrable.split(".").slice(1).join(".") as string,
+        punycodeName: registrable,
+        unicodeName: domain,
+        isIdn: registrable !== domain.toLowerCase(),
+      })
+    : null;
+  const existing = d
+    ? await db
+        .select({
+          issuer: certTable.issuer,
+          subject: certTable.subject,
+          altNames: certTable.altNames,
+          validFrom: certTable.validFrom,
+          validTo: certTable.validTo,
+          expiresAt: certTable.expiresAt,
+        })
+        .from(certTable)
+        .where(eq(certTable.domainId, d.id))
+    : ([] as Array<{
+        issuer: string;
+        subject: string;
+        altNames: unknown;
+        validFrom: Date;
+        validTo: Date;
+        expiresAt: Date | null;
+      }>);
   if (existing.length > 0) {
-    const now = Date.now();
-    const fresh = existing.some((c) => (c.expiresAt?.getTime?.() ?? 0) > now);
+    const nowMs = Date.now();
+    const fresh = existing.every(
+      (c) => (c.expiresAt?.getTime?.() ?? 0) > nowMs,
+    );
     if (fresh) {
       const out: Certificate[] = existing.map((c) => ({
         issuer: c.issuer,
@@ -106,7 +118,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     });
 
     await captureServer("tls_probe", {
-      domain: registrable,
+      domain: registrable ?? domain,
       chain_length: out.length,
       duration_ms: Date.now() - startedAt,
       outcome,
@@ -117,33 +129,35 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       out.length > 0
         ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
         : new Date(Date.now() + 3600_000);
-    await replaceCertificates({
-      domainId: d.id,
-      chain: out.map((c) => ({
-        issuer: c.issuer,
-        subject: c.subject,
-        altNames: c.altNames as unknown as string[],
-        validFrom: new Date(c.validFrom),
-        validTo: new Date(c.validTo),
-        caProviderId: null,
-      })),
-      fetchedAt: now,
-      expiresAt: ttlForCertificates(now, earliestValidTo),
-    });
+    if (d) {
+      await replaceCertificates({
+        domainId: d.id,
+        chain: out.map((c) => ({
+          issuer: c.issuer,
+          subject: c.subject,
+          altNames: c.altNames as unknown as string[],
+          validFrom: new Date(c.validFrom),
+          validTo: new Date(c.validTo),
+          caProviderId: null,
+        })),
+        fetchedAt: now,
+        expiresAt: ttlForCertificates(now, earliestValidTo),
+      });
+    }
 
     console.info("[certificates] ok", {
-      domain: registrable,
+      domain: registrable ?? domain,
       chain_length: out.length,
       duration_ms: Date.now() - startedAt,
     });
     return out;
   } catch (err) {
     console.warn("[certificates] error", {
-      domain: registrable,
+      domain: registrable ?? domain,
       error: (err as Error)?.message,
     });
     await captureServer("tls_probe", {
-      domain: registrable,
+      domain: registrable ?? domain,
       chain_length: 0,
       duration_ms: Date.now() - startedAt,
       outcome,
