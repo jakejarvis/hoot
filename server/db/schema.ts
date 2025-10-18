@@ -80,6 +80,7 @@ export const registrations = pgTable(
       .primaryKey()
       .references(() => domains.id, { onDelete: "cascade" }),
     isRegistered: boolean("is_registered").notNull(),
+    privacyEnabled: boolean("privacy_enabled"),
     registry: text("registry"),
     creationDate: timestamp("creation_date", { withTimezone: true }),
     updatedDate: timestamp("updated_date", { withTimezone: true }),

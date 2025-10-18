@@ -88,6 +88,7 @@ CREATE TABLE "registration_nameservers" (
 CREATE TABLE "registrations" (
 	"domain_id" uuid PRIMARY KEY NOT NULL,
 	"is_registered" boolean NOT NULL,
+	"privacy_enabled" boolean,
 	"registry" text,
 	"creation_date" timestamp with time zone,
 	"updated_date" timestamp with time zone,

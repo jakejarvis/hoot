@@ -78,6 +78,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         domain: registrable as string,
         tld: d.tld,
         isRegistered: row.isRegistered,
+        privacyEnabled: row.privacyEnabled ?? false,
         unicodeName: d.unicodeName,
         punycodeName: d.name,
         registry: row.registry ?? undefined,
@@ -179,6 +180,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     await upsertRegistration({
       domainId: d.id,
       isRegistered: record.isRegistered,
+      privacyEnabled: record.privacyEnabled ?? false,
       registry: record.registry ?? null,
       creationDate: record.creationDate ? new Date(record.creationDate) : null,
       updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,

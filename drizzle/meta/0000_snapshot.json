@@ -1,5 +1,5 @@
 {
-  "id": "d140bca9-65c8-42fc-9966-1b5101d3eb5c",
+  "id": "bcc62004-d123-4026-8854-303595cfaad8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -821,6 +821,12 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true
+        },
+        "privacy_enabled": {
+          "name": "privacy_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
         },
         "registry": {
           "name": "registry",
