@@ -1,5 +1,6 @@
 export const USER_AGENT =
-  process.env.HOOT_USER_AGENT || "hoot.sh/0.1 (+https://hoot.sh)";
+  process.env.EXTERNAL_USER_AGENT ||
+  "domainstack.io/0.1 (+https://domainstack.io)";
 
 // Cache TTLs
 export const FAVICON_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week

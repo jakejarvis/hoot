@@ -1,4 +1,4 @@
 import "server-only";
 import { Inngest } from "inngest";
 
-export const inngest = new Inngest({ id: "hoot-app" });
+export const inngest = new Inngest({ id: "domainstack" });

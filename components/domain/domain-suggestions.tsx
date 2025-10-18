@@ -26,7 +26,7 @@ export function DomainSuggestions({
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("hoot-history");
+      const stored = localStorage.getItem("search-history");
       if (stored) setHistory(JSON.parse(stored));
     } catch {
       // ignore parse errors

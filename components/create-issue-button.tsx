@@ -14,7 +14,7 @@ type CreateIssueButtonProps = {
   size?: React.ComponentProps<typeof Button>["size"];
 };
 
-const REPOSITORY_SLUG = "jakejarvis/hoot" as const;
+const REPOSITORY_SLUG = "jakejarvis/domainstack.io" as const;
 
 function buildIssueUrl(error?: ErrorWithOptionalDigest) {
   const message = error?.message?.trim() || "Unexpected error";

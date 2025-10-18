@@ -128,7 +128,9 @@ export function DomainSearch({
               autoCapitalize="none"
               spellCheck={false}
               disabled={loading}
-              placeholder={variant === "lg" ? "hoot.sh" : "Search any domain"}
+              placeholder={
+                variant === "lg" ? "domainstack.io" : "Search any domain"
+              }
               aria-label="Search any domain"
               value={value}
               onChange={(e) => setValue(e.target.value)}
