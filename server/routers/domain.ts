@@ -10,6 +10,7 @@ import {
   RegistrationSchema,
   SeoResponseSchema,
 } from "@/lib/schemas";
+import { inngest } from "@/server/inngest/client";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
 import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";
@@ -41,7 +42,15 @@ export const domainRouter = createTRPCRouter({
   dns: loggedProcedure
     .input(domainInput)
     .output(DnsResolveResultSchema)
-    .query(({ input }) => resolveAll(input.domain)),
+    .query(async ({ input }) => {
+      const result = await resolveAll(input.domain);
+      // fire-and-forget background fanout if needed
+      void inngest.send({
+        name: "domain/inspected",
+        data: { domain: input.domain },
+      });
+      return result;
+    }),
   hosting: loggedProcedure
     .input(domainInput)
     .output(HostingSchema)

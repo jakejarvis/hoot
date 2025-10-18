@@ -26,8 +26,22 @@ vi.mock("node:tls", async () => {
   };
 });
 
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCertificates, parseAltNames, toName } from "./certificates";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
+
+beforeEach(async () => {
+  vi.resetModules();
+  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { db } = await makePGliteDb();
+  vi.doMock("@/server/db/client", () => ({ db }));
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -53,9 +67,13 @@ describe("getCertificates", () => {
       subject: {
         CN: "example.com",
       } as unknown as tls.PeerCertificate["subject"],
+      valid_from: "Jan 1 00:00:00 2039 GMT",
+      valid_to: "Jan 8 00:00:00 2040 GMT",
     });
     const issuer = makePeer({
       subject: { O: "LE" } as unknown as tls.PeerCertificate["subject"],
+      valid_from: "Jan 1 00:00:00 2039 GMT",
+      valid_to: "Jan 8 00:00:00 2040 GMT",
     });
 
     const getPeerCertificate = vi
@@ -79,12 +97,33 @@ describe("getCertificates", () => {
     } as unknown as tls.TLSSocket;
 
     globalThis.__redisTestHelper.reset();
-    const out = await getCertificates("success.test");
+    const { getCertificates } = await import("./certificates");
+    const out = await getCertificates("example.com");
     expect(out.length).toBeGreaterThan(0);
-    expect(globalThis.__redisTestHelper.store.has("tls:success.test")).toBe(
-      true,
-    );
-    // no-op
+
+    // Verify DB persistence
+    const { db } = await import("@/server/db/client");
+    const { certificates, domains } = await import("@/server/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "example.com"))
+      .limit(1);
+    const rows = await db
+      .select()
+      .from(certificates)
+      .where(eq(certificates.domainId, d[0].id));
+    expect(rows.length).toBeGreaterThan(0);
+
+    // Next call should use DB fast-path: no TLS listener invocation
+    const prevCalls = (tlsMock.socketMock.getPeerCertificate as unknown as Mock)
+      .mock.calls.length;
+    const out2 = await getCertificates("example.com");
+    expect(out2.length).toBeGreaterThan(0);
+    const nextCalls = (tlsMock.socketMock.getPeerCertificate as unknown as Mock)
+      .mock.calls.length;
+    expect(nextCalls).toBe(prevCalls);
   });
 
   it("returns empty on timeout", async () => {
@@ -110,22 +149,28 @@ describe("getCertificates", () => {
       }),
     } as unknown as tls.TLSSocket;
 
-    // call the timeout callback asynchronously to simulate real timer
+    const { getCertificates } = await import("./certificates");
+    // Kick off without awaiting so the function can attach error handler first
+    const pending = getCertificates("timeout.test");
+    // Yield to event loop to allow synchronous setup inside getCertificates
+    await Promise.resolve();
+    // Now trigger the timeout callback
     setTimeout(() => timeoutCb?.(), 0);
-
-    const out = await getCertificates("timeout.test");
+    const out = await pending;
     expect(out).toEqual([]);
     // no-op
   });
 });
 
 describe("tls helper parsing", () => {
-  it("parseAltNames extracts DNS/IP values and ignores others", () => {
+  it("parseAltNames extracts DNS/IP values and ignores others", async () => {
     const input = "DNS:example.com, IP Address:1.2.3.4, URI:http://x";
+    const { parseAltNames } = await import("./certificates");
     expect(parseAltNames(input)).toEqual(["example.com", "1.2.3.4"]);
   });
 
-  it("parseAltNames handles empty/missing", () => {
+  it("parseAltNames handles empty/missing", async () => {
+    const { parseAltNames } = await import("./certificates");
     expect(parseAltNames(undefined)).toEqual([]);
     expect(parseAltNames("")).toEqual([]);
   });
@@ -135,8 +180,10 @@ describe("tls helper parsing", () => {
     } as unknown as tls.PeerCertificate["subject"];
     const orgOnly = { O: "Org" } as unknown as tls.PeerCertificate["subject"];
     const other = { X: "Y" } as unknown as tls.PeerCertificate["subject"];
-    expect(toName(cnOnly)).toBe("cn.example");
-    expect(toName(orgOnly)).toBe("Org");
-    expect(toName(other)).toContain("X");
+    return import("./certificates").then(({ toName }) => {
+      expect(toName(cnOnly)).toBe("cn.example");
+      expect(toName(orgOnly)).toBe("Org");
+      expect(toName(other)).toContain("X");
+    });
   });
 });

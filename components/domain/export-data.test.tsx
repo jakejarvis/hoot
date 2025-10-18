@@ -42,7 +42,6 @@ describe("exportDomainData", () => {
         registrar: { name: "Test Registrar" },
         warnings: [],
         unicodeName: "example.com",
-        punycodeName: "example.com",
         registrarProvider: {
           name: "Test Registrar",
           domain: "testregistrar.com",

@@ -7,4 +7,5 @@ export * from "./domain/registration";
 export * from "./domain/seo";
 export * from "./internal/export";
 export * from "./internal/provider";
+export * from "./internal/sections";
 export * from "./internal/storage";

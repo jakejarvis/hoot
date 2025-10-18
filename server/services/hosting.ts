@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
@@ -5,8 +8,16 @@ import {
   detectEmailProvider,
   detectHostingProvider,
 } from "@/lib/providers/detection";
-import { ns, redis } from "@/lib/redis";
 import type { Hosting } from "@/lib/schemas";
+import { db } from "@/server/db/client";
+import {
+  hosting as hostingTable,
+  providers as providersTable,
+} from "@/server/db/schema";
+import { ttlForHosting } from "@/server/db/ttl";
+import { upsertDomain } from "@/server/repos/domains";
+import { upsertHosting } from "@/server/repos/hosting";
+import { resolveProviderId } from "@/server/repos/providers";
 import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
@@ -15,11 +26,106 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   const startedAt = Date.now();
   console.debug("[hosting] start", { domain });
 
-  const key = ns("hosting", domain.toLowerCase());
-  const cached = await redis.get<Hosting>(key);
-  if (cached) {
-    console.info("[hosting] cache hit", { domain });
-    return cached;
+  // Fast path: DB
+  const registrable = toRegistrableDomain(domain);
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: getDomainTld(registrable) ?? "",
+        unicodeName: domain,
+      })
+    : null;
+  const existing = d
+    ? await db
+        .select({
+          hostingProviderId: hostingTable.hostingProviderId,
+          emailProviderId: hostingTable.emailProviderId,
+          dnsProviderId: hostingTable.dnsProviderId,
+          geoCity: hostingTable.geoCity,
+          geoRegion: hostingTable.geoRegion,
+          geoCountry: hostingTable.geoCountry,
+          geoCountryCode: hostingTable.geoCountryCode,
+          geoLat: hostingTable.geoLat,
+          geoLon: hostingTable.geoLon,
+          expiresAt: hostingTable.expiresAt,
+        })
+        .from(hostingTable)
+        .where(eq(hostingTable.domainId, d.id))
+    : ([] as Array<{
+        hostingProviderId: string | null;
+        emailProviderId: string | null;
+        dnsProviderId: string | null;
+        geoCity: string | null;
+        geoRegion: string | null;
+        geoCountry: string | null;
+        geoCountryCode: string | null;
+        geoLat: number | null;
+        geoLon: number | null;
+        expiresAt: Date | null;
+      }>);
+  if (
+    d &&
+    existing[0] &&
+    (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()
+  ) {
+    // Fast path: return hydrated providers from DB when TTL is valid
+    const hp = alias(providersTable, "hp");
+    const ep = alias(providersTable, "ep");
+    const dp = alias(providersTable, "dp");
+    const hydrated = await db
+      .select({
+        hostingProviderName: hp.name,
+        hostingProviderDomain: hp.domain,
+        emailProviderName: ep.name,
+        emailProviderDomain: ep.domain,
+        dnsProviderName: dp.name,
+        dnsProviderDomain: dp.domain,
+        geoCity: hostingTable.geoCity,
+        geoRegion: hostingTable.geoRegion,
+        geoCountry: hostingTable.geoCountry,
+        geoCountryCode: hostingTable.geoCountryCode,
+        geoLat: hostingTable.geoLat,
+        geoLon: hostingTable.geoLon,
+      })
+      .from(hostingTable)
+      .leftJoin(hp, eq(hp.id, hostingTable.hostingProviderId))
+      .leftJoin(ep, eq(ep.id, hostingTable.emailProviderId))
+      .leftJoin(dp, eq(dp.id, hostingTable.dnsProviderId))
+      .where(eq(hostingTable.domainId, d.id))
+      .limit(1);
+    const row = hydrated[0];
+    if (row) {
+      const info: Hosting = {
+        hostingProvider: {
+          name: row.hostingProviderName ?? "Unknown",
+          domain: row.hostingProviderDomain ?? null,
+        },
+        emailProvider: {
+          name: row.emailProviderName ?? "Unknown",
+          domain: row.emailProviderDomain ?? null,
+        },
+        dnsProvider: {
+          name: row.dnsProviderName ?? "Unknown",
+          domain: row.dnsProviderDomain ?? null,
+        },
+        geo: {
+          city: row.geoCity ?? "",
+          region: row.geoRegion ?? "",
+          country: row.geoCountry ?? "",
+          country_code: row.geoCountryCode ?? "",
+          lat: row.geoLat ?? null,
+          lon: row.geoLon ?? null,
+        },
+      };
+      console.info("[hosting] cache", {
+        domain,
+        hosting: info.hostingProvider.name,
+        email: info.emailProvider.name,
+        dns_provider: info.dnsProvider.name,
+        duration_ms: Date.now() - startedAt,
+      });
+      return info;
+    }
   }
 
   const { records: dns } = await resolveAll(domain);
@@ -101,7 +207,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     geo,
   };
   await captureServer("hosting_detected", {
-    domain,
+    domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,
     dns_provider: dnsName,
@@ -109,9 +215,44 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     geo_country: geo.country || "",
     duration_ms: Date.now() - startedAt,
   });
-  await redis.set(key, info, { ex: 24 * 60 * 60 });
+  // Persist to Postgres
+  const now = new Date();
+  if (d) {
+    const [hostingProviderId, emailProviderId, dnsProviderId] =
+      await Promise.all([
+        resolveProviderId({
+          category: "hosting",
+          domain: hostingIconDomain,
+          name: hostingName,
+        }),
+        resolveProviderId({
+          category: "email",
+          domain: emailIconDomain,
+          name: emailName,
+        }),
+        resolveProviderId({
+          category: "dns",
+          domain: dnsIconDomain,
+          name: dnsName,
+        }),
+      ]);
+    await upsertHosting({
+      domainId: d.id,
+      hostingProviderId,
+      emailProviderId,
+      dnsProviderId,
+      geoCity: geo.city,
+      geoRegion: geo.region,
+      geoCountry: geo.country,
+      geoCountryCode: geo.country_code,
+      geoLat: geo.lat ?? null,
+      geoLon: geo.lon ?? null,
+      fetchedAt: now,
+      expiresAt: ttlForHosting(now),
+    });
+  }
   console.info("[hosting] ok", {
-    domain,
+    domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,
     dns_provider: dnsName,

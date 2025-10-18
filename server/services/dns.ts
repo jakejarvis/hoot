@@ -1,9 +1,10 @@
+import { eq } from "drizzle-orm";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
-import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { ns, redis } from "@/lib/redis";
 import {
   type DnsRecord,
   type DnsResolveResult,
@@ -11,6 +12,11 @@ import {
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
+import { db } from "@/server/db/client";
+import { dnsRecords } from "@/server/db/schema";
+import { ttlForDnsRecord } from "@/server/db/ttl";
+import { replaceDns } from "@/server/repos/dns";
+import { upsertDomain } from "@/server/repos/domains";
 
 export type DohProvider = {
   key: DnsResolver;
@@ -47,219 +53,232 @@ export const DOH_PROVIDERS: DohProvider[] = [
 ];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
-  const lower = domain.toLowerCase();
   const startedAt = Date.now();
-  console.debug("[dns] start", { domain: lower });
-  const providers = providerOrderForLookup(lower);
+  console.debug("[dns] start", { domain });
+  const providers = providerOrderForLookup(domain);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
-  const aggregateKey = ns("dns", lower);
-  const lockKey = ns("lock", "dns", lower);
+  const types = DnsTypeSchema.options;
 
-  // Aggregate cache fast-path
-  try {
-    const agg = (await redis.get(aggregateKey)) as DnsResolveResult | null;
-    if (agg && Array.isArray(agg.records)) {
-      // Normalize sorting for returned aggregate in case older cache entries
-      // were stored before server-side sorting was added.
-      const sortedAggRecords = sortDnsRecordsByType(
-        agg.records,
-        DnsTypeSchema.options,
+  // Read from Postgres first; return if fresh
+  const registrable = toRegistrableDomain(domain);
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: getDomainTld(registrable) ?? "",
+        unicodeName: domain,
+      })
+    : null;
+  const rows = d
+    ? await db
+        .select({
+          type: dnsRecords.type,
+          name: dnsRecords.name,
+          value: dnsRecords.value,
+          ttl: dnsRecords.ttl,
+          priority: dnsRecords.priority,
+          isCloudflare: dnsRecords.isCloudflare,
+          resolver: dnsRecords.resolver,
+          expiresAt: dnsRecords.expiresAt,
+        })
+        .from(dnsRecords)
+        .where(eq(dnsRecords.domainId, d.id))
+    : ([] as Array<{
+        type: DnsType;
+        name: string;
+        value: string;
+        ttl: number | null;
+        priority: number | null;
+        isCloudflare: boolean | null;
+        resolver: DnsResolver | null;
+        expiresAt: Date | null;
+      }>);
+  if (rows.length > 0) {
+    const now = Date.now();
+    // Group cached rows by type
+    const rowsByType = (rows as typeof rows).reduce(
+      (acc, r) => {
+        const t = r.type as DnsType;
+        if (!acc[t]) {
+          acc[t] = [] as typeof rows;
+        }
+        (acc[t] as typeof rows).push(r);
+        return acc;
+      },
+      {
+        // intentionally start empty; only present types will be keys
+      } as Record<DnsType, typeof rows>,
+    );
+    const presentTypes = Object.keys(rowsByType) as DnsType[];
+    const typeIsFresh = (t: DnsType) => {
+      const arr = rowsByType[t] ?? [];
+      return (
+        arr.length > 0 &&
+        arr.every((r) => (r.expiresAt?.getTime?.() ?? 0) > now)
       );
+    };
+    const freshTypes = presentTypes.filter((t) => typeIsFresh(t));
+    const allFreshAcrossTypes = (types as DnsType[]).every((t) =>
+      typeIsFresh(t),
+    );
+
+    const assembled: DnsRecord[] = rows.map((r) => ({
+      type: r.type as DnsType,
+      name: r.name,
+      value: r.value,
+      ttl: r.ttl ?? undefined,
+      priority: r.priority ?? undefined,
+      isCloudflare: r.isCloudflare ?? undefined,
+    }));
+    const resolverHint = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
+    const sorted = sortDnsRecordsByType(assembled, types);
+    if (allFreshAcrossTypes) {
       await captureServer("dns_resolve_all", {
-        domain: lower,
+        domain: registrable ?? domain,
         duration_ms_total: Date.now() - startedAt,
-        counts: ((): Record<DnsType, number> => {
-          return (DnsTypeSchema.options as DnsType[]).reduce(
+        counts: (() => {
+          return (types as DnsType[]).reduce(
             (acc, t) => {
-              acc[t] = sortedAggRecords.filter((r) => r.type === t).length;
+              acc[t] = sorted.filter((r) => r.type === t).length;
               return acc;
             },
             { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
           );
         })(),
-        cloudflare_ip_present: sortedAggRecords.some(
+        cloudflare_ip_present: sorted.some(
           (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
         ),
-        dns_provider_used: agg.resolver,
+        dns_provider_used: resolverHint,
         provider_attempts: 0,
         duration_ms_by_provider: {},
         cache_hit: true,
-        cache_source: "aggregate",
+        cache_source: "postgres",
       });
-      console.info("[dns] aggregate cache hit", {
-        domain: lower,
-        resolver: agg.resolver,
-        total: sortedAggRecords.length,
-      });
-      return { records: sortedAggRecords, resolver: agg.resolver };
+      return { records: sorted, resolver: resolverHint };
     }
-  } catch {}
 
-  // Try to acquire lock or wait for someone else's result
-  const lockWaitStart = Date.now();
-  const lockResult = await acquireLockOrWaitForResult<DnsResolveResult>({
-    lockKey,
-    resultKey: aggregateKey,
-    lockTtl: 30,
-  });
-  if (!lockResult.acquired && lockResult.cachedResult) {
-    const agg = lockResult.cachedResult;
-    await captureServer("dns_resolve_all", {
-      domain: lower,
-      duration_ms_total: Date.now() - startedAt,
-      counts: ((): Record<DnsType, number> => {
-        return (DnsTypeSchema.options as DnsType[]).reduce(
+    // Partial revalidation for stale OR missing types using pinned provider
+    const typesToFetch = (types as DnsType[]).filter((t) => !typeIsFresh(t));
+    if (typesToFetch.length > 0) {
+      const pinnedProvider =
+        DOH_PROVIDERS.find((p) => p.key === resolverHint) ??
+        providerOrderForLookup(domain)[0];
+      const attemptStart = Date.now();
+      try {
+        const fetchedStale = (
+          await Promise.all(
+            typesToFetch.map(async (t) => {
+              const recs = await resolveTypeWithProvider(
+                domain,
+                t,
+                pinnedProvider,
+              );
+              return recs;
+            }),
+          )
+        ).flat();
+        durationByProvider[pinnedProvider.key] = Date.now() - attemptStart;
+
+        // Persist only stale types
+        const nowDate = new Date();
+        const recordsByTypeToPersist = Object.fromEntries(
+          typesToFetch.map((t) => [
+            t,
+            fetchedStale
+              .filter((r) => r.type === t)
+              .map((r) => ({
+                name: r.name,
+                value: r.value,
+                ttl: r.ttl ?? null,
+                priority: r.priority ?? null,
+                isCloudflare: r.isCloudflare ?? null,
+                expiresAt: ttlForDnsRecord(nowDate, r.ttl ?? null),
+              })),
+          ]),
+        ) as Record<
+          DnsType,
+          Array<{
+            name: string;
+            value: string;
+            ttl: number | null;
+            priority: number | null;
+            isCloudflare: boolean | null;
+            expiresAt: Date;
+          }>
+        >;
+        if (d) {
+          await replaceDns({
+            domainId: d.id,
+            resolver: pinnedProvider.key,
+            fetchedAt: nowDate,
+            recordsByType: recordsByTypeToPersist,
+          });
+        }
+
+        // Merge cached fresh + newly fetched stale
+        const cachedFresh = freshTypes.flatMap((t) =>
+          (rowsByType[t] ?? []).map((r) => ({
+            type: r.type as DnsType,
+            name: r.name,
+            value: r.value,
+            ttl: r.ttl ?? undefined,
+            priority: r.priority ?? undefined,
+            isCloudflare: r.isCloudflare ?? undefined,
+          })),
+        );
+        const merged = sortDnsRecordsByType(
+          [...cachedFresh, ...fetchedStale],
+          types,
+        );
+        const counts = (types as DnsType[]).reduce(
           (acc, t) => {
-            acc[t] = agg.records.filter((r) => r.type === t).length;
+            acc[t] = merged.filter((r) => r.type === t).length;
             return acc;
           },
           { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
         );
-      })(),
-      cloudflare_ip_present: agg.records.some(
-        (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-      ),
-      dns_provider_used: agg.resolver,
-      provider_attempts: 0,
-      duration_ms_by_provider: {},
-      cache_hit: true,
-      cache_source: "aggregate_wait",
-      lock_acquired: false,
-      lock_waited_ms: Date.now() - lockWaitStart,
-    });
-    console.info("[dns] waited for aggregate", { domain: lower });
-    const sortedAggRecords = sortDnsRecordsByType(
-      agg.records,
-      DnsTypeSchema.options,
-    );
-    return { records: sortedAggRecords, resolver: agg.resolver };
-  }
-  const acquiredLock = lockResult.acquired;
-  if (!acquiredLock && !lockResult.cachedResult) {
-    // Manual short wait/poll for aggregate result in test envs where
-    // acquireLockOrWaitForResult does not poll. Keeps callers from duplicating work.
-    const start = Date.now();
-    const maxWaitMs = 1500;
-    const intervalMs = 25;
-    // eslint-disable-next-line no-constant-condition
-    while (Date.now() - start < maxWaitMs) {
-      const agg = (await redis.get(aggregateKey)) as DnsResolveResult | null;
-      if (agg && Array.isArray(agg.records)) {
-        await captureServer("dns_resolve_all", {
-          domain: lower,
-          duration_ms_total: Date.now() - startedAt,
-          counts: ((): Record<DnsType, number> => {
-            return (DnsTypeSchema.options as DnsType[]).reduce(
-              (acc, t) => {
-                acc[t] = agg.records.filter((r) => r.type === t).length;
-                return acc;
-              },
-              { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<
-                DnsType,
-                number
-              >,
-            );
-          })(),
-          cloudflare_ip_present: agg.records.some(
-            (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-          ),
-          dns_provider_used: agg.resolver,
-          provider_attempts: 0,
-          duration_ms_by_provider: {},
-          cache_hit: true,
-          cache_source: "aggregate_wait",
-          lock_acquired: false,
-          lock_waited_ms: Date.now() - start,
-        });
-        const sortedAggRecords = sortDnsRecordsByType(
-          agg.records,
-          DnsTypeSchema.options,
+        const cloudflareIpPresent = merged.some(
+          (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
         );
-        return { records: sortedAggRecords, resolver: agg.resolver };
+        await captureServer("dns_resolve_all", {
+          domain: registrable ?? domain,
+          duration_ms_total: Date.now() - startedAt,
+          counts,
+          cloudflare_ip_present: cloudflareIpPresent,
+          dns_provider_used: pinnedProvider.key,
+          provider_attempts: 1,
+          duration_ms_by_provider: durationByProvider,
+          cache_hit: false,
+          cache_source: "partial",
+        });
+        console.info("[dns] ok (partial)", {
+          domain: registrable,
+          counts,
+          resolver: pinnedProvider.key,
+          duration_ms_total: Date.now() - startedAt,
+        });
+        return {
+          records: merged,
+          resolver: pinnedProvider.key,
+        } as DnsResolveResult;
+      } catch (err) {
+        console.warn("[dns] partial refresh failed; falling back", {
+          domain: registrable,
+          provider: pinnedProvider.key,
+          error: (err as Error)?.message,
+        });
+        // Fall through to full provider loop below
       }
-      await new Promise((r) => setTimeout(r, intervalMs));
     }
-  }
-
-  // Provider-agnostic cache check: if all types are cached, return immediately
-  const types = DnsTypeSchema.options;
-  const cachedByType = await Promise.all(
-    types.map(async (type) =>
-      redis.get<DnsRecord[]>(ns("dns", `${lower}:${type}`)),
-    ),
-  );
-  const allCached = cachedByType.every((arr) => Array.isArray(arr));
-  if (allCached) {
-    // Ensure per-type cached arrays are normalized for sorting
-    const sortedByType = (cachedByType as DnsRecord[][]).map((arr, idx) =>
-      sortDnsRecordsForType(arr.slice(), types[idx] as DnsType),
-    );
-    const flat = (sortedByType as DnsRecord[][]).flat();
-    const counts = types.reduce(
-      (acc, t) => {
-        acc[t] = flat.filter((r) => r.type === t).length;
-        return acc;
-      },
-      { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
-    );
-    const cloudflareIpPresent = flat.some(
-      (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-    );
-    const resolverUsed =
-      ((await redis.get(ns("dns", lower, "resolver"))) as DnsResolver | null) ||
-      "cloudflare";
-    try {
-      await redis.set(
-        aggregateKey,
-        { records: flat, resolver: resolverUsed },
-        {
-          ex: 5 * 60,
-        },
-      );
-    } catch {}
-    await captureServer("dns_resolve_all", {
-      domain: lower,
-      duration_ms_total: Date.now() - startedAt,
-      counts,
-      cloudflare_ip_present: cloudflareIpPresent,
-      dns_provider_used: resolverUsed,
-      provider_attempts: 0,
-      duration_ms_by_provider: {},
-      cache_hit: true,
-      cache_source: "per_type",
-      lock_acquired: acquiredLock,
-      lock_waited_ms: acquiredLock ? 0 : Date.now() - lockWaitStart,
-    });
-    console.info("[dns] cache hit", {
-      domain: lower,
-      counts,
-      resolver: resolverUsed,
-    });
-    if (acquiredLock) {
-      try {
-        await redis.del(lockKey);
-      } catch {}
-    }
-    return { records: flat, resolver: resolverUsed } as DnsResolveResult;
   }
 
   for (let attemptIndex = 0; attemptIndex < providers.length; attemptIndex++) {
     const provider = providers[attemptIndex] as DohProvider;
     const attemptStart = Date.now();
     try {
-      let usedFresh = false;
       const results = await Promise.all(
         types.map(async (type) => {
-          const key = ns("dns", lower, type);
-          const cached = await redis.get<DnsRecord[]>(key);
-          if (cached) {
-            return sortDnsRecordsForType(cached.slice(), type as DnsType);
-          }
-          const fresh = await resolveTypeWithProvider(domain, type, provider);
-          await redis.set(key, fresh, { ex: 5 * 60 });
-          usedFresh = usedFresh || true;
-          return fresh;
+          return await resolveTypeWithProvider(domain, type, provider);
         }),
       );
       const flat = results.flat();
@@ -275,54 +294,69 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const cloudflareIpPresent = flat.some(
         (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
       );
-      // Persist the resolver metadata only when we actually fetched fresh data
-      if (usedFresh) {
-        await redis.set(ns("dns", `${lower}:resolver`), provider.key, {
-          ex: 5 * 60,
+      const resolverUsed = provider.key;
+
+      // Persist to Postgres
+      const now = new Date();
+      const recordsByType: Record<DnsType, DnsRecord[]> = {
+        A: [],
+        AAAA: [],
+        MX: [],
+        TXT: [],
+        NS: [],
+      };
+      for (const r of flat) recordsByType[r.type].push(r);
+      if (d) {
+        await replaceDns({
+          domainId: d.id,
+          resolver: resolverUsed,
+          fetchedAt: now,
+          recordsByType: Object.fromEntries(
+            (Object.keys(recordsByType) as DnsType[]).map((t) => [
+              t,
+              (recordsByType[t] as DnsRecord[]).map((r) => ({
+                name: r.name,
+                value: r.value,
+                ttl: r.ttl ?? null,
+                priority: r.priority ?? null,
+                isCloudflare: r.isCloudflare ?? null,
+                expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
+              })),
+            ]),
+          ) as Record<
+            DnsType,
+            Array<{
+              name: string;
+              value: string;
+              ttl: number | null;
+              priority: number | null;
+              isCloudflare: boolean | null;
+              expiresAt: Date;
+            }>
+          >,
         });
       }
-      const resolverUsed = usedFresh
-        ? provider.key
-        : ((await redis.get(
-            ns("dns", lower, "resolver"),
-          )) as DnsResolver | null) || provider.key;
-      try {
-        await redis.set(
-          aggregateKey,
-          { records: flat, resolver: resolverUsed },
-          {
-            ex: 5 * 60,
-          },
-        );
-      } catch {}
       await captureServer("dns_resolve_all", {
-        domain: lower,
+        domain: registrable ?? domain,
         duration_ms_total: Date.now() - startedAt,
         counts,
         cloudflare_ip_present: cloudflareIpPresent,
         dns_provider_used: resolverUsed,
         provider_attempts: attemptIndex + 1,
         duration_ms_by_provider: durationByProvider,
-        cache_hit: !usedFresh,
-        cache_source: usedFresh ? "fresh" : "per_type",
-        lock_acquired: acquiredLock,
-        lock_waited_ms: acquiredLock ? 0 : Date.now() - lockWaitStart,
+        cache_hit: false,
+        cache_source: "fresh",
       });
       console.info("[dns] ok", {
-        domain: lower,
+        domain: registrable,
         counts,
         resolver: resolverUsed,
         duration_ms_total: Date.now() - startedAt,
       });
-      if (acquiredLock) {
-        try {
-          await redis.del(lockKey);
-        } catch {}
-      }
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
       console.warn("[dns] provider attempt failed", {
-        domain: lower,
+        domain: registrable,
         provider: provider.key,
         error: (err as Error)?.message,
       });
@@ -334,18 +368,18 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
 
   // All providers failed
   await captureServer("dns_resolve_all", {
-    domain: lower,
+    domain: registrable ?? domain,
     duration_ms_total: Date.now() - startedAt,
     failure: true,
     provider_attempts: providers.length,
   });
   console.error("[dns] all providers failed", {
-    domain: lower,
+    domain: registrable,
     providers: providers.map((p) => p.key),
     error: String(lastError),
   });
   throw new Error(
-    `All DoH providers failed for ${lower}: ${String(lastError)}`,
+    `All DoH providers failed for ${registrable ?? domain}: ${String(lastError)}`,
   );
 }
 

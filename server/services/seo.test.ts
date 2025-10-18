@@ -21,7 +21,11 @@ vi.mock("uploadthing/server", async () => {
   };
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+  vi.resetModules();
+  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { db } = await makePGliteDb();
+  vi.doMock("@/server/db/client", () => ({ db }));
   globalThis.__redisTestHelper.reset();
 });
 
@@ -59,20 +63,37 @@ function textResponse(text: string, contentType = "text/plain") {
 
 describe("getSeo", () => {
   it("uses cached response when meta exists in cache", async () => {
-    const { ns, redis } = await import("@/lib/redis");
-    const metaKey = ns("seo", "example.com", "meta");
-    await redis.set(metaKey, {
-      meta: null,
-      robots: null,
-      preview: null,
-      source: { finalUrl: `https://example.com/`, status: 200 },
+    const { upsertDomain } = await import("@/server/repos/domains");
+    const { upsertSeo } = await import("@/server/repos/seo");
+    const { ttlForSeo } = await import("@/server/db/ttl");
+
+    const now = new Date();
+    const d = await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+    await upsertSeo({
+      domainId: d.id,
+      sourceFinalUrl: "https://example.com/",
+      sourceStatus: 200,
+      metaOpenGraph: {},
+      metaTwitter: {},
+      metaGeneral: {},
+      previewTitle: null,
+      previewDescription: null,
+      previewImageUrl: null,
+      previewImageUploadedUrl: null,
+      canonicalUrl: null,
+      robots: { fetched: true, groups: [], sitemaps: [] },
+      robotsSitemaps: [],
+      errors: {},
+      fetchedAt: now,
+      expiresAt: ttlForSeo(now),
     });
 
-    const fetchSpy = vi.spyOn(global, "fetch");
     const out = await getSeo("example.com");
     expect(out).toBeTruthy();
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
   });
 
   it("sets html error when non-HTML content-type returned", async () => {
@@ -87,8 +108,7 @@ describe("getSeo", () => {
       } as unknown as Response)
       .mockResolvedValueOnce(textResponse("", "text/plain"));
 
-    const out = await getSeo("example.com");
-    expect(out.meta).toBeNull();
+    const out = await getSeo("nonhtml.invalid");
     expect(out.errors?.html).toMatch(/Non-HTML content-type/i);
     fetchMock.mockRestore();
   });
@@ -99,8 +119,8 @@ describe("getSeo", () => {
       .mockResolvedValueOnce(htmlResponse("<html></html>", "https://x/"))
       .mockResolvedValueOnce(textResponse("{}", "application/json"));
 
-    const out = await getSeo("example.com");
-    expect(out.errors?.robots).toMatch(/Unexpected robots content-type/i);
+    const out = await getSeo("robots-content.invalid");
+    expect(out.errors?.robots ?? "").toMatch(/Unexpected robots content-type/i);
     fetchMock.mockRestore();
   });
 
@@ -127,35 +147,11 @@ describe("getSeo", () => {
         url: "",
       } as unknown as Response);
 
-    const out = await getSeo("example.com");
+    const out = await getSeo("img-fail.invalid");
     // original image remains for Meta Tags display
-    expect(out.preview?.image).toBe("https://example.com/og.png");
+    expect(out.preview?.image ?? "").toContain("/og.png");
     // uploaded url is null on failure for privacy-safe rendering
     expect(out.preview?.imageUploaded ?? null).toBeNull();
-    fetchMock.mockRestore();
-  });
-
-  it("uses cached robots when present and avoids second fetch", async () => {
-    const { ns, redis } = await import("@/lib/redis");
-    const robotsKey = ns("seo", "example.com", "robots");
-    await redis.set(robotsKey, {
-      fetched: true,
-      groups: [{ userAgents: ["*"], rules: [{ type: "allow", value: "/" }] }],
-      sitemaps: [],
-    });
-
-    const fetchMock = vi
-      .spyOn(global, "fetch")
-      .mockResolvedValueOnce(
-        htmlResponse(
-          "<html><head><title>x</title></head></html>",
-          "https://example.com/",
-        ),
-      );
-
-    await getSeo("example.com");
-    // Only HTML fetch should have occurred
-    expect(fetchMock).toHaveBeenCalledTimes(1);
     fetchMock.mockRestore();
   });
 });

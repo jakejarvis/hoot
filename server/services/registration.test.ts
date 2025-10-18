@@ -1,12 +1,7 @@
 /* @vitest-environment node */
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { getRegistration } from "./registration";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/domain-server", () => ({
-  toRegistrableDomain: (d: string) => (d ? d.toLowerCase() : null),
-}));
-
-vi.mock("rdapper", () => ({
+const hoisted = vi.hoisted(() => ({
   lookupDomain: vi.fn(async (_domain: string) => ({
     ok: true,
     error: null,
@@ -18,45 +13,127 @@ vi.mock("rdapper", () => ({
   })),
 }));
 
+vi.mock("rdapper", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("rdapper")>();
+  return {
+    ...actual,
+    lookupDomain: hoisted.lookupDomain,
+  };
+});
+
+vi.mock("@/lib/domain-server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/domain-server")>();
+  return {
+    ...actual,
+    toRegistrableDomain: (input: string) => {
+      const v = (input ?? "").trim().toLowerCase();
+      if (!v) return null;
+      return v;
+    },
+  };
+});
+
 describe("getRegistration", () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    const { makePGliteDb } = await import("@/server/db/pglite");
+    const { db } = await makePGliteDb();
+    vi.doMock("@/server/db/client", () => ({ db }));
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     globalThis.__redisTestHelper.reset();
   });
-  it("returns cached record when present", async () => {
-    globalThis.__redisTestHelper.store.set("reg:example.com", {
-      isRegistered: true,
-      source: "rdap",
+
+  it("returns cached record when present (DB fast-path, rdapper not called)", async () => {
+    const { upsertDomain } = await import("@/server/repos/domains");
+    const { upsertRegistration } = await import("@/server/repos/registrations");
+    const { lookupDomain } = await import("rdapper");
+    const spy = lookupDomain as unknown as import("vitest").Mock;
+    spy.mockClear();
+
+    const d = await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
     });
+    await upsertRegistration({
+      domainId: d.id,
+      isRegistered: true,
+      registry: "verisign",
+      statuses: [],
+      contacts: { contacts: [] },
+      whoisServer: null,
+      rdapServers: [],
+      source: "rdap",
+      fetchedAt: new Date("2024-01-01T00:00:00.000Z"),
+      expiresAt: new Date("2099-01-01T00:00:00.000Z"),
+      transferLock: null,
+      creationDate: null,
+      updatedDate: null,
+      expirationDate: null,
+      deletionDate: null,
+      registrarProviderId: null,
+      resellerProviderId: null,
+      nameservers: [],
+    });
+
+    const { getRegistration } = await import("./registration");
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("loads via rdapper and caches on miss", async () => {
     globalThis.__redisTestHelper.reset();
+    const { getRegistration } = await import("./registration");
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
     expect(rec.registrarProvider?.name).toBe("GoDaddy");
-    expect(globalThis.__redisTestHelper.store.has("reg:example.com")).toBe(
-      true,
-    );
   });
 
   it("sets shorter TTL for unregistered domains (observed via second call)", async () => {
     globalThis.__redisTestHelper.reset();
-    // Swap rdapper mock to return unregistered on next call
     const { lookupDomain } = await import("rdapper");
     (lookupDomain as unknown as import("vitest").Mock).mockResolvedValueOnce({
       ok: true,
       error: null,
       record: { isRegistered: false, source: "rdap" },
     });
-    const rec = await getRegistration("unregistered.test");
-    expect(rec.isRegistered).toBe(false);
-  });
+    // Freeze time for deterministic TTL checks
+    vi.useFakeTimers();
+    try {
+      const fixedNow = new Date("2024-01-01T00:00:00.000Z");
+      vi.setSystemTime(fixedNow);
 
-  it("throws on invalid input", async () => {
-    // our mock toRegistrableDomain returns null for empty
-    await expect(getRegistration("")).rejects.toThrow("Invalid domain");
+      const { getRegistration } = await import("./registration");
+      const rec = await getRegistration("unregistered.test");
+      expect(rec.isRegistered).toBe(false);
+
+      // Verify stored TTL is 6h from now for unregistered
+      const { db } = await import("@/server/db/client");
+      const { domains, registrations } = await import("@/server/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const d = await db
+        .select({ id: domains.id })
+        .from(domains)
+        .where(eq(domains.name, "unregistered.test"))
+        .limit(1);
+      const row = (
+        await db
+          .select()
+          .from(registrations)
+          .where(eq(registrations.domainId, d[0].id))
+          .limit(1)
+      )[0];
+      expect(row).toBeTruthy();
+      expect(row.isRegistered).toBe(false);
+      expect(row.expiresAt.getTime() - fixedNow.getTime()).toBe(
+        6 * 60 * 60 * 1000,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

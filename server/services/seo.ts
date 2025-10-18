@@ -1,35 +1,118 @@
+import { eq } from "drizzle-orm";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
-import type { SeoResponse } from "@/lib/schemas";
+import type {
+  GeneralMeta,
+  OpenGraphMeta,
+  RobotsTxt,
+  SeoResponse,
+  TwitterMeta,
+} from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { makeImageFileName, uploadImage } from "@/lib/storage";
+import { db } from "@/server/db/client";
+import { seo as seoTable } from "@/server/db/schema";
+import { ttlForSeo } from "@/server/db/ttl";
+import { upsertDomain } from "@/server/repos/domains";
+import { upsertSeo } from "@/server/repos/seo";
 
-const HTML_TTL_SECONDS = 1 * 60 * 60; // 1 hour
-const ROBOTS_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
-  const lower = domain.toLowerCase();
-  const metaKey = ns("seo", lower, "meta");
-  const robotsKey = ns("seo", lower, "robots");
-
-  console.debug("[seo] start", { domain: lower });
-  const cached = await redis.get<SeoResponse>(metaKey);
-  if (cached) {
-    console.info("[seo] cache hit", {
-      domain: lower,
-      has_meta: !!cached.meta,
-      has_robots: !!cached.robots,
-    });
-    return cached;
+  console.debug("[seo] start", { domain });
+  // Fast path: DB
+  const registrable = toRegistrableDomain(domain);
+  const d = registrable
+    ? await upsertDomain({
+        name: registrable,
+        tld: getDomainTld(registrable) ?? "",
+        unicodeName: domain,
+      })
+    : null;
+  const existing = d
+    ? await db
+        .select({
+          sourceFinalUrl: seoTable.sourceFinalUrl,
+          sourceStatus: seoTable.sourceStatus,
+          metaOpenGraph: seoTable.metaOpenGraph,
+          metaTwitter: seoTable.metaTwitter,
+          metaGeneral: seoTable.metaGeneral,
+          previewTitle: seoTable.previewTitle,
+          previewDescription: seoTable.previewDescription,
+          previewImageUrl: seoTable.previewImageUrl,
+          previewImageUploadedUrl: seoTable.previewImageUploadedUrl,
+          canonicalUrl: seoTable.canonicalUrl,
+          robots: seoTable.robots,
+          errors: seoTable.errors,
+          expiresAt: seoTable.expiresAt,
+        })
+        .from(seoTable)
+        .where(eq(seoTable.domainId, d.id))
+    : ([] as Array<{
+        sourceFinalUrl: string | null;
+        sourceStatus: number | null;
+        metaOpenGraph: OpenGraphMeta;
+        metaTwitter: TwitterMeta;
+        metaGeneral: GeneralMeta;
+        previewTitle: string | null;
+        previewDescription: string | null;
+        previewImageUrl: string | null;
+        previewImageUploadedUrl: string | null;
+        canonicalUrl: string | null;
+        robots: RobotsTxt;
+        errors: Record<string, unknown>;
+        expiresAt: Date | null;
+      }>);
+  if (existing[0] && (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()) {
+    const preview = existing[0].canonicalUrl
+      ? {
+          title: existing[0].previewTitle ?? null,
+          description: existing[0].previewDescription ?? null,
+          image: existing[0].previewImageUrl ?? null,
+          imageUploaded: existing[0].previewImageUploadedUrl ?? null,
+          canonicalUrl: existing[0].canonicalUrl,
+        }
+      : null;
+    // Ensure uploaded image URL is still valid; refresh via Redis-backed cache
+    if (preview?.image) {
+      try {
+        const refreshed = await getOrCreateSocialPreviewImageUrl(
+          registrable ?? domain,
+          preview.image,
+        );
+        preview.imageUploaded = refreshed?.url ?? preview.imageUploaded ?? null;
+      } catch {
+        // keep as-is on transient errors
+      }
+    }
+    const response: SeoResponse = {
+      meta: {
+        openGraph: existing[0].metaOpenGraph as OpenGraphMeta,
+        twitter: existing[0].metaTwitter as TwitterMeta,
+        general: existing[0].metaGeneral as GeneralMeta,
+      },
+      robots: existing[0].robots as RobotsTxt,
+      preview,
+      source: {
+        finalUrl: existing[0].sourceFinalUrl ?? null,
+        status: existing[0].sourceStatus ?? null,
+      },
+      errors: existing[0].errors as Record<string, unknown> as {
+        html?: string;
+        robots?: string;
+      },
+    };
+    return response;
   }
 
-  let finalUrl: string = `https://${lower}/`;
+  let finalUrl: string = `https://${registrable ?? domain}/`;
   let status: number | null = null;
   let htmlError: string | undefined;
   let robotsError: string | undefined;
@@ -51,12 +134,12 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           "User-Agent": USER_AGENT,
         },
       },
-      { timeoutMs: 10000 },
+      { timeoutMs: 10000, retries: 1, backoffMs: 200 },
     );
     status = res.status;
     finalUrl = res.url;
     const contentType = res.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
+    if (!/^(text\/html|application\/xhtml\+xml)\b/i.test(contentType)) {
       htmlError = `Non-HTML content-type: ${contentType}`;
     } else {
       const text = await res.text();
@@ -68,34 +151,27 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     htmlError = String(err);
   }
 
-  // robots.txt fetch (with cache)
+  // robots.txt fetch (no Redis cache; stored in Postgres with row TTL)
   try {
-    const cachedRobots =
-      await redis.get<ReturnType<typeof parseRobotsTxt>>(robotsKey);
-    if (cachedRobots) {
-      robots = cachedRobots;
-    } else {
-      const robotsUrl = `https://${lower}/robots.txt`;
-      const res = await fetchWithTimeout(
-        robotsUrl,
-        {
-          method: "GET",
-          headers: { Accept: "text/plain", "User-Agent": USER_AGENT },
-        },
-        { timeoutMs: 8000 },
-      );
-      if (res.ok) {
-        const ct = res.headers.get("content-type") ?? "";
-        if (ct.includes("text/plain") || ct.includes("text/")) {
-          const txt = await res.text();
-          robots = parseRobotsTxt(txt, { baseUrl: robotsUrl });
-          await redis.set(robotsKey, robots, { ex: ROBOTS_TTL_SECONDS });
-        } else {
-          robotsError = `Unexpected robots content-type: ${ct}`;
-        }
+    const robotsUrl = `https://${registrable ?? domain}/robots.txt`;
+    const res = await fetchWithTimeout(
+      robotsUrl,
+      {
+        method: "GET",
+        headers: { Accept: "text/plain", "User-Agent": USER_AGENT },
+      },
+      { timeoutMs: 8000 },
+    );
+    if (res.ok) {
+      const ct = res.headers.get("content-type") ?? "";
+      if (/^text\/(plain|html|xml)?($|;|,)/i.test(ct)) {
+        const txt = await res.text();
+        robots = parseRobotsTxt(txt, { baseUrl: robotsUrl });
       } else {
-        robotsError = `HTTP ${res.status}`;
+        robotsError = `Unexpected robots content-type: ${ct}`;
       }
+    } else {
+      robotsError = `HTTP ${res.status}`;
     }
   } catch (err) {
     robotsError = String(err);
@@ -107,7 +183,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   if (preview?.image) {
     try {
       const stored = await getOrCreateSocialPreviewImageUrl(
-        lower,
+        registrable ?? domain,
         preview.image,
       );
       // Preserve original image URL for meta display; attach uploaded URL for rendering
@@ -133,10 +209,31 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       : {}),
   };
 
-  await redis.set(metaKey, response, { ex: HTML_TTL_SECONDS });
+  // Persist to Postgres only when we have a domainId
+  const now = new Date();
+  if (d) {
+    await upsertSeo({
+      domainId: d.id,
+      sourceFinalUrl: response.source.finalUrl ?? null,
+      sourceStatus: response.source.status ?? null,
+      metaOpenGraph: response.meta?.openGraph ?? ({} as OpenGraphMeta),
+      metaTwitter: response.meta?.twitter ?? ({} as TwitterMeta),
+      metaGeneral: response.meta?.general ?? ({} as GeneralMeta),
+      previewTitle: response.preview?.title ?? null,
+      previewDescription: response.preview?.description ?? null,
+      previewImageUrl: response.preview?.image ?? null,
+      previewImageUploadedUrl: response.preview?.imageUploaded ?? null,
+      canonicalUrl: response.preview?.canonicalUrl ?? null,
+      robots: robots ?? ({} as RobotsTxt),
+      robotsSitemaps: response.robots?.sitemaps ?? [],
+      errors: response.errors ?? {},
+      fetchedAt: now,
+      expiresAt: ttlForSeo(now),
+    });
+  }
 
   await captureServer("seo_fetch", {
-    domain: lower,
+    domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,
     has_robots: !!robots,
@@ -144,7 +241,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   });
 
   console.info("[seo] ok", {
-    domain: lower,
+    domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,
     has_robots: !!robots,
