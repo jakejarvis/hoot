@@ -29,7 +29,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: getDomainTld(registrable) as string,
+        tld: getDomainTld(registrable) ?? "",
         unicodeName: domain,
       })
     : null;

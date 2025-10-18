@@ -65,7 +65,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: getDomainTld(registrable) as string,
+        tld: getDomainTld(registrable) ?? "",
         unicodeName: domain,
       })
     : null;
