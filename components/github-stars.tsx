@@ -2,16 +2,19 @@ import { Button } from "@/components/ui/button";
 
 async function fetchRepoStars(): Promise<number | null> {
   try {
-    const res = await fetch("https://api.github.com/repos/jakejarvis/hoot", {
-      // Revalidate at most every 30 minutes to avoid rate limits (one day without access token)
-      next: { revalidate: process.env.GITHUB_TOKEN ? 1800 : 86400 },
-      headers: {
-        Accept: "application/vnd.github+json",
-        ...(process.env.GITHUB_TOKEN
-          ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
-          : {}),
+    const res = await fetch(
+      "https://api.github.com/repos/jakejarvis/domainstack.io",
+      {
+        // Revalidate at most every 30 minutes to avoid rate limits (one day without access token)
+        next: { revalidate: process.env.GITHUB_TOKEN ? 1800 : 86400 },
+        headers: {
+          Accept: "application/vnd.github+json",
+          ...(process.env.GITHUB_TOKEN
+            ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+            : {}),
+        },
       },
-    });
+    );
     if (!res.ok) return null;
     const json = (await res.json()) as { stargazers_count?: number };
     return typeof json.stargazers_count === "number"
@@ -29,7 +32,7 @@ export async function GithubStars() {
   return (
     <Button variant="ghost" size="sm" asChild>
       <a
-        href="https://github.com/jakejarvis/hoot"
+        href="https://github.com/jakejarvis/domainstack.io"
         target="_blank"
         rel="noopener"
         className="group flex select-none items-center gap-2 transition-colors"

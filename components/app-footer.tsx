@@ -27,13 +27,13 @@ export function AppFooter() {
         .
       </p>
       <p>
-        Owl logo by{" "}
+        Brick logo by{" "}
         <a
-          href="https://thenounproject.com/creator/jordymadueno/"
+          href="https://thenounproject.com/creator/arypst/"
           target="_blank"
           rel="noopener"
         >
-          Jordy Madueño
+          Ary Prasetyo
         </a>{" "}
         from{" "}
         <a href="https://thenounproject.com/" target="_blank" rel="noopener">

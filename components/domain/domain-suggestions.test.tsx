@@ -20,7 +20,7 @@ vi.mock("@/components/domain/favicon", () => ({
 describe("DomainSuggestions", () => {
   beforeEach(() => {
     // Reset history between tests
-    localStorage.removeItem("hoot-history");
+    localStorage.removeItem("search-history");
   });
 
   it("renders default suggestions when there is no history", async () => {
@@ -37,7 +37,7 @@ describe("DomainSuggestions", () => {
 
   it("merges history and defaults without duplicates, capped by max", async () => {
     localStorage.setItem(
-      "hoot-history",
+      "search-history",
       JSON.stringify(["foo.com", "github.com", "bar.org"]),
     );
     render(<DomainSuggestions max={4} />);
@@ -56,7 +56,7 @@ describe("DomainSuggestions", () => {
 
   it("invokes onSelect when a suggestion is clicked", async () => {
     const onSelect = vi.fn();
-    localStorage.setItem("hoot-history", JSON.stringify(["example.com"]));
+    localStorage.setItem("search-history", JSON.stringify(["example.com"]));
     render(<DomainSuggestions onSelectAction={onSelect} />);
     await userEvent.click(screen.getByRole("button", { name: /example.com/i }));
     expect(onSelect).toHaveBeenCalledWith("example.com");
