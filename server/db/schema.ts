@@ -58,9 +58,7 @@ export const domains = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     tld: text("tld").notNull(),
-    punycodeName: text("punycode_name").notNull(),
     unicodeName: text("unicode_name").notNull(),
-    isIdn: boolean("is_idn").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

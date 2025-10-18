@@ -33,7 +33,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     ? await upsertDomain({
         name: registrable,
         tld: getDomainTld(registrable) as string,
-        punycodeName: registrable,
         unicodeName: domain,
       })
     : null;

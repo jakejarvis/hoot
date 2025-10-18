@@ -19,7 +19,6 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     ? await upsertDomain({
         name: registrable,
         tld: getDomainTld(registrable) as string,
-        punycodeName: registrable,
         unicodeName: domain,
       })
     : null;

@@ -6,16 +6,15 @@ import { domains } from "@/server/db/schema";
 export type UpsertDomainParams = {
   name: string; // punycode lowercased
   tld: string;
-  punycodeName: string;
   unicodeName: string;
 };
 
 export async function upsertDomain(params: UpsertDomainParams) {
-  const { name, tld, punycodeName, unicodeName } = params;
+  const { name, tld, unicodeName } = params;
 
   const inserted = await db
     .insert(domains)
-    .values({ name, tld, punycodeName, unicodeName })
+    .values({ name, tld, unicodeName })
     .onConflictDoNothing({ target: [domains.name] })
     .returning();
   if (inserted[0]) return inserted[0];

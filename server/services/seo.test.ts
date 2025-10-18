@@ -71,7 +71,6 @@ describe("getSeo", () => {
     const d = await upsertDomain({
       name: "example.com",
       tld: "com",
-      punycodeName: "example.com",
       unicodeName: "example.com",
     });
     await upsertSeo({

@@ -30,7 +30,6 @@ export async function getRegistration(domain: string): Promise<Registration> {
     ? await upsertDomain({
         name: registrable,
         tld: getDomainTld(registrable) as string,
-        punycodeName: registrable,
         unicodeName: domain,
       })
     : null;
@@ -80,7 +79,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         tld: d.tld,
         isRegistered: row.isRegistered,
         unicodeName: d.unicodeName,
-        punycodeName: d.punycodeName,
+        punycodeName: d.name,
         registry: row.registry ?? undefined,
         // registrar object is optional; we don't persist its full details, so omit
         statuses: row.statuses ?? undefined,

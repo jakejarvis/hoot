@@ -20,7 +20,6 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     ? await upsertDomain({
         name: registrable,
         tld: getDomainTld(registrable) as string,
-        punycodeName: registrable,
         unicodeName: domain,
       })
     : null;

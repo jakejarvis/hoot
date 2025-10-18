@@ -32,7 +32,6 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     ? await upsertDomain({
         name: registrable,
         tld: getDomainTld(registrable) as string,
-        punycodeName: registrable,
         unicodeName: domain,
       })
     : null;
