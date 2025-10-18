@@ -101,9 +101,11 @@ describe("getCertificates", () => {
     const out = await getCertificates("example.com");
     expect(out.length).toBeGreaterThan(0);
 
-    // Verify DB persistence
+    // Verify DB persistence and CA provider creation
     const { db } = await import("@/server/db/client");
-    const { certificates, domains } = await import("@/server/db/schema");
+    const { certificates, domains, providers } = await import(
+      "@/server/db/schema"
+    );
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })
@@ -115,6 +117,14 @@ describe("getCertificates", () => {
       .from(certificates)
       .where(eq(certificates.domainId, d[0].id));
     expect(rows.length).toBeGreaterThan(0);
+
+    // Ensure a CA provider row exists for the issuer
+    const ca = await db
+      .select()
+      .from(providers)
+      .where(eq(providers.name, "Let's Encrypt"))
+      .limit(1);
+    expect(ca.length).toBe(1);
 
     // Next call should use DB fast-path: no TLS listener invocation
     const prevCalls = (tlsMock.socketMock.getPeerCertificate as unknown as Mock)

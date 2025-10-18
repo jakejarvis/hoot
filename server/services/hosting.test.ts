@@ -26,6 +26,22 @@ vi.mock("@/server/services/ip", () => ({
   })),
 }));
 
+// Ensure toRegistrableDomain accepts our test domains (including .example)
+vi.mock("@/lib/domain-server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/domain-server")>();
+  return {
+    ...actual,
+    toRegistrableDomain: (input: string) => {
+      const v = (input ?? "").trim().toLowerCase().replace(/\.$/, "");
+      if (!v) return null;
+      const parts = v.split(".").filter(Boolean);
+      if (parts.length >= 2)
+        return `${parts[parts.length - 2]}.${parts[parts.length - 1]}`;
+      return v;
+    },
+  };
+});
+
 beforeEach(async () => {
   vi.resetModules();
   const { makePGliteDb } = await import("@/server/db/pglite");
@@ -178,5 +194,72 @@ describe("detectHosting", () => {
     const result = await detectHosting("fallbacks.example");
     expect(result.emailProvider.domain).toBe("example.com");
     expect(result.dnsProvider.domain).toBe("example.net");
+  });
+
+  it("creates provider rows for DNS and Email when missing and links them", async () => {
+    const { resolveAll } = await import("@/server/services/dns");
+    const { probeHeaders } = await import("@/server/services/headers");
+    const { detectHosting } = await import("@/server/services/hosting");
+
+    (resolveAll as unknown as Mock).mockResolvedValue({
+      records: [
+        { type: "A", name: "example.com", value: "1.2.3.4", ttl: 60 },
+        {
+          type: "MX",
+          name: "example.com",
+          value: "aspmx.l.google.com",
+          ttl: 300,
+          priority: 10,
+        },
+        {
+          type: "NS",
+          name: "example.com",
+          value: "ns1.cloudflare.com",
+          ttl: 600,
+        },
+      ],
+      source: "mock",
+    });
+    (probeHeaders as unknown as Mock).mockResolvedValue([]);
+
+    await detectHosting("provider-create.example");
+
+    const { db } = await import("@/server/db/client");
+    const { domains, hosting, providers } = await import("@/server/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "provider-create.example"))
+      .limit(1);
+    const row = (
+      await db
+        .select({
+          emailProviderId: hosting.emailProviderId,
+          dnsProviderId: hosting.dnsProviderId,
+        })
+        .from(hosting)
+        .where(eq(hosting.domainId, d[0].id))
+        .limit(1)
+    )[0];
+    expect(row.emailProviderId).toBeTruthy();
+    expect(row.dnsProviderId).toBeTruthy();
+
+    const email = (
+      await db
+        .select({ name: providers.name })
+        .from(providers)
+        .where(eq(providers.id, row.emailProviderId as string))
+        .limit(1)
+    )[0];
+    const dns = (
+      await db
+        .select({ name: providers.name })
+        .from(providers)
+        .where(eq(providers.id, row.dnsProviderId as string))
+        .limit(1)
+    )[0];
+    expect(email?.name).toMatch(/google/i);
+    expect(dns?.name).toMatch(/cloudflare/i);
   });
 });

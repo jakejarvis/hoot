@@ -44,3 +44,34 @@ export async function resolveProviderId(
   }
   return null;
 }
+
+/** Resolve a provider id, creating a provider row when not found. */
+export async function resolveOrCreateProviderId(
+  input: ResolveProviderInput,
+): Promise<string | null> {
+  const existing = await resolveProviderId(input);
+  if (existing) return existing;
+  const name = input.name?.trim();
+  if (!name) return null;
+  const domain = input.domain?.toLowerCase() ?? null;
+  // Use a simple slug derived from name for uniqueness within category
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+  try {
+    const inserted = await db
+      .insert(providers)
+      .values({
+        category: input.category,
+        name,
+        domain: domain ?? undefined,
+        slug,
+      })
+      .returning({ id: providers.id });
+    return inserted[0]?.id ?? null;
+  } catch {
+    // Possible race with another insert; try resolve again
+    return resolveProviderId(input);
+  }
+}

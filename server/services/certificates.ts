@@ -10,7 +10,7 @@ import { certificates as certTable } from "@/server/db/schema";
 import { ttlForCertificates } from "@/server/db/ttl";
 import { replaceCertificates } from "@/server/repos/certificates";
 import { upsertDomain } from "@/server/repos/domains";
-import { resolveProviderId } from "@/server/repos/providers";
+import { resolveOrCreateProviderId } from "@/server/repos/providers";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug("[certificates] start", { domain });
@@ -132,7 +132,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
     if (d) {
       const chainWithIds = await Promise.all(
         out.map(async (c) => {
-          const caProviderId = await resolveProviderId({
+          const caProviderId = await resolveOrCreateProviderId({
             category: "ca",
             domain: c.caProvider.domain,
             name: c.caProvider.name,

@@ -12,7 +12,7 @@ import {
 } from "@/server/db/schema";
 import { ttlForRegistration } from "@/server/db/ttl";
 import { upsertDomain } from "@/server/repos/domains";
-import { resolveProviderId } from "@/server/repos/providers";
+import { resolveOrCreateProviderId } from "@/server/repos/providers";
 import { upsertRegistration } from "@/server/repos/registrations";
 
 /**
@@ -167,7 +167,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // Persist snapshot
   if (d) {
     const fetchedAt = new Date();
-    const registrarProviderId = await resolveProviderId({
+    const registrarProviderId = await resolveOrCreateProviderId({
       category: "registrar",
       domain: registrarDomain,
       name: registrarName,

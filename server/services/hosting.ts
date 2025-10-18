@@ -17,7 +17,7 @@ import {
 import { ttlForHosting } from "@/server/db/ttl";
 import { upsertDomain } from "@/server/repos/domains";
 import { upsertHosting } from "@/server/repos/hosting";
-import { resolveProviderId } from "@/server/repos/providers";
+import { resolveOrCreateProviderId } from "@/server/repos/providers";
 import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
@@ -157,10 +157,10 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   // Hosting provider detection with fallback:
   // - If no A record/IP → unset → "Not configured"
   // - Else if unknown → try IP ownership org/ISP
-  const hosting = detectHostingProvider(headers);
+  const hostingDetected = detectHostingProvider(headers);
 
-  let hostingName = hosting.name;
-  let hostingIconDomain = hosting.domain;
+  let hostingName = hostingDetected.name;
+  let hostingIconDomain = hostingDetected.domain;
   if (!ip) {
     hostingName = "Not configured";
     hostingIconDomain = null;
@@ -170,17 +170,17 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   }
 
   // Determine email provider, using "Not configured" when MX is unset
-  const email =
+  const emailDetected =
     mx.length === 0
       ? { name: "Not configured", domain: null }
       : detectEmailProvider(mx.map((m) => m.value));
-  let emailName = email.name;
-  let emailIconDomain = email.domain;
+  let emailName = emailDetected.name;
+  let emailIconDomain = emailDetected.domain;
 
   // DNS provider from nameservers
-  const dnsResult = detectDnsProvider(nsRecords.map((n) => n.value));
-  let dnsName = dnsResult.name;
-  let dnsIconDomain = dnsResult.domain;
+  const dnsDetected = detectDnsProvider(nsRecords.map((n) => n.value));
+  let dnsName = dnsDetected.name;
+  let dnsIconDomain = dnsDetected.domain;
 
   // If no known match for email provider, fall back to the root domain of the first MX host
   if (emailName !== "Not configured" && !emailIconDomain && mx[0]?.value) {
@@ -220,17 +220,17 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   if (d) {
     const [hostingProviderId, emailProviderId, dnsProviderId] =
       await Promise.all([
-        resolveProviderId({
+        resolveOrCreateProviderId({
           category: "hosting",
           domain: hostingIconDomain,
           name: hostingName,
         }),
-        resolveProviderId({
+        resolveOrCreateProviderId({
           category: "email",
           domain: emailIconDomain,
           name: emailName,
         }),
-        resolveProviderId({
+        resolveOrCreateProviderId({
           category: "dns",
           domain: dnsIconDomain,
           name: dnsName,

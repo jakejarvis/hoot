@@ -85,12 +85,40 @@ describe("getRegistration", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("loads via rdapper and caches on miss", async () => {
+  it("loads via rdapper, creates registrar provider when missing, and caches", async () => {
     globalThis.__redisTestHelper.reset();
     const { getRegistration } = await import("./registration");
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
     expect(rec.registrarProvider?.name).toBe("GoDaddy");
+
+    // Verify provider row exists and is linked
+    const { db } = await import("@/server/db/client");
+    const { domains, providers, registrations } = await import(
+      "@/server/db/schema"
+    );
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "example.com"))
+      .limit(1);
+    const row = (
+      await db
+        .select({ registrarProviderId: registrations.registrarProviderId })
+        .from(registrations)
+        .where(eq(registrations.domainId, d[0].id))
+        .limit(1)
+    )[0];
+    expect(row.registrarProviderId).toBeTruthy();
+    const prov = (
+      await db
+        .select({ name: providers.name })
+        .from(providers)
+        .where(eq(providers.id, row.registrarProviderId as string))
+        .limit(1)
+    )[0];
+    expect(prov?.name).toBe("GoDaddy");
   });
 
   it("sets shorter TTL for unregistered domains (observed via second call)", async () => {
