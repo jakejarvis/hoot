@@ -6,10 +6,5 @@
       "PUPPETEER_SKIP_DOWNLOAD": "1"
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/blob-prune",
-      "schedule": "0 3 * * *"
-    }
-  ]
+  "crons": []
 }
