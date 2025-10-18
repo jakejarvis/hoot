@@ -47,7 +47,7 @@ export const sectionRevalidate = inngest.createFunction(
   {
     id: "section-revalidate",
     concurrency: {
-      key: "event.data.domainNormalized",
+      key: "event.data.domain",
       limit: 1,
     },
   },

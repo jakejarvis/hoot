@@ -89,13 +89,11 @@ export const scanDue = inngest.createFunction(
     const MAX_SECTIONS_PER_DOMAIN = 6;
     const groupedEvents: Array<{
       name: string;
-      data: { domain: string; domainNormalized: string; sections: string[] };
+      data: { domain: string; sections: string[] };
     }> = Array.from(domainsToSections.entries()).map(([domain, sections]) => ({
       name: "section/revalidate",
       data: {
-        domain,
-        domainNormalized:
-          typeof domain === "string" ? domain.trim().toLowerCase() : "",
+        domain: typeof domain === "string" ? domain.trim().toLowerCase() : "",
         sections: Array.from(sections).slice(0, MAX_SECTIONS_PER_DOMAIN),
       },
     }));
