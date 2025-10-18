@@ -19,7 +19,7 @@ export async function getPricingForTld(domain: string): Promise<Pricing> {
   const input = (domain ?? "").trim().toLowerCase();
   // Ignore single-label hosts like "localhost" or invalid inputs
   if (!input.includes(".")) return { tld: null, price: null };
-  const tld = (getDomainTld(input) ?? "").toLowerCase();
+  const tld = getDomainTld(input)?.toLowerCase() ?? "";
   if (!tld) return { tld: null, price: null };
 
   const resultKey = ns("pricing");
