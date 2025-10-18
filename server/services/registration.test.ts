@@ -58,7 +58,6 @@ describe("getRegistration", () => {
       tld: "com",
       punycodeName: "example.com",
       unicodeName: "example.com",
-      isIdn: false,
     });
     await upsertRegistration({
       domainId: d.id,

@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
@@ -17,10 +18,9 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: registrable.split(".").slice(1).join(".") as string,
+        tld: getDomainTld(registrable) as string,
         punycodeName: registrable,
         unicodeName: domain,
-        isIdn: registrable !== domain.toLowerCase(),
       })
     : null;
   const existing = d

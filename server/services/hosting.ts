@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
@@ -30,10 +31,9 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: registrable.split(".").slice(1).join(".") as string,
+        tld: getDomainTld(registrable) as string,
         punycodeName: registrable,
         unicodeName: domain,
-        isIdn: registrable !== domain.toLowerCase(),
       })
     : null;
   const existing = d

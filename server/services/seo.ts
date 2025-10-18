@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
@@ -31,10 +32,9 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: registrable.split(".").slice(1).join(".") as string,
+        tld: getDomainTld(registrable) as string,
         punycodeName: registrable,
         unicodeName: domain,
-        isIdn: registrable !== domain.toLowerCase(),
       })
     : null;
   const existing = d

@@ -73,7 +73,6 @@ describe("getSeo", () => {
       tld: "com",
       punycodeName: "example.com",
       unicodeName: "example.com",
-      isIdn: false,
     });
     await upsertSeo({
       domainId: d.id,

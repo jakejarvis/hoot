@@ -6,7 +6,6 @@ export const RegistrationSchema = z.object({
   domain: z.string(),
   tld: z.string(),
   isRegistered: z.boolean(),
-  isIDN: z.boolean().optional(),
   unicodeName: z.string().optional(),
   punycodeName: z.string().optional(),
   registry: z.string().optional(),

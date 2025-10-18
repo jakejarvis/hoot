@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { lookupDomain } from "rdapper";
+import { getDomainTld, lookupDomain } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
@@ -29,10 +29,9 @@ export async function getRegistration(domain: string): Promise<Registration> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: registrable.split(".").slice(1).join(".") as string,
+        tld: getDomainTld(registrable) as string,
         punycodeName: registrable,
         unicodeName: domain,
-        isIdn: registrable !== domain.toLowerCase(),
       })
     : null;
   if (d) {
@@ -80,7 +79,6 @@ export async function getRegistration(domain: string): Promise<Registration> {
         domain: registrable as string,
         tld: d.tld,
         isRegistered: row.isRegistered,
-        isIDN: d.isIdn,
         unicodeName: d.unicodeName,
         punycodeName: d.punycodeName,
         registry: row.registry ?? undefined,

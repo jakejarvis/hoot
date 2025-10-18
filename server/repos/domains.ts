@@ -8,15 +8,14 @@ export type UpsertDomainParams = {
   tld: string;
   punycodeName: string;
   unicodeName: string;
-  isIdn: boolean;
 };
 
 export async function upsertDomain(params: UpsertDomainParams) {
-  const { name, tld, punycodeName, unicodeName, isIdn } = params;
+  const { name, tld, punycodeName, unicodeName } = params;
 
   const inserted = await db
     .insert(domains)
-    .values({ name, tld, punycodeName, unicodeName, isIdn })
+    .values({ name, tld, punycodeName, unicodeName })
     .onConflictDoNothing({ target: [domains.name] })
     .returning();
   if (inserted[0]) return inserted[0];

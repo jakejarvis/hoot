@@ -1,5 +1,6 @@
 import tls from "node:tls";
 import { eq } from "drizzle-orm";
+import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
@@ -18,10 +19,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   const d = registrable
     ? await upsertDomain({
         name: registrable,
-        tld: registrable.split(".").slice(1).join(".") as string,
+        tld: getDomainTld(registrable) as string,
         punycodeName: registrable,
         unicodeName: domain,
-        isIdn: registrable !== domain.toLowerCase(),
       })
     : null;
   const existing = d
