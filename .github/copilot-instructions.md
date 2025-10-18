@@ -1,6 +1,6 @@
-# GitHub Copilot Instructions for DomainStack
+# GitHub Copilot Instructions for Domainstack
 
-This repository contains DomainStack, a domain intelligence tool built with Next.js 15 and React 19. Please follow these guidelines when assisting with code in this repository.
+This repository contains Domainstack, a domain intelligence tool built with Next.js 15 and React 19. Please follow these guidelines when assisting with code in this repository.
 
 ## Additional Resources
 
@@ -11,7 +11,7 @@ Refer to these files for comprehensive information about the repository's archit
 
 ## Project Overview
 
-DomainStack is an all-in-one app for exploring domain names, providing instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation. The app features a modern, interactive UI with dark mode support and fast, privacy-focused data fetching with caching.
+Domainstack is an all-in-one app for exploring domain names, providing instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation. The app features a modern, interactive UI with dark mode support and fast, privacy-focused data fetching with caching.
 
 ## Project Structure & Module Organization
 

@@ -10,7 +10,7 @@ import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DomainStack — Domain Intelligence Made Easy",
+  title: "Domainstack — Domain Intelligence Made Easy",
   description: "Investigate domains with WHOIS, DNS, SSL, headers, and more.",
 };
 

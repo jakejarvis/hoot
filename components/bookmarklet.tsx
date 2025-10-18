@@ -37,7 +37,7 @@ export function Bookmarklet({ className }: { className?: string }) {
           </DialogTitle>
           <DialogDescription>
             Drag the button below to your bookmarks bar. Then, press it on any
-            site and the DomainStack report for that domain will open in a new
+            site and the Domainstack report for that domain will open in a new
             tab, like magic!
           </DialogDescription>
         </DialogHeader>
