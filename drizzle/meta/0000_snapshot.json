@@ -1,5 +1,5 @@
 {
-  "id": "6b40253f-9cac-4024-bcc2-edaee66ddc6e",
+  "id": "d140bca9-65c8-42fc-9966-1b5101d3eb5c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -345,24 +345,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "punycode_name": {
-          "name": "punycode_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "unicode_name": {
           "name": "unicode_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "is_idn": {
-          "name": "is_idn",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "created_at": {
           "name": "created_at",

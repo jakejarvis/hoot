@@ -34,9 +34,7 @@ CREATE TABLE "domains" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"tld" text NOT NULL,
-	"punycode_name" text NOT NULL,
 	"unicode_name" text NOT NULL,
-	"is_idn" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "u_domains_name" UNIQUE("name")
