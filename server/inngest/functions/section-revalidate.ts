@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { ns, redis } from "@/lib/redis";
+import { type Section, SectionEnum } from "@/lib/schemas";
 import { inngest } from "@/server/inngest/client";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
@@ -9,23 +10,6 @@ import { probeHeaders } from "@/server/services/headers";
 import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getSeo } from "@/server/services/seo";
-
-type Section =
-  | "dns"
-  | "headers"
-  | "hosting"
-  | "certificates"
-  | "seo"
-  | "registration";
-
-const SectionEnum = z.enum([
-  "dns",
-  "headers",
-  "hosting",
-  "certificates",
-  "seo",
-  "registration",
-]);
 
 const eventDataSchema = z.object({
   domain: z.string().min(1),
@@ -63,7 +47,7 @@ export const sectionRevalidate = inngest.createFunction(
   {
     id: "section-revalidate",
     concurrency: {
-      key: "event.data.domain",
+      key: "event.data.domainNormalized",
       limit: 1,
     },
   },
@@ -71,6 +55,8 @@ export const sectionRevalidate = inngest.createFunction(
   async ({ event }) => {
     const data = eventDataSchema.parse(event.data);
     const domain = data.domain;
+    const normalizedDomain =
+      typeof domain === "string" ? domain.trim().toLowerCase() : "";
 
     const sections: Section[] = Array.isArray(data.sections)
       ? data.sections
@@ -81,13 +67,8 @@ export const sectionRevalidate = inngest.createFunction(
     if (sections.length === 0) return;
 
     for (const section of sections) {
-      const lockKey = ns("lock", "revalidate", section, domain.toLowerCase());
-      const resultKey = ns(
-        "result",
-        "revalidate",
-        section,
-        domain.toLowerCase(),
-      );
+      const lockKey = ns("lock", "revalidate", section, normalizedDomain);
+      const resultKey = ns("result", "revalidate", section, normalizedDomain);
       const wait = await acquireLockOrWaitForResult({
         lockKey,
         resultKey,
@@ -95,7 +76,7 @@ export const sectionRevalidate = inngest.createFunction(
       });
       if (!wait.acquired) continue;
       try {
-        await revalidateSection(domain, section);
+        await revalidateSection(normalizedDomain, section);
         try {
           await redis.set(
             resultKey,

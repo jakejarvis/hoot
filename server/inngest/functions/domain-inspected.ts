@@ -20,7 +20,12 @@ export const domainInspected = inngest.createFunction(
     for (const section of targets) {
       await step.sendEvent("enqueue-section", {
         name: "section/revalidate",
-        data: { domain, section },
+        data: {
+          domain,
+          domainNormalized:
+            typeof domain === "string" ? domain.trim().toLowerCase() : "",
+          section,
+        },
       });
     }
   },
