@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getDomainTld } from "rdapper";
 import { PorkbunIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,7 +80,7 @@ export function DomainPricingCTA({
 
           <span>
             <span className="text-foreground/85">
-              .{getDomainTld(domain)} from
+              .{domain.split(".").slice(1).join(".")} from
             </span>{" "}
             <span className="font-semibold">{price}</span>
             <span className="text-muted-foreground text-xs">/year</span>
