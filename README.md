@@ -1,4 +1,4 @@
-# 🦉 [Domainstack](https://domainstack.io) - Domain Intelligence Tool
+# 📚 [Domainstack](https://domainstack.io) - Domain Intelligence Tool
 
 [Domainstack](https://domainstack.io) is a all-in-one app for exploring domain names. Easily search for any domain (like [`github.com`](https://domainstack.io/github.com)) and get instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation.
 
