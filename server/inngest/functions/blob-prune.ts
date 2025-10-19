@@ -60,9 +60,29 @@ export const blobPrune = inngest.createFunction(
   { id: "blob-prune", concurrency: { limit: 1 } },
   // Mirror existing Vercel Cron cadence (03:00 daily)
   { cron: "0 3 * * *" },
-  async ({ step }) => {
+  async ({ step, logger }) => {
     await step.run("prune-due-blobs", async () => {
-      await pruneDueBlobsOnce(Date.now());
+      const startedAt = Date.now();
+      logger.info("[blob-prune] starting prune cycle");
+      const result = await pruneDueBlobsOnce(startedAt);
+      const durationMs = Date.now() - startedAt;
+      if (result.errors.length) {
+        logger.warn("[blob-prune] completed with errors", {
+          deletedCount: result.deleted.length,
+          errorCount: result.errors.length,
+          durationMs,
+        });
+      } else {
+        logger.info("[blob-prune] completed", {
+          deletedCount: result.deleted.length,
+          durationMs,
+        });
+      }
+      return {
+        deletedCount: result.deleted.length,
+        errorCount: result.errors.length,
+        durationMs,
+      };
     });
   },
 );

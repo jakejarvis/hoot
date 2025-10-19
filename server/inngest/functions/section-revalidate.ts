@@ -52,7 +52,7 @@ export const sectionRevalidate = inngest.createFunction(
     },
   },
   { event: "section/revalidate" },
-  async ({ event }) => {
+  async ({ event, step, logger }) => {
     const data = eventDataSchema.parse(event.data);
     const domain = data.domain;
     const normalizedDomain =
@@ -64,30 +64,64 @@ export const sectionRevalidate = inngest.createFunction(
         ? [data.section]
         : [];
 
-    if (sections.length === 0) return;
+    if (sections.length === 0) {
+      logger.debug("[section-revalidate] no sections provided", {
+        domain: normalizedDomain,
+      });
+      return;
+    }
 
     for (const section of sections) {
       const lockKey = ns("lock", "revalidate", section, normalizedDomain);
       const resultKey = ns("result", "revalidate", section, normalizedDomain);
-      const wait = await acquireLockOrWaitForResult({
-        lockKey,
-        resultKey,
-        lockTtl: 60,
-      });
+      const wait = await step.run("acquire-lock", async () =>
+        acquireLockOrWaitForResult({
+          lockKey,
+          resultKey,
+          lockTtl: 60,
+        }),
+      );
       if (!wait.acquired) continue;
       try {
-        await revalidateSection(normalizedDomain, section);
-        try {
-          await redis.set(
-            resultKey,
-            JSON.stringify({ completedAt: Date.now() }),
-            { ex: 55 },
-          );
-        } catch {}
+        await step.run(`revalidate:${section}`, async () => {
+          logger.info("[section-revalidate] start", {
+            domain: normalizedDomain,
+            section,
+          });
+          await revalidateSection(normalizedDomain, section);
+          logger.info("[section-revalidate] done", {
+            domain: normalizedDomain,
+            section,
+          });
+          return { domain: normalizedDomain, section };
+        });
+        await step.run("write-result", async () => {
+          try {
+            await redis.set(
+              resultKey,
+              JSON.stringify({ completedAt: Date.now() }),
+              { ex: 55 },
+            );
+          } catch (err) {
+            logger.warn("[section-revalidate] failed to write result", {
+              domain: normalizedDomain,
+              section,
+              error: err,
+            });
+          }
+        });
       } finally {
-        try {
-          await redis.del(lockKey);
-        } catch {}
+        await step.run("release-lock", async () => {
+          try {
+            await redis.del(lockKey);
+          } catch (err) {
+            logger.warn("[section-revalidate] failed to release lock", {
+              domain: normalizedDomain,
+              section,
+              error: err,
+            });
+          }
+        });
       }
     }
   },

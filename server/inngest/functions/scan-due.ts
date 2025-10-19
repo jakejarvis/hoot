@@ -15,65 +15,83 @@ import { inngest } from "@/server/inngest/client";
 export const scanDue = inngest.createFunction(
   { id: "scan-due-revalidations" },
   { cron: "*/1 * * * *" },
-  async ({ step }) => {
+  async ({ step, logger }) => {
     const now = new Date();
     const limit = 200;
 
     // Fetch due rows with error handling so failures surface with context
-    let dueDns: Array<{ domainId: string; domain: string }>; // dns
-    let dueHeaders: Array<{ domainId: string; domain: string }>; // headers
-    let dueHosting: Array<{ domainId: string; domain: string }>; // hosting
-    let dueCerts: Array<{ domainId: string; domain: string }>; // certificates
-    let dueSeo: Array<{ domainId: string; domain: string }>; // seo
-    let dueReg: Array<{ domainId: string; domain: string }>; // registration
-    try {
-      [dueDns, dueHeaders, dueHosting, dueCerts, dueSeo, dueReg] =
-        await Promise.all([
-          db
-            .select({ domainId: dnsRecords.domainId, domain: domains.name })
-            .from(dnsRecords)
-            .innerJoin(domains, eq(dnsRecords.domainId, domains.id))
-            .where(lte(dnsRecords.expiresAt, now))
-            .limit(limit),
-          db
-            .select({ domainId: httpHeaders.domainId, domain: domains.name })
-            .from(httpHeaders)
-            .innerJoin(domains, eq(httpHeaders.domainId, domains.id))
-            .where(lte(httpHeaders.expiresAt, now))
-            .limit(limit),
-          db
-            .select({ domainId: hosting.domainId, domain: domains.name })
-            .from(hosting)
-            .innerJoin(domains, eq(hosting.domainId, domains.id))
-            .where(lte(hosting.expiresAt, now))
-            .limit(limit),
-          db
-            .select({ domainId: certificates.domainId, domain: domains.name })
-            .from(certificates)
-            .innerJoin(domains, eq(certificates.domainId, domains.id))
-            .where(lte(certificates.expiresAt, now))
-            .limit(limit),
-          db
-            .select({ domainId: seo.domainId, domain: domains.name })
-            .from(seo)
-            .innerJoin(domains, eq(seo.domainId, domains.id))
-            .where(lte(seo.expiresAt, now))
-            .limit(limit),
-          db
-            .select({ domainId: registrations.domainId, domain: domains.name })
-            .from(registrations)
-            .innerJoin(domains, eq(registrations.domainId, domains.id))
-            .where(lte(registrations.expiresAt, now))
-            .limit(limit),
-        ]);
-    } catch (error) {
-      console.error("[scan-due] database queries failed", {
-        error,
-        now,
-        limit,
-      });
-      throw error;
-    }
+    let dueDns: Array<{ domainId: string; domain: string }> = []; // dns
+    let dueHeaders: Array<{ domainId: string; domain: string }> = []; // headers
+    let dueHosting: Array<{ domainId: string; domain: string }> = []; // hosting
+    let dueCerts: Array<{ domainId: string; domain: string }> = []; // certificates
+    let dueSeo: Array<{ domainId: string; domain: string }> = []; // seo
+    let dueReg: Array<{ domainId: string; domain: string }> = []; // registration
+    await step.run("query-due-rows", async () => {
+      try {
+        [dueDns, dueHeaders, dueHosting, dueCerts, dueSeo, dueReg] =
+          await Promise.all([
+            db
+              .select({ domainId: dnsRecords.domainId, domain: domains.name })
+              .from(dnsRecords)
+              .innerJoin(domains, eq(dnsRecords.domainId, domains.id))
+              .where(lte(dnsRecords.expiresAt, now))
+              .limit(limit),
+            db
+              .select({ domainId: httpHeaders.domainId, domain: domains.name })
+              .from(httpHeaders)
+              .innerJoin(domains, eq(httpHeaders.domainId, domains.id))
+              .where(lte(httpHeaders.expiresAt, now))
+              .limit(limit),
+            db
+              .select({ domainId: hosting.domainId, domain: domains.name })
+              .from(hosting)
+              .innerJoin(domains, eq(hosting.domainId, domains.id))
+              .where(lte(hosting.expiresAt, now))
+              .limit(limit),
+            db
+              .select({ domainId: certificates.domainId, domain: domains.name })
+              .from(certificates)
+              .innerJoin(domains, eq(certificates.domainId, domains.id))
+              .where(lte(certificates.expiresAt, now))
+              .limit(limit),
+            db
+              .select({ domainId: seo.domainId, domain: domains.name })
+              .from(seo)
+              .innerJoin(domains, eq(seo.domainId, domains.id))
+              .where(lte(seo.expiresAt, now))
+              .limit(limit),
+            db
+              .select({
+                domainId: registrations.domainId,
+                domain: domains.name,
+              })
+              .from(registrations)
+              .innerJoin(domains, eq(registrations.domainId, domains.id))
+              .where(lte(registrations.expiresAt, now))
+              .limit(limit),
+          ]);
+        logger.info("[scan-due] queried due rows");
+        return {
+          now: now.toISOString(),
+          limit,
+          counts: {
+            dns: dueDns.length,
+            headers: dueHeaders.length,
+            hosting: dueHosting.length,
+            certs: dueCerts.length,
+            seo: dueSeo.length,
+            registration: dueReg.length,
+          },
+        };
+      } catch (error) {
+        logger.error("[scan-due] database queries failed", {
+          error,
+          now: now.toISOString(),
+          limit,
+        });
+        throw error;
+      }
+    });
 
     // Group sections per domain to deduplicate events
     const domainsToSections = new Map<string, Set<string>>();
@@ -110,6 +128,7 @@ export const scanDue = inngest.createFunction(
     }));
 
     if (groupedEvents.length === 0) {
+      logger.debug("[scan-due] no due groups; exiting");
       return;
     }
 
@@ -122,8 +141,12 @@ export const scanDue = inngest.createFunction(
           `enqueue-due-${Math.floor(i / BATCH_SIZE)}`,
           chunk,
         );
+        logger.info("[scan-due] enqueued batch", {
+          batchSize: chunk.length,
+          batchIndex: Math.floor(i / BATCH_SIZE),
+        });
       } catch (error) {
-        console.error("[scan-due] sendEvent failed", {
+        logger.error("[scan-due] sendEvent failed", {
           error,
           batchSize: chunk.length,
           batchIndex: Math.floor(i / BATCH_SIZE),
