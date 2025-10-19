@@ -2,9 +2,9 @@ import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import { Providers } from "@/app/providers";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
-import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
@@ -26,7 +26,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-svh overscroll-none font-sans tabular-nums antialiased">
-        <ThemeProvider>
+        <Providers>
           {/* Solid background for light/dark modes */}
           <div aria-hidden className="-z-10 fixed inset-0 bg-background" />
 
@@ -39,7 +39,7 @@ export default function RootLayout({
             </div>
           </TRPCProvider>
           <Toaster />
-        </ThemeProvider>
+        </Providers>
         <Analytics />
       </body>
     </html>

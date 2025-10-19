@@ -9,8 +9,11 @@ const nav = vi.hoisted(() => ({
   params: { domain: "Example.COM" as string | undefined },
 }));
 
-vi.mock("next/navigation", () => ({
+vi.mock("@bprogress/next/app", () => ({
   useRouter: () => ({ push: nav.push }),
+}));
+
+vi.mock("next/navigation", () => ({
   useParams: () => nav.params,
   usePathname: () => "/x",
 }));

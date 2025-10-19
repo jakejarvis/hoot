@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "@bprogress/next/app";
 import { CircleX } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";

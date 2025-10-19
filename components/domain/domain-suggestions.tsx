@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@bprogress/next/app";
 import { useEffect, useMemo, useState } from "react";
 import { Favicon } from "@/components/domain/favicon";
 import { Button } from "@/components/ui/button";

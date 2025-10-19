@@ -8,8 +8,11 @@ const nav = vi.hoisted(() => ({
   push: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({
+vi.mock("@bprogress/next/app", () => ({
   useRouter: () => ({ push: nav.push }),
+}));
+
+vi.mock("next/navigation", () => ({
   useParams: () => ({}),
 }));
 
