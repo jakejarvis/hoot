@@ -11,7 +11,7 @@ export const DEFAULT_SUGGESTIONS = [
   "github.com",
   "reddit.com",
   "wikipedia.org",
-  "chatgpt.com",
+  "firefox.com",
   "jarv.is",
 ];
 
