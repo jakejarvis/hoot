@@ -7,7 +7,18 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build", "!drizzle"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!dist",
+      "!build",
+      "!coverage",
+      "!drizzle",
+      "!public",
+      "!.github",
+      "!.vscode"
+    ]
   },
   "formatter": {
     "enabled": true,

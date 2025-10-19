@@ -5,6 +5,5 @@
       "ENABLE_EXPERIMENTAL_COREPACK": "1",
       "PUPPETEER_SKIP_DOWNLOAD": "1"
     }
-  },
-  "crons": []
+  }
 }

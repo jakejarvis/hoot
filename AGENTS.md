@@ -6,6 +6,8 @@
 - `hooks/` shared stateful helpers (camelCase named exports).
 - `lib/` domain utilities and caching (`lib/cache`); import via `@/...` aliases.
 - `server/` backend integrations and tRPC routers; isolate DNS, RDAP/WHOIS, TLS, and header probing services.
+- `server/db/` Drizzle ORM schema, migrations, and repository layer for Postgres persistence.
+- `server/inngest/` Inngest functions for background jobs and scheduled section revalidation.
 - `public/` static assets; Tailwind v4 tokens live in `app/globals.css`. Update `instrumentation-client.ts` when adding analytics.
 
 ## Build, Test, and Development Commands
@@ -15,6 +17,12 @@
 - `pnpm lint` — run Biome lint + type-aware checks (`--write` to fix).
 - `pnpm format` — apply Biome formatting.
 - `pnpm typecheck` — run `tsc --noEmit` for stricter diagnostics.
+- `pnpm db:generate` — generate Drizzle migrations.
+- `pnpm db:push` — push the current schema to the database.
+- `pnpm db:migrate` — apply migrations to the database.
+- `pnpm db:studio` — open Drizzle Studio.
+- `pnpm db:seed:providers` — seed known provider rules.
+- Requires Node.js >= 22 (see `package.json` engines).
 
 ## Coding Style & Naming Conventions
 - TypeScript only, `strict` enabled; prefer small, pure modules (≈≤300 LOC).
@@ -27,6 +35,7 @@
   - Mocks analytics clients/servers and `server-only`.
   - Centralized Redis mock exposed via `global.__redisTestHelper` for consistent state and resets.
   - `unstable_cache` mocked as a no-op; caching behavior is not under test.
+- Database in tests: Drizzle client is not globally mocked. Replace `@/server/db/client` with a PGlite-backed instance when needed.
 - UI tests:
   - Do not add direct tests for `components/ui/*` (shadcn).
   - Mock Radix primitives (Accordion, Tooltip) when testing domain sections.
@@ -46,5 +55,6 @@
 ## Security & Configuration Tips
 - Keep secrets in `.env.local`.
 - Screenshots (Puppeteer): prefer `puppeteer-core` + `@sparticuz/chromium` on Vercel.
-- Cache Cloudflare DoH, RDAP, TLS, and header probes via `lib/cache`; apply retry backoff to respect provider limits.
+- Persist domain data in Postgres via Drizzle; use Redis for short-lived caching/locks. Apply retry backoff to respect provider limits.
+- Background revalidation runs via Inngest functions (scheduled and event-driven).
 - Review `server/trpc.ts` when extending procedures to ensure auth/context remain intact.
