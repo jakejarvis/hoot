@@ -392,8 +392,8 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                     aria-pressed={only === "all"}
                     onClick={() => setOnly("all")}
                     className={cn(
-                      "h-9 px-3 text-[13px]",
-                      only === "all" && "!bg-accent hover:!bg-accent/90",
+                      "h-9 px-3 text-[13px] hover:bg-muted/30 dark:hover:bg-accent/50",
+                      only === "all" && "!bg-muted/50 dark:!bg-accent",
                     )}
                   >
                     All
@@ -404,8 +404,8 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                     aria-pressed={only === "allow"}
                     onClick={() => setOnly("allow")}
                     className={cn(
-                      "h-9 gap-2 px-3 text-[13px]",
-                      only === "allow" && "!bg-accent hover:!bg-accent/90",
+                      "h-9 gap-2 px-3 text-[13px] hover:bg-muted/30 dark:hover:bg-accent/50",
+                      only === "allow" && "!bg-muted/50 dark:!bg-accent",
                     )}
                   >
                     <CircleCheck
@@ -421,8 +421,8 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
                     aria-pressed={only === "disallow"}
                     onClick={() => setOnly("disallow")}
                     className={cn(
-                      "h-9 gap-2 px-3 text-[13px]",
-                      only === "disallow" && "!bg-accent hover:!bg-accent/90",
+                      "h-9 gap-2 px-3 text-[13px] hover:bg-muted/30 dark:hover:bg-accent/50",
+                      only === "disallow" && "!bg-muted/50 dark:!bg-accent",
                     )}
                   >
                     <Ban
@@ -501,7 +501,7 @@ function RobotsGroupHeader({
   showDisallow?: boolean;
 }) {
   return (
-    <div className="flex w-full items-center justify-between rounded-md p-1 hover:bg-accent/50">
+    <div className="flex w-full items-center justify-between rounded-md p-1.5 hover:bg-accent/35">
       <div className="flex flex-wrap items-center gap-1.5">
         <ChevronRight className="size-3 text-muted-foreground transition-transform group-data-[state=open]/accordion:rotate-90" />
         {userAgents.map((ua) => (
@@ -563,6 +563,7 @@ function GroupsAccordion({
       <AccordionItem
         key={`g-${g.userAgents.join(",")}-${allowN}-${disallowN}`}
         value={`g-${idx}`}
+        className="border-border/65"
       >
         <AccordionTrigger className="group/accordion py-2 hover:no-underline [&>svg]:hidden">
           <RobotsGroupHeader
@@ -618,7 +619,7 @@ function GroupContent({
     useProgressiveReveal(rules, 6);
   if (isSearching) {
     return (
-      <div className="flex flex-col gap-1.5 py-2">
+      <div className="flex flex-col gap-1.5">
         {rules.map((r, i) => (
           <RuleRow
             key={`r-${r.type}-${r.value}-all-${i}`}
@@ -875,9 +876,6 @@ function SeoSkeleton() {
             {["sm-0", "sm-1"].map((sid) => (
               <Skeleton key={sid} className="h-3 w-56" />
             ))}
-            <div className="mt-4 flex justify-center">
-              <Skeleton className="h-7 w-28 rounded-md" />
-            </div>
           </div>
         </div>
       </div>
@@ -908,16 +906,17 @@ function SocialPreviewSkeletonLarge() {
 
 function RobotsGroupSkeleton() {
   return (
-    <div className="rounded-lg border p-2">
+    <div className="rounded-lg border border-border/65 p-1.5">
       {/* Header with chevron + chips + count */}
-      <div className="flex w-full items-center justify-between py-1">
+      <div className="flex w-full items-center justify-between p-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="size-3 rounded-full bg-muted" />
-          {["ua-0", "ua-1", "ua-2"].map((uid) => (
-            <Skeleton key={uid} className="h-5 w-14 rounded" />
-          ))}
+          {/* Chevron placeholder */}
+          <span className="size-3 rounded bg-muted" />
+          {/* UA chips (show a single example to mirror new design) */}
+          <Skeleton className="h-5 w-10 rounded" />
         </div>
-        <Skeleton className="h-4 w-16" />
+        {/* Count placeholder */}
+        <Skeleton className="h-4 w-24" />
       </div>
       {/* Rules */}
       <div className="flex flex-col gap-1.5 py-2">
@@ -930,9 +929,6 @@ function RobotsGroupSkeleton() {
             <Skeleton className="h-3 w-64" />
           </div>
         ))}
-      </div>
-      <div className="my-2 flex justify-center">
-        <Skeleton className="h-7 w-24 rounded-md" />
       </div>
     </div>
   );

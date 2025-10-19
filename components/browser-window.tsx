@@ -19,7 +19,10 @@ export function BrowserWindow({
       )}
     >
       {/* Top Chrome Bar */}
-      <div className="flex h-6 items-center gap-2 border-zinc-200 border-b bg-zinc-100 px-2 dark:border-zinc-800 dark:bg-zinc-900">
+      <div
+        className="flex h-6 items-center gap-2 border-zinc-200 border-b bg-zinc-100 px-2 dark:border-zinc-800 dark:bg-zinc-900"
+        aria-hidden
+      >
         {/* Traffic Light Dots */}
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-full bg-[#FF5F57]" />
@@ -30,7 +33,9 @@ export function BrowserWindow({
         {/* Address Bar */}
         <div className="flex h-3.5 flex-1 items-center rounded-sm bg-zinc-200 px-2 dark:bg-zinc-800">
           <span className="inline-block w-full truncate text-center text-[8px] text-zinc-500 dark:text-zinc-400">
-            {url}
+            <a href={url} target="_blank" rel="noopener">
+              {url}
+            </a>
           </span>
         </div>
       </div>
