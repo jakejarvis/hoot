@@ -109,9 +109,6 @@ const __redisImpl = vi.hoisted(() => {
 
 vi.mock("@/lib/redis", () => __redisImpl);
 
-// We no longer globally mock the Drizzle client; individual tests replace
-// `@/server/db/client` with a PGlite-backed instance as needed.
-
 // Expose for tests that want to clear or assert cache interactions
 declare global {
   // Makes the test helper available in the test environment

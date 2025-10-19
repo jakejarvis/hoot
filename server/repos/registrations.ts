@@ -3,6 +3,11 @@ import type { InferInsertModel } from "drizzle-orm";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { registrationNameservers, registrations } from "@/server/db/schema";
+import {
+  RegistrationInsert as RegistrationInsertSchema,
+  RegistrationNameserverInsert as RegistrationNameserverInsertSchema,
+  RegistrationUpdate as RegistrationUpdateSchema,
+} from "@/server/db/zod";
 
 type RegistrationInsert = InferInsertModel<typeof registrations>;
 type RegistrationNameserverInsert = InferInsertModel<
@@ -17,14 +22,13 @@ export async function upsertRegistration(
   },
 ) {
   const { domainId, nameservers: ns, ...rest } = params;
+  const insertRow = RegistrationInsertSchema.parse({ domainId, ...rest });
+  const updateRow = RegistrationUpdateSchema.parse({ ...rest });
   await db.transaction(async (tx) => {
-    await tx
-      .insert(registrations)
-      .values({ domainId, ...rest })
-      .onConflictDoUpdate({
-        target: registrations.domainId,
-        set: { ...rest },
-      });
+    await tx.insert(registrations).values(insertRow).onConflictDoUpdate({
+      target: registrations.domainId,
+      set: updateRow,
+    });
 
     if (!ns) return;
     // Replace-set semantics for nameservers
@@ -49,14 +53,15 @@ export async function upsertRegistration(
 
     for (const n of ns) {
       const host = n.host.trim().toLowerCase();
+      const nsInsert = RegistrationNameserverInsertSchema.parse({
+        domainId,
+        host,
+        ipv4: (n.ipv4 ?? []) as string[],
+        ipv6: (n.ipv6 ?? []) as string[],
+      });
       await tx
         .insert(registrationNameservers)
-        .values({
-          domainId,
-          host,
-          ipv4: (n.ipv4 ?? []) as string[],
-          ipv6: (n.ipv6 ?? []) as string[],
-        })
+        .values(nsInsert)
         .onConflictDoUpdate({
           target: [
             registrationNameservers.domainId,

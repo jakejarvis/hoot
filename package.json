@@ -48,6 +48,7 @@
     "country-flag-icons": "^1.5.21",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.6",
+    "drizzle-zod": "^0.8.3",
     "geist": "^1.5.1",
     "icojs": "^0.20.0",
     "inngest": "^3.44.3",

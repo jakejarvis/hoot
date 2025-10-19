@@ -7,6 +7,10 @@ import {
   type dnsRecordType,
   type dnsResolver,
 } from "@/server/db/schema";
+import {
+  DnsRecordInsert as DnsRecordInsertSchema,
+  DnsRecordUpdate as DnsRecordUpdateSchema,
+} from "@/server/db/zod";
 
 type DnsRecordInsert = InferInsertModel<typeof dnsRecords>;
 
@@ -63,20 +67,29 @@ export async function replaceDns(params: UpsertDnsParams) {
       await db.delete(dnsRecords).where(inArray(dnsRecords.id, toDelete));
     }
     for (const r of next) {
+      const insertRow = DnsRecordInsertSchema.parse({
+        domainId,
+        type,
+        name: r.name as string,
+        value: r.value as string,
+        ttl: r.ttl ?? null,
+        priority: r.priority ?? null,
+        isCloudflare: r.isCloudflare ?? null,
+        resolver: params.resolver,
+        fetchedAt: params.fetchedAt as Date | string,
+        expiresAt: r.expiresAt as Date | string,
+      });
+      const updateSet = DnsRecordUpdateSchema.parse({
+        ttl: r.ttl ?? null,
+        priority: r.priority ?? null,
+        isCloudflare: r.isCloudflare ?? null,
+        resolver: params.resolver,
+        fetchedAt: params.fetchedAt as Date | string,
+        expiresAt: r.expiresAt as Date | string,
+      });
       await db
         .insert(dnsRecords)
-        .values({
-          domainId,
-          type,
-          name: r.name as string,
-          value: r.value as string,
-          ttl: r.ttl ?? null,
-          priority: r.priority ?? null,
-          isCloudflare: r.isCloudflare ?? null,
-          resolver: params.resolver,
-          fetchedAt: params.fetchedAt,
-          expiresAt: r.expiresAt as Date,
-        })
+        .values(insertRow)
         .onConflictDoUpdate({
           target: [
             dnsRecords.domainId,
@@ -84,14 +97,7 @@ export async function replaceDns(params: UpsertDnsParams) {
             dnsRecords.name,
             dnsRecords.value,
           ],
-          set: {
-            ttl: r.ttl ?? null,
-            priority: r.priority ?? null,
-            isCloudflare: r.isCloudflare ?? null,
-            resolver: params.resolver,
-            fetchedAt: params.fetchedAt,
-            expiresAt: r.expiresAt as Date,
-          },
+          set: updateSet,
         });
     }
   }

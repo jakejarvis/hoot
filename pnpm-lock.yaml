@@ -65,6 +65,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(@electric-sql/pglite@0.3.11)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.6)
+      drizzle-zod:
+        specifier: ^0.8.3
+        version: 0.8.3(drizzle-orm@0.44.6(@electric-sql/pglite@0.3.11)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.6))(zod@4.1.12)
       geist:
         specifier: ^1.5.1
         version: 1.5.1(next@15.6.0-canary.39(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
@@ -3261,6 +3264,12 @@ packages:
         optional: true
       sqlite3:
         optional: true
+
+  drizzle-zod@0.8.3:
+    resolution: {integrity: sha512-66yVOuvGhKJnTdiqj1/Xaaz9/qzOdRJADpDa68enqS6g3t0kpNkwNYjUuaeXgZfO/UWuIM9HIhSlJ6C5ZraMww==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
+      zod: ^3.25.0 || ^4.0.0
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -8011,6 +8020,11 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.15.5
       '@upstash/redis': 1.35.6
+
+  drizzle-zod@0.8.3(drizzle-orm@0.44.6(@electric-sql/pglite@0.3.11)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.6))(zod@4.1.12):
+    dependencies:
+      drizzle-orm: 0.44.6(@electric-sql/pglite@0.3.11)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.6)
+      zod: 4.1.12
 
   dunder-proto@1.0.1:
     dependencies:

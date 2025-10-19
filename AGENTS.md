@@ -28,6 +28,11 @@
 - TypeScript only, `strict` enabled; prefer small, pure modules (≈≤300 LOC).
 - 2-space indentation. Files/folders: kebab-case; exports: PascalCase; helpers: camelCase named exports.
 - Client components must begin with `"use client"`. Consolidate imports via `@/...`. Keep page roots lean.
+ - Use `drizzle-zod` for DB boundary validation:
+   - Read schemas: `server/db/zod.ts` `*Select` (strict `Date` types)
+   - Write schemas: `server/db/zod.ts` `*Insert`/`*Update` (dates coerced)
+   - Reuse domain Zod types for JSON columns (SEO, registration) to avoid drift
+   - Reference: drizzle-zod docs [drizzle-zod](https://orm.drizzle.team/docs/zod)
 
 ## Testing Guidelines
 - Use **Vitest** with React Testing Library; config in `vitest.config.ts`.
