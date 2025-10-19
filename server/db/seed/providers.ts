@@ -1,8 +1,10 @@
-import { CA_PROVIDERS } from "@/lib/providers/rules/certificate";
-import { DNS_PROVIDERS } from "@/lib/providers/rules/dns";
-import { EMAIL_PROVIDERS } from "@/lib/providers/rules/email";
-import { HOSTING_PROVIDERS } from "@/lib/providers/rules/hosting";
-import { REGISTRAR_PROVIDERS } from "@/lib/providers/rules/registrar";
+import {
+  CA_PROVIDERS,
+  DNS_PROVIDERS,
+  EMAIL_PROVIDERS,
+  HOSTING_PROVIDERS,
+  REGISTRAR_PROVIDERS,
+} from "@/lib/providers/catalog";
 import { db } from "@/server/db/client";
 import { type providerCategory, providers } from "@/server/db/schema";
 

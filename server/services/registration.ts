@@ -3,7 +3,11 @@ import { getDomainTld, lookupDomain } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
-import type { Registration } from "@/lib/schemas";
+import type {
+  Registration,
+  RegistrationContacts,
+  RegistrationSource,
+} from "@/lib/schemas";
 import { db } from "@/server/db/client";
 import {
   providers,
@@ -18,8 +22,6 @@ import { upsertRegistration } from "@/server/repos/registrations";
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
-// Type exported from schemas; keep alias for local file consumers if any
-
 export async function getRegistration(domain: string): Promise<Registration> {
   const startedAt = Date.now();
   console.debug("[registration] start", { domain });
@@ -71,8 +73,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         .from(registrationNameservers)
         .where(eq(registrationNameservers.domainId, d.id));
 
-      const contactsArray: Registration["contacts"] =
-        row.contacts?.contacts ?? [];
+      const contactsArray: RegistrationContacts = row.contacts ?? [];
 
       const response: Registration = {
         domain: registrable as string,
@@ -96,7 +97,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         contacts: contactsArray,
         whoisServer: row.whoisServer ?? undefined,
         rdapServers: row.rdapServers ?? undefined,
-        source: row.source as Registration["source"],
+        source: row.source as RegistrationSource,
         registrarProvider,
       };
 
@@ -190,7 +191,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
       deletionDate: record.deletionDate ? new Date(record.deletionDate) : null,
       transferLock: record.transferLock ?? null,
       statuses: record.statuses ?? [],
-      contacts: { contacts: record.contacts ?? [] },
+      contacts: record.contacts ?? [],
       whoisServer: record.whoisServer ?? null,
       rdapServers: record.rdapServers ?? [],
       source: record.source,

@@ -33,7 +33,7 @@ export const OpenGraphMetaSchema = z.object({
   type: z.string().optional(),
   url: z.string().url().optional(),
   siteName: z.string().optional(),
-  images: z.array(z.string().url()),
+  images: z.array(z.string().url()).optional(),
 });
 
 export const TwitterMetaSchema = z.object({

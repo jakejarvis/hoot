@@ -1,6 +1,7 @@
 CREATE TYPE "public"."dns_record_type" AS ENUM('A', 'AAAA', 'MX', 'TXT', 'NS');--> statement-breakpoint
 CREATE TYPE "public"."dns_resolver" AS ENUM('cloudflare', 'google');--> statement-breakpoint
 CREATE TYPE "public"."provider_category" AS ENUM('hosting', 'email', 'dns', 'ca', 'registrar');--> statement-breakpoint
+CREATE TYPE "public"."registration_source" AS ENUM('rdap', 'whois');--> statement-breakpoint
 CREATE TABLE "certificates" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"domain_id" uuid NOT NULL,
@@ -96,10 +97,10 @@ CREATE TABLE "registrations" (
 	"deletion_date" timestamp with time zone,
 	"transfer_lock" boolean,
 	"statuses" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"contacts" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"contacts" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"whois_server" text,
 	"rdap_servers" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"source" text NOT NULL,
+	"source" "registration_source" NOT NULL,
 	"registrar_provider_id" uuid,
 	"reseller_provider_id" uuid,
 	"fetched_at" timestamp with time zone NOT NULL,

@@ -46,8 +46,6 @@ describe("getRegistration", () => {
 
   afterEach(async () => {
     vi.restoreAllMocks();
-    // reset redis between tests
-    // biome-ignore lint/suspicious/noAsyncPromiseExecutor: dynamic import fine in tests
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
   });
@@ -69,7 +67,7 @@ describe("getRegistration", () => {
       isRegistered: true,
       registry: "verisign",
       statuses: [],
-      contacts: { contacts: [] },
+      contacts: [],
       whoisServer: null,
       rdapServers: [],
       source: "rdap",

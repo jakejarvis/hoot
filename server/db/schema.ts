@@ -13,7 +13,14 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { Registration } from "@/lib/schemas";
+import type {
+  GeneralMeta,
+  OpenGraphMeta,
+  RegistrationContacts,
+  RegistrationStatuses,
+  RobotsTxt,
+  TwitterMeta,
+} from "@/lib/schemas";
 
 // Enums
 export const providerCategory = pgEnum("provider_category", [
@@ -31,6 +38,10 @@ export const dnsRecordType = pgEnum("dns_record_type", [
   "NS",
 ]);
 export const dnsResolver = pgEnum("dns_resolver", ["cloudflare", "google"]);
+export const registrationSource = pgEnum("registration_source", [
+  "rdap",
+  "whois",
+]);
 
 // Providers
 export const providers = pgTable(
@@ -88,19 +99,19 @@ export const registrations = pgTable(
     deletionDate: timestamp("deletion_date", { withTimezone: true }),
     transferLock: boolean("transfer_lock"),
     statuses: jsonb("statuses")
-      .$type<Registration["statuses"]>()
+      .$type<RegistrationStatuses>()
       .notNull()
       .default(sql`'[]'::jsonb`),
     contacts: jsonb("contacts")
-      .$type<{ contacts?: Registration["contacts"] }>()
+      .$type<RegistrationContacts>()
       .notNull()
-      .default(sql`'{}'::jsonb`),
+      .default(sql`'[]'::jsonb`),
     whoisServer: text("whois_server"),
     rdapServers: jsonb("rdap_servers")
       .$type<string[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
-    source: text("source").notNull(),
+    source: registrationSource("source").notNull(),
     registrarProviderId: uuid("registrar_provider_id").references(
       () => providers.id,
     ),
@@ -169,7 +180,10 @@ export const certificates = pgTable(
       .references(() => domains.id, { onDelete: "cascade" }),
     issuer: text("issuer").notNull(),
     subject: text("subject").notNull(),
-    altNames: jsonb("alt_names").notNull().default(sql`'[]'::jsonb`),
+    altNames: jsonb("alt_names")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     validFrom: timestamp("valid_from", { withTimezone: true }).notNull(),
     validTo: timestamp("valid_to", { withTimezone: true }).notNull(),
     caProviderId: uuid("ca_provider_id").references(() => providers.id),
@@ -244,16 +258,29 @@ export const seo = pgTable(
       .references(() => domains.id, { onDelete: "cascade" }),
     sourceFinalUrl: text("source_final_url"),
     sourceStatus: integer("source_status"),
-    metaOpenGraph: jsonb("meta_open_graph").notNull().default(sql`'{}'::jsonb`),
-    metaTwitter: jsonb("meta_twitter").notNull().default(sql`'{}'::jsonb`),
-    metaGeneral: jsonb("meta_general").notNull().default(sql`'{}'::jsonb`),
+    metaOpenGraph: jsonb("meta_open_graph")
+      .$type<OpenGraphMeta>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    metaTwitter: jsonb("meta_twitter")
+      .$type<TwitterMeta>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    metaGeneral: jsonb("meta_general")
+      .$type<GeneralMeta>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     previewTitle: text("preview_title"),
     previewDescription: text("preview_description"),
     previewImageUrl: text("preview_image_url"),
     previewImageUploadedUrl: text("preview_image_uploaded_url"),
     canonicalUrl: text("canonical_url"),
-    robots: jsonb("robots").notNull().default(sql`'{}'::jsonb`),
+    robots: jsonb("robots")
+      .$type<RobotsTxt>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     robotsSitemaps: jsonb("robots_sitemaps")
+      .$type<string[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
     errors: jsonb("errors").notNull().default(sql`'[]'::jsonb`),

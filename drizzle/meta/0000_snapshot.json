@@ -1,5 +1,5 @@
 {
-  "id": "bcc62004-d123-4026-8854-303595cfaad8",
+  "id": "06bb0394-eb78-4455-afa5-b591028232f7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -876,7 +876,7 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'::jsonb"
+          "default": "'[]'::jsonb"
         },
         "whois_server": {
           "name": "whois_server",
@@ -893,7 +893,8 @@
         },
         "source": {
           "name": "source",
-          "type": "text",
+          "type": "registration_source",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -1191,6 +1192,14 @@
         "dns",
         "ca",
         "registrar"
+      ]
+    },
+    "public.registration_source": {
+      "name": "registration_source",
+      "schema": "public",
+      "values": [
+        "rdap",
+        "whois"
       ]
     }
   },

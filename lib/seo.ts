@@ -95,7 +95,7 @@ export function parseHtmlMeta(html: string, finalUrl: string): SeoMeta {
     resolveUrlMaybe(general.canonical, finalUrl) ?? general.canonical;
   og.url = resolveUrlMaybe(og.url, finalUrl) ?? og.url;
   og.images = og.images
-    .map((i) => resolveUrlMaybe(i, finalUrl))
+    ?.map((i) => resolveUrlMaybe(i, finalUrl))
     .filter(Boolean) as string[];
   if (tw.image) tw.image = resolveUrlMaybe(tw.image, finalUrl) ?? tw.image;
 
