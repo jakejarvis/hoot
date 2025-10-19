@@ -35,48 +35,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  headers: async () => {
-    return process.env.VERCEL_ENV === "production"
-      ? [
-          {
-            source: "/:path*",
-            headers: [
-              {
-                key: "Content-Security-Policy-Report-Only",
-                value: `
-                  default-src 'self';
-                  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.posthog.com https://vercel.live https://vitals.vercel-insights.com;
-                  style-src 'self' 'unsafe-inline' https://vercel.live;
-                  img-src 'self' https://f2zros4g9k.ufs.sh https://vercel.live https://vercel.com data: blob:;
-                  font-src 'self' https://vercel.live https://assets.vercel.com;
-                  object-src 'none';
-                  connect-src 'self' https://*.posthog.com https://*.tiles.mapbox.com https://api.mapbox.com https://events.mapbox.com https://vercel.live https://vitals.vercel-insights.com https://*.pusher.com wss://*.pusher.com;
-                  worker-src 'self' data: blob:;
-                  child-src 'self' blob:;
-                  frame-src 'self' https://vercel.live;
-                  frame-ancestors 'none';
-                  form-action 'self';
-                  base-uri 'self';
-                  ${
-                    process.env.NEXT_PUBLIC_POSTHOG_KEY
-                      ? `report-uri /_proxy/ingest/report/?token=${process.env.NEXT_PUBLIC_POSTHOG_KEY}; report-to posthog`
-                      : ""
-                  }
-                `
-                  .replace(/\s{2,}/g, " ")
-                  .trim(),
-              },
-              {
-                key: "Reporting-Endpoints",
-                value: process.env.NEXT_PUBLIC_POSTHOG_KEY
-                  ? `posthog="/_proxy/ingest/report/?token=${process.env.NEXT_PUBLIC_POSTHOG_KEY}"`
-                  : "",
-              },
-            ],
-          },
-        ]
-      : [];
-  },
   skipTrailingSlashRedirect: true,
 };
 
