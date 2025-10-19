@@ -1,6 +1,14 @@
 /* @vitest-environment node */
 import type { Mock } from "vitest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 // Import lazily inside tests after DB injection to avoid importing the client early
 
@@ -42,11 +50,15 @@ vi.mock("@/lib/domain-server", async (importOriginal) => {
   };
 });
 
-beforeEach(async () => {
-  vi.resetModules();
+beforeAll(async () => {
   const { makePGliteDb } = await import("@/server/db/pglite");
   const { db } = await makePGliteDb();
   vi.doMock("@/server/db/client", () => ({ db }));
+});
+
+beforeEach(async () => {
+  const { resetPGliteDb } = await import("@/server/db/pglite");
+  await resetPGliteDb();
 });
 
 afterEach(() => {

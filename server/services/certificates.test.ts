@@ -28,6 +28,7 @@ vi.mock("node:tls", async () => {
 
 import {
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -36,11 +37,15 @@ import {
   vi,
 } from "vitest";
 
-beforeEach(async () => {
-  vi.resetModules();
+beforeAll(async () => {
   const { makePGliteDb } = await import("@/server/db/pglite");
   const { db } = await makePGliteDb();
   vi.doMock("@/server/db/client", () => ({ db }));
+});
+
+beforeEach(async () => {
+  const { resetPGliteDb } = await import("@/server/db/pglite");
+  await resetPGliteDb();
 });
 
 afterEach(() => {

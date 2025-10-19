@@ -1,11 +1,23 @@
 /* @vitest-environment node */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
-beforeEach(async () => {
-  vi.resetModules();
+beforeAll(async () => {
   const { makePGliteDb } = await import("@/server/db/pglite");
   const { db } = await makePGliteDb();
   vi.doMock("@/server/db/client", () => ({ db }));
+});
+
+beforeEach(async () => {
+  const { resetPGliteDb } = await import("@/server/db/pglite");
+  await resetPGliteDb();
 });
 
 afterEach(() => {

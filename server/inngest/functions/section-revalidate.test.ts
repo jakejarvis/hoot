@@ -1,13 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import dns lazily inside tests to avoid module-scope DB client init
 
 describe("section-revalidate", () => {
-  beforeEach(async () => {
-    vi.resetModules();
+  beforeAll(async () => {
     const { makePGliteDb } = await import("@/server/db/pglite");
     const { db } = await makePGliteDb();
     vi.doMock("@/server/db/client", () => ({ db }));
+  });
+  beforeEach(async () => {
+    const { resetPGliteDb } = await import("@/server/db/pglite");
+    await resetPGliteDb();
     globalThis.__redisTestHelper.reset();
   });
 
