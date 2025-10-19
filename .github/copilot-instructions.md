@@ -1,6 +1,6 @@
-# GitHub Copilot Instructions for Hoot
+# GitHub Copilot Instructions for Domainstack
 
-This repository contains Hoot, a domain intelligence tool built with Next.js 15 and React 19. Please follow these guidelines when assisting with code in this repository.
+This repository contains Domainstack, a domain intelligence tool built with Next.js 15 and React 19. Please follow these guidelines when assisting with code in this repository.
 
 ## Additional Resources
 
@@ -11,7 +11,7 @@ Refer to these files for comprehensive information about the repository's archit
 
 ## Project Overview
 
-Hoot is an all-in-one app for exploring domain names, providing instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation. The app features a modern, interactive UI with dark mode support and fast, privacy-focused data fetching with caching.
+Domainstack is an all-in-one app for exploring domain names, providing instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation. The app features a modern, interactive UI with dark mode support and fast, privacy-focused data fetching with caching.
 
 ## Project Structure & Module Organization
 
@@ -74,7 +74,7 @@ Hoot is an all-in-one app for exploring domain names, providing instant insights
   - `UPLOADTHING_SECRET` (required)
   - `UPLOADTHING_APP_ID` (recommended)
   - `SCREENSHOT_TTL_SECONDS` (optional, default 7 days)
-  - `HOOT_USER_AGENT` (optional UA override)
+  - `EXTERNAL_USER_AGENT` (optional UA override)
   - `PUPPETEER_SKIP_DOWNLOAD=1` on Vercel to skip full puppeteer install
 
 ### Cron Upload Pruning

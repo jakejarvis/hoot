@@ -1,8 +1,8 @@
-# 🦉 Hoot - Domain Intelligence Tool
+# 📚 [Domainstack](https://domainstack.io) - Domain Intelligence Tool
 
-[Hoot.sh](https://hoot.sh) is a all-in-one app for exploring domain names. Easily search for any domain (like [`github.com`](https://hoot.sh/github.com)) and get instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation.
+[Domainstack](https://domainstack.io) is a all-in-one app for exploring domain names. Easily search for any domain (like [`github.com`](https://domainstack.io/github.com)) and get instant insights including WHOIS info, DNS records, SSL certificates, HTTP headers, hosting details, and geolocation.
 
-![Screenshot of Hoot domain analysis page for GitHub.com](https://github.com/user-attachments/assets/fa82ad38-7af3-46f6-94a2-901e45c12af1)
+![Screenshot of Domainstack domain analysis page for GitHub.com](https://github.com/user-attachments/assets/fa82ad38-7af3-46f6-94a2-901e45c12af1)
 
 ---
 
@@ -37,8 +37,8 @@
 
 1. **Clone & install dependencies:**  
    ```bash
-   git clone https://github.com/jakejarvis/hoot.git
-   cd hoot
+   git clone https://github.com/jakejarvis/domainstack.io.git
+   cd domainstack.io
    pnpm install
    ```
 
@@ -94,4 +94,4 @@ pnpm test:run
 
 [MIT](LICENSE)
 
-Owl logo by [Jordy Madueño](https://thenounproject.com/creator/jordymadueno/) from [Noun Project](https://thenounproject.com/) (CC BY 3.0).
+Toybrick by Ary Prasetyo from [Noun Project](https://thenounproject.com/browse/icons/term/toybrick/) (CC BY 3.0)

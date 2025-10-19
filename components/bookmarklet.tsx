@@ -37,8 +37,8 @@ export function Bookmarklet({ className }: { className?: string }) {
           </DialogTitle>
           <DialogDescription>
             Drag the button below to your bookmarks bar. Then, press it on any
-            site and the Hoot report for that domain will open in a new tab,
-            like magic!
+            site and the Domainstack report for that domain will open in a new
+            tab, like magic!
           </DialogDescription>
         </DialogHeader>
         <button
