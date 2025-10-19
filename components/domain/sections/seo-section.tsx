@@ -460,9 +460,18 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
               />
             </>
           ) : robots?.sitemaps?.length ? (
-            <div className="text-muted-foreground text-sm">
-              This robots.txt only declares sitemaps; no crawl rules specified.
-            </div>
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileQuestionMark />
+                </EmptyMedia>
+                <EmptyTitle>No crawl rules detected</EmptyTitle>
+                <EmptyDescription>
+                  This website&apos;s robots.txt only declares sitemaps; no
+                  crawl rules are specified.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : null}
 
           {robots?.sitemaps?.length ? (
