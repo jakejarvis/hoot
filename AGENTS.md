@@ -38,16 +38,19 @@
 - Use **Vitest** with React Testing Library; config in `vitest.config.ts`.
 - Global setup in `vitest.setup.ts`:
   - Mocks analytics clients/servers and `server-only`.
-  - Centralized Redis mock exposed via `global.__redisTestHelper` for consistent state and resets.
   - `unstable_cache` mocked as a no-op; caching behavior is not under test.
 - Database in tests: Drizzle client is not globally mocked. Replace `@/server/db/client` with a PGlite-backed instance when needed.
+- Redis in tests: do NOT use globals. Mock per-suite with the in-memory adapter:
+  - In `beforeAll`: `const { makeInMemoryRedis } = await import("@/lib/redis-mock"); const impl = makeInMemoryRedis(); vi.doMock("@/lib/redis", () => impl);`
+  - In `beforeEach`/`afterEach`: `const { resetInMemoryRedis } = await import("@/lib/redis-mock"); resetInMemoryRedis();`
+  - Seed/assert via the mocked client: `const { redis } = await import("@/lib/redis"); await redis.set(key, value);`
 - UI tests:
   - Do not add direct tests for `components/ui/*` (shadcn).
   - Mock Radix primitives (Accordion, Tooltip) when testing domain sections.
   - Mock TRPC/React Query for components like `Favicon` and `Screenshot`.
 - Server tests:
   - Prefer `vi.hoisted` for ESM module mocks (e.g., `node:tls`).
-  - Use unique cache keys/domains; call `global.__redisTestHelper.reset()` in `afterEach`.
+  - Use unique cache keys/domains; call `resetInMemoryRedis()` in `afterEach`.
   - Screenshot service (`server/services/screenshot.ts`) uses hoisted mocks for `puppeteer`/`puppeteer-core` and `@sparticuz/chromium`.
 - Browser APIs: Mock `URL.createObjectURL`/`revokeObjectURL` with `vi.fn()` in tests that need them.
 - Commands: `pnpm test`, `pnpm test:run`, `pnpm test:coverage`.

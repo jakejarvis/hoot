@@ -9,12 +9,28 @@ vi.mock("uploadthing/server", () => ({
 }));
 
 describe("blob-prune Inngest function", () => {
-  beforeEach(() => {
-    global.__redisTestHelper.reset();
-    const set = global.__redisTestHelper.zsets;
-    set.set("purge:favicon", new Map([["ut-key-f1", Date.now()]]));
-    set.set("purge:screenshot", new Map([["ut-key-s1", Date.now()]]));
-    set.set("purge:social", new Map([["ut-key-so1", Date.now()]]));
+  beforeAll(async () => {
+    const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+    const impl = makeInMemoryRedis();
+    vi.doMock("@/lib/redis", () => impl);
+  });
+
+  beforeEach(async () => {
+    const { redis, ns } = await import("@/lib/redis");
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+    await redis.zadd(ns("purge", "favicon"), {
+      score: Date.now(),
+      member: "ut-key-f1",
+    });
+    await redis.zadd(ns("purge", "screenshot"), {
+      score: Date.now(),
+      member: "ut-key-s1",
+    });
+    await redis.zadd(ns("purge", "social"), {
+      score: Date.now(),
+      member: "ut-key-so1",
+    });
   });
 
   afterEach(() => {
@@ -27,7 +43,11 @@ describe("blob-prune Inngest function", () => {
     const { deleted, errors } = await pruneDueBlobsOnce(Date.now());
     expect(deleted.length).toBeGreaterThan(0);
     expect(errors.length).toBe(0);
-    // ensure removed from zsets
-    expect(global.__redisTestHelper.zsets.get("purge:favicon")?.size).toBe(0);
+    // ensure removed from zset (no due members remain)
+    const { redis, ns } = await import("@/lib/redis");
+    const due = await redis.zrange(ns("purge", "favicon"), 0, Date.now(), {
+      byScore: true,
+    });
+    expect(due.length).toBe(0);
   });
 });

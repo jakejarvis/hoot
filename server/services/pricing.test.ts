@@ -1,6 +1,7 @@
 /* @vitest-environment node */
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { getPricingForTld } from "./pricing";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+let getPricingForTld: typeof import("./pricing").getPricingForTld;
 
 // Mock upstream fetch
 const mockResponse = {
@@ -12,9 +13,17 @@ const mockResponse = {
 };
 
 describe("getPricingForTld", () => {
-  afterEach(() => {
+  beforeAll(async () => {
+    const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+    const impl = makeInMemoryRedis();
+    vi.doMock("@/lib/redis", () => impl);
+    ({ getPricingForTld } = await import("./pricing"));
+  });
+
+  afterEach(async () => {
     vi.restoreAllMocks();
-    globalThis.__redisTestHelper.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
   });
 
   it("returns null price for invalid tld input", async () => {
@@ -37,12 +46,14 @@ describe("getPricingForTld", () => {
     // Assert
     expect(res.tld).toBe("com");
     expect(res.price).toBe("9.99");
-    expect(globalThis.__redisTestHelper.store.has("pricing")).toBe(true);
+    const { redis } = await import("@/lib/redis");
+    expect(await redis.exists("pricing")).toBe(1);
   });
 
   it("uses cached payload on subsequent calls without fetching again", async () => {
     // Seed cache
-    globalThis.__redisTestHelper.store.set("pricing", mockResponse);
+    const { redis } = await import("@/lib/redis");
+    await redis.set("pricing", mockResponse);
     const fetchSpy = vi.spyOn(global, "fetch");
 
     const res = await getPricingForTld("something.dev");

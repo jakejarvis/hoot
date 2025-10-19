@@ -1,13 +1,30 @@
 /* @vitest-environment node */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getOrCreateCachedAsset } from "@/lib/cache";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+let getOrCreateCachedAsset: typeof import("@/lib/cache").getOrCreateCachedAsset;
 
 const ns = (...parts: string[]) => parts.join(":");
 
 describe("cached assets", () => {
-  beforeEach(() => {
-    globalThis.__redisTestHelper.reset();
+  beforeAll(async () => {
+    const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+    const impl = makeInMemoryRedis();
+    vi.doMock("@/lib/redis", () => impl);
+    ({ getOrCreateCachedAsset } = await import("@/lib/cache"));
   });
+  beforeEach(async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

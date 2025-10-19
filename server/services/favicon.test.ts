@@ -1,5 +1,5 @@
 /* @vitest-environment node */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
   uploadImage: vi.fn(async () => ({
@@ -22,19 +22,30 @@ vi.mock("sharp", () => ({
   }),
 }));
 
-// Import after mocks
-import { getOrCreateFaviconBlobUrl } from "./favicon";
+beforeAll(async () => {
+  const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+  const impl = makeInMemoryRedis();
+  vi.doMock("@/lib/redis", () => impl);
+});
 
-afterEach(() => {
+// Import after mocks
+let getOrCreateFaviconBlobUrl: typeof import("./favicon").getOrCreateFaviconBlobUrl;
+beforeAll(async () => {
+  ({ getOrCreateFaviconBlobUrl } = await import("./favicon"));
+});
+
+afterEach(async () => {
   vi.restoreAllMocks();
   storageMock.uploadImage.mockReset();
-  global.__redisTestHelper.reset();
+  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+  resetInMemoryRedis();
 });
 
 describe("getOrCreateFaviconBlobUrl", () => {
   it("returns existing blob url when present", async () => {
     const key = `favicon:url:${"example.com"}:${32}`;
-    global.__redisTestHelper.store.set(key, {
+    const { redis } = await import("@/lib/redis");
+    await redis.set(key, {
       url: "blob://existing-url",
       expiresAtMs: Date.now() + 1000,
     });
@@ -45,7 +56,8 @@ describe("getOrCreateFaviconBlobUrl", () => {
 
   it("reads object values from redis index", async () => {
     const key = `favicon:url:${"legacy.com"}:${32}`;
-    global.__redisTestHelper.store.set(key, {
+    const { redis } = await import("@/lib/redis");
+    await redis.set(key, {
       url: "https://blob/legacy.png",
       expiresAtMs: Date.now() + 1000,
     });
@@ -56,7 +68,8 @@ describe("getOrCreateFaviconBlobUrl", () => {
   it("accepts object values from redis client auto-parse", async () => {
     const key = `favicon:url:${"object.com"}:${32}`;
     // Simulate a client returning an already-parsed object
-    global.__redisTestHelper.store.set(key, {
+    const { redis } = await import("@/lib/redis");
+    await redis.set(key, {
       url: "https://blob/object.png",
       expiresAtMs: Date.now() + 1000,
     });

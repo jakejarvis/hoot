@@ -1,5 +1,13 @@
 /* @vitest-environment node */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 const storageMock = vi.hoisted(() => ({
   uploadImage: vi.fn(async () => ({
@@ -39,16 +47,24 @@ vi.mock("@/lib/image", () => ({
   addWatermarkToScreenshot: vi.fn(async (b: Buffer) => b),
 }));
 
-import { getOrCreateScreenshotBlobUrl } from "./screenshot";
+let getOrCreateScreenshotBlobUrl: typeof import("./screenshot").getOrCreateScreenshotBlobUrl;
+
+beforeAll(async () => {
+  const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+  const impl = makeInMemoryRedis();
+  vi.doMock("@/lib/redis", () => impl);
+  ({ getOrCreateScreenshotBlobUrl } = await import("./screenshot"));
+});
 
 beforeEach(() => {
   process.env.VERCEL = "1"; // force sparticuz + puppeteer-core path in tests
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
   storageMock.uploadImage.mockReset();
-  global.__redisTestHelper.reset();
+  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+  resetInMemoryRedis();
   pageMock.goto.mockReset();
   pageMock.waitForNetworkIdle.mockReset();
   pageMock.screenshot.mockReset();
@@ -57,7 +73,8 @@ afterEach(() => {
 describe("getOrCreateScreenshotBlobUrl", () => {
   it("returns existing blob url when present (object)", async () => {
     const key = `screenshot:url:${"example.com"}:${1200}x${630}`;
-    global.__redisTestHelper.store.set(key, {
+    const { redis } = await import("@/lib/redis");
+    await redis.set(key, {
       url: "blob://existing",
       expiresAtMs: Date.now() + 1000,
     });

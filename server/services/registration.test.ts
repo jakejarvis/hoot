@@ -39,11 +39,17 @@ describe("getRegistration", () => {
     const { makePGliteDb } = await import("@/server/db/pglite");
     const { db } = await makePGliteDb();
     vi.doMock("@/server/db/client", () => ({ db }));
+    const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+    const impl = makeInMemoryRedis();
+    vi.doMock("@/lib/redis", () => impl);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks();
-    globalThis.__redisTestHelper.reset();
+    // reset redis between tests
+    // biome-ignore lint/suspicious/noAsyncPromiseExecutor: dynamic import fine in tests
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
   });
 
   it("returns cached record when present (DB fast-path, rdapper not called)", async () => {
@@ -86,7 +92,8 @@ describe("getRegistration", () => {
   });
 
   it("loads via rdapper, creates registrar provider when missing, and caches", async () => {
-    globalThis.__redisTestHelper.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
     const { getRegistration } = await import("./registration");
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
@@ -122,7 +129,8 @@ describe("getRegistration", () => {
   });
 
   it("sets shorter TTL for unregistered domains (observed via second call)", async () => {
-    globalThis.__redisTestHelper.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
     const { lookupDomain } = await import("rdapper");
     (lookupDomain as unknown as import("vitest").Mock).mockResolvedValueOnce({
       ok: true,

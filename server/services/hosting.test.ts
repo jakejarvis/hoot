@@ -54,6 +54,9 @@ beforeAll(async () => {
   const { makePGliteDb } = await import("@/server/db/pglite");
   const { db } = await makePGliteDb();
   vi.doMock("@/server/db/client", () => ({ db }));
+  const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+  const impl = makeInMemoryRedis();
+  vi.doMock("@/lib/redis", () => impl);
 });
 
 beforeEach(async () => {
@@ -61,9 +64,10 @@ beforeEach(async () => {
   await resetPGliteDb();
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
-  globalThis.__redisTestHelper?.reset();
+  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+  resetInMemoryRedis();
 });
 
 describe("detectHosting", () => {

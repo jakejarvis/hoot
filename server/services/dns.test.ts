@@ -17,6 +17,9 @@ beforeAll(async () => {
   const { makePGliteDb } = await import("@/server/db/pglite");
   const { db } = await makePGliteDb();
   vi.doMock("@/server/db/client", () => ({ db }));
+  const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+  const impl = makeInMemoryRedis();
+  vi.doMock("@/lib/redis", () => impl);
 });
 
 beforeEach(async () => {
@@ -24,10 +27,10 @@ beforeEach(async () => {
   await resetPGliteDb();
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
-  // Clear shared redis mock counters if present
-  globalThis.__redisTestHelper?.reset();
+  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+  resetInMemoryRedis();
 });
 
 function dohAnswer(
@@ -97,7 +100,8 @@ describe("resolveAll", () => {
 
   it("retries next provider when first fails and succeeds on second", async () => {
     const { resolveAll } = await import("./dns");
-    globalThis.__redisTestHelper?.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
     let call = 0;
     const fetchMock = vi.spyOn(global, "fetch").mockImplementation(async () => {
       call += 1;
@@ -134,7 +138,8 @@ describe("resolveAll", () => {
 
   it("caches results across providers and preserves resolver metadata", async () => {
     const { resolveAll } = await import("./dns");
-    globalThis.__redisTestHelper?.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
     // First run: succeed and populate cache and resolver meta
     const firstFetch = vi
       .spyOn(global, "fetch")
@@ -181,7 +186,8 @@ describe("resolveAll", () => {
 
   it("dedupes concurrent callers via aggregate cache/lock", async () => {
     const { resolveAll } = await import("./dns");
-    globalThis.__redisTestHelper?.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
     // Use the top-level dohAnswer helper declared above
 
     const fetchMock = vi
@@ -222,7 +228,8 @@ describe("resolveAll", () => {
 
   it("fetches missing AAAA during partial revalidation", async () => {
     const { resolveAll } = await import("./dns");
-    globalThis.__redisTestHelper?.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
 
     // First run: full fetch; AAAA returns empty, others present
     const firstFetch = vi

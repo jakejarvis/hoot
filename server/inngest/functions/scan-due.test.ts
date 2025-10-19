@@ -13,7 +13,6 @@ describe("scan-due", () => {
   beforeEach(async () => {
     const { resetPGliteDb } = await import("@/server/db/pglite");
     await resetPGliteDb();
-    globalThis.__redisTestHelper.reset();
   });
 
   it("counts due dns rows via db mock", async () => {

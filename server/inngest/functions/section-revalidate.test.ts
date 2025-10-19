@@ -7,11 +7,16 @@ describe("section-revalidate", () => {
     const { makePGliteDb } = await import("@/server/db/pglite");
     const { db } = await makePGliteDb();
     vi.doMock("@/server/db/client", () => ({ db }));
+    const { makeInMemoryRedis } = await import("@/lib/redis-mock");
+    const impl = makeInMemoryRedis();
+    vi.doMock("@/lib/redis", () => impl);
   });
+
   beforeEach(async () => {
     const { resetPGliteDb } = await import("@/server/db/pglite");
     await resetPGliteDb();
-    globalThis.__redisTestHelper.reset();
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
   });
 
   it("calls dns resolver for dns section", async () => {
