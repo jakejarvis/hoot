@@ -47,6 +47,7 @@ export function SocialPreview({
                   width={240}
                   height={240}
                   className="h-full w-full object-cover"
+                  loading="lazy"
                   unoptimized
                 />
               ) : (
@@ -86,6 +87,7 @@ export function SocialPreview({
                   width={1200}
                   height={675}
                   className="h-full w-full object-cover"
+                  loading="lazy"
                   unoptimized
                 />
               ) : (
@@ -126,6 +128,7 @@ export function SocialPreview({
                 width={1200}
                 height={628}
                 className="h-full w-full object-cover"
+                loading="lazy"
                 unoptimized
               />
             ) : (
@@ -165,6 +168,7 @@ export function SocialPreview({
                 width={1200}
                 height={627}
                 className="h-full w-full object-cover"
+                loading="lazy"
                 unoptimized
               />
             ) : (
@@ -212,6 +216,7 @@ export function SocialPreview({
                 width={1200}
                 height={675}
                 className="h-full w-full object-cover"
+                loading="lazy"
                 unoptimized
               />
             ) : (
@@ -250,6 +255,7 @@ export function SocialPreview({
                 width={1200}
                 height={628}
                 className="h-full w-full object-cover"
+                loading="lazy"
                 unoptimized
               />
             ) : (

@@ -79,11 +79,16 @@ describe("Favicon", () => {
 
   it("renders Image when url present", () => {
     (useQuery as unknown as Mock).mockReturnValue({
-      data: { url: "https://app.ufs.sh/f/x.png" },
+      data: {
+        url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/32x32.webp",
+      },
       isLoading: false,
     });
     render(<Favicon domain="example.com" size={16} />);
     const img = screen.getByRole("img", { name: /icon/i });
-    expect(img).toHaveAttribute("src", "https://app.ufs.sh/f/x.png");
+    expect(img).toHaveAttribute(
+      "src",
+      "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/32x32.webp",
+    );
   });
 });

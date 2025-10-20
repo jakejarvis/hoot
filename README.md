@@ -10,7 +10,7 @@
 
 - **Instant domain reports**: Registration, DNS, certificates, HTTP headers, hosting & email, and geolocation.
 - **SEO insights**: Extract titles, meta tags, social previews, canonical data, and `robots.txt` signals.
-- **Screenshots & favicons**: Server-side screenshots and favicon extraction, cached via UploadThing.
+- **Screenshots & favicons**: Server-side screenshots and favicon extraction, cached in Cloudflare R2.
 - **Fast, private, no sign-up**: Live fetches with smart caching.
 - **Reliable data pipeline**: Postgres persistence (Drizzle), background revalidation (Inngest), and Redis for short-lived caching/locks.
 
@@ -24,7 +24,7 @@
 - **Postgres** + **Drizzle ORM**
 - **Inngest** for background jobs and scheduled revalidation
 - **Upstash Redis** for caching, rate limits, and locks
-- **UploadThing** for favicon/screenshot storage
+- **Cloudflare R2** (S3 API) for favicon/screenshot storage
 - [**rdapper**](https://github.com/jakejarvis/rdapper) for RDAP lookups with WHOIS fallback
 - **Puppeteer** (with `@sparticuz/chromium` on server) for screenshots
 - **Mapbox** for IP geolocation maps

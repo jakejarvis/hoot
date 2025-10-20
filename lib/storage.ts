@@ -1,52 +1,44 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
-import { UTApi, UTFile } from "uploadthing/server";
+import { makePublicUrl, putObject } from "@/lib/r2";
 import type { StorageKind } from "@/lib/schemas";
 
 const UPLOAD_MAX_ATTEMPTS = 3;
 const UPLOAD_BACKOFF_BASE_MS = 100;
 const UPLOAD_BACKOFF_MAX_MS = 2000;
 
-// TTLs now live in lib/constants.ts
-
 /**
- * Deterministic, obfuscated hash for IDs and filenames
+ * Deterministic, obfuscated hash for IDs and filenames.
+ * Requires a dedicated BLOB_SIGNING_SECRET in non-dev environments.
  */
-export function deterministicHash(input: string, length = 32): string {
-  const secret = process.env.UPLOADTHING_SECRET || "dev-hmac-secret";
-  return createHmac("sha256", secret)
+function deterministicHash(input: string, length = 32): string {
+  const isDev = process.env.NODE_ENV === "development";
+  const secret = process.env.BLOB_SIGNING_SECRET;
+  if (!secret && !isDev) {
+    throw new Error("BLOB_SIGNING_SECRET is not set");
+  }
+  const stableSecret = secret || "dev-hmac-secret";
+  return createHmac("sha256", stableSecret)
     .update(input)
     .digest("hex")
     .slice(0, length);
 }
 
-/**
- * Build a deterministic image filename for UploadThing
- */
-export function makeImageFileName(
+function makeObjectKey(
   kind: StorageKind,
-  domain: string,
-  width: number,
-  height: number,
-  extra?: string,
+  filename: string,
+  extension = "bin",
+  extraParts: Array<string | number>,
 ): string {
-  const base = `${kind}:${domain}:${width}x${height}${extra ? `:${extra}` : ""}`;
+  const base = `${kind}:${extraParts.join(":")}`;
   const digest = deterministicHash(base);
-  return `${kind}_${digest}.webp`;
+  return `${digest}/${filename}.${extension}`;
 }
 
-const utapi = new UTApi();
-
-type UploadThingResult =
-  | {
-      data: { key?: string; ufsUrl?: string; url?: string } | null;
-      error: unknown | null;
-    }
-  | Array<{
-      data: { key?: string; ufsUrl?: string; url?: string } | null;
-      error: unknown | null;
-    }>;
+/**
+ * Build a deterministic object key for image-like blobs.
+ */
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -63,65 +55,43 @@ function backoffDelayMs(
 }
 
 /**
- * Extract upload result from UploadThing response
- * Returns randomized URL and UploadThing file key; throws on failure
- */
-function extractUploadResult(result: UploadThingResult): {
-  url: string;
-  key: string;
-} {
-  const entry = (Array.isArray(result) ? result[0] : result) as {
-    data: { key?: string; ufsUrl?: string; url?: string } | null;
-    error: unknown | null;
-  };
-
-  if (entry?.error) {
-    throw new Error(
-      `UploadThing error: ${entry.error instanceof Error ? entry.error.message : String(entry.error)}`,
-    );
-  }
-
-  const url = entry?.data?.ufsUrl;
-  const key = entry?.data?.key;
-  if (typeof url === "string" && typeof key === "string") {
-    return { url, key };
-  }
-
-  throw new Error("Upload failed: missing url or key in response");
-}
-
-/**
- * Upload file with retry logic and exponential backoff
+ * Upload buffer to R2 with retry logic and exponential backoff
  */
 async function uploadWithRetry(
-  file: UTFile,
+  key: string,
+  buffer: Buffer,
+  contentType: string,
+  cacheControl?: string,
   maxAttempts = UPLOAD_MAX_ATTEMPTS,
-): Promise<{ url: string; key: string }> {
+): Promise<void> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       console.debug("[storage] upload attempt", {
-        fileName: (file as unknown as { name?: string }).name ?? "unknown",
+        key,
         attempt: attempt + 1,
         maxAttempts,
       });
 
-      const result = await utapi.uploadFiles(file);
-      const extracted = extractUploadResult(result);
-
-      console.info("[storage] upload success", {
-        fileName: (file as unknown as { name?: string }).name ?? "unknown",
-        attempt: attempt + 1,
-        url: extracted.url,
+      await putObject({
+        key,
+        body: buffer,
+        contentType,
+        cacheControl,
       });
 
-      return extracted;
+      console.info("[storage] upload success", {
+        key,
+        attempt: attempt + 1,
+      });
+
+      return;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
       console.warn("[storage] upload attempt failed", {
-        fileName: (file as unknown as { name?: string }).name ?? "unknown",
+        key,
         attempt: attempt + 1,
         error: lastError.message,
       });
@@ -134,7 +104,7 @@ async function uploadWithRetry(
           UPLOAD_BACKOFF_MAX_MS,
         );
         console.debug("[storage] retrying after delay", {
-          fileName: (file as unknown as { name?: string }).name ?? "unknown",
+          key,
           delayMs: delay,
         });
         await sleep(delay);
@@ -147,16 +117,98 @@ async function uploadWithRetry(
   );
 }
 
-export async function uploadImage(options: {
+export async function storeBlob(options: {
+  kind: StorageKind;
+  buffer: Buffer;
+  key?: string;
+  contentType?: string;
+  extension?: string;
+  filename?: string;
+  extraParts?: Array<string | number>;
+  cacheControl?: string;
+}): Promise<{ url: string; key: string }> {
+  const {
+    kind,
+    buffer,
+    key: providedKey,
+    contentType: providedCt,
+    extension: providedExt,
+    filename: providedFilename,
+    extraParts = [],
+    cacheControl,
+  } = options;
+
+  let contentType = providedCt;
+  let extension = providedExt;
+  let filename = providedFilename;
+
+  if (!contentType || !extension) {
+    try {
+      const { fileTypeFromBuffer } = await import("file-type");
+      const ft = await fileTypeFromBuffer(buffer);
+      if (!contentType) contentType = ft?.mime;
+      if (!extension) extension = ft?.ext;
+    } catch {
+      // ignore detection errors; use fallbacks below
+    }
+  }
+
+  contentType = contentType || "application/octet-stream";
+  extension = extension || "bin";
+  filename = filename || "file";
+
+  const key =
+    providedKey || makeObjectKey(kind, filename, extension, extraParts);
+  await uploadWithRetry(key, buffer, contentType, cacheControl);
+  return { url: makePublicUrl(key), key };
+}
+
+export async function storeImage(options: {
   kind: StorageKind;
   domain: string;
-  width: number;
-  height: number;
   buffer: Buffer;
+  width?: number;
+  height?: number;
+  contentType?: string;
+  extension?: string;
+  cacheControl?: string;
 }): Promise<{ url: string; key: string }> {
-  const { kind, domain, width, height, buffer } = options;
-  const fileName = makeImageFileName(kind, domain, width, height);
-  const file = new UTFile([new Uint8Array(buffer)], fileName);
+  const {
+    kind,
+    domain,
+    buffer,
+    width: providedW,
+    height: providedH,
+    contentType,
+    extension,
+    cacheControl,
+  } = options;
 
-  return await uploadWithRetry(file);
+  let width = providedW;
+  let height = providedH;
+
+  if (!width || !height) {
+    try {
+      const { imageSize } = await import("image-size");
+      const dim = imageSize(buffer);
+      if (!width && typeof dim.width === "number") width = dim.width;
+      if (!height && typeof dim.height === "number") height = dim.height;
+    } catch {
+      // ignore; width/height remain undefined
+    }
+  }
+
+  const finalWidth = width ?? 0;
+  const finalHeight = height ?? 0;
+
+  // Defer contentType/extension selection to storeBlob by passing filename and hash parts
+  return await storeBlob({
+    kind,
+    buffer,
+    filename: `${finalWidth}x${finalHeight}`,
+    extraParts: [domain, `${finalWidth}x${finalHeight}`],
+    contentType: contentType || undefined,
+    extension: extension || undefined,
+    cacheControl,
+  });
 }

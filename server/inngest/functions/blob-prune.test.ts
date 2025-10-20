@@ -1,12 +1,27 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const utMock = vi.hoisted(() => ({
-  deleteFiles: vi.fn(async (_keys: string[]) => undefined),
+const s3Send = vi.hoisted(() =>
+  vi.fn(
+    async (cmd: { input?: { Delete?: { Objects?: { Key?: string }[] } } }) => {
+      const keys =
+        cmd.input?.Delete?.Objects?.map((o) => o.Key || "").filter(Boolean) ||
+        [];
+      return {
+        Deleted: keys.map((k) => ({ Key: k })),
+        Errors: [],
+      };
+    },
+  ),
+);
+vi.mock("@aws-sdk/client-s3", () => ({
+  S3Client: vi.fn().mockImplementation(() => ({ send: s3Send })),
+  DeleteObjectsCommand: vi.fn().mockImplementation((input) => ({ input })),
 }));
-vi.mock("uploadthing/server", () => ({
-  UTApi: vi.fn().mockImplementation(() => utMock),
-}));
+vi.stubEnv("R2_ACCOUNT_ID", "test-account");
+vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
+vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
+vi.stubEnv("R2_BUCKET", "test-bucket");
 
 describe("blob-prune Inngest function", () => {
   beforeAll(async () => {
@@ -35,7 +50,7 @@ describe("blob-prune Inngest function", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    utMock.deleteFiles.mockClear();
+    s3Send.mockClear();
   });
 
   it("prunes due keys using pruneDueBlobsOnce", async () => {

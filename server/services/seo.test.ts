@@ -12,22 +12,15 @@ import {
 // getSeo is imported dynamically after mocks are applied
 let getSeo: typeof import("./seo").getSeo;
 
-const utMock = vi.hoisted(() => ({
-  uploadFiles: vi.fn(async () => ({
-    data: { ufsUrl: "https://app.ufs.sh/f/mock-key", key: "mock-key" },
-    error: null,
-  })),
+const s3Send = vi.hoisted(() => vi.fn(async () => ({})));
+vi.mock("@aws-sdk/client-s3", () => ({
+  S3Client: vi.fn().mockImplementation(() => ({ send: s3Send })),
+  PutObjectCommand: vi.fn().mockImplementation((input) => ({ input })),
 }));
-vi.mock("uploadthing/server", async () => {
-  const actual =
-    await vi.importActual<typeof import("uploadthing/server")>(
-      "uploadthing/server",
-    );
-  return {
-    ...actual,
-    UTApi: vi.fn().mockImplementation(() => utMock),
-  };
-});
+vi.stubEnv("R2_ACCOUNT_ID", "test-account");
+vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
+vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
+vi.stubEnv("R2_BUCKET", "test-bucket");
 
 beforeAll(async () => {
   const { makePGliteDb } = await import("@/server/db/pglite");

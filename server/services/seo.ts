@@ -15,7 +15,7 @@ import type {
   TwitterMeta,
 } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
-import { makeImageFileName, uploadImage } from "@/lib/storage";
+import { storeImage } from "@/lib/storage";
 import { db } from "@/server/db/client";
 import { seo as seoTable } from "@/server/db/schema";
 import { ttlForSeo } from "@/server/db/ttl";
@@ -257,26 +257,16 @@ async function getOrCreateSocialPreviewImageUrl(
 ): Promise<{ url: string | null }> {
   const startedAt = Date.now();
   const lower = domain.toLowerCase();
-  const fileId = makeImageFileName(
-    "social",
-    lower,
-    SOCIAL_WIDTH,
-    SOCIAL_HEIGHT,
-    imageUrl,
-  );
-
   const indexKey = ns(
-    "seo",
-    "image-url",
+    "seo-image",
+    "url",
     lower,
-    fileId,
     `${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
   );
   const lockKey = ns(
     "lock",
     "seo-image",
     lower,
-    fileId,
     `${SOCIAL_WIDTH}x${SOCIAL_HEIGHT}`,
   );
 
@@ -351,12 +341,12 @@ async function getOrCreateSocialPreviewImageUrl(
     const image = await optimizeImageCover(raw, SOCIAL_WIDTH, SOCIAL_HEIGHT);
     if (!image || image.length === 0) return { url: null };
 
-    const { url, key } = await uploadImage({
+    const { url, key } = await storeImage({
       kind: "social",
       domain: lower,
+      buffer: image,
       width: SOCIAL_WIDTH,
       height: SOCIAL_HEIGHT,
-      buffer: image,
     });
 
     try {

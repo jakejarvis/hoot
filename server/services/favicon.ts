@@ -3,7 +3,7 @@ import { FAVICON_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { convertBufferToImageCover } from "@/lib/image";
 import { ns } from "@/lib/redis";
-import { uploadImage } from "@/lib/storage";
+import { storeImage } from "@/lib/storage";
 
 const DEFAULT_SIZE = 32;
 const REQUEST_TIMEOUT_MS = 1500; // per each method
@@ -59,12 +59,12 @@ export async function getOrCreateFaviconBlobUrl(
             contentType,
           );
           if (!webp) continue;
-          const { url, key } = await uploadImage({
+          const { url, key } = await storeImage({
             kind: "favicon",
             domain,
+            buffer: webp,
             width: DEFAULT_SIZE,
             height: DEFAULT_SIZE,
-            buffer: webp,
           });
           const source = (() => {
             if (src.includes("icons.duckduckgo.com")) return "duckduckgo";
