@@ -1,7 +1,19 @@
 /* @vitest-environment node */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const s3Send = vi.hoisted(() => vi.fn(async () => ({})));
+const s3Send = vi.hoisted(() =>
+  vi.fn(
+    async (cmd: { input?: { Delete?: { Objects?: { Key?: string }[] } } }) => {
+      const keys =
+        cmd.input?.Delete?.Objects?.map((o) => o.Key || "").filter(Boolean) ||
+        [];
+      return {
+        Deleted: keys.map((k) => ({ Key: k })),
+        Errors: [],
+      };
+    },
+  ),
+);
 vi.mock("@aws-sdk/client-s3", () => ({
   S3Client: vi.fn().mockImplementation(() => ({ send: s3Send })),
   DeleteObjectsCommand: vi.fn().mockImplementation((input) => ({ input })),

@@ -12,6 +12,7 @@ vi.stubEnv("R2_ACCOUNT_ID", "test-account");
 vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
 vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
 vi.stubEnv("R2_BUCKET", "test-bucket");
+vi.stubEnv("BLOB_SIGNING_SECRET", "secret");
 
 import { storeImage } from "./storage";
 
@@ -30,9 +31,9 @@ describe("storage uploads", () => {
       height: 32,
     });
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
     expect(s3Send).toHaveBeenCalledTimes(1);
   });
 
@@ -45,9 +46,9 @@ describe("storage uploads", () => {
       height: 630,
     });
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/1200x630\.webp$/,
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/1200x630\.bin$/,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/1200x630\.webp$/);
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/1200x630\.bin$/);
     expect(s3Send).toHaveBeenCalledTimes(1);
   });
 
@@ -65,9 +66,9 @@ describe("storage uploads", () => {
     });
 
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
     expect(s3Send).toHaveBeenCalledTimes(2);
   });
 
@@ -85,9 +86,9 @@ describe("storage uploads", () => {
     });
 
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
     expect(s3Send).toHaveBeenCalledTimes(2);
   });
 
@@ -121,9 +122,9 @@ describe("storage uploads", () => {
     });
 
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
     expect(s3Send).toHaveBeenCalledTimes(2);
   });
 });

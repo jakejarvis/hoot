@@ -25,11 +25,11 @@ export async function pruneDueBlobsOnce(
     // Upstash supports zrange by score; the SDK exposes options for byScore/offset/count
     // Use a loop to progressively drain without pulling too many at once
     while (true) {
-      const due = await redis.zrange<string[]>(ns("purge", kind), 0, now, {
+      const due = (await redis.zrange(ns("purge", kind), 0, now, {
         byScore: true,
         offset: 0,
         count: batch,
-      });
+      })) as string[];
       if (!due.length) break;
 
       const succeeded: string[] = [];
