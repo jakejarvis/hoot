@@ -63,8 +63,16 @@ export async function putObject(options: {
   await s3.send(cmd);
 }
 
-export async function deleteObjects(keys: string[]): Promise<void> {
-  if (!keys.length) return;
+export type DeleteResult = Array<{
+  key: string;
+  deleted: boolean;
+  error?: string;
+}>;
+
+export async function deleteObjects(keys: string[]): Promise<DeleteResult> {
+  const results: DeleteResult = [];
+  if (!keys.length) return results;
+
   const s3 = getS3();
   const bucket = getBucket();
 
@@ -72,10 +80,38 @@ export async function deleteObjects(keys: string[]): Promise<void> {
   for (let i = 0; i < keys.length; i += MAX_PER_BATCH) {
     const slice = keys.slice(i, i + MAX_PER_BATCH);
     const objects: ObjectIdentifier[] = slice.map((k) => ({ Key: k }));
-    const cmd = new DeleteObjectsCommand({
-      Bucket: bucket,
-      Delete: { Objects: objects, Quiet: true },
-    });
-    await s3.send(cmd);
+    try {
+      const cmd = new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: { Objects: objects, Quiet: false },
+      });
+      const resp = await s3.send(cmd);
+
+      const deletedSet = new Set<string>(
+        (resp.Deleted || []).map((d) => d.Key || ""),
+      );
+      const errorMap = new Map<string, string>();
+      for (const e of resp.Errors || []) {
+        if (e.Key) errorMap.set(e.Key, e.Message || e.Code || "unknown");
+      }
+
+      for (const k of slice) {
+        if (deletedSet.has(k)) {
+          results.push({ key: k, deleted: true });
+        } else if (errorMap.has(k)) {
+          results.push({ key: k, deleted: false, error: errorMap.get(k) });
+        } else {
+          // Not reported in Deleted or Errors: treat as unknown failure
+          results.push({ key: k, deleted: false, error: "unknown" });
+        }
+      }
+    } catch (err) {
+      const message = (err as Error)?.message || "unknown";
+      for (const k of slice) {
+        results.push({ key: k, deleted: false, error: message });
+      }
+    }
   }
+
+  return results;
 }
