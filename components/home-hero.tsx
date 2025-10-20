@@ -78,7 +78,7 @@ export function HomeHero({ intervalMs = 2400, className }: HomeHeroProps) {
                     ease: [0.22, 1, 0.36, 1],
                     duration: 0.5,
                   }}
-                  className="inline-block will-change-transform"
+                  className="inline-block transform-gpu will-change-transform"
                 >
                   {rotatingWords[index]}
                 </motion.span>

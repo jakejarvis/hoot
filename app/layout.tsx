@@ -6,12 +6,17 @@ import { Providers } from "@/app/providers";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
 import { Toaster } from "@/components/ui/sonner";
+import { BASE_URL } from "@/lib/constants";
 import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Domainstack — Domain Intelligence Made Easy",
   description: "Investigate domains with WHOIS, DNS, SSL, headers, and more.",
+  metadataBase: new URL(BASE_URL),
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({

@@ -25,6 +25,9 @@ export async function generateMetadata({
   return {
     title: `${normalized} — Domain Report`,
     description: `Investigate ${normalized}'s WHOIS, DNS, SSL, headers, and more.`,
+    alternates: {
+      canonical: `/${normalized}`,
+    },
   };
 }
 
