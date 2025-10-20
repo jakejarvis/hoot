@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const hoisted = vi.hoisted(() => ({
-  lookupDomain: vi.fn(async (_domain: string) => ({
+  lookup: vi.fn(async (_domain: string) => ({
     ok: true,
     error: null,
     record: {
@@ -17,7 +17,7 @@ vi.mock("rdapper", async (importOriginal) => {
   const actual = await importOriginal<typeof import("rdapper")>();
   return {
     ...actual,
-    lookupDomain: hoisted.lookupDomain,
+    lookup: hoisted.lookup,
   };
 });
 
@@ -53,8 +53,8 @@ describe("getRegistration", () => {
   it("returns cached record when present (DB fast-path, rdapper not called)", async () => {
     const { upsertDomain } = await import("@/server/repos/domains");
     const { upsertRegistration } = await import("@/server/repos/registrations");
-    const { lookupDomain } = await import("rdapper");
-    const spy = lookupDomain as unknown as import("vitest").Mock;
+    const { lookup } = await import("rdapper");
+    const spy = lookup as unknown as import("vitest").Mock;
     spy.mockClear();
 
     const d = await upsertDomain({
@@ -129,8 +129,8 @@ describe("getRegistration", () => {
   it("sets shorter TTL for unregistered domains (observed via second call)", async () => {
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
-    const { lookupDomain } = await import("rdapper");
-    (lookupDomain as unknown as import("vitest").Mock).mockResolvedValueOnce({
+    const { lookup } = await import("rdapper");
+    (lookup as unknown as import("vitest").Mock).mockResolvedValueOnce({
       ok: true,
       error: null,
       record: { isRegistered: false, source: "rdap" },

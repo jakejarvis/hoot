@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { getDomainTld, lookupDomain } from "rdapper";
+import { getDomainTld, lookup } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
@@ -119,7 +119,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     }
   }
 
-  const { ok, record, error } = await lookupDomain(registrable ?? domain, {
+  const { ok, record, error } = await lookup(registrable ?? domain, {
     timeoutMs: 5000,
   });
 
