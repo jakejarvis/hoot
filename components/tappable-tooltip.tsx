@@ -366,6 +366,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       disableHoverableContent,
       hoverCloseTimerRef,
     } = useTooltipCtx();
+    const [isTransitioning, setIsTransitioning] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
     const provider = React.useContext(Ctx) ?? {
       delayDuration: OPEN_DELAY_MS,
       touchCloseRadius: TOUCH_CLOSE_RADIUS,
@@ -474,6 +476,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
               onPointerEnter={() => {
                 // moving into the tooltip — keep it open
                 if (!disableHoverableContent) {
+                  setIsHovered(true);
                   // cancel any pending close from leaving the trigger
                   if (hoverCloseTimerRef.current) {
                     window.clearTimeout(hoverCloseTimerRef.current);
@@ -483,6 +486,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
               }}
               onPointerLeave={(e) => {
                 if (disableHoverableContent) return;
+                setIsHovered(false);
                 // leaving the tooltip: if not going back to the trigger, schedule a close
                 const rt = e.relatedTarget as Node | null;
                 const intoTrigger = !!(
@@ -526,6 +530,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
                 animate="visible"
                 exit="hidden"
                 variants={variants}
+                onAnimationStart={() => setIsTransitioning(true)}
+                onAnimationComplete={() => setIsTransitioning(false)}
                 transition={
                   shouldReduce
                     ? { duration: 0.12 }
@@ -550,7 +556,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
                   aria-hidden
                   className="absolute block"
                   style={{
-                    pointerEvents: "auto",
+                    pointerEvents:
+                      isTransitioning || isHovered ? "auto" : "none",
                     // invisible hover bridge, fills the tiny gap toward the trigger
                     ...(resolvedSide === "top" && {
                       left: 0,
