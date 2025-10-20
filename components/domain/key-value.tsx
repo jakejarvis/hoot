@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/tappable-tooltip";
 import { useTruncation } from "@/hooks/use-truncation";
 import { cn } from "@/lib/utils";
 

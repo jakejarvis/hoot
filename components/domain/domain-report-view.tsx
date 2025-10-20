@@ -12,12 +12,12 @@ import { HeadersSection } from "@/components/domain/sections/headers-section";
 import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
 import { RegistrationSection } from "@/components/domain/sections/registration-section";
 import { SeoSection } from "@/components/domain/sections/seo-section";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/tappable-tooltip";
+import { Button } from "@/components/ui/button";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
@@ -113,7 +113,7 @@ export function DomainReportView({ domain }: { domain: string }) {
             />
           </a>
         </ScreenshotTooltip>
-        <Tooltip delayDuration={500}>
+        <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="outline"

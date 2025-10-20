@@ -8,7 +8,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/tappable-tooltip";
 import type { DnsRecord } from "@/lib/schemas";
 
 export function DnsRecordList({

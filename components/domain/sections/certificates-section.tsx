@@ -15,6 +15,11 @@ import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import { RelativeExpiryBadge } from "@/components/domain/time-badges";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/tappable-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,11 +30,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";

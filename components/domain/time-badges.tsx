@@ -3,12 +3,12 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { ClockFading } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/tappable-tooltip";
+import { Badge } from "@/components/ui/badge";
 import { formatTtl } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

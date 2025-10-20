@@ -30,6 +30,11 @@ import {
   SubheadCountSkeleton,
 } from "@/components/domain/subhead-count";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/tappable-tooltip";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -52,11 +57,6 @@ import {
 } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useProgressiveReveal } from "@/hooks/use-progressive-reveal";
 import type { SeoResponse, SocialPreviewProvider } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";

@@ -13,7 +13,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/tappable-tooltip";
 import {
   extractHostnameFromUrlish,
   formatDate,
