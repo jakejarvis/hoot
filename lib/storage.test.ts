@@ -1,164 +1,129 @@
 /* @vitest-environment node */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const utMock = vi.hoisted(() => ({
-  uploadFiles: vi.fn(async () => ({
-    data: { ufsUrl: "https://app.ufs.sh/f/mock-key", key: "mock-key" },
-    error: null,
-  })),
-}));
-
-vi.mock("uploadthing/server", async () => {
-  const actual =
-    await vi.importActual<typeof import("uploadthing/server")>(
-      "uploadthing/server",
-    );
+const s3Send = vi.hoisted(() => vi.fn(async () => ({})));
+vi.mock("@aws-sdk/client-s3", () => {
   return {
-    ...actual,
-    UTApi: vi.fn().mockImplementation(() => utMock),
+    S3Client: vi.fn().mockImplementation(() => ({ send: s3Send })),
+    PutObjectCommand: vi.fn().mockImplementation((input) => ({ input })),
   };
 });
+vi.stubEnv("R2_ACCOUNT_ID", "test-account");
+vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
+vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
+vi.stubEnv("R2_BUCKET", "test-bucket");
 
-import { deterministicHash, makeImageFileName, uploadImage } from "./storage";
+import { storeImage } from "./storage";
 
 afterEach(() => {
   vi.restoreAllMocks();
-  utMock.uploadFiles.mockClear();
+  s3Send.mockClear();
 });
 
 describe("storage uploads", () => {
-  it("uploadImage (favicon) returns ufsUrl and UT file key and calls UTApi", async () => {
-    const res = await uploadImage({
+  it("storeImage (favicon) returns R2 public URL and key and calls S3", async () => {
+    const res = await storeImage({
       kind: "favicon",
       domain: "example.com",
+      buffer: Buffer.from([1, 2, 3]),
       width: 32,
       height: 32,
-      buffer: Buffer.from([1, 2, 3]),
     });
-    expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
-    // we return UploadThing file key for deletion
-    expect(res.key).toBe("mock-key");
-    const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
-      .mock.calls[0]?.[0];
-    expect(callArg).toBeInstanceOf(Blob);
-    expect(utMock.uploadFiles).toHaveBeenCalledTimes(1);
+    expect(res.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+    );
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(s3Send).toHaveBeenCalledTimes(1);
   });
 
-  it("uploadImage (screenshot) returns ufsUrl and UT file key and calls UTApi", async () => {
-    const res = await uploadImage({
+  it("storeImage (screenshot) returns R2 public URL and key and calls S3", async () => {
+    const res = await storeImage({
       kind: "screenshot",
       domain: "example.com",
+      buffer: Buffer.from([4, 5, 6]),
       width: 1200,
       height: 630,
-      buffer: Buffer.from([4, 5, 6]),
     });
-    expect(res.url).toBe("https://app.ufs.sh/f/mock-key");
-    // we return UploadThing file key for deletion
-    expect(res.key).toBe("mock-key");
-    const callArg = (utMock.uploadFiles as unknown as import("vitest").Mock)
-      .mock.calls[0]?.[0];
-    expect(callArg).toBeInstanceOf(Blob);
-    expect(utMock.uploadFiles).toHaveBeenCalledTimes(1);
+    expect(res.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/1200x630\.webp$/,
+    );
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/1200x630\.webp$/);
+    expect(s3Send).toHaveBeenCalledTimes(1);
   });
 
   it("retries on upload failure and succeeds on second attempt", async () => {
-    utMock.uploadFiles
+    s3Send
       .mockRejectedValueOnce(new Error("Network error"))
-      .mockResolvedValueOnce({
-        data: { ufsUrl: "https://app.ufs.sh/f/retry-key", key: "retry-key" },
-        error: null,
-      });
+      .mockResolvedValueOnce({});
 
-    const res = await uploadImage({
+    const res = await storeImage({
       kind: "favicon",
       domain: "retry.com",
+      buffer: Buffer.from([1, 2, 3]),
       width: 32,
       height: 32,
-      buffer: Buffer.from([1, 2, 3]),
     });
 
-    expect(res.url).toBe("https://app.ufs.sh/f/retry-key");
-    expect(res.key).toBe("retry-key");
-    expect(utMock.uploadFiles).toHaveBeenCalledTimes(2);
+    expect(res.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+    );
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(s3Send).toHaveBeenCalledTimes(2);
   });
 
-  it("retries on missing url in response", async () => {
-    utMock.uploadFiles
-      .mockResolvedValueOnce({
-        data: { key: "no-url", ufsUrl: undefined } as never,
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: { ufsUrl: "https://app.ufs.sh/f/retry-key", key: "retry-key" },
-        error: null,
-      });
+  it("retries once on transient failure then succeeds", async () => {
+    s3Send
+      .mockRejectedValueOnce(new Error("Transient"))
+      .mockResolvedValueOnce({});
 
-    const res = await uploadImage({
+    const res = await storeImage({
       kind: "favicon",
       domain: "retry.com",
+      buffer: Buffer.from([1, 2, 3]),
       width: 32,
       height: 32,
-      buffer: Buffer.from([1, 2, 3]),
     });
 
-    expect(res.url).toBe("https://app.ufs.sh/f/retry-key");
-    expect(utMock.uploadFiles).toHaveBeenCalledTimes(2);
+    expect(res.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+    );
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(s3Send).toHaveBeenCalledTimes(2);
   });
 
   it("throws after exhausting all retry attempts", async () => {
-    utMock.uploadFiles.mockRejectedValue(new Error("Persistent error"));
+    s3Send.mockRejectedValue(new Error("Persistent error"));
 
     await expect(
-      uploadImage({
+      storeImage({
         kind: "favicon",
         domain: "fail.com",
+        buffer: Buffer.from([1, 2, 3]),
         width: 32,
         height: 32,
-        buffer: Buffer.from([1, 2, 3]),
       }),
     ).rejects.toThrow(/Upload failed after 3 attempts/);
 
-    expect(utMock.uploadFiles).toHaveBeenCalledTimes(3);
+    expect(s3Send).toHaveBeenCalledTimes(3);
   });
 
-  it("handles error in UploadThing response", async () => {
-    utMock.uploadFiles
-      .mockResolvedValueOnce({
-        data: null as never,
-        error: new Error("UploadThing API error") as never,
-      })
-      .mockResolvedValueOnce({
-        data: { ufsUrl: "https://app.ufs.sh/f/ok", key: "ok" },
-        error: null,
-      });
+  it("succeeds after initial failure", async () => {
+    s3Send
+      .mockRejectedValueOnce(new Error("S3 API error"))
+      .mockResolvedValueOnce({});
 
-    const res = await uploadImage({
+    const res = await storeImage({
       kind: "favicon",
       domain: "error.com",
+      buffer: Buffer.from([1, 2, 3]),
       width: 32,
       height: 32,
-      buffer: Buffer.from([1, 2, 3]),
     });
 
-    expect(res.url).toBe("https://app.ufs.sh/f/ok");
-    expect(utMock.uploadFiles).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe("hashing helpers", () => {
-  it("deterministicHash returns stable value for same input", () => {
-    const a1 = deterministicHash("input");
-    const a2 = deterministicHash("input");
-    expect(a1).toBe(a2);
-    expect(a1).toMatch(/^[a-f0-9]{32}$/);
-  });
-
-  it("makeImageFileName is deterministic and changes with inputs", () => {
-    const f1 = makeImageFileName("social", "example.com", 1200, 630);
-    const f2 = makeImageFileName("social", "example.com", 1200, 630);
-    const f3 = makeImageFileName("social", "example.com", 1200, 630, "v2");
-    expect(f1).toBe(f2);
-    expect(f1).toMatch(/^social_[a-f0-9]{32}\.webp$/);
-    expect(f3).not.toBe(f1);
+    expect(res.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
+    );
+    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.webp$/);
+    expect(s3Send).toHaveBeenCalledTimes(2);
   });
 });

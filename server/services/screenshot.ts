@@ -4,7 +4,7 @@ import { SCREENSHOT_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizeImageCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { ns } from "@/lib/redis";
-import { uploadImage } from "@/lib/storage";
+import { storeImage } from "@/lib/storage";
 
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 630;
@@ -117,12 +117,12 @@ export async function getOrCreateScreenshotBlobUrl(
                 VIEWPORT_WIDTH,
                 VIEWPORT_HEIGHT,
               );
-              const { url: storedUrl, key: fileKey } = await uploadImage({
+              const { url: storedUrl, key: fileKey } = await storeImage({
                 kind: "screenshot",
                 domain,
+                buffer: withWatermark,
                 width: VIEWPORT_WIDTH,
                 height: VIEWPORT_HEIGHT,
-                buffer: withWatermark,
               });
               return {
                 url: storedUrl,

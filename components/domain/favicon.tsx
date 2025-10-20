@@ -64,8 +64,9 @@ export function Favicon({
       width={size}
       height={size}
       className={className}
-      loading="lazy"
       unoptimized
+      priority={false}
+      draggable={false}
       onError={() => setFailedUrl(url)}
     />
   );

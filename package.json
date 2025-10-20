@@ -29,6 +29,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.913.0",
     "@bprogress/next": "^3.2.12",
     "@date-fns/utc": "^2.1.1",
     "@neondatabase/serverless": "^1.0.2",
@@ -50,8 +51,10 @@
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.6",
     "drizzle-zod": "^0.8.3",
+    "file-type": "^21.0.0",
     "geist": "^1.5.1",
     "icojs": "^0.20.0",
+    "image-size": "^2.0.2",
     "inngest": "^3.44.3",
     "ipaddr.js": "^2.2.0",
     "lucide-react": "^0.546.0",
@@ -72,7 +75,6 @@
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
-    "uploadthing": "^7.7.4",
     "uuid": "^13.0.0",
     "vaul": "^1.1.2",
     "zod": "^4.1.12"

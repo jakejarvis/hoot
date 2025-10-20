@@ -1,5 +1,5 @@
 import "server-only";
-import { UTApi } from "uploadthing/server";
+import { deleteObjects } from "@/lib/r2";
 import { ns, redis } from "@/lib/redis";
 import { StorageKindSchema } from "@/lib/schemas";
 import { inngest } from "@/server/inngest/client";
@@ -10,7 +10,7 @@ export type BlobPruneResult = {
 };
 
 /**
- * Drains due UploadThing file keys from our purge queues and attempts deletion.
+ * Drains due object keys from our purge queues and attempts deletion in R2.
  * Exposed for tests and used by the Inngest function below.
  */
 export async function pruneDueBlobsOnce(
@@ -19,7 +19,6 @@ export async function pruneDueBlobsOnce(
 ): Promise<BlobPruneResult> {
   const deleted: string[] = [];
   const errors: Array<{ path: string; error: string }> = [];
-  const utapi = new UTApi();
 
   for (const kind of StorageKindSchema.options) {
     // Drain due items in batches per storage kind
@@ -36,7 +35,7 @@ export async function pruneDueBlobsOnce(
 
       const succeeded: string[] = [];
       try {
-        await utapi.deleteFiles(due);
+        await deleteObjects(due);
         deleted.push(...due);
         succeeded.push(...due);
       } catch (err) {

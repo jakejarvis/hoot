@@ -69,7 +69,9 @@ describe("Screenshot", () => {
 
   it("renders image when url present", () => {
     (useQuery as unknown as Mock).mockReturnValue({
-      data: { url: "https://app.ufs.sh/f/url.png" },
+      data: {
+        url: "https://test-bucket.test-account.r2.cloudflarestorage.com/screenshot/url.webp",
+      },
       isLoading: false,
       isFetching: false,
     });
@@ -77,7 +79,10 @@ describe("Screenshot", () => {
     const img = screen.getByRole("img", {
       name: /homepage preview of example.com/i,
     });
-    expect(img).toHaveAttribute("src", "https://app.ufs.sh/f/url.png");
+    expect(img).toHaveAttribute(
+      "src",
+      "https://test-bucket.test-account.r2.cloudflarestorage.com/screenshot/url.webp",
+    );
   });
 
   it("shows fallback when no url and not loading", () => {

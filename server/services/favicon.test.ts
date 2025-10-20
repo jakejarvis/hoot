@@ -2,14 +2,18 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
-  uploadImage: vi.fn(async () => ({
-    url: "https://app.ufs.sh/f/stored-url",
-    key: "ut-key",
+  storeImage: vi.fn(async () => ({
+    url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/32x32.webp",
+    key: "abcdef0123456789abcdef0123456789/32x32.webp",
   })),
   getFaviconTtlSeconds: vi.fn(() => 60),
 }));
 
 vi.mock("@/lib/storage", () => storageMock);
+vi.stubEnv("R2_ACCOUNT_ID", "test-account");
+vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
+vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
+vi.stubEnv("R2_BUCKET", "test-bucket");
 
 // Mock sharp to return a pipeline that resolves a buffer (now using webp)
 vi.mock("sharp", () => ({
@@ -36,7 +40,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   vi.restoreAllMocks();
-  storageMock.uploadImage.mockReset();
+  storageMock.storeImage.mockReset();
   const { resetInMemoryRedis } = await import("@/lib/redis-mock");
   resetInMemoryRedis();
 });
@@ -51,7 +55,7 @@ describe("getOrCreateFaviconBlobUrl", () => {
     });
     const out = await getOrCreateFaviconBlobUrl("example.com");
     expect(out.url).toBe("blob://existing-url");
-    expect(storageMock.uploadImage).not.toHaveBeenCalled();
+    expect(storageMock.storeImage).not.toHaveBeenCalled();
   });
 
   it("reads object values from redis index", async () => {
@@ -86,8 +90,10 @@ describe("getOrCreateFaviconBlobUrl", () => {
     const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(resp);
 
     const out = await getOrCreateFaviconBlobUrl("example.com");
-    expect(out.url).toBe("https://app.ufs.sh/f/stored-url");
-    expect(storageMock.uploadImage).toHaveBeenCalled();
+    expect(out.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/32x32\.webp$/,
+    );
+    expect(storageMock.storeImage).toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
 

@@ -52,6 +52,7 @@
   - Prefer `vi.hoisted` for ESM module mocks (e.g., `node:tls`).
   - Use unique cache keys/domains; call `resetInMemoryRedis()` in `afterEach`.
   - Screenshot service (`server/services/screenshot.ts`) uses hoisted mocks for `puppeteer`/`puppeteer-core` and `@sparticuz/chromium`.
+  - R2 storage: mock `@aws-sdk/client-s3` (`S3Client` with a mocked `send`). Set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET` via `vi.stubEnv` in suites that touch uploads/deletes.
 - Browser APIs: Mock `URL.createObjectURL`/`revokeObjectURL` with `vi.fn()` in tests that need them.
 - Commands: `pnpm test`, `pnpm test:run`, `pnpm test:coverage`.
 
@@ -61,7 +62,8 @@
 - Call out skipped checks and confirm `.env.local` requirements for reviewers.
 
 ## Security & Configuration Tips
-- Keep secrets in `.env.local`.
+- Keep secrets in `.env.local`. See `.env.example` for required variables.
+- Cloudflare R2 (S3-compatible) backs favicon/screenshot storage.
 - Screenshots (Puppeteer): prefer `puppeteer-core` + `@sparticuz/chromium` on Vercel.
 - Persist domain data in Postgres via Drizzle; use Redis for short-lived caching/locks. Apply retry backoff to respect provider limits.
 - Background revalidation runs via Inngest functions (scheduled and event-driven).

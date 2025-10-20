@@ -10,13 +10,17 @@ import {
 } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
-  uploadImage: vi.fn(async () => ({
-    url: "https://app.ufs.sh/f/stored-screenshot",
-    key: "ut-key",
+  storeImage: vi.fn(async () => ({
+    url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
+    key: "abcdef0123456789abcdef0123456789/1200x630.webp",
   })),
 }));
 
 vi.mock("@/lib/storage", () => storageMock);
+vi.stubEnv("R2_ACCOUNT_ID", "test-account");
+vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
+vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
+vi.stubEnv("R2_BUCKET", "test-bucket");
 
 // Mock puppeteer environments
 const pageMock = {
@@ -62,7 +66,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   vi.restoreAllMocks();
-  storageMock.uploadImage.mockReset();
+  storageMock.storeImage.mockReset();
   const { resetInMemoryRedis } = await import("@/lib/redis-mock");
   resetInMemoryRedis();
   pageMock.goto.mockReset();
@@ -80,15 +84,17 @@ describe("getOrCreateScreenshotBlobUrl", () => {
     });
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toBe("blob://existing");
-    expect(storageMock.uploadImage).not.toHaveBeenCalled();
+    expect(storageMock.storeImage).not.toHaveBeenCalled();
   });
 
   // Drop string JSON case now that we assume automatic deserialization
 
   it("captures, uploads and returns url when not cached", async () => {
     const out = await getOrCreateScreenshotBlobUrl("example.com");
-    expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
-    expect(storageMock.uploadImage).toHaveBeenCalled();
+    expect(out.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/1200x630\.webp$/,
+    );
+    expect(storageMock.storeImage).toHaveBeenCalled();
   });
 
   it("retries navigation failure and succeeds on second attempt", async () => {
@@ -105,7 +111,9 @@ describe("getOrCreateScreenshotBlobUrl", () => {
       backoffMaxMs: 2,
     });
     Math.random = originalRandom;
-    expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
+    expect(out.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/1200x630\.webp$/,
+    );
     expect(pageMock.goto).toHaveBeenCalledTimes(2);
   });
 
@@ -125,7 +133,9 @@ describe("getOrCreateScreenshotBlobUrl", () => {
       backoffMaxMs: 2,
     });
     Math.random = originalRandom;
-    expect(out.url).toBe("https://app.ufs.sh/f/stored-screenshot");
+    expect(out.url).toMatch(
+      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/1200x630\.webp$/,
+    );
     expect(pageMock.screenshot).toHaveBeenCalledTimes(2);
   });
 
