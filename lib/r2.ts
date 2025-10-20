@@ -39,10 +39,15 @@ export function getBucket(): string {
 export function makePublicUrl(key: string): string {
   const accountId = requireEnv("R2_ACCOUNT_ID");
   const bucket = getBucket();
-  const base =
+  const rawBase =
     process.env.R2_PUBLIC_BASE_URL ||
     `https://${bucket}.${accountId}.r2.cloudflarestorage.com`;
-  return `${base}/${encodeURI(key)}`;
+  const base = rawBase.replace(/\/+$/, "");
+  const encodedKey = key
+    .split("/")
+    .map((p) => encodeURIComponent(p))
+    .join("/");
+  return `${base}/${encodedKey}`;
 }
 
 export async function putObject(options: {

@@ -28,10 +28,10 @@ function deterministicHash(input: string, length = 32): string {
 function makeObjectKey(
   kind: StorageKind,
   filename: string,
-  hashParts: Array<string | number>,
   extension = "bin",
+  extraParts: Array<string | number>,
 ): string {
-  const base = `${kind}:${hashParts.join(":")}`;
+  const base = `${kind}:${extraParts.join(":")}`;
   const digest = deterministicHash(base);
   return `${digest}/${filename}.${extension}`;
 }
@@ -158,7 +158,7 @@ export async function storeBlob(options: {
   filename = filename || "file";
 
   const key =
-    providedKey || makeObjectKey(kind, filename, extraParts, extension);
+    providedKey || makeObjectKey(kind, filename, extension, extraParts);
   await uploadWithRetry(key, buffer, contentType, cacheControl);
   return { url: makePublicUrl(key), key };
 }
@@ -200,17 +200,13 @@ export async function storeImage(options: {
 
   const finalWidth = width ?? 0;
   const finalHeight = height ?? 0;
-  const key = makeObjectKey(
-    kind,
-    `${finalWidth}x${finalHeight}`,
-    [domain, kind, `${finalWidth}x${finalHeight}`],
-    extension || "webp",
-  );
 
+  // Defer contentType/extension selection to storeBlob by passing filename and hash parts
   return await storeBlob({
     kind,
     buffer,
-    key,
+    filename: `${finalWidth}x${finalHeight}`,
+    extraParts: [domain, kind, `${finalWidth}x${finalHeight}`],
     contentType: contentType || undefined,
     extension: extension || undefined,
     cacheControl,
