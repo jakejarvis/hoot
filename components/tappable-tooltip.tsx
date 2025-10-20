@@ -10,6 +10,12 @@ function setRef<T>(ref: React.ForwardedRef<T>, value: T | null) {
   else if (ref) (ref as React.MutableRefObject<T | null>).current = value;
 }
 
+// Consistent delay used when scheduling hover-based open/close
+const OPEN_DELAY_MS = 200;
+const CLOSE_DELAY_MS = 400;
+// Radius around the trigger that doesn't close the tooltip
+const TOUCH_CLOSE_RADIUS = 64;
+
 /* -------------------------------------------------------------------------------------------------
  * Provider
  * -------------------------------------------------------------------------------------------------*/
@@ -23,8 +29,8 @@ const Ctx = React.createContext<ProviderCtx | null>(null);
 
 function TooltipProvider({
   children,
-  delayDuration = 200,
-  touchCloseRadius = 64,
+  delayDuration = OPEN_DELAY_MS,
+  touchCloseRadius = TOUCH_CLOSE_RADIUS,
 }: React.PropsWithChildren<Partial<ProviderCtx>>) {
   const value = React.useMemo(
     () => ({ delayDuration, touchCloseRadius }),
@@ -192,12 +198,12 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
       hoverCloseTimerRef.current = window.setTimeout(() => {
         removeMoveListener();
         setOpen(false);
-      }, 400); // slightly more forgiving
+      }, CLOSE_DELAY_MS);
     }, [cancelClose, hoverCloseTimerRef, removeMoveListener, setOpen]);
 
     const provider = React.useContext(Ctx) ?? {
-      delayDuration: 200,
-      touchCloseRadius: 64,
+      delayDuration: OPEN_DELAY_MS,
+      touchCloseRadius: TOUCH_CLOSE_RADIUS,
     };
 
     const hoverTimer = React.useRef<number | null>(null);
@@ -361,8 +367,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       hoverCloseTimerRef,
     } = useTooltipCtx();
     const provider = React.useContext(Ctx) ?? {
-      delayDuration: 200,
-      touchCloseRadius: 64,
+      delayDuration: OPEN_DELAY_MS,
+      touchCloseRadius: TOUCH_CLOSE_RADIUS,
     };
 
     // Resolve side with optional left/right → top/bottom axis fallback
@@ -489,7 +495,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
                     window.clearTimeout(hoverCloseTimerRef.current);
                   hoverCloseTimerRef.current = window.setTimeout(
                     () => setOpen(false),
-                    240,
+                    CLOSE_DELAY_MS,
                   );
                 }
               }}
