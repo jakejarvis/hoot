@@ -151,6 +151,7 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
       onPointerLeave,
       onPointerDown,
       onKeyDown,
+      type,
       ...rest
     },
     forwardedRef,
@@ -233,6 +234,7 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
       <PopoverPrimitive.Trigger asChild>
         <Comp
           ref={ref}
+          type={asChild ? type : (type ?? "button")}
           onPointerEnter={(e: React.PointerEvent<HTMLElement>) => {
             onPointerEnter?.(e);
             if (e.pointerType === "mouse") {
@@ -289,6 +291,9 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
           }}
           onPointerDown={(e: React.PointerEvent<HTMLElement>) => {
             onPointerDown?.(e);
+            // Prevent any pending hover opens or scheduled closes from racing with press
+            clearHover();
+            cancelClose();
             if (e.pointerType === "touch" || e.pointerType === "pen") {
               setOpen((p) => !p);
             }
