@@ -24,7 +24,6 @@ export async function pruneDueBlobsOnce(
     // Drain due items in batches per storage kind
     // Upstash supports zrange by score; the SDK exposes options for byScore/offset/count
     // Use a loop to progressively drain without pulling too many at once
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const due = await redis.zrange<string[]>(ns("purge", kind), 0, now, {
         byScore: true,
@@ -35,9 +34,15 @@ export async function pruneDueBlobsOnce(
 
       const succeeded: string[] = [];
       try {
-        await deleteObjects(due);
-        deleted.push(...due);
-        succeeded.push(...due);
+        const result = await deleteObjects(due);
+        const batchDeleted = result.filter((r) => r.deleted).map((r) => r.key);
+        deleted.push(...batchDeleted);
+        succeeded.push(...batchDeleted);
+        for (const r of result) {
+          if (!r.deleted) {
+            errors.push({ path: r.key, error: r.error || "unknown" });
+          }
+        }
       } catch (err) {
         for (const path of due) {
           errors.push({ path, error: (err as Error)?.message || "unknown" });
