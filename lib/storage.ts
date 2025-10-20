@@ -9,16 +9,17 @@ const UPLOAD_BACKOFF_BASE_MS = 100;
 const UPLOAD_BACKOFF_MAX_MS = 2000;
 
 /**
- * Deterministic, obfuscated hash for IDs and filenames. Reuses
- * the same secret as the R2 credentials for convenience, unless
- * overridden by BLOB_SIGNING_SECRET.
+ * Deterministic, obfuscated hash for IDs and filenames.
+ * Requires a dedicated BLOB_SIGNING_SECRET in non-dev environments.
  */
 function deterministicHash(input: string, length = 32): string {
-  const secret =
-    process.env.BLOB_SIGNING_SECRET ||
-    process.env.R2_SECRET_ACCESS_KEY ||
-    "dev-hmac-secret";
-  return createHmac("sha256", secret)
+  const isDev = process.env.NODE_ENV === "development";
+  const secret = process.env.BLOB_SIGNING_SECRET;
+  if (!secret && !isDev) {
+    throw new Error("BLOB_SIGNING_SECRET is not set");
+  }
+  const stableSecret = secret || "dev-hmac-secret";
+  return createHmac("sha256", stableSecret)
     .update(input)
     .digest("hex")
     .slice(0, length);
