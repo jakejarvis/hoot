@@ -207,6 +207,19 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
       }
     };
 
+    // Ensure any listeners/timeouts are cleared on unmount
+    // biome-ignore lint/correctness/useExhaustiveDependencies: unmount-only cleanup should not re-run on deps
+    React.useEffect(() => {
+      return () => {
+        removeMoveListener();
+        clearHover();
+        if (hoverCloseTimerRef.current) {
+          window.clearTimeout(hoverCloseTimerRef.current);
+          hoverCloseTimerRef.current = null;
+        }
+      };
+    }, []);
+
     const ref = (node: HTMLElement | null) => {
       triggerRef.current = node;
       setRef(forwardedRef, node);
