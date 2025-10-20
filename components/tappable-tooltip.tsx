@@ -328,8 +328,8 @@ type TooltipContentProps = Omit<
 > & {
   side?: Side;
   align?: Align;
-  sideOffset?: number;
   alignOffset?: number;
+  sideOffset?: number;
   withArrow?: boolean;
   /** If side is left/right and horizontal space is tight, auto-switch to top/bottom. */
   smartAxisFallback?: boolean;
@@ -343,8 +343,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       children,
       side = "top",
       align = "center",
-      sideOffset = 8,
       alignOffset = 0, // API parity
+      sideOffset = 8,
       withArrow = true,
       smartAxisFallback = true,
       ...rest
@@ -461,6 +461,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
               forceMount
               side={resolvedSide}
               align={align}
+              alignOffset={alignOffset}
               sideOffset={sideOffset}
               avoidCollisions
               onOpenAutoFocus={(e) => e.preventDefault()} // keep focus on trigger
