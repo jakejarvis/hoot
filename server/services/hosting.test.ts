@@ -2,7 +2,6 @@
 import type { Mock } from "vitest";
 import {
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -12,27 +11,42 @@ import {
 
 // Import lazily inside tests after DB injection to avoid importing the client early
 
-// Mocks for dependencies used by detectHosting
-vi.mock("@/server/services/dns", () => ({
-  resolveAll: vi.fn(async () => ({ records: [], source: "mock" })),
+// Hoisted mocks for dependencies used by detectHosting
+const hoisted = vi.hoisted(() => ({
+  dns: {
+    resolveAll: vi.fn(async () => ({ records: [], source: "mock" })),
+  },
+  headers: {
+    probeHeaders: vi.fn(async () => ({ headers: [], source: undefined })),
+  },
+  ip: {
+    lookupIpMeta: vi.fn(async () => ({
+      geo: {
+        city: "",
+        region: "",
+        country: "",
+        country_code: "",
+        lat: null,
+        lon: null,
+      },
+      owner: null,
+      domain: null,
+    })),
+  },
 }));
-vi.mock("@/server/services/headers", () => ({
-  probeHeaders: vi.fn(async () => ({ headers: [], source: undefined })),
-}));
-vi.mock("@/server/services/ip", () => ({
-  lookupIpMeta: vi.fn(async () => ({
-    geo: {
-      city: "",
-      region: "",
-      country: "",
-      country_code: "",
-      lat: null,
-      lon: null,
-    },
-    owner: null,
-    domain: null,
-  })),
-}));
+
+vi.mock("@/server/services/dns", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/services/dns")>();
+  return { ...actual, resolveAll: hoisted.dns.resolveAll };
+});
+vi.mock("@/server/services/headers", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/services/headers")>();
+  return { ...actual, probeHeaders: hoisted.headers.probeHeaders };
+});
+vi.mock("@/server/services/ip", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/services/ip")>();
+  return { ...actual, lookupIpMeta: hoisted.ip.lookupIpMeta };
+});
 
 // Ensure toRegistrableDomain accepts our test domains (including .example)
 vi.mock("@/lib/domain-server", async (importOriginal) => {
@@ -50,18 +64,14 @@ vi.mock("@/lib/domain-server", async (importOriginal) => {
   };
 });
 
-beforeAll(async () => {
+beforeEach(async () => {
+  vi.resetModules();
   const { makePGliteDb } = await import("@/server/db/pglite");
   const { db } = await makePGliteDb();
   vi.doMock("@/server/db/client", () => ({ db }));
   const { makeInMemoryRedis } = await import("@/lib/redis-mock");
   const impl = makeInMemoryRedis();
   vi.doMock("@/lib/redis", () => impl);
-});
-
-beforeEach(async () => {
-  const { resetPGliteDb } = await import("@/server/db/pglite");
-  await resetPGliteDb();
 });
 
 afterEach(async () => {

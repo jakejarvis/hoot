@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { CertificateSchema } from "../domain/certificates";
 import { DnsRecordSchema, DnsResolverSchema } from "../domain/dns";
+import { HttpHeadersSchema } from "../domain/headers";
 import { HostingSchema } from "../domain/hosting";
-import { HttpHeadersSchema } from "../domain/http";
 import { RegistrationSchema } from "../domain/registration";
 import { SeoResponseSchema } from "../domain/seo";
 

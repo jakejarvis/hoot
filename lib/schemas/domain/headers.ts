@@ -16,12 +16,7 @@ export const HttpHeadersSourceSchema = z
   .optional();
 
 export const HttpHeadersResponseSchema = z.object({
-  headers: z.array(
-    z.object({
-      name: z.string(),
-      value: z.union([z.string(), z.array(z.string())]),
-    }),
-  ),
+  headers: HttpHeadersSchema,
   source: HttpHeadersSourceSchema,
 });
 
