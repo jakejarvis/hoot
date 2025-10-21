@@ -201,6 +201,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         />
 
         <SeoSection
+          domain={domain}
           data={seo.data || null}
           isLoading={!seoSettled}
           isError={!!seo.isError}
