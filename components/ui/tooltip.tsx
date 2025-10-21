@@ -88,13 +88,21 @@ function TooltipContent({
 } & React.ComponentPropsWithoutRef<"div">) {
   const ctx = React.useContext(HybridTooltipContext);
   const mode: HybridMode = ctx?.mode ?? "tooltip";
-  const baseClasses =
-    "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit animate-in whitespace-normal break-words max-w-[calc(100vw-2rem)] rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs outline-hidden data-[state=closed]:animate-out";
 
+  const baseClasses =
+    "group fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit animate-in whitespace-normal break-words max-w-[calc(100vw-2rem)] rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs outline-hidden data-[state=closed]:animate-out";
   const originClass =
     mode === "tooltip"
       ? "origin-(--radix-tooltip-content-transform-origin)"
       : "origin-(--radix-popover-content-transform-origin)";
+  const arrowClass =
+    "z-50 size-2.5 rotate-45 rounded-[1px] bg-primary fill-primary " +
+    "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit animate-in whitespace-normal break-words max-w-[calc(100vw-2rem)] rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs outline-hidden data-[state=closed]:animate-out " +
+    // position adjustments per side (read from parent Content data attribute) to overlap the edge consistently
+    "group-data-[side=top]:translate-y-[calc(-50%_-_2px)] " +
+    "group-data-[side=bottom]:translate-y-[calc(50%_+_2px)] " +
+    "group-data-[side=left]:translate-x-[calc(-50%_-_2px)] " +
+    "group-data-[side=right]:translate-x-[calc(50%_+_2px)]";
 
   if (mode === "tooltip") {
     return (
@@ -113,9 +121,7 @@ function TooltipContent({
           {...props}
         >
           {children}
-          {hideArrow ? null : (
-            <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[1px] bg-primary fill-primary" />
-          )}
+          {hideArrow ? null : <TooltipPrimitive.Arrow className={arrowClass} />}
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     );
@@ -137,9 +143,7 @@ function TooltipContent({
         {...props}
       >
         {children}
-        {hideArrow ? null : (
-          <PopoverPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[1px] bg-primary fill-primary" />
-        )}
+        {hideArrow ? null : <PopoverPrimitive.Arrow className={arrowClass} />}
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   );
