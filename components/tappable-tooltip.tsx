@@ -11,8 +11,8 @@ function setRef<T>(ref: React.ForwardedRef<T>, value: T | null) {
 }
 
 // Consistent delay used when scheduling hover-based open/close
-const OPEN_DELAY_MS = 200;
-const CLOSE_DELAY_MS = 400;
+const OPEN_DELAY_MS = 0;
+const CLOSE_DELAY_MS = 150;
 // Radius around the trigger that doesn't close the tooltip
 const TOUCH_CLOSE_RADIUS = 64;
 
@@ -23,19 +23,29 @@ const TOUCH_CLOSE_RADIUS = 64;
 type ProviderCtx = {
   delayDuration: number;
   touchCloseRadius: number; // px
+  currentOpenId?: string | null;
+  setCurrentOpenId?: (id: string | null) => void;
 };
 
 const Ctx = React.createContext<ProviderCtx | null>(null);
 
 function TooltipProvider({
-  children,
   delayDuration = OPEN_DELAY_MS,
   touchCloseRadius = TOUCH_CLOSE_RADIUS,
+  children,
 }: React.PropsWithChildren<Partial<ProviderCtx>>) {
+  const [currentOpenId, setCurrentOpenId] = React.useState<string | null>(null);
+
   const value = React.useMemo(
-    () => ({ delayDuration, touchCloseRadius }),
-    [delayDuration, touchCloseRadius],
+    () => ({
+      delayDuration,
+      touchCloseRadius,
+      currentOpenId,
+      setCurrentOpenId,
+    }),
+    [delayDuration, touchCloseRadius, currentOpenId],
   );
+
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -61,6 +71,7 @@ type RootCtx = {
   hoverCloseTimerRef: React.MutableRefObject<number | null>;
   describedById: string;
   disableHoverableContent: boolean;
+  instanceId: string;
 };
 
 const TooltipCtx = React.createContext<RootCtx | null>(null);
@@ -84,22 +95,39 @@ function Tooltip({
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? !!controlledOpen : uncontrolledOpen;
 
+  // stable id for this tooltip instance
+  const instanceId = React.useId();
+  const describedById = React.useId();
+
+  const triggerRef = React.useRef<HTMLElement | null>(null);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const hoverCloseTimerRef = React.useRef<number | null>(null);
+
+  const { setCurrentOpenId } = React.useContext(Ctx) ?? {
+    setCurrentOpenId: () => {},
+  };
+
   const setOpen = React.useCallback(
     (next: SetOpenArg) => {
       const value =
         typeof next === "function"
           ? (next as (p: boolean) => boolean)(open)
           : next;
+
+      // set the active id *synchronously* when opening
+      if (value) setCurrentOpenId?.(instanceId);
+
       if (!isControlled) setUncontrolledOpen(value);
       onOpenChange?.(value);
     },
-    [isControlled, onOpenChange, open],
+    [open, isControlled, onOpenChange, instanceId, setCurrentOpenId],
   );
 
-  const triggerRef = React.useRef<HTMLElement | null>(null);
-  const contentRef = React.useRef<HTMLDivElement | null>(null);
-  const hoverCloseTimerRef = React.useRef<number | null>(null);
-  const describedById = React.useId();
+  // keep latest setOpen in a ref so the registered closer never goes stale
+  const latestSetOpenRef = React.useRef(setOpen);
+  React.useEffect(() => {
+    latestSetOpenRef.current = setOpen;
+  }, [setOpen]);
 
   const ctx = React.useMemo<RootCtx>(
     () => ({
@@ -110,8 +138,9 @@ function Tooltip({
       hoverCloseTimerRef,
       describedById,
       disableHoverableContent,
+      instanceId,
     }),
-    [open, setOpen, disableHoverableContent, describedById],
+    [open, setOpen, disableHoverableContent, describedById, instanceId],
   );
 
   return (
@@ -365,9 +394,12 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       describedById,
       disableHoverableContent,
       hoverCloseTimerRef,
+      instanceId,
     } = useTooltipCtx();
-    const [isTransitioning, setIsTransitioning] = React.useState(false);
-    const [isHovered, setIsHovered] = React.useState(false);
+    const providerCtx = React.useContext(Ctx);
+    const isActiveHere =
+      !providerCtx?.currentOpenId || providerCtx.currentOpenId === instanceId;
+
     const provider = React.useContext(Ctx) ?? {
       delayDuration: OPEN_DELAY_MS,
       touchCloseRadius: TOUCH_CLOSE_RADIUS,
@@ -459,7 +491,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
     return (
       <PopoverPrimitive.Portal forceMount>
         <AnimatePresence initial={false}>
-          {open && (
+          {open && isActiveHere ? (
             <PopoverPrimitive.Content
               // do NOT asChild here; keep this node static for Floating UI to measure.
               ref={(node) => {
@@ -474,10 +506,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
               avoidCollisions
               onOpenAutoFocus={(e) => e.preventDefault()} // keep focus on trigger
               onPointerEnter={() => {
-                // moving into the tooltip — keep it open
+                // moving into the tooltip/bridge — keep it open
                 if (!disableHoverableContent) {
-                  setIsHovered(true);
-                  // cancel any pending close from leaving the trigger
                   if (hoverCloseTimerRef.current) {
                     window.clearTimeout(hoverCloseTimerRef.current);
                     hoverCloseTimerRef.current = null;
@@ -486,7 +516,6 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
               }}
               onPointerLeave={(e) => {
                 if (disableHoverableContent) return;
-                setIsHovered(false);
                 // leaving the tooltip: if not going back to the trigger, schedule a close
                 const rt = e.relatedTarget as Node | null;
                 const intoTrigger = !!(
@@ -530,8 +559,6 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
                 animate="visible"
                 exit="hidden"
                 variants={variants}
-                onAnimationStart={() => setIsTransitioning(true)}
-                onAnimationComplete={() => setIsTransitioning(false)}
                 transition={
                   shouldReduce
                     ? { duration: 0.12 }
@@ -556,8 +583,9 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
                   aria-hidden
                   className="absolute block"
                   style={{
-                    pointerEvents:
-                      isTransitioning || isHovered ? "auto" : "none",
+                    // Always accept pointer events while open so the cursor can land on the bridge
+                    pointerEvents: "auto",
+                    zIndex: 1,
                     // invisible hover bridge, fills the tiny gap toward the trigger
                     ...(resolvedSide === "top" && {
                       left: 0,
@@ -610,7 +638,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
                 )}
               </motion.div>
             </PopoverPrimitive.Content>
-          )}
+          ) : null}
         </AnimatePresence>
       </PopoverPrimitive.Portal>
     );

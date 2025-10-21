@@ -2,7 +2,6 @@ import { AlertCircle, Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/tappable-tooltip";
 import {
@@ -73,22 +72,20 @@ export function Section({
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-base">{title}</span>
                   {help && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            role="img"
-                            aria-label={`More info about ${title}`}
-                          >
-                            <Info
-                              className="h-3.5 w-3.5 opacity-60"
-                              aria-hidden
-                            />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">{help}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          role="img"
+                          aria-label={`More info about ${title}`}
+                        >
+                          <Info
+                            className="h-3.5 w-3.5 opacity-60"
+                            aria-hidden
+                          />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{help}</TooltipContent>
+                    </Tooltip>
                   )}
                 </CardTitle>
                 {(description || help) && (

@@ -2,6 +2,7 @@
 
 import { AppProgressProvider as ProgressProvider } from "@bprogress/next";
 import { ThemeProvider } from "next-themes";
+import { TooltipProvider } from "@/components/tappable-tooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         shallowRouting
         disableStyle
       >
-        {children}
+        <TooltipProvider>{children}</TooltipProvider>
       </ProgressProvider>
     </ThemeProvider>
   );
