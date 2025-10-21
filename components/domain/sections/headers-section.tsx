@@ -69,15 +69,20 @@ export function HeadersSection({
                     "cache-control",
                     "permissions-policy",
                   ]);
-                  return d.headers.map((h) => (
-                    <KeyValue
-                      key={`${h.name}:${String((h as { value: unknown }).value)}`}
-                      label={h.name}
-                      value={String((h as { value: unknown }).value)}
-                      copyable
-                      highlight={important.has(h.name)}
-                    />
-                  ));
+                  return d.headers.map((h) => {
+                    const value = Array.isArray(h.value)
+                      ? h.value.join(", ")
+                      : h.value;
+                    return (
+                      <KeyValue
+                        key={h.name}
+                        label={h.name}
+                        value={value}
+                        copyable
+                        highlight={important.has(h.name)}
+                      />
+                    );
+                  });
                 })()}
               </KeyValueGrid>
             </div>
