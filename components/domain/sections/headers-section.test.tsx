@@ -3,22 +3,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { HeadersSection } from "./headers-section";
 
-// TooltipProvider is used by Section header help
-vi.mock("@/components/ui/tooltip", () => ({
-  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-provider">{children}</div>
-  ),
-  Tooltip: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip">{children}</div>
-  ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-trigger">{children}</div>
-  ),
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-content">{children}</div>
-  ),
-}));
-
 describe("HeadersSection", () => {
   it("highlights important headers and renders values", () => {
     const data = [
