@@ -95,36 +95,31 @@ function TooltipContent({
     mode === "tooltip"
       ? "origin-(--radix-tooltip-content-transform-origin)"
       : "origin-(--radix-popover-content-transform-origin)";
-  const sizeClampClasses =
+  const widthClampClasses =
     mode === "tooltip"
-      ? "max-w-[min(var(--radix-tooltip-content-available-width),calc(100vw-2rem))] md:max-w-[min(var(--radix-tooltip-content-available-width),28rem)] max-h-[min(var(--radix-tooltip-content-available-height),calc(100vh-2rem))] overflow-y-auto"
-      : "max-w-[min(var(--radix-popover-content-available-width),calc(100vw-2rem))] md:max-w-[min(var(--radix-popover-content-available-width),28rem)] max-h-[min(var(--radix-popover-content-available-height),calc(100vh-2rem))] overflow-y-auto";
+      ? "max-w-[min(var(--radix-tooltip-content-available-width),calc(100vw-2rem))] md:max-w-[min(var(--radix-tooltip-content-available-width),28rem)]"
+      : "max-w-[min(var(--radix-popover-content-available-width),calc(100vw-2rem))] md:max-w-[min(var(--radix-popover-content-available-width),28rem)]";
+  const heightClampWrapperClasses =
+    mode === "tooltip"
+      ? "max-h-[min(var(--radix-tooltip-content-available-height),calc(100vh-2rem))] overflow-y-auto"
+      : "max-h-[min(var(--radix-popover-content-available-height),calc(100vh-2rem))] overflow-y-auto";
   const arrowClass =
-    "z-50 size-2.5 rotate-45 rounded-[1px] bg-primary fill-primary " +
-    "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit animate-in whitespace-normal break-words max-w-[calc(100vw-2rem)] rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs outline-hidden data-[state=closed]:animate-out " +
-    // position adjustments per side (read from parent Content data attribute) to overlap the edge consistently
-    "group-data-[side=top]:translate-y-[calc(-50%_-_2px)] " +
-    "group-data-[side=bottom]:translate-y-[calc(50%_+_2px)] " +
-    "group-data-[side=left]:translate-x-[calc(-50%_-_2px)] " +
-    "group-data-[side=right]:translate-x-[calc(50%_+_2px)]";
+    "z-50 size-2.5 rotate-45 rounded-[1px] bg-primary fill-primary translate-y-[calc(-50%_-_2px)]";
 
   if (mode === "tooltip") {
     return (
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           data-slot="tooltip-content"
-          side={
-            (props as { side?: "top" | "right" | "bottom" | "left" }).side ??
-            "top"
-          }
+          side={props.side ?? "top"}
           sideOffset={sideOffset}
           avoidCollisions
           collisionPadding={8}
           sticky="partial"
-          className={cn(baseClasses, sizeClampClasses, originClass, className)}
+          className={cn(baseClasses, widthClampClasses, originClass, className)}
           {...props}
         >
-          {children}
+          <div className={heightClampWrapperClasses}>{children}</div>
           {hideArrow ? null : <TooltipPrimitive.Arrow className={arrowClass} />}
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
@@ -135,18 +130,15 @@ function TooltipContent({
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         data-slot="tooltip-content"
-        side={
-          (props as { side?: "top" | "right" | "bottom" | "left" }).side ??
-          "top"
-        }
+        side={props.side ?? "top"}
         sideOffset={sideOffset}
         avoidCollisions
         collisionPadding={8}
         sticky="partial"
-        className={cn(baseClasses, sizeClampClasses, originClass, className)}
+        className={cn(baseClasses, widthClampClasses, originClass, className)}
         {...props}
       >
-        {children}
+        <div className={heightClampWrapperClasses}>{children}</div>
         {hideArrow ? null : <PopoverPrimitive.Arrow className={arrowClass} />}
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
