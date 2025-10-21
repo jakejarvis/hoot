@@ -1,13 +1,6 @@
 /* @vitest-environment node */
 import type { Mock } from "vitest";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import lazily inside tests after DB injection to avoid importing the client early
 
@@ -40,7 +33,8 @@ vi.mock("@/server/services/dns", async (importOriginal) => {
   return { ...actual, resolveAll: hoisted.dns.resolveAll };
 });
 vi.mock("@/server/services/headers", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/services/headers")>();
+  const actual =
+    await importOriginal<typeof import("@/server/services/headers")>();
   return { ...actual, probeHeaders: hoisted.headers.probeHeaders };
 });
 vi.mock("@/server/services/ip", async (importOriginal) => {
