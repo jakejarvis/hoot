@@ -97,9 +97,13 @@ export const scanDue = inngest.createFunction(
     // Best-effort prune of expired http_headers_meta rows (simple, fast)
     await step.run("prune-http-headers-meta", async () => {
       try {
-        await db
+        const deleted = await db
           .delete(httpHeadersMeta)
-          .where(lte(httpHeadersMeta.expiresAt, now));
+          .where(lte(httpHeadersMeta.expiresAt, now))
+          .returning({ id: httpHeadersMeta.domainId });
+        logger.info("[scan-due] pruned http_headers_meta", {
+          deleted: deleted.length,
+        });
       } catch (error) {
         logger.warn("[scan-due] prune http_headers_meta failed", { error });
       }
