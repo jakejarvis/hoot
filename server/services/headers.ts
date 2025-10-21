@@ -135,20 +135,23 @@ export async function probeHeaders(
     });
     // Persist to Postgres
     const now = new Date();
+    const expiresAt = ttlForHeaders(now);
     if (d) {
-      await replaceHeaders({
-        domainId: d.id,
-        headers: normalized,
-        fetchedAt: now,
-        expiresAt: ttlForHeaders(now),
-      });
-      await upsertHeadersMeta({
-        domainId: d.id,
-        finalUrl: final.url,
-        status: final.status,
-        fetchedAt: now,
-        expiresAt: ttlForHeaders(now),
-      });
+      await Promise.all([
+        replaceHeaders({
+          domainId: d.id,
+          headers: normalized,
+          fetchedAt: now,
+          expiresAt,
+        }),
+        upsertHeadersMeta({
+          domainId: d.id,
+          finalUrl: final.url,
+          status: final.status,
+          fetchedAt: now,
+          expiresAt,
+        }),
+      ]);
     }
     console.info("[headers] ok", {
       domain: registrable,
