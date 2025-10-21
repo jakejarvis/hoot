@@ -99,15 +99,10 @@ export async function probeHeaders(
       }
       return {
         headers: normalized,
-        source: metaFresh
-          ? {
-              finalUrl: meta[0]?.finalUrl ?? null,
-              status: meta[0]?.status ?? null,
-            }
-          : {
-              finalUrl: meta[0]?.finalUrl ?? null,
-              status: meta[0]?.status ?? null,
-            },
+        source: {
+          finalUrl: meta[0]?.finalUrl ?? null,
+          status: meta[0]?.status ?? null,
+        },
       };
     }
   }
