@@ -20,7 +20,7 @@ export function RedirectedAlert({
     if (dest === src) return null;
     return (
       <Alert {...props}>
-        <Milestone />
+        <Milestone aria-hidden="true" />
         <AlertTitle>We followed a redirect:</AlertTitle>
         <AlertDescription>
           {src} → {dest}

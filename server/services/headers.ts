@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { fetchWithTimeout } from "@/lib/fetch";
+import { fetchWithTimeout, headThenGet } from "@/lib/fetch";
 import type { HttpHeader, HttpHeadersResponse } from "@/lib/schemas";
 import { db } from "@/server/db/client";
 import { httpHeaders, httpHeadersMeta } from "@/server/db/schema";
@@ -64,6 +64,38 @@ export async function probeHeaders(
         domain: registrable,
         count: normalized.length,
       });
+      // If headers are fresh but meta is stale, return a provisional source
+      // using any existing (possibly stale) meta and refresh meta in background.
+      if (!metaFresh && d) {
+        // Fire-and-forget: cheap HEAD with fallback to GET to refresh meta.
+        void (async () => {
+          try {
+            const { response } = await headThenGet(
+              url,
+              {},
+              { timeoutMs: 4000 },
+            );
+            const nowRefresh = new Date();
+            await upsertHeadersMeta({
+              domainId: d.id,
+              finalUrl: response.url ?? null,
+              status: response.status ?? null,
+              fetchedAt: nowRefresh,
+              expiresAt: ttlForHeaders(nowRefresh),
+            });
+            console.info("[headers] meta refreshed (bg)", {
+              domain: registrable,
+              status: response.status,
+              finalUrl: response.url,
+            });
+          } catch (err) {
+            console.warn("[headers] meta refresh failed (bg)", {
+              domain: registrable ?? domain,
+              error: (err as Error)?.message,
+            });
+          }
+        })();
+      }
       return {
         headers: normalized,
         source: metaFresh
@@ -71,7 +103,10 @@ export async function probeHeaders(
               finalUrl: meta[0]?.finalUrl ?? null,
               status: meta[0]?.status ?? null,
             }
-          : undefined,
+          : {
+              finalUrl: meta[0]?.finalUrl ?? null,
+              status: meta[0]?.status ?? null,
+            },
       };
     }
   }
@@ -108,8 +143,8 @@ export async function probeHeaders(
       });
       await upsertHeadersMeta({
         domainId: d.id,
-        finalUrl: final.url ?? null,
-        status: final.status ?? null,
+        finalUrl: final.url,
+        status: final.status,
         fetchedAt: now,
         expiresAt: ttlForHeaders(now),
       });
