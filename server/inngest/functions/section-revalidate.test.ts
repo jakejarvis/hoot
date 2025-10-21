@@ -36,7 +36,9 @@ describe("section-revalidate", () => {
       "@/server/inngest/functions/section-revalidate"
     );
     const mod = await import("@/server/services/headers");
-    const spy = vi.spyOn(mod, "probeHeaders").mockResolvedValue([]);
+    const spy = vi
+      .spyOn(mod, "probeHeaders")
+      .mockResolvedValue({ headers: [], source: undefined });
     await revalidateSection("example.com", "headers");
     expect(spy).toHaveBeenCalledWith("example.com");
   });

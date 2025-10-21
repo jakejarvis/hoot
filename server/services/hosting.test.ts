@@ -17,7 +17,7 @@ vi.mock("@/server/services/dns", () => ({
   resolveAll: vi.fn(async () => ({ records: [], source: "mock" })),
 }));
 vi.mock("@/server/services/headers", () => ({
-  probeHeaders: vi.fn(async () => []),
+  probeHeaders: vi.fn(async () => ({ headers: [], source: undefined })),
 }));
 vi.mock("@/server/services/ip", () => ({
   lookupIpMeta: vi.fn(async () => ({
@@ -97,10 +97,13 @@ describe("detectHosting", () => {
       ],
       source: "mock",
     });
-    (probeHeaders as unknown as Mock).mockResolvedValue([
-      { name: "server", value: "Vercel" },
-      { name: "x-vercel-id", value: "abc" },
-    ]);
+    (probeHeaders as unknown as Mock).mockResolvedValue({
+      headers: [
+        { name: "server", value: "Vercel" },
+        { name: "x-vercel-id", value: "abc" },
+      ],
+      source: undefined,
+    });
     (lookupIpMeta as unknown as Mock).mockResolvedValue({
       geo: {
         city: "San Francisco",
@@ -163,7 +166,10 @@ describe("detectHosting", () => {
       records: [{ type: "A", name: "x", value: "9.9.9.9", ttl: 60 }],
       source: "mock",
     });
-    (probeHeaders as unknown as Mock).mockResolvedValue([]);
+    (probeHeaders as unknown as Mock).mockResolvedValue({
+      headers: [],
+      source: undefined,
+    });
     (lookupIpMeta as unknown as Mock).mockResolvedValue({
       geo: {
         city: "",
@@ -205,7 +211,10 @@ describe("detectHosting", () => {
       ],
       source: "mock",
     });
-    (probeHeaders as unknown as Mock).mockResolvedValue([]);
+    (probeHeaders as unknown as Mock).mockResolvedValue({
+      headers: [],
+      source: undefined,
+    });
 
     const result = await detectHosting("fallbacks.example");
     expect(result.emailProvider.domain).toBe("example.com");
@@ -236,7 +245,10 @@ describe("detectHosting", () => {
       ],
       source: "mock",
     });
-    (probeHeaders as unknown as Mock).mockResolvedValue([]);
+    (probeHeaders as unknown as Mock).mockResolvedValue({
+      headers: [],
+      source: undefined,
+    });
 
     await detectHosting("provider-create.example");
 
