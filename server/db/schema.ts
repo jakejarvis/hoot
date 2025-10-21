@@ -231,7 +231,16 @@ export const httpHeadersMeta = pgTable(
     fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("i_http_meta_expires").on(t.expiresAt)],
+  (t) => [
+    index("i_http_meta_expires").on(t.expiresAt),
+    // Allow NULL or enforce valid HTTP status code range
+    check(
+      "ck_http_meta_status_code",
+      sql`${t.status} IS NULL OR (${t.status} BETWEEN 100 AND 599)`,
+    ),
+    // Ensure expiresAt >= fetchedAt
+    check("ck_http_meta_valid_window", sql`${t.expiresAt} >= ${t.fetchedAt}`),
+  ],
 );
 
 // Hosting (latest)
