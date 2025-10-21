@@ -1,41 +1,49 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Popover as PopoverPrimitive, Slot as SlotPrimitive } from "radix-ui";
 import * as React from "react";
+import { useTimeout } from "@/hooks/use-timeout";
 import { cn } from "@/lib/utils";
+
+/* -------------------------------------------------------------------------------------------------
+ * Constants
+ * -------------------------------------------------------------------------------------------------*/
+
+const OPEN_DELAY_MS = 0;
+const CLOSE_DELAY_MS = 150;
+const TOUCH_CLOSE_RADIUS = 12;
+
+/* -------------------------------------------------------------------------------------------------
+ * Small helpers
+ * -------------------------------------------------------------------------------------------------*/
 
 function setRef<T>(ref: React.ForwardedRef<T>, value: T | null) {
   if (typeof ref === "function") ref(value);
   else if (ref) (ref as React.MutableRefObject<T | null>).current = value;
 }
 
-// Consistent delay used when scheduling hover-based open/close
-const OPEN_DELAY_MS = 0;
-const CLOSE_DELAY_MS = 150;
-// Radius around the trigger that doesn't close the tooltip
-const TOUCH_CLOSE_RADIUS = 64;
-
 /* -------------------------------------------------------------------------------------------------
- * Provider
+ * Provider (single-open coordination + shared config)
  * -------------------------------------------------------------------------------------------------*/
 
 type ProviderCtx = {
   delayDuration: number;
-  touchCloseRadius: number; // px
-  currentOpenId?: string | null;
-  setCurrentOpenId?: (id: string | null) => void;
+  touchCloseRadius: number;
+  currentOpenId: string | null;
+  setCurrentOpenId: (id: string | null) => void;
 };
 
-const Ctx = React.createContext<ProviderCtx | null>(null);
+const ProviderContext = React.createContext<ProviderCtx | null>(null);
 
 function TooltipProvider({
   delayDuration = OPEN_DELAY_MS,
   touchCloseRadius = TOUCH_CLOSE_RADIUS,
   children,
-}: React.PropsWithChildren<Partial<ProviderCtx>>) {
+}: React.PropsWithChildren<
+  Partial<Pick<ProviderCtx, "delayDuration" | "touchCloseRadius">>
+>) {
   const [currentOpenId, setCurrentOpenId] = React.useState<string | null>(null);
-
   const value = React.useMemo(
     () => ({
       delayDuration,
@@ -45,8 +53,11 @@ function TooltipProvider({
     }),
     [delayDuration, touchCloseRadius, currentOpenId],
   );
-
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <ProviderContext.Provider value={value}>
+      {children}
+    </ProviderContext.Provider>
+  );
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -89,13 +100,12 @@ function Tooltip({
   disableHoverableContent = false,
   children,
 }: TooltipRootProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = React.useState<boolean>(
-    !!defaultOpen,
-  );
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? !!controlledOpen : uncontrolledOpen;
+  const [open, setOpenBase] = useControllableState<boolean>({
+    prop: controlledOpen,
+    defaultProp: !!defaultOpen,
+    onChange: onOpenChange,
+  });
 
-  // stable id for this tooltip instance
   const instanceId = React.useId();
   const describedById = React.useId();
 
@@ -103,31 +113,26 @@ function Tooltip({
   const contentRef = React.useRef<HTMLDivElement | null>(null);
   const hoverCloseTimerRef = React.useRef<number | null>(null);
 
-  const { setCurrentOpenId } = React.useContext(Ctx) ?? {
-    setCurrentOpenId: () => {},
-  };
-
+  // single-open coordination
+  const provider = React.useContext(ProviderContext);
   const setOpen = React.useCallback(
     (next: SetOpenArg) => {
       const value =
         typeof next === "function"
           ? (next as (p: boolean) => boolean)(open)
           : next;
-
-      // set the active id *synchronously* when opening
-      if (value) setCurrentOpenId?.(instanceId);
-
-      if (!isControlled) setUncontrolledOpen(value);
-      onOpenChange?.(value);
+      if (value) provider?.setCurrentOpenId(instanceId);
+      setOpenBase(value);
     },
-    [open, isControlled, onOpenChange, instanceId, setCurrentOpenId],
+    [open, provider, instanceId, setOpenBase],
   );
 
-  // keep latest setOpen in a ref so the registered closer never goes stale
-  const latestSetOpenRef = React.useRef(setOpen);
+  // Close if some other tooltip becomes active
   React.useEffect(() => {
-    latestSetOpenRef.current = setOpen;
-  }, [setOpen]);
+    const activeId = provider?.currentOpenId;
+    if (!activeId) return; // no provider or none marked active → do nothing
+    if (activeId !== instanceId && open) setOpen(false);
+  }, [provider?.currentOpenId, instanceId, open, setOpen]);
 
   const ctx = React.useMemo<RootCtx>(
     () => ({
@@ -168,13 +173,12 @@ type TriggerEventOverrides = {
   onFocus?: (e: React.FocusEvent<HTMLElement, Element>) => void;
   onBlur?: (e: React.FocusEvent<HTMLElement, Element>) => void;
 };
+
 type TooltipTriggerProps = Omit<
   React.ComponentPropsWithoutRef<"button">,
   keyof TriggerEventOverrides
 > &
-  TriggerEventOverrides & {
-    asChild?: boolean;
-  };
+  TriggerEventOverrides & { asChild?: boolean };
 
 const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
   function TooltipTrigger(
@@ -194,152 +198,83 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
     const {
       setOpen,
       triggerRef,
+      disableHoverableContent,
       contentRef,
       hoverCloseTimerRef,
-      disableHoverableContent,
     } = useTooltipCtx();
+    const provider = React.useContext(ProviderContext);
 
-    // while cursor is in the small gap, watch for it entering the content
-    const moveListenerRef = React.useRef<((e: PointerEvent) => void) | null>(
-      null,
-    );
-    const removeMoveListener = React.useCallback(() => {
-      if (moveListenerRef.current) {
-        document.removeEventListener(
-          "pointermove",
-          moveListenerRef.current,
-          true,
-        );
-        moveListenerRef.current = null;
-      }
-    }, []);
+    const openTimer = useTimeout();
 
     const cancelClose = React.useCallback(() => {
       if (hoverCloseTimerRef.current) {
-        window.clearTimeout(hoverCloseTimerRef.current);
+        clearTimeout(hoverCloseTimerRef.current);
         hoverCloseTimerRef.current = null;
       }
-      removeMoveListener();
-    }, [hoverCloseTimerRef, removeMoveListener]);
+    }, [hoverCloseTimerRef]);
 
     const scheduleClose = React.useCallback(() => {
       cancelClose();
       hoverCloseTimerRef.current = window.setTimeout(() => {
-        removeMoveListener();
         setOpen(false);
       }, CLOSE_DELAY_MS);
-    }, [cancelClose, hoverCloseTimerRef, removeMoveListener, setOpen]);
-
-    const provider = React.useContext(Ctx) ?? {
-      delayDuration: OPEN_DELAY_MS,
-      touchCloseRadius: TOUCH_CLOSE_RADIUS,
-    };
-
-    const hoverTimer = React.useRef<number | null>(null);
-    const clearHover = () => {
-      if (hoverTimer.current) {
-        window.clearTimeout(hoverTimer.current);
-        hoverTimer.current = null;
-      }
-    };
-
-    // Ensure any listeners/timeouts are cleared on unmount
-    // biome-ignore lint/correctness/useExhaustiveDependencies: unmount-only cleanup should not re-run on deps
-    React.useEffect(() => {
-      return () => {
-        removeMoveListener();
-        clearHover();
-        if (hoverCloseTimerRef.current) {
-          window.clearTimeout(hoverCloseTimerRef.current);
-          hoverCloseTimerRef.current = null;
-        }
-      };
-    }, []);
+    }, [cancelClose, hoverCloseTimerRef, setOpen]);
 
     const ref = (node: HTMLElement | null) => {
       triggerRef.current = node;
       setRef(forwardedRef, node);
     };
 
-    const Comp: React.ElementType = asChild
-      ? (SlotPrimitive.Slot as React.ElementType)
-      : "button";
+    const Comp = asChild ? SlotPrimitive.Slot : "button";
 
     return (
       <PopoverPrimitive.Trigger asChild>
         <Comp
           ref={ref}
-          // Ensure `type` is only applied to native button, not arbitrary Slot child
           {...(!asChild ? ({ type: type ?? "button" } as const) : {})}
-          onPointerEnter={(e: React.PointerEvent<HTMLElement>) => {
+          onPointerEnter={(e) => {
             onPointerEnter?.(e);
             if (e.pointerType === "mouse") {
-              clearHover();
               cancelClose();
-              hoverTimer.current = window.setTimeout(
+              openTimer.set(
                 () => setOpen(true),
-                provider.delayDuration,
+                provider?.delayDuration ?? OPEN_DELAY_MS,
               );
             }
           }}
-          onPointerLeave={(e: React.PointerEvent<HTMLElement>) => {
+          onPointerLeave={(e) => {
             onPointerLeave?.(e);
-            if (e.pointerType === "mouse") {
-              clearHover();
-              if (disableHoverableContent) {
-                setOpen(false);
-                return;
-              }
-              // If moving into the tooltip, don't close; otherwise schedule a close.
-              const rtAny = e.relatedTarget as EventTarget | null;
-              const rtNode = rtAny instanceof Node ? rtAny : null;
-              const intoContent = !!(
-                rtNode && contentRef.current?.contains(rtNode)
-              );
-              if (!intoContent) {
-                // gap case: start watching for the cursor to enter the content
-                if (!moveListenerRef.current) {
-                  moveListenerRef.current = (pe: PointerEvent) => {
-                    const node = contentRef.current;
-                    const targetAny = pe.target as EventTarget | null;
-                    const targetNode =
-                      targetAny instanceof Node ? targetAny : null;
-                    if (node && targetNode && node.contains(targetNode)) {
-                      cancelClose(); // reached the content/bridge → keep open
-                      removeMoveListener();
-                    }
-                  };
-                  document.addEventListener(
-                    "pointermove",
-                    moveListenerRef.current,
-                    true,
-                  );
-                }
-                scheduleClose();
-              }
-            }
+            if (e.pointerType !== "mouse") return;
+
+            openTimer.clear();
+
+            // If moving into tooltip content (or its invisible bridge), do NOT schedule close
+            const rt = e.relatedTarget as EventTarget | null;
+            const intoContent = !!(
+              rt instanceof Node && contentRef.current?.contains(rt)
+            );
+            if (intoContent) return;
+
+            if (disableHoverableContent) setOpen(false);
+            else scheduleClose();
           }}
-          onFocus={(e: React.FocusEvent<HTMLElement, Element>) => {
+          onFocus={(e) => {
             onFocus?.(e);
-            // Only open on focus when keyboard-focused (avoids reopen on close returning focus)
-            if (e.currentTarget.matches(":focus-visible")) {
-              setOpen(true);
-            }
+            if (e.currentTarget.matches(":focus-visible")) setOpen(true);
           }}
-          onBlur={(e: React.FocusEvent<HTMLElement, Element>) => {
+          onBlur={(e) => {
             onBlur?.(e);
             setOpen(false);
           }}
-          onPointerDown={(e: React.PointerEvent<HTMLElement>) => {
+          onPointerDown={(e) => {
             onPointerDown?.(e);
-            // Prevent any pending hover opens or scheduled closes from racing with press
-            clearHover();
+            openTimer.clear();
             cancelClose();
             if (e.pointerType === "touch" || e.pointerType === "pen") {
               setOpen((p) => !p);
             }
           }}
-          onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+          onKeyDown={(e) => {
             onKeyDown?.(e);
             if (e.key === "Escape") setOpen(false);
           }}
@@ -352,7 +287,7 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
 );
 
 /* -------------------------------------------------------------------------------------------------
- * Content (Popover-backed, Framer Motion)
+ * Content
  * -------------------------------------------------------------------------------------------------*/
 
 type Side = "top" | "right" | "bottom" | "left";
@@ -360,7 +295,7 @@ type Align = "start" | "center" | "end";
 
 type TooltipContentProps = Omit<
   React.ComponentPropsWithoutRef<"div">,
-  | "onAnimationStart" // Motion has different types; leave these to motion
+  | "onAnimationStart"
   | "onAnimationEnd"
   | "onAnimationIteration"
   | "onDrag"
@@ -372,7 +307,6 @@ type TooltipContentProps = Omit<
   alignOffset?: number;
   sideOffset?: number;
   withArrow?: boolean;
-  /** If side is left/right and horizontal space is tight, auto-switch to top/bottom. */
   smartAxisFallback?: boolean;
 };
 
@@ -384,7 +318,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       children,
       side = "top",
       align = "center",
-      alignOffset = 0, // API parity
+      alignOffset = 0,
       sideOffset = 8,
       withArrow = true,
       smartAxisFallback = true,
@@ -397,23 +331,16 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       setOpen,
       triggerRef,
       contentRef,
+      hoverCloseTimerRef,
       describedById,
       disableHoverableContent,
-      hoverCloseTimerRef,
       instanceId,
     } = useTooltipCtx();
-    const providerCtx = React.useContext(Ctx);
-    const isActiveHere =
-      !providerCtx?.currentOpenId || providerCtx.currentOpenId === instanceId;
+    const provider = React.useContext(ProviderContext);
 
-    const provider = React.useContext(Ctx) ?? {
-      delayDuration: OPEN_DELAY_MS,
-      touchCloseRadius: TOUCH_CLOSE_RADIUS,
-    };
-
-    // Resolve side with optional left/right → top/bottom axis fallback
+    // ---- axis fallback (unchanged) ----
     const [resolvedSide, setResolvedSide] = React.useState<Side>(side);
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
       if (!open || !smartAxisFallback) return;
       const t = triggerRef.current;
       if (!t) return;
@@ -424,6 +351,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       const rightSpace = vw - rect.right;
       const topSpace = rect.top;
       const bottomSpace = vh - rect.bottom;
+
       if (side === "left" || side === "right") {
         const horiz = Math.max(leftSpace, rightSpace);
         const vert = Math.max(topSpace, bottomSpace);
@@ -435,7 +363,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       setResolvedSide(side);
     }, [open, side, smartAxisFallback, triggerRef]);
 
-    // aria-describedby wiring (tooltip pattern)
+    // ---- aria-describedby, scroll/resize, provider mark (unchanged) ----
     React.useEffect(() => {
       const t = triggerRef.current;
       if (!t || !open) return;
@@ -456,7 +384,6 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       };
     }, [open, describedById, triggerRef]);
 
-    // Close on scroll/resize
     React.useEffect(() => {
       if (!open) return;
       const close = () => setOpen(false);
@@ -468,188 +395,150 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       };
     }, [open, setOpen]);
 
-    const shouldReduce = useReducedMotion();
+    React.useEffect(() => {
+      if (open) provider?.setCurrentOpenId(instanceId);
+    }, [open, provider, instanceId]);
 
-    // Direction-aware translation for the enter
-    const delta =
-      resolvedSide === "top"
-        ? { y: 6 }
-        : resolvedSide === "bottom"
-          ? { y: -6 }
-          : resolvedSide === "left"
-            ? { x: 6 }
-            : { x: -6 };
+    const cancelClose = React.useCallback(() => {
+      if (hoverCloseTimerRef.current) {
+        clearTimeout(hoverCloseTimerRef.current);
+        hoverCloseTimerRef.current = null;
+      }
+    }, [hoverCloseTimerRef]);
 
-    const variants = {
-      hidden: {
-        opacity: 0,
-        ...(shouldReduce ? {} : { ...delta, scale: 0.96 }),
-      },
-      visible: { opacity: 1, x: 0, y: 0, scale: 1 },
-    } as const;
-
-    // width/height of the invisible hover bridge that extends toward the trigger
-    const bridgeSize = Math.max(
-      24,
-      (typeof sideOffset === "number" ? sideOffset : 0) + 12,
+    const gapPad = Math.max(
+      0,
+      (typeof sideOffset === "number" ? sideOffset : 0) - 1, // stop 1px short of trigger
     );
 
     return (
-      <PopoverPrimitive.Portal forceMount>
-        <AnimatePresence initial={false}>
-          {open && isActiveHere ? (
-            <PopoverPrimitive.Content
-              // do NOT asChild here; keep this node static for Floating UI to measure.
-              ref={(node) => {
-                setRef(forwardedRef, node);
-                contentRef.current = node;
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          ref={(node) => {
+            setRef(forwardedRef, node);
+            contentRef.current = node;
+          }}
+          forceMount
+          side={resolvedSide}
+          align={align}
+          alignOffset={alignOffset}
+          sideOffset={sideOffset}
+          avoidCollisions
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onPointerEnter={() => {
+            if (!disableHoverableContent) cancelClose();
+          }}
+          onPointerLeave={() => {
+            if (!disableHoverableContent) setOpen(false);
+          }}
+          onInteractOutside={(e) => {
+            const t = triggerRef.current;
+            const pe = e.detail?.originalEvent as PointerEvent | undefined;
+            if (!t || !pe) return;
+            const r = t.getBoundingClientRect();
+            const cx = Math.max(r.left, Math.min(pe.clientX, r.right));
+            const cy = Math.max(r.top, Math.min(pe.clientY, r.bottom));
+            if (
+              Math.hypot(pe.clientX - cx, pe.clientY - cy) <=
+              (provider?.touchCloseRadius ?? TOUCH_CLOSE_RADIUS)
+            ) {
+              e.preventDefault();
+            }
+          }}
+          style={{
+            transformOrigin: "var(--radix-popover-content-transform-origin)",
+            maxWidth: "min(90vw, var(--radix-popover-content-available-width))",
+            ...style,
+          }}
+          className={cn(
+            "group",
+            "relative z-50 m-0 border-0 bg-foreground p-0 text-xs shadow-md outline-none",
+            "whitespace-normal text-pretty break-words rounded-md px-3 py-1.5 text-background",
+            "overflow-visible", // <— allow the pad to live outside without clipping
+            "will-change-[transform,opacity]",
+            "data-[state=closed]:animate-out data-[state=open]:animate-in",
+            "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+            "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+            "data-[side=top]:slide-in-from-bottom-1",
+            "data-[side=bottom]:slide-in-from-top-1",
+            "data-[side=left]:slide-in-from-right-1",
+            "data-[side=right]:slide-in-from-left-1",
+            "motion-reduce:animate-none",
+            className,
+          )}
+          role="tooltip"
+          id={describedById}
+          data-slot="tooltip-content"
+          {...rest}
+        >
+          {/* content stays visually centered because we didn't mess with padding */}
+          {children}
+
+          {/* 3) invisible hover pad toward the trigger; doesn't affect layout */}
+          {gapPad > 0 && (
+            <span
+              aria-hidden
+              onPointerEnter={cancelClose}
+              className="absolute block"
+              style={{
+                pointerEvents: "auto",
+                // put it *outside* the bubble on the side facing the trigger:
+                ...(resolvedSide === "top" && {
+                  left: 0,
+                  right: 0,
+                  height: gapPad,
+                  bottom: -gapPad,
+                }),
+                ...(resolvedSide === "bottom" && {
+                  left: 0,
+                  right: 0,
+                  height: gapPad,
+                  top: -gapPad,
+                }),
+                ...(resolvedSide === "left" && {
+                  top: 0,
+                  bottom: 0,
+                  width: gapPad,
+                  right: -gapPad,
+                }),
+                ...(resolvedSide === "right" && {
+                  top: 0,
+                  bottom: 0,
+                  width: gapPad,
+                  left: -gapPad,
+                }),
               }}
-              forceMount
-              side={resolvedSide}
-              align={align}
-              alignOffset={alignOffset}
-              sideOffset={sideOffset}
-              avoidCollisions
-              onOpenAutoFocus={(e) => e.preventDefault()} // keep focus on trigger
-              onPointerEnter={() => {
-                // moving into the tooltip/bridge — keep it open
-                if (!disableHoverableContent) {
-                  if (hoverCloseTimerRef.current) {
-                    window.clearTimeout(hoverCloseTimerRef.current);
-                    hoverCloseTimerRef.current = null;
-                  }
-                }
-              }}
-              onPointerLeave={(e) => {
-                if (disableHoverableContent) return;
-                // leaving the tooltip: if not going back to the trigger, schedule a close
-                const rtAny = e.relatedTarget as EventTarget | null;
-                const rtNode = rtAny instanceof Node ? rtAny : null;
-                const intoTrigger = !!(
-                  rtNode &&
-                  triggerRef.current &&
-                  triggerRef.current.contains(rtNode)
-                );
-                if (!intoTrigger) {
-                  if (hoverCloseTimerRef.current)
-                    window.clearTimeout(hoverCloseTimerRef.current);
-                  hoverCloseTimerRef.current = window.setTimeout(
-                    () => setOpen(false),
-                    CLOSE_DELAY_MS,
-                  );
-                }
-              }}
-              onInteractOutside={(e) => {
-                const t = triggerRef.current;
-                const pe = e.detail?.originalEvent as PointerEvent | undefined;
-                if (!t || !pe) return;
-                const r = t.getBoundingClientRect();
-                const cx = Math.max(r.left, Math.min(pe.clientX, r.right));
-                const cy = Math.max(r.top, Math.min(pe.clientY, r.bottom));
-                if (
-                  Math.hypot(pe.clientX - cx, pe.clientY - cy) <=
-                  provider.touchCloseRadius
-                ) {
-                  e.preventDefault();
-                }
-              }}
-              // Content is just a positioned shell; styles live on the inner motion wrapper.
-              className="pointer-events-auto relative z-50 m-0 border-0 bg-transparent p-0 shadow-none outline-none"
-              role="tooltip"
-              id={describedById}
-              data-side={resolvedSide}
-              data-slot="tooltip-content"
-              {...rest}
-            >
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                variants={variants}
-                transition={
-                  shouldReduce
-                    ? { duration: 0.12 }
-                    : { duration: 0.16, ease: "easeOut" }
-                }
-                style={{
-                  transformOrigin:
-                    "var(--radix-popover-content-transform-origin)",
-                  maxWidth: "min(90vw, 320px)",
-                  ...style,
-                }}
-                className={cn(
-                  "overflow-visible",
-                  "z-50 rounded-md bg-foreground px-3 py-1.5 text-background text-xs shadow-md",
-                  // Instead of a CSS border on the bubble + arrow combo, use stroke on the arrow and/or drop-shadow for the outline
-                  "whitespace-normal text-pretty break-words",
-                  className,
-                )}
-              >
-                {children}
-                <span
-                  aria-hidden
-                  className="absolute block"
-                  style={{
-                    // Always accept pointer events while open so the cursor can land on the bridge
-                    pointerEvents: "auto",
-                    zIndex: 1,
-                    // invisible hover bridge, fills the tiny gap toward the trigger
-                    ...(resolvedSide === "top" && {
-                      left: 0,
-                      right: 0,
-                      height: bridgeSize,
-                      bottom: -bridgeSize,
-                    }),
-                    ...(resolvedSide === "bottom" && {
-                      left: 0,
-                      right: 0,
-                      height: bridgeSize,
-                      top: -bridgeSize,
-                    }),
-                    ...(resolvedSide === "left" && {
-                      top: 0,
-                      bottom: 0,
-                      width: bridgeSize,
-                      right: -bridgeSize,
-                    }),
-                    ...(resolvedSide === "right" && {
-                      top: 0,
-                      bottom: 0,
-                      width: bridgeSize,
-                      left: -bridgeSize,
-                    }),
-                  }}
-                />
-                {withArrow && (
-                  <PopoverPrimitive.Arrow
-                    width={12}
-                    height={8}
-                    className={cn(
-                      "pointer-events-none text-foreground [paint-order:stroke]",
-                      // tiny pixel snap to avoid half-pixel placement at some zooms
-                      resolvedSide === "top" && "-mt-[2px] translate-y-[0.5px]",
-                      resolvedSide === "bottom" &&
-                        "-translate-y-[0.5px] -mb-[2px]",
-                      resolvedSide === "left" &&
-                        "-ml-[2px] translate-x-[0.5px]",
-                      resolvedSide === "right" &&
-                        "-translate-x-[0.5px] -mr-[2px]",
-                    )}
-                    fill="currentColor"
-                    stroke="hsl(var(--border)/0.20)"
-                    strokeWidth={1}
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                    shapeRendering="crispEdges"
-                  />
-                )}
-              </motion.div>
-            </PopoverPrimitive.Content>
-          ) : null}
-        </AnimatePresence>
+            />
+          )}
+
+          {withArrow && (
+            <PopoverPrimitive.Arrow
+              width={12}
+              height={8}
+              className={cn(
+                "pointer-events-none text-foreground [paint-order:stroke]",
+                "group-data-[side=top]:-mt-[2px] group-data-[side=top]:translate-y-[0.5px]",
+                "group-data-[side=bottom]:-translate-y-[0.5px] group-data-[side=bottom]:-mb-[2px]",
+                "group-data-[side=left]:-ml-[2px] group-data-[side=left]:translate-x-[0.5px]",
+                "group-data-[side=right]:-translate-x-[0.5px] group-data-[side=right]:-mr-[2px]",
+              )}
+              fill="currentColor"
+              stroke="hsl(var(--border)/0.20)"
+              strokeWidth={1}
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              shapeRendering="crispEdges"
+            />
+          )}
+        </PopoverPrimitive.Content>
       </PopoverPrimitive.Portal>
     );
   },
 );
+
+/* -------------------------------------------------------------------------------------------------
+ * Exports
+ * -------------------------------------------------------------------------------------------------*/
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
