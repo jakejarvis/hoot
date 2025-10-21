@@ -7,6 +7,17 @@ vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-slot="tooltip">{children}</div>
+  ),
+  // Pass-through to avoid nesting buttons when used with asChild
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  TooltipContent: (_: { children: React.ReactNode }) => null,
+}));
+
 // Mock hooks for queries/history with an overridable return value
 type DomainQueriesMock = {
   registration: {

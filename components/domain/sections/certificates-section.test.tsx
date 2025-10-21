@@ -3,25 +3,23 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CertificatesSection, equalHostname } from "./certificates-section";
 
-// Mock tooltip
-vi.mock("@/components/ui/tooltip", () => ({
-  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-provider">{children}</div>
+vi.mock("@/components/domain/favicon", () => ({
+  Favicon: ({ domain }: { domain: string }) => (
+    <div data-slot="favicon" data-domain={domain} />
   ),
+}));
+
+vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => (
     <div data-slot="tooltip">{children}</div>
   ),
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-trigger">{children}</div>
+    <button type="button" data-slot="tooltip-trigger">
+      {children}
+    </button>
   ),
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <div data-slot="tooltip-content">{children}</div>
-  ),
-}));
-
-vi.mock("@/components/domain/favicon", () => ({
-  Favicon: ({ domain }: { domain: string }) => (
-    <div data-slot="favicon" data-domain={domain} />
   ),
 }));
 

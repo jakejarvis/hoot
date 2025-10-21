@@ -1,22 +1,19 @@
 /* @vitest-environment jsdom */
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { HeadersSection } from "./headers-section";
 
-// TooltipProvider is used by Section header help
+// Keep TooltipContent empty in unit tests to avoid text duplication issues.
 vi.mock("@/components/ui/tooltip", () => ({
-  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-provider">{children}</div>
-  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => (
     <div data-slot="tooltip">{children}</div>
   ),
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-trigger">{children}</div>
+    <button type="button" data-slot="tooltip-trigger">
+      {children}
+    </button>
   ),
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-content">{children}</div>
-  ),
+  TooltipContent: (_: { children: React.ReactNode }) => null,
 }));
 
 describe("HeadersSection", () => {

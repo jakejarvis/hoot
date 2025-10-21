@@ -113,7 +113,7 @@ export function DomainReportView({ domain }: { domain: string }) {
             />
           </a>
         </ScreenshotTooltip>
-        <Tooltip delayDuration={500}>
+        <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="outline"
@@ -125,7 +125,7 @@ export function DomainReportView({ domain }: { domain: string }) {
               <span className="hidden sm:inline-block">Export</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">
+          <TooltipContent>
             <p>
               Save this report as a <span className="font-mono">JSON</span>{" "}
               file.

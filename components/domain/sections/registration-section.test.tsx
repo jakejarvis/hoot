@@ -7,6 +7,19 @@ vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>favicon:{domain}</div>,
 }));
 
+// Keep TooltipContent empty in unit tests to avoid text duplication issues.
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-slot="tooltip">{children}</div>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button" data-slot="tooltip-trigger">
+      {children}
+    </button>
+  ),
+  TooltipContent: (_: { children: React.ReactNode }) => null,
+}));
+
 describe("RegistrationSection", () => {
   it("renders registrar, dates, and registrant when data present", () => {
     const record = {
@@ -39,9 +52,8 @@ describe("RegistrationSection", () => {
     );
 
     expect(screen.getByText("Registrar")).toBeInTheDocument();
-    expect(
-      screen.getByText((_, node) => node?.textContent === "GoDaddy"),
-    ).toBeInTheDocument();
+    // TooltipTrigger wraps the text; assert via getAllByText to avoid ambiguity
+    expect(screen.getAllByText("GoDaddy").length).toBeGreaterThan(0);
     expect(screen.getByText(/favicon:godaddy.com/i)).toBeInTheDocument();
     expect(screen.getByText("Created")).toBeInTheDocument();
     expect(screen.getByText("Expires")).toBeInTheDocument();
@@ -71,7 +83,7 @@ describe("RegistrationSection", () => {
       />,
     );
     // skeletons are present via role none; just assert section title appears to ensure render
-    expect(screen.getByText(/Registration/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Registration/i).length).toBeGreaterThan(0);
   });
 });
 

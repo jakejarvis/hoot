@@ -15,6 +15,19 @@ type SocialPreviewMockProps = {
   variant?: "compact" | "large";
 };
 
+// Keep TooltipContent empty in unit tests to avoid ambiguous matches.
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-slot="tooltip">{children}</div>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button" data-slot="tooltip-trigger">
+      {children}
+    </button>
+  ),
+  TooltipContent: (_: { children: React.ReactNode }) => null,
+}));
+
 vi.mock("@/components/social-preview", () => ({
   SocialPreview: (props: SocialPreviewMockProps) =>
     createElement("div", {
