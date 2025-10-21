@@ -291,18 +291,20 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
                 return;
               }
               // If moving into the tooltip, don't close; otherwise schedule a close.
-              const rt = e.relatedTarget as Node | null;
+              const rtAny = e.relatedTarget as EventTarget | null;
+              const rtNode = rtAny instanceof Node ? rtAny : null;
               const intoContent = !!(
-                rt &&
-                contentRef.current &&
-                contentRef.current.contains(rt)
+                rtNode && contentRef.current?.contains(rtNode)
               );
               if (!intoContent) {
                 // gap case: start watching for the cursor to enter the content
                 if (!moveListenerRef.current) {
                   moveListenerRef.current = (pe: PointerEvent) => {
                     const node = contentRef.current;
-                    if (node?.contains(pe.target as Node)) {
+                    const targetAny = pe.target as EventTarget | null;
+                    const targetNode =
+                      targetAny instanceof Node ? targetAny : null;
+                    if (node && targetNode && node.contains(targetNode)) {
                       cancelClose(); // reached the content/bridge → keep open
                       removeMoveListener();
                     }
@@ -319,7 +321,10 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
           }}
           onFocus={(e: React.FocusEvent<HTMLElement, Element>) => {
             onFocus?.(e);
-            setOpen(true);
+            // Only open on focus when keyboard-focused (avoids reopen on close returning focus)
+            if (e.currentTarget.matches(":focus-visible")) {
+              setOpen(true);
+            }
           }}
           onBlur={(e: React.FocusEvent<HTMLElement, Element>) => {
             onBlur?.(e);
@@ -518,11 +523,12 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
               onPointerLeave={(e) => {
                 if (disableHoverableContent) return;
                 // leaving the tooltip: if not going back to the trigger, schedule a close
-                const rt = e.relatedTarget as Node | null;
+                const rtAny = e.relatedTarget as EventTarget | null;
+                const rtNode = rtAny instanceof Node ? rtAny : null;
                 const intoTrigger = !!(
-                  rt &&
+                  rtNode &&
                   triggerRef.current &&
-                  triggerRef.current.contains(rt)
+                  triggerRef.current.contains(rtNode)
                 );
                 if (!intoTrigger) {
                   if (hoverCloseTimerRef.current)
