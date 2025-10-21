@@ -3,6 +3,7 @@
 import { Bug } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { REPOSITORY_SLUG } from "@/lib/constants";
 
 type ErrorWithOptionalDigest = Error & { digest?: string };
 
@@ -13,8 +14,6 @@ type CreateIssueButtonProps = {
   variant?: React.ComponentProps<typeof Button>["variant"];
   size?: React.ComponentProps<typeof Button>["size"];
 };
-
-const REPOSITORY_SLUG = "jakejarvis/domainstack.io" as const;
 
 function buildIssueUrl(error?: ErrorWithOptionalDigest) {
   const message = error?.message?.trim() || "Unexpected error";

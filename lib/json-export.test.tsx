@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 import { describe, expect, it, vi } from "vitest";
-import { exportDomainData } from "./export-data";
+import { exportDomainData } from "./json-export";
 
 describe("exportDomainData", () => {
   it("creates a JSON blob URL and clicks anchor with expected filename", () => {
