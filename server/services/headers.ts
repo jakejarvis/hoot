@@ -43,10 +43,11 @@ export async function probeHeaders(
         })
         .from(httpHeadersMeta)
         .where(eq(httpHeadersMeta.domainId, d.id))
+        .limit(1)
     : ([] as Array<{
         finalUrl: string | null;
         status: number | null;
-        expiresAt: Date | null;
+        expiresAt: Date;
       }>);
   if (existing.length > 0) {
     const now = Date.now();
