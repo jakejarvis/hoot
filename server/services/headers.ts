@@ -33,7 +33,7 @@ export async function probeHeaders(
         })
         .from(httpHeaders)
         .where(eq(httpHeaders.domainId, d.id))
-    : ([] as Array<{ name: string; value: string; expiresAt: Date | null }>);
+    : ([] as Array<{ name: string; value: string; expiresAt: Date }>);
   const meta = d
     ? await db
         .select({
@@ -51,12 +51,8 @@ export async function probeHeaders(
       }>);
   if (existing.length > 0) {
     const now = Date.now();
-    const headersFresh = existing.every(
-      (h) => (h.expiresAt?.getTime?.() ?? 0) > now,
-    );
-    const metaFresh = meta[0]
-      ? (meta[0].expiresAt?.getTime?.() ?? 0) > now
-      : false;
+    const headersFresh = existing.every((h) => h.expiresAt.getTime() > now);
+    const metaFresh = meta[0] ? meta[0].expiresAt.getTime() > now : false;
     if (headersFresh) {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
