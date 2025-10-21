@@ -226,21 +226,7 @@ export function SeoSection({
             </Tabs>
           </div>
 
-          <div className="space-y-4 rounded-xl">
-            <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-              <a
-                href={`https://${domain}/robots.txt`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:underline"
-              >
-                <span>robots.txt</span>
-                <ExternalLink className="size-3" aria-hidden="true" />
-              </a>
-              <SubheadCount count={0 as number} color="blue" />
-            </div>
-            <RobotsSummary robots={data.robots} />
-          </div>
+          <RobotsSummary domain={domain} robots={data.robots} />
         </div>
       ) : (
         <Empty className="border border-dashed">
@@ -260,7 +246,13 @@ export function SeoSection({
   );
 }
 
-function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
+function RobotsSummary({
+  domain,
+  robots,
+}: {
+  domain: string;
+  robots: SeoResponse["robots"];
+}) {
   const has =
     !!robots &&
     robots.fetched &&
@@ -367,13 +359,22 @@ function RobotsSummary({ robots }: { robots: SeoResponse["robots"] }) {
   return (
     <div className="space-y-4 rounded-xl">
       <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
-        <span>robots.txt</span>
-        {has ? (
-          <SubheadCount
-            count={(counts.allows + counts.disallows) as number}
-            color="blue"
+        <a
+          href={`https://${domain}/robots.txt`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:underline"
+        >
+          <span>robots.txt</span>
+          <ExternalLink
+            className="relative bottom-px inline-flex size-3"
+            aria-hidden="true"
           />
-        ) : null}
+        </a>
+        <SubheadCount
+          count={(counts.allows + counts.disallows) as number}
+          color="blue"
+        />
       </div>
 
       {has ? (
