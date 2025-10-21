@@ -269,7 +269,8 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
       <PopoverPrimitive.Trigger asChild>
         <Comp
           ref={ref}
-          type={asChild ? type : (type ?? "button")}
+          // Ensure `type` is only applied to native button, not arbitrary Slot child
+          {...(!asChild ? ({ type: type ?? "button" } as const) : {})}
           onPointerEnter={(e: React.PointerEvent<HTMLElement>) => {
             onPointerEnter?.(e);
             if (e.pointerType === "mouse") {
