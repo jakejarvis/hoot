@@ -29,6 +29,13 @@ export function KeyValue({
   valueTooltip?: React.ReactNode;
 }) {
   const { valueRef, isTruncated } = useTruncation();
+  const shouldTooltip = isTruncated || valueTooltip != null;
+
+  const valueSpan = (
+    <span ref={valueRef} className="min-w-0 flex-1 truncate">
+      {value}
+    </span>
+  );
 
   return (
     <div
@@ -59,22 +66,16 @@ export function KeyValue({
             </span>
           ) : null}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span ref={valueRef} className="min-w-0 flex-1 truncate">
-                {value}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              className={cn(
-                isTruncated || valueTooltip != null
-                  ? "max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]"
-                  : "hidden",
-              )}
-            >
-              {valueTooltip ?? value}
-            </TooltipContent>
-          </Tooltip>
+          {shouldTooltip ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{valueSpan}</TooltipTrigger>
+              <TooltipContent className="max-w-[80vw] whitespace-pre-wrap break-words md:max-w-[40rem]">
+                {valueTooltip ?? value}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            valueSpan
+          )}
 
           {suffix ? (
             <span className="leading-none [&_img]:block [&_img]:h-4 [&_img]:w-4 [&_span]:leading-none [&_svg]:block [&_svg]:h-4 [&_svg]:w-4">
