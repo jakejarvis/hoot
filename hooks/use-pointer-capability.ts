@@ -51,12 +51,3 @@ export function usePointerCapability(): PointerCapability {
 
   return capability;
 }
-
-/**
- * Returns true when we should prefer a Popover to emulate tooltip behavior on touch/coarse devices.
- * Current heuristic: prefer popover when there is no hover support or the pointer is coarse.
- */
-export function usePreferPopoverForTooltip(): boolean {
-  const { supportsHover, isCoarsePointer } = usePointerCapability();
-  return !supportsHover || isCoarsePointer;
-}

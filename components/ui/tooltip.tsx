@@ -5,7 +5,7 @@ import {
   Tooltip as TooltipPrimitive,
 } from "radix-ui";
 import * as React from "react";
-import { usePreferPopoverForTooltip } from "@/hooks/use-pointer-capability";
+import { usePointerCapability } from "@/hooks/use-pointer-capability";
 import { cn } from "@/lib/utils";
 
 type HybridMode = "tooltip" | "popover";
@@ -30,8 +30,11 @@ function TooltipProvider({
 function Tooltip({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  const preferPopover = usePreferPopoverForTooltip();
-  const mode: HybridMode = preferPopover ? "popover" : "tooltip";
+  const { supportsHover, isCoarsePointer } = usePointerCapability();
+  // Current heuristic: prefer popover when there is no hover support or the pointer is coarse.
+  const mode: HybridMode =
+    !supportsHover || isCoarsePointer ? "popover" : "tooltip";
+
   const { children, ...rest } = props;
 
   return (
@@ -69,9 +72,20 @@ function TooltipContent({
   children,
   hideArrow,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content> & {
+}: Pick<
+  React.ComponentProps<typeof TooltipPrimitive.Content>,
+  | "side"
+  | "sideOffset"
+  | "align"
+  | "alignOffset"
+  | "avoidCollisions"
+  | "collisionPadding"
+  | "sticky"
+  | "className"
+  | "children"
+> & {
   hideArrow?: boolean;
-}) {
+} & React.ComponentPropsWithoutRef<"div">) {
   const ctx = React.useContext(HybridTooltipContext);
   const mode: HybridMode = ctx?.mode ?? "tooltip";
   const baseClasses =
@@ -87,6 +101,10 @@ function TooltipContent({
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           data-slot="tooltip-content"
+          side={
+            (props as { side?: "top" | "right" | "bottom" | "left" }).side ??
+            "top"
+          }
           sideOffset={sideOffset}
           avoidCollisions
           collisionPadding={8}
@@ -107,14 +125,16 @@ function TooltipContent({
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         data-slot="tooltip-content"
+        side={
+          (props as { side?: "top" | "right" | "bottom" | "left" }).side ??
+          "top"
+        }
         sideOffset={sideOffset}
         avoidCollisions
         collisionPadding={8}
         sticky="partial"
         className={cn(baseClasses, originClass, className)}
-        {...(props as unknown as React.ComponentProps<
-          typeof PopoverPrimitive.Content
-        >)}
+        {...props}
       >
         {children}
         {hideArrow ? null : (
@@ -125,4 +145,4 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipTrigger, TooltipContent };
