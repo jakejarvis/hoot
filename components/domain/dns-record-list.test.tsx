@@ -7,13 +7,14 @@ vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
-// Mock tooltip primitives
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => (
     <div data-slot="tooltip">{children}</div>
   ),
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-slot="tooltip-trigger">{children}</div>
+    <button type="button" data-slot="tooltip-trigger">
+      {children}
+    </button>
   ),
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <div data-slot="tooltip-content">{children}</div>

@@ -22,6 +22,14 @@ export function usePointerCapability(): PointerCapability {
   });
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      // In SSR or test environments without matchMedia, keep defaults.
+      return;
+    }
+
     const hoverMql = window.matchMedia("(hover: hover)");
     const coarseMql = window.matchMedia("(pointer: coarse)");
 
@@ -34,6 +42,7 @@ export function usePointerCapability(): PointerCapability {
     update();
     hoverMql.addEventListener("change", update);
     coarseMql.addEventListener("change", update);
+
     return () => {
       hoverMql.removeEventListener("change", update);
       coarseMql.removeEventListener("change", update);
@@ -41,13 +50,4 @@ export function usePointerCapability(): PointerCapability {
   }, []);
 
   return capability;
-}
-
-/**
- * Returns true when we should prefer a Popover to emulate tooltip behavior on touch/coarse devices.
- * Current heuristic: prefer popover when there is no hover support or the pointer is coarse.
- */
-export function usePreferPopoverForTooltip(): boolean {
-  const { supportsHover, isCoarsePointer } = usePointerCapability();
-  return !supportsHover || isCoarsePointer;
 }
