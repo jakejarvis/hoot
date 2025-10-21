@@ -21,13 +21,17 @@ vi.mock("@/components/ui/tooltip", () => ({
 
 describe("HeadersSection", () => {
   it("highlights important headers and renders values", () => {
-    const data = [
-      { name: "strict-transport-security", value: "max-age=63072000" },
-      { name: "server", value: "vercel" },
-      { name: "x-powered-by", value: "nextjs" },
-    ];
+    const data = {
+      headers: [
+        { name: "strict-transport-security", value: "max-age=63072000" },
+        { name: "server", value: "vercel" },
+        { name: "x-powered-by", value: "nextjs" },
+      ] as Array<{ name: string; value: string }>,
+      source: undefined,
+    };
     render(
       <HeadersSection
+        domain="example.com"
         data={data}
         isLoading={false}
         isError={false}
@@ -43,6 +47,7 @@ describe("HeadersSection", () => {
   it("shows error state", () => {
     render(
       <HeadersSection
+        domain="example.com"
         data={null}
         isLoading={false}
         isError
@@ -55,6 +60,7 @@ describe("HeadersSection", () => {
   it("shows loading skeletons", () => {
     render(
       <HeadersSection
+        domain="example.com"
         data={null}
         isLoading
         isError={false}

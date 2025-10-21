@@ -8,6 +8,7 @@ import {
   domains,
   hosting,
   httpHeaders,
+  httpHeadersMeta,
   providers,
   registrationNameservers,
   registrations,
@@ -62,6 +63,11 @@ export const CertificateUpdate = zWrite.createUpdateSchema(certificates);
 export const HttpHeaderRowSelect = zRead.createSelectSchema(httpHeaders);
 export const HttpHeaderRowInsert = zWrite.createInsertSchema(httpHeaders);
 export const HttpHeaderRowUpdate = zWrite.createUpdateSchema(httpHeaders);
+
+// HTTP headers meta
+export const HttpHeadersMetaSelect = zRead.createSelectSchema(httpHeadersMeta);
+export const HttpHeadersMetaInsert = zWrite.createInsertSchema(httpHeadersMeta);
+export const HttpHeadersMetaUpdate = zWrite.createUpdateSchema(httpHeadersMeta);
 
 // Hosting
 export const HostingRowSelect = zRead.createSelectSchema(hosting);

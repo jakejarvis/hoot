@@ -5,7 +5,7 @@ import {
   CertificatesSchema,
   DnsResolveResultSchema,
   HostingSchema,
-  HttpHeadersSchema,
+  HttpHeadersResponseSchema,
   PricingSchema,
   RegistrationSchema,
   SeoResponseSchema,
@@ -61,7 +61,7 @@ export const domainRouter = createTRPCRouter({
     .query(({ input }) => getCertificates(input.domain)),
   headers: loggedProcedure
     .input(domainInput)
-    .output(HttpHeadersSchema)
+    .output(HttpHeadersResponseSchema)
     .query(({ input }) => probeHeaders(input.domain)),
   seo: loggedProcedure
     .input(domainInput)

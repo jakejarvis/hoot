@@ -1,7 +1,7 @@
 import "server-only";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { httpHeaders } from "@/server/db/schema";
+import { httpHeaders, httpHeadersMeta } from "@/server/db/schema";
 
 export type ReplaceHeadersParams = {
   domainId: string;
@@ -42,4 +42,21 @@ export async function replaceHeaders(params: ReplaceHeadersParams) {
         set: { value: h.value, fetchedAt, expiresAt },
       });
   }
+}
+
+export async function upsertHeadersMeta(params: {
+  domainId: string;
+  finalUrl: string | null;
+  status: number | null;
+  fetchedAt: Date;
+  expiresAt: Date;
+}) {
+  const { domainId, finalUrl, status, fetchedAt, expiresAt } = params;
+  await db
+    .insert(httpHeadersMeta)
+    .values({ domainId, finalUrl, status, fetchedAt, expiresAt })
+    .onConflictDoUpdate({
+      target: httpHeadersMeta.domainId,
+      set: { finalUrl, status, fetchedAt, expiresAt },
+    });
 }

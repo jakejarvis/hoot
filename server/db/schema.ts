@@ -219,6 +219,21 @@ export const httpHeaders = pgTable(
   ],
 );
 
+// HTTP headers fetch meta (latest)
+export const httpHeadersMeta = pgTable(
+  "http_headers_meta",
+  {
+    domainId: uuid("domain_id")
+      .primaryKey()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    finalUrl: text("final_url"),
+    status: integer("status"),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("i_http_meta_expires").on(t.expiresAt)],
+);
+
 // Hosting (latest)
 export const hosting = pgTable(
   "hosting",

@@ -90,6 +90,7 @@ describe("SeoSection", () => {
     const data = buildSeoData();
     render(
       <SeoSection
+        domain="example.com"
         data={data}
         isLoading={false}
         isError={false}
@@ -142,6 +143,7 @@ describe("SeoSection SocialPreview", () => {
 
     const { rerender } = render(
       <SeoSection
+        domain="example.com"
         data={dataSummary}
         isLoading={false}
         isError={false}
@@ -181,6 +183,7 @@ describe("SeoSection SocialPreview", () => {
     } as Partial<import("@/lib/schemas").SeoResponse>);
     rerender(
       <SeoSection
+        domain="example.com"
         data={dataLarge}
         isLoading={false}
         isError={false}
@@ -197,6 +200,7 @@ describe("SeoSection RobotsSummary", () => {
     const data = buildSeoData();
     render(
       <SeoSection
+        domain="example.com"
         data={data}
         isLoading={false}
         isError={false}
@@ -225,6 +229,7 @@ describe("SeoSection RobotsSummary", () => {
     const data = buildSeoData();
     render(
       <SeoSection
+        domain="example.com"
         data={data}
         isLoading={false}
         isError={false}
@@ -242,6 +247,7 @@ describe("SeoSection RobotsSummary", () => {
     const data = buildSeoData({ robots: null });
     render(
       <SeoSection
+        domain="example.com"
         data={data}
         isLoading={false}
         isError={false}
@@ -259,6 +265,7 @@ describe("SeoSection RobotsSummary", () => {
     const onRetry = vi.fn();
     render(
       <SeoSection
+        domain="example.com"
         data={undefined}
         isLoading={false}
         isError={true}

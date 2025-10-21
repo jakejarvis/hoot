@@ -7,4 +7,18 @@ export const HttpHeaderSchema = z.object({
 
 export const HttpHeadersSchema = z.array(HttpHeaderSchema);
 
+export const HttpHeadersSourceSchema = z
+  .object({
+    finalUrl: z.string().url().nullable(),
+    status: z.number().nullable(),
+  })
+  .nullable()
+  .optional();
+
+export const HttpHeadersResponseSchema = z.object({
+  headers: HttpHeadersSchema,
+  source: HttpHeadersSourceSchema,
+});
+
 export type HttpHeader = z.infer<typeof HttpHeaderSchema>;
+export type HttpHeadersResponse = z.infer<typeof HttpHeadersResponseSchema>;

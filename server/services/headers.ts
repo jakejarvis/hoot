@@ -3,14 +3,16 @@ import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import type { HttpHeader } from "@/lib/schemas";
+import type { HttpHeader, HttpHeadersResponse } from "@/lib/schemas";
 import { db } from "@/server/db/client";
-import { httpHeaders } from "@/server/db/schema";
+import { httpHeaders, httpHeadersMeta } from "@/server/db/schema";
 import { ttlForHeaders } from "@/server/db/ttl";
 import { upsertDomain } from "@/server/repos/domains";
-import { replaceHeaders } from "@/server/repos/headers";
+import { replaceHeaders, upsertHeadersMeta } from "@/server/repos/headers";
 
-export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
+export async function probeHeaders(
+  domain: string,
+): Promise<HttpHeadersResponse> {
   const url = `https://${domain}/`;
   console.debug("[headers] start", { domain });
   // Fast path: read from Postgres if fresh
@@ -32,10 +34,29 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         .from(httpHeaders)
         .where(eq(httpHeaders.domainId, d.id))
     : ([] as Array<{ name: string; value: string; expiresAt: Date | null }>);
+  const meta = d
+    ? await db
+        .select({
+          finalUrl: httpHeadersMeta.finalUrl,
+          status: httpHeadersMeta.status,
+          expiresAt: httpHeadersMeta.expiresAt,
+        })
+        .from(httpHeadersMeta)
+        .where(eq(httpHeadersMeta.domainId, d.id))
+    : ([] as Array<{
+        finalUrl: string | null;
+        status: number | null;
+        expiresAt: Date | null;
+      }>);
   if (existing.length > 0) {
     const now = Date.now();
-    const fresh = existing.every((h) => (h.expiresAt?.getTime?.() ?? 0) > now);
-    if (fresh) {
+    const headersFresh = existing.every(
+      (h) => (h.expiresAt?.getTime?.() ?? 0) > now,
+    );
+    const metaFresh = meta[0]
+      ? (meta[0].expiresAt?.getTime?.() ?? 0) > now
+      : false;
+    if (headersFresh) {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
@@ -43,7 +64,15 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         domain: registrable,
         count: normalized.length,
       });
-      return normalized;
+      return {
+        headers: normalized,
+        source: metaFresh
+          ? {
+              finalUrl: meta[0]?.finalUrl ?? null,
+              status: meta[0]?.status ?? null,
+            }
+          : undefined,
+      };
     }
   }
 
@@ -77,13 +106,23 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         fetchedAt: now,
         expiresAt: ttlForHeaders(now),
       });
+      await upsertHeadersMeta({
+        domainId: d.id,
+        finalUrl: final.url ?? null,
+        status: final.status ?? null,
+        fetchedAt: now,
+        expiresAt: ttlForHeaders(now),
+      });
     }
     console.info("[headers] ok", {
       domain: registrable,
       status: final.status,
       count: normalized.length,
     });
-    return normalized;
+    return {
+      headers: normalized,
+      source: { finalUrl: final.url, status: final.status },
+    };
   } catch (err) {
     console.warn("[headers] error", {
       domain: registrable ?? domain,
@@ -97,7 +136,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       error: String(err),
     });
     // Return empty on failure without caching to avoid long-lived negatives
-    return [];
+    return { headers: [], source: undefined };
   }
 }
 

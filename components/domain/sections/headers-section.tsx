@@ -5,6 +5,7 @@ import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeletonList } from "@/components/domain/key-value-skeletons";
+import { RedirectedAlert } from "@/components/domain/redirected-alert";
 import { Section } from "@/components/domain/section";
 import { SectionContent } from "@/components/domain/section-content";
 import {
@@ -14,16 +15,18 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import type { HttpHeader } from "@/lib/schemas";
+import type { HttpHeadersResponse } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
 export function HeadersSection({
+  domain,
   data,
   isLoading,
   isError,
   onRetryAction,
 }: {
-  data?: HttpHeader[] | null;
+  domain: string;
+  data?: HttpHeadersResponse | null;
   isLoading: boolean;
   isError: boolean;
   onRetryAction: () => void;
@@ -34,7 +37,9 @@ export function HeadersSection({
         isLoading={isLoading}
         isError={isError}
         data={data ?? null}
-        isEmpty={(d) => !Array.isArray(d) || d.length === 0}
+        isEmpty={(d) =>
+          !d || !Array.isArray(d.headers) || d.headers.length === 0
+        }
         renderLoading={() => (
           <KeyValueGrid colsDesktop={2}>
             <KeyValueSkeletonList
@@ -44,32 +49,40 @@ export function HeadersSection({
             />
           </KeyValueGrid>
         )}
-        renderData={(d) => (
-          <KeyValueGrid colsDesktop={2}>
-            {(() => {
-              const important = new Set([
-                "strict-transport-security",
-                "content-security-policy",
-                "content-security-policy-report-only",
-                "x-frame-options",
-                "referrer-policy",
-                "server",
-                "x-powered-by",
-                "cache-control",
-                "permissions-policy",
-              ]);
-              return d.map((h) => (
-                <KeyValue
-                  key={`${h.name}:${String((h as { value: unknown }).value)}`}
-                  label={h.name}
-                  value={String((h as { value: unknown }).value)}
-                  copyable
-                  highlight={important.has(h.name)}
-                />
-              ));
-            })()}
-          </KeyValueGrid>
-        )}
+        renderData={(d) => {
+          return (
+            <div className="space-y-3">
+              <RedirectedAlert
+                domain={domain}
+                finalUrl={d.source?.finalUrl ?? undefined}
+              />
+              <KeyValueGrid colsDesktop={2}>
+                {(() => {
+                  const important = new Set([
+                    "strict-transport-security",
+                    "content-security-policy",
+                    "content-security-policy-report-only",
+                    "x-frame-options",
+                    "referrer-policy",
+                    "server",
+                    "x-powered-by",
+                    "cache-control",
+                    "permissions-policy",
+                  ]);
+                  return d.headers.map((h) => (
+                    <KeyValue
+                      key={`${h.name}:${String((h as { value: unknown }).value)}`}
+                      label={h.name}
+                      value={String((h as { value: unknown }).value)}
+                      copyable
+                      highlight={important.has(h.name)}
+                    />
+                  ));
+                })()}
+              </KeyValueGrid>
+            </div>
+          );
+        }}
         renderError={() => (
           <ErrorWithRetry
             message="Failed to load headers."

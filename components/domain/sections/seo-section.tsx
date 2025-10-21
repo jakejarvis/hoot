@@ -23,6 +23,7 @@ import {
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
+import { RedirectedAlert } from "@/components/domain/redirected-alert";
 import { Section } from "@/components/domain/section";
 import { SocialPreview } from "@/components/domain/social-preview";
 import {
@@ -63,11 +64,13 @@ import { SECTION_DEFS } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
 
 export function SeoSection({
+  domain,
   data,
   isLoading,
   isError,
   onRetryAction,
 }: {
+  domain: string;
   data?: SeoResponse | null;
   isLoading: boolean;
   isError: boolean;
@@ -118,6 +121,10 @@ export function SeoSection({
         </div>
       ) : data && hasAnySeoMeta ? (
         <div className="space-y-4">
+          <RedirectedAlert
+            domain={domain}
+            finalUrl={data?.source?.finalUrl ?? undefined}
+          />
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
               <span>Meta Tags</span>
@@ -219,7 +226,21 @@ export function SeoSection({
             </Tabs>
           </div>
 
-          <RobotsSummary robots={data.robots} />
+          <div className="space-y-4 rounded-xl">
+            <div className="mt-5 flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
+              <a
+                href={`https://${domain}/robots.txt`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 hover:underline"
+              >
+                <span>robots.txt</span>
+                <ExternalLink className="size-3" aria-hidden="true" />
+              </a>
+              <SubheadCount count={0 as number} color="blue" />
+            </div>
+            <RobotsSummary robots={data.robots} />
+          </div>
         </div>
       ) : (
         <Empty className="border border-dashed">
