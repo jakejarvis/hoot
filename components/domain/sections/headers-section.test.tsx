@@ -28,7 +28,6 @@ describe("HeadersSection", () => {
     };
     render(
       <HeadersSection
-        domain="example.com"
         data={data}
         isLoading={false}
         isError={false}
@@ -44,7 +43,6 @@ describe("HeadersSection", () => {
   it("shows error state", () => {
     render(
       <HeadersSection
-        domain="example.com"
         data={null}
         isLoading={false}
         isError
@@ -57,7 +55,6 @@ describe("HeadersSection", () => {
   it("shows loading skeletons", () => {
     render(
       <HeadersSection
-        domain="example.com"
         data={null}
         isLoading
         isError={false}

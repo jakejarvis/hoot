@@ -188,7 +188,6 @@ export function DomainReportView({ domain }: { domain: string }) {
         />
 
         <HeadersSection
-          domain={domain}
           data={headers.data || null}
           isLoading={!headersSettled}
           isError={!!headers.isError}

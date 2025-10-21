@@ -124,7 +124,9 @@ export function SeoSection({
           <RedirectedAlert
             domain={domain}
             finalUrl={data?.source?.finalUrl ?? undefined}
+            className="mb-6"
           />
+
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-[11px] text-foreground/70 uppercase leading-none tracking-[0.08em] dark:text-foreground/80">
               <span>Meta Tags</span>
@@ -363,7 +365,7 @@ function RobotsSummary({
           href={`https://${domain}/robots.txt`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 hover:underline"
+          className="inline-flex items-center gap-1 hover:underline hover:underline-offset-3"
         >
           <span>robots.txt</span>
           <ExternalLink

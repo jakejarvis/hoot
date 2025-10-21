@@ -1,7 +1,7 @@
 "use client";
 
 import { Milestone } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function RedirectedAlert({
   domain,
@@ -21,9 +21,17 @@ export function RedirectedAlert({
     return (
       <Alert {...props}>
         <Milestone aria-hidden="true" />
-        <AlertTitle>We followed a redirect:</AlertTitle>
         <AlertDescription>
-          {src} → {dest}
+          <p className="text-[13px]">
+            We followed a redirect to{" "}
+            <a
+              href={`/${encodeURIComponent(dest)}`}
+              className="inline font-medium text-foreground/90 underline underline-offset-3"
+            >
+              {dest}
+            </a>
+            .
+          </p>
         </AlertDescription>
       </Alert>
     );
