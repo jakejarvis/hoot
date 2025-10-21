@@ -134,9 +134,10 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   const nsRecords = dns.filter((d) => d.type === "NS");
   const ip = a?.value ?? null;
 
-  const headers = await probeHeaders(domain).catch(
-    () => [] as { name: string; value: string }[],
-  );
+  const headersResponse = await probeHeaders(domain).catch(() => ({
+    headers: [],
+    source: undefined,
+  }));
 
   const meta = ip
     ? await lookupIpMeta(ip)
@@ -157,7 +158,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   // Hosting provider detection with fallback:
   // - If no A record/IP → unset → "Not configured"
   // - Else if unknown → try IP ownership org/ISP
-  const hostingDetected = detectHostingProvider(headers);
+  const hostingDetected = detectHostingProvider(headersResponse.headers);
 
   let hostingName = hostingDetected.name;
   let hostingIconDomain = hostingDetected.domain;

@@ -47,10 +47,10 @@ describe("probeHeaders", () => {
 
     const { probeHeaders } = await import("./headers");
     const out1 = await probeHeaders("example.com");
-    expect(out1.length).toBeGreaterThan(0);
+    expect(out1.headers.length).toBeGreaterThan(0);
     const fetchSpy = vi.spyOn(global, "fetch");
     const out2 = await probeHeaders("example.com");
-    expect(out2.length).toBe(out1.length);
+    expect(out2.headers.length).toBe(out1.headers.length);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
     fetchMock.mockRestore();
@@ -77,9 +77,9 @@ describe("probeHeaders", () => {
       probeHeaders("example.com"),
       probeHeaders("example.com"),
     ]);
-    expect(a.length).toBeGreaterThan(0);
-    expect(b.length).toBe(a.length);
-    expect(c.length).toBe(a.length);
+    expect(a.headers.length).toBeGreaterThan(0);
+    expect(b.headers.length).toBe(a.headers.length);
+    expect(c.headers.length).toBe(a.headers.length);
     // Only assert that all calls returned equivalent results; caching is validated elsewhere
     fetchMock.mockRestore();
   });
@@ -90,7 +90,7 @@ describe("probeHeaders", () => {
     });
     const { probeHeaders } = await import("./headers");
     const out = await probeHeaders("fail.example");
-    expect(out.length).toBe(0);
+    expect(out.headers.length).toBe(0);
     fetchMock.mockRestore();
   });
 });
