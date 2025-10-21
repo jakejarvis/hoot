@@ -79,8 +79,8 @@ export async function probeHeaders(
             const nowRefresh = new Date();
             await upsertHeadersMeta({
               domainId: d.id,
-              finalUrl: response.url ?? null,
-              status: response.status ?? null,
+              finalUrl: response.url,
+              status: response.status,
               fetchedAt: nowRefresh,
               expiresAt: ttlForHeaders(nowRefresh),
             });
