@@ -95,6 +95,10 @@ function TooltipContent({
     mode === "tooltip"
       ? "origin-(--radix-tooltip-content-transform-origin)"
       : "origin-(--radix-popover-content-transform-origin)";
+  const sizeClampClasses =
+    mode === "tooltip"
+      ? "max-w-[min(var(--radix-tooltip-content-available-width),calc(100vw-2rem))] md:max-w-[min(var(--radix-tooltip-content-available-width),28rem)] max-h-[min(var(--radix-tooltip-content-available-height),calc(100vh-2rem))] overflow-y-auto"
+      : "max-w-[min(var(--radix-popover-content-available-width),calc(100vw-2rem))] md:max-w-[min(var(--radix-popover-content-available-width),28rem)] max-h-[min(var(--radix-popover-content-available-height),calc(100vh-2rem))] overflow-y-auto";
   const arrowClass =
     "z-50 size-2.5 rotate-45 rounded-[1px] bg-primary fill-primary " +
     "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit animate-in whitespace-normal break-words max-w-[calc(100vw-2rem)] rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs outline-hidden data-[state=closed]:animate-out " +
@@ -117,7 +121,7 @@ function TooltipContent({
           avoidCollisions
           collisionPadding={8}
           sticky="partial"
-          className={cn(baseClasses, originClass, className)}
+          className={cn(baseClasses, sizeClampClasses, originClass, className)}
           {...props}
         >
           {children}
@@ -139,7 +143,7 @@ function TooltipContent({
         avoidCollisions
         collisionPadding={8}
         sticky="partial"
-        className={cn(baseClasses, originClass, className)}
+        className={cn(baseClasses, sizeClampClasses, originClass, className)}
         {...props}
       >
         {children}

@@ -18,19 +18,6 @@ vi.mock("@/components/ui/tooltip", () => ({
   TooltipContent: (_: { children: React.ReactNode }) => null,
 }));
 
-// Minimal TRPC client mock so components using useTRPC() don't error
-vi.mock("@/lib/trpc/client", () => ({
-  useTRPC: () => ({
-    domain: {
-      screenshot: {
-        queryOptions: (_vars: unknown, opts: unknown) => ({
-          queryKey: ["screenshot", _vars, opts],
-        }),
-      },
-    },
-  }),
-}));
-
 // Mock hooks for queries/history with an overridable return value
 type DomainQueriesMock = {
   registration: {

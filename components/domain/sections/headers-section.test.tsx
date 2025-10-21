@@ -3,6 +3,19 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { HeadersSection } from "./headers-section";
 
+// Keep TooltipContent empty in unit tests to avoid text duplication issues.
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-slot="tooltip">{children}</div>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button" data-slot="tooltip-trigger">
+      {children}
+    </button>
+  ),
+  TooltipContent: (_: { children: React.ReactNode }) => null,
+}));
+
 describe("HeadersSection", () => {
   it("highlights important headers and renders values", () => {
     const data = [
