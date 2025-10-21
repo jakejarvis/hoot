@@ -740,9 +740,7 @@ function RuleTypeDot({ type }: { type: "allow" | "disallow" | "crawlDelay" }) {
           />
         </div>
       </TooltipTrigger>
-      <TooltipContent side="left" sideOffset={6}>
-        {label}
-      </TooltipContent>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }

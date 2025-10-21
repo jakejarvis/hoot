@@ -4,7 +4,6 @@ import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ScreenshotTooltip } from "./screenshot-tooltip";
 
-// Mock tooltip primitives to render immediately without portals
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => (
     <div data-slot="tooltip">{children}</div>

@@ -22,6 +22,14 @@ export function usePointerCapability(): PointerCapability {
   });
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      // In SSR or test environments without matchMedia, keep defaults.
+      return;
+    }
+
     const hoverMql = window.matchMedia("(hover: hover)");
     const coarseMql = window.matchMedia("(pointer: coarse)");
 
@@ -34,6 +42,7 @@ export function usePointerCapability(): PointerCapability {
     update();
     hoverMql.addEventListener("change", update);
     coarseMql.addEventListener("change", update);
+
     return () => {
       hoverMql.removeEventListener("change", update);
       coarseMql.removeEventListener("change", update);

@@ -78,7 +78,7 @@ export function RegistrationSection({
                       <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
+                  <TooltipContent>
                     <p className="inline-flex items-center gap-[5px]">
                       <span>
                         Verified by{" "}

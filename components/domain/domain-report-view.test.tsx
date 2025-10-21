@@ -7,6 +7,30 @@ vi.mock("@/components/domain/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-slot="tooltip">{children}</div>
+  ),
+  // Pass-through to avoid nesting buttons when used with asChild
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  TooltipContent: (_: { children: React.ReactNode }) => null,
+}));
+
+// Minimal TRPC client mock so components using useTRPC() don't error
+vi.mock("@/lib/trpc/client", () => ({
+  useTRPC: () => ({
+    domain: {
+      screenshot: {
+        queryOptions: (_vars: unknown, opts: unknown) => ({
+          queryKey: ["screenshot", _vars, opts],
+        }),
+      },
+    },
+  }),
+}));
+
 // Mock hooks for queries/history with an overridable return value
 type DomainQueriesMock = {
   registration: {
