@@ -8,6 +8,7 @@ import {
   loggerLink,
   TRPCClientError,
 } from "@trpc/client";
+import { Siren } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import superjson from "superjson";
@@ -62,6 +63,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
                 toast.error(title, {
                   id: "rate-limit",
                   description: `Try again in ${friendly}.`,
+                  icon: <Siren className="h-4 w-4" />,
                   position: "top-center",
                 });
               }
