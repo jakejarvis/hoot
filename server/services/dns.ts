@@ -229,7 +229,12 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
                 soonest,
               );
             }
-          } catch {}
+          } catch (err) {
+            console.warn("[dns] schedule failed (partial)", {
+              domain: registrable ?? domain,
+              error: (err as Error)?.message,
+            });
+          }
         }
 
         // Merge cached fresh + newly fetched stale
@@ -361,7 +366,12 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             );
           const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
           await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
-        } catch {}
+        } catch (err) {
+          console.warn("[dns] schedule failed (full)", {
+            domain: registrable ?? domain,
+            error: (err as Error)?.message,
+          });
+        }
       }
       await captureServer("dns_resolve_all", {
         domain: registrable ?? domain,
