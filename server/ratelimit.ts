@@ -58,7 +58,11 @@ export async function assertRateLimit(service: ServiceName, ip: string) {
   }
 
   // allow ratelimit analytics to be sent in background
-  waitUntil(res.pending);
+  try {
+    waitUntil?.(res.pending);
+  } catch {
+    // no-op
+  }
 
   return { limit: res.limit, remaining: res.remaining, reset: res.reset };
 }

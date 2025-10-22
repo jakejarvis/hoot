@@ -65,7 +65,11 @@ export const captureServer = async (
   });
 
   // flush events to posthog in background
-  waitUntil(client.shutdown());
+  try {
+    waitUntil?.(client.shutdown());
+  } catch {
+    // no-op
+  }
 };
 
 export const captureServerException = async (
@@ -85,5 +89,9 @@ export const captureServerException = async (
   );
 
   // flush events to posthog in background
-  waitUntil(client.shutdown());
+  try {
+    waitUntil?.(client.shutdown());
+  } catch {
+    // no-op
+  }
 };
