@@ -3,8 +3,15 @@ import { ipAddress } from "@vercel/functions";
 import superjson from "superjson";
 
 export const createContext = async (opts?: { req?: Request }) => {
-  const ip = opts?.req ? (ipAddress(opts.req) ?? null) : null;
-  return { ip, req: opts?.req } as const;
+  const req = opts?.req;
+  const ip = req
+    ? (ipAddress(req) ??
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      req.headers.get("cf-connecting-ip") ??
+      null)
+    : null;
+  return { ip, req } as const;
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;

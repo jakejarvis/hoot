@@ -6,6 +6,7 @@ import {
   createTRPCClient,
   httpBatchStreamLink,
   loggerLink,
+  TRPCClientError,
 } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -39,19 +40,21 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
               process.env.NODE_ENV === "development" ||
               (opts.direction === "down" && opts.result instanceof Error);
 
-            // Show a friendly toast for rate-limit errors
-            if (opts.direction === "down" && opts.result instanceof Error) {
-              const err = opts.result as Error;
-              const code = (err as unknown as { data?: { code?: string } }).data
-                ?.code;
-              if (code === "TOO_MANY_REQUESTS") {
-                const data = (
-                  err as unknown as {
-                    data?: { retryAfter?: number; service?: string };
-                  }
-                ).data;
-                const retryAfterSec = Number(data?.retryAfter ?? 1);
-                const service = data?.service;
+            // Show a friendly toast for rate-limit errors (standardized cause)
+            if (
+              opts.direction === "down" &&
+              opts.result instanceof TRPCClientError
+            ) {
+              const err = opts.result as TRPCClientError<AppRouter>;
+              const cause = err.cause as
+                | { code?: string; retryAfter?: number; service?: string }
+                | undefined;
+              if (cause?.code === "TOO_MANY_REQUESTS") {
+                const retryAfterSec = Math.max(
+                  1,
+                  Math.round(Number(cause.retryAfter ?? 1)),
+                );
+                const service = cause.service;
                 const friendly = formatWait(retryAfterSec);
                 const title = service
                   ? `Too many ${service} requests`

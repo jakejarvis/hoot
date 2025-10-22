@@ -40,20 +40,16 @@ export async function assertRateLimit(service: ServiceName, ip: string) {
       1,
       Math.ceil((res.reset - Date.now()) / 1000),
     );
-    const e = new TRPCError({
+    throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: `Rate limit exceeded for ${service}. Try again in ${retryAfterSec}s.`,
+      cause: {
+        retryAfter: retryAfterSec,
+        service,
+        limit: res.limit,
+        remaining: res.remaining,
+      },
     });
-    // @ts-expect-error enrich error data for responseMeta/client handling
-    e.data = {
-      // @ts-expect-error
-      ...e.data,
-      retryAfter: retryAfterSec,
-      service,
-      limit: res.limit,
-      remaining: res.remaining,
-    };
-    throw e;
   }
   return { limit: res.limit, remaining: res.remaining, reset: res.reset };
 }
