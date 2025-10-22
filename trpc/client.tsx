@@ -58,5 +58,5 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     </QueryClientProvider>
   );
 }
-
-// formatWait is defined in the errorToastLink
+   );
+ }
