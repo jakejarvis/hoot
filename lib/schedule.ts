@@ -29,6 +29,18 @@ export async function scheduleSectionIfEarlier(
   domain: string,
   dueAtMs: number,
 ): Promise<boolean> {
+  // Validate dueAtMs before any computation or Redis writes
+  if (!Number.isFinite(dueAtMs) || dueAtMs < 0) {
+    try {
+      await captureServer("schedule_section", {
+        section,
+        domain,
+        due_at_ms: dueAtMs,
+        outcome: "invalid_due",
+      });
+    } catch {}
+    return false;
+  }
   const now = Date.now();
   const minDueMs = now + minTtlSecondsForSection(section) * 1000;
   const desired = Math.max(dueAtMs, minDueMs);
