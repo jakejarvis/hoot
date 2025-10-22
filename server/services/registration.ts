@@ -212,7 +212,12 @@ export async function getRegistration(domain: string): Promise<Registration> {
         registrable ?? domain,
         expiresAt.getTime(),
       );
-    } catch {}
+    } catch (err) {
+      console.warn("[registration] schedule failed", {
+        domain: registrable ?? domain,
+        error: (err as Error)?.message,
+      });
+    }
   }
   await captureServer("registration_lookup", {
     domain: registrable ?? domain,
