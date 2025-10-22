@@ -52,6 +52,7 @@ export async function assertRateLimit(service: ServiceName, ip: string) {
         service,
         limit: res.limit,
         remaining: res.remaining,
+        reset: res.reset,
       },
     });
   }
