@@ -238,10 +238,11 @@ export async function pruneDueBlobsOnce(
     // Drain due items in batches per storage kind
     // Upstash supports zrange by score; the SDK exposes options for byScore/offset/count
     // Use a loop to progressively drain without pulling too many at once
+    let offset = 0;
     while (true) {
       const dueRaw = (await redis.zrange(ns("purge", kind), 0, now, {
         byScore: true,
-        offset: 0,
+        offset,
         count: batch,
       })) as string[];
       if (!dueRaw.length) break;
@@ -249,8 +250,10 @@ export async function pruneDueBlobsOnce(
       // Filter out paths that already failed during this run
       const due = dueRaw.filter((path) => !alreadyFailed.has(path));
       if (!due.length) {
-        // All items in this batch already failed, stop to avoid infinite loop
-        break;
+        // All items in this batch already failed, advance to next window
+        offset += dueRaw.length;
+        if (dueRaw.length < batch) break; // Reached end of score range
+        continue;
       }
 
       const succeeded: string[] = [];
@@ -275,6 +278,10 @@ export async function pruneDueBlobsOnce(
       if (succeeded.length) await redis.zrem(ns("purge", kind), ...succeeded);
       // Avoid infinite loop when a full batch fails to delete (e.g., network or token issue)
       if (succeeded.length === 0 && due.length > 0) break;
+
+      // Advance offset for next iteration
+      offset += dueRaw.length;
+
       // Nothing more due right now
       if (dueRaw.length < batch) break;
     }
