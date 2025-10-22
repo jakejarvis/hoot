@@ -43,12 +43,16 @@ export async function GET(request: Request) {
     for (let i = 0; i < result.events.length; i += BATCH_SIZE) {
       const chunk = result.events.slice(i, i + BATCH_SIZE);
       await inngest.send(chunk);
-      // Best-effort cleanup: remove drained domains from due sets for sections included
-      await Promise.all(
-        chunk.flatMap((e) =>
-          e.data.sections.map((s) => redis.zrem(ns("due", s), e.data.domain)),
-        ),
-      );
+      // Best-effort cleanup: remove drained domains; ignore failures
+      try {
+        await Promise.all(
+          chunk.flatMap((e) =>
+            e.data.sections.map((s) => redis.zrem(ns("due", s), e.data.domain)),
+          ),
+        );
+      } catch (e) {
+        console.warn("[due-drain] cleanup failed", e);
+      }
       emitted += chunk.length;
     }
 
