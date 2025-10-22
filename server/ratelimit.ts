@@ -1,5 +1,8 @@
+import "server-only";
+
 import { TRPCError } from "@trpc/server";
 import { Ratelimit } from "@upstash/ratelimit";
+import { waitUntil } from "@vercel/functions";
 import { redis } from "@/lib/redis";
 import { t } from "@/trpc/init";
 
@@ -26,8 +29,7 @@ const limiters = Object.fromEntries(
         cfg.points,
         cfg.window as `${number} ${"s" | "m" | "h"}`,
       ),
-      analytics: false,
-      prefix: `rl:${service}`,
+      analytics: true,
     }),
   ]),
 ) as Record<ServiceName, Ratelimit>;
@@ -35,11 +37,13 @@ const limiters = Object.fromEntries(
 export async function assertRateLimit(service: ServiceName, ip: string) {
   const key = `${service}:${ip}`;
   const res = await limiters[service].limit(key);
+
   if (!res.success) {
     const retryAfterSec = Math.max(
       1,
       Math.ceil((res.reset - Date.now()) / 1000),
     );
+
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: `Rate limit exceeded for ${service}. Try again in ${retryAfterSec}s.`,
@@ -51,6 +55,10 @@ export async function assertRateLimit(service: ServiceName, ip: string) {
       },
     });
   }
+
+  // allow ratelimit analytics to be sent in background
+  waitUntil(res.pending);
+
   return { limit: res.limit, remaining: res.remaining, reset: res.reset };
 }
 
