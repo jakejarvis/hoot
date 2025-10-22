@@ -104,6 +104,19 @@ export async function recordFailureAndBackoff(
   return nextAtMs;
 }
 
+export async function resetFailureBackoff(
+  section: Section,
+  domain: string,
+): Promise<void> {
+  const taskKey = ns("task", section);
+  try {
+    await redis.hdel(taskKey, domain);
+  } catch {}
+  try {
+    await captureServer("schedule_backoff_reset", { section, domain });
+  } catch {}
+}
+
 export function allSections(): Section[] {
   return SectionEnum.options as Section[];
 }

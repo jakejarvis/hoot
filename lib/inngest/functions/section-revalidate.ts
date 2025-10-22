@@ -5,6 +5,7 @@ import { inngest } from "@/lib/inngest/client";
 import { ns, redis } from "@/lib/redis";
 import {
   recordFailureAndBackoff,
+  resetFailureBackoff,
   scheduleSectionIfEarlier,
 } from "@/lib/schedule";
 import { type Section, SectionEnum } from "@/lib/schemas";
@@ -110,6 +111,8 @@ export const sectionRevalidate = inngest.createFunction(
               normalizedDomain,
               fallbackMs,
             );
+            // Clear any accumulated failure backoff on success
+            await resetFailureBackoff(section, normalizedDomain);
           } catch {}
         });
         await step.run("write-result", async () => {
