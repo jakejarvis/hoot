@@ -1,14 +1,14 @@
 import { serve } from "inngest/next";
-import { inngest } from "@/server/inngest/client";
-import { blobPrune } from "@/server/inngest/functions/blob-prune";
-import { domainInspected } from "@/server/inngest/functions/domain-inspected";
-import { scanDue } from "@/server/inngest/functions/scan-due";
-import { sectionRevalidate } from "@/server/inngest/functions/section-revalidate";
+import { inngest } from "@/lib/inngest/client";
+import { blobPrune } from "@/lib/inngest/functions/blob-prune";
+import { domainInspected } from "@/lib/inngest/functions/domain-inspected";
+import { dueDrain } from "@/lib/inngest/functions/due-drain";
+import { sectionRevalidate } from "@/lib/inngest/functions/section-revalidate";
 
 // opt out of caching per Inngest docs
 export const dynamic = "force-dynamic";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [sectionRevalidate, domainInspected, scanDue, blobPrune],
+  functions: [sectionRevalidate, domainInspected, dueDrain, blobPrune],
 });

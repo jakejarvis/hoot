@@ -8,6 +8,7 @@ import {
   detectEmailProvider,
   detectHostingProvider,
 } from "@/lib/providers/detection";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Hosting } from "@/lib/schemas";
 import { db } from "@/server/db/client";
 import {
@@ -250,6 +251,10 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       fetchedAt: now,
       expiresAt: ttlForHosting(now),
     });
+    try {
+      const dueAtMs = ttlForHosting(now).getTime();
+      await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
+    } catch {}
   }
   console.info("[hosting] ok", {
     domain: registrable ?? domain,

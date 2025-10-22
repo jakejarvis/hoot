@@ -1,6 +1,7 @@
 import "server-only";
+import { inngest } from "@/lib/inngest/client";
+import { scheduleImmediate } from "@/lib/schedule";
 import { type Section, SectionEnum } from "@/lib/schemas";
-import { inngest } from "@/server/inngest/client";
 
 export const domainInspected = inngest.createFunction(
   { id: "domain-inspected" },
@@ -17,22 +18,20 @@ export const domainInspected = inngest.createFunction(
         )
       : [];
     if (sections.length === 0) {
-      logger.debug("[domain-inspected] no valid sections to enqueue", {
+      logger.debug("[domain-inspected] no valid sections to schedule", {
         domain,
       });
       return;
     }
-    for (const section of sections) {
-      const normalizedDomain =
-        typeof domain === "string" ? domain.trim().toLowerCase() : "";
-      await step.sendEvent("enqueue-section", {
-        name: "section/revalidate",
-        data: { domain: normalizedDomain, section },
-      });
-      logger.info("[domain-inspected] enqueued section revalidation", {
+    const normalizedDomain =
+      typeof domain === "string" ? domain.trim().toLowerCase() : "";
+    await step.run("schedule-sections", async () => {
+      await scheduleImmediate(normalizedDomain, sections);
+      logger.info("[domain-inspected] scheduled sections", {
         domain: normalizedDomain,
-        section,
+        sections,
       });
-    }
+      return { domain: normalizedDomain, sections };
+    });
   },
 );

@@ -5,6 +5,7 @@ import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
   type DnsResolveResult,
@@ -213,6 +214,18 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             fetchedAt: nowDate,
             recordsByType: recordsByTypeToPersist,
           });
+          try {
+            const soonest = Math.min(
+              ...Object.values(recordsByTypeToPersist)
+                .flat()
+                .map((r) => r.expiresAt.getTime()),
+            );
+            await scheduleSectionIfEarlier(
+              "dns",
+              registrable ?? domain,
+              soonest,
+            );
+          } catch {}
         }
 
         // Merge cached fresh + newly fetched stale
@@ -335,6 +348,14 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             }>
           >,
         });
+        try {
+          const soonest = Math.min(
+            ...Object.values(recordsByType)
+              .flat()
+              .map((r) => ttlForDnsRecord(now, r.ttl ?? null).getTime()),
+          );
+          await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
+        } catch {}
       }
       await captureServer("dns_resolve_all", {
         domain: registrable ?? domain,

@@ -3,6 +3,7 @@ import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { HttpHeader } from "@/lib/schemas";
 import { db } from "@/server/db/client";
 import { httpHeaders } from "@/server/db/schema";
@@ -77,6 +78,14 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         fetchedAt: now,
         expiresAt: ttlForHeaders(now),
       });
+      try {
+        const dueAtMs = ttlForHeaders(now).getTime();
+        await scheduleSectionIfEarlier(
+          "headers",
+          registrable ?? domain,
+          dueAtMs,
+        );
+      } catch {}
     }
     console.info("[headers] ok", {
       domain: registrable,

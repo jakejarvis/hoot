@@ -1,8 +1,8 @@
 import "server-only";
+import { inngest } from "@/lib/inngest/client";
 import { deleteObjects } from "@/lib/r2";
 import { ns, redis } from "@/lib/redis";
 import { StorageKindSchema } from "@/lib/schemas";
-import { inngest } from "@/server/inngest/client";
 
 export type BlobPruneResult = {
   deleted: string[];

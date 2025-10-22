@@ -11,7 +11,6 @@ import {
   SeoResponseSchema,
   StorageUrlSchema,
 } from "@/lib/schemas";
-import { inngest } from "@/server/inngest/client";
 import { rateLimitMiddleware } from "@/server/ratelimit";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
@@ -50,15 +49,7 @@ export const domainRouter = createTRPCRouter({
     .use(rateLimitMiddleware)
     .input(DomainInputSchema)
     .output(DnsResolveResultSchema)
-    .query(async ({ input }) => {
-      const result = await resolveAll(input.domain);
-      // fire-and-forget background fanout if needed
-      void inngest.send({
-        name: "domain/inspected",
-        data: { domain: input.domain },
-      });
-      return result;
-    }),
+    .query(({ input }) => resolveAll(input.domain)),
   hosting: publicProcedure
     .meta({ service: "hosting" })
     .use(rateLimitMiddleware)
