@@ -109,7 +109,6 @@ export const dueDrain = inngest.createFunction(
       batchIndex += 1;
     }
 
-    eventsSent = emitted;
     try {
       await captureServer("due_drain", {
         duration_ms: Date.now() - startedAt,
