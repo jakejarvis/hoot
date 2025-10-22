@@ -1,8 +1,8 @@
 import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { hosting as hostingTable } from "@/server/db/schema";
-import { HostingRowInsert as HostingRowInsertSchema } from "@/server/db/zod";
+import { db } from "@/lib/db/client";
+import { hosting as hostingTable } from "@/lib/db/schema";
+import { HostingRowInsert as HostingRowInsertSchema } from "@/lib/db/zod";
 
 type HostingInsert = InferInsertModel<typeof hostingTable>;
 

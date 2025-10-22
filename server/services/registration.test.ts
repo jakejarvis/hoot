@@ -36,9 +36,9 @@ vi.mock("@/lib/domain-server", async (importOriginal) => {
 describe("getRegistration", () => {
   beforeEach(async () => {
     vi.resetModules();
-    const { makePGliteDb } = await import("@/server/db/pglite");
+    const { makePGliteDb } = await import("@/lib/db/pglite");
     const { db } = await makePGliteDb();
-    vi.doMock("@/server/db/client", () => ({ db }));
+    vi.doMock("@/lib/db/client", () => ({ db }));
     const { makeInMemoryRedis } = await import("@/lib/redis-mock");
     const impl = makeInMemoryRedis();
     vi.doMock("@/lib/redis", () => impl);
@@ -51,8 +51,8 @@ describe("getRegistration", () => {
   });
 
   it("returns cached record when present (DB fast-path, rdapper not called)", async () => {
-    const { upsertDomain } = await import("@/server/repos/domains");
-    const { upsertRegistration } = await import("@/server/repos/registrations");
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    const { upsertRegistration } = await import("@/lib/db/repos/registrations");
     const { lookup } = await import("rdapper");
     const spy = lookup as unknown as import("vitest").Mock;
     spy.mockClear();
@@ -98,9 +98,9 @@ describe("getRegistration", () => {
     expect(rec.registrarProvider?.name).toBe("GoDaddy");
 
     // Verify provider row exists and is linked
-    const { db } = await import("@/server/db/client");
+    const { db } = await import("@/lib/db/client");
     const { domains, providers, registrations } = await import(
-      "@/server/db/schema"
+      "@/lib/db/schema"
     );
     const { eq } = await import("drizzle-orm");
     const d = await db
@@ -146,8 +146,8 @@ describe("getRegistration", () => {
       expect(rec.isRegistered).toBe(false);
 
       // Verify stored TTL is 6h from now for unregistered
-      const { db } = await import("@/server/db/client");
-      const { domains, registrations } = await import("@/server/db/schema");
+      const { db } = await import("@/lib/db/client");
+      const { domains, registrations } = await import("@/lib/db/schema");
       const { eq } = await import("drizzle-orm");
       const d = await db
         .select({ id: domains.id })

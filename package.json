@@ -22,7 +22,7 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:seed:providers": "tsx server/db/seed/providers.ts",
+    "db:seed:providers": "tsx scripts/seed/providers.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",

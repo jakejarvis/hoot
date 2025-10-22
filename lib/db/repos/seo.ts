@@ -1,8 +1,8 @@
 import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { seo as seoTable } from "@/server/db/schema";
-import { SeoRowInsert as SeoRowInsertSchema } from "@/server/db/zod";
+import { db } from "@/lib/db/client";
+import { seo as seoTable } from "@/lib/db/schema";
+import { SeoRowInsert as SeoRowInsertSchema } from "@/lib/db/zod";
 
 type SeoInsert = InferInsertModel<typeof seoTable>;
 

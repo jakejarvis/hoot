@@ -3,7 +3,7 @@ import {
   ttlForCertificates,
   ttlForDnsRecord,
   ttlForRegistration,
-} from "@/server/db/ttl";
+} from "@/lib/db/ttl";
 
 describe("TTL policy", () => {
   it("registration: 24h when registered and far from expiry", () => {

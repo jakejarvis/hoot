@@ -3,6 +3,11 @@ import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
+import { db } from "@/lib/db/client";
+import { replaceDns } from "@/lib/db/repos/dns";
+import { upsertDomain } from "@/lib/db/repos/domains";
+import { dnsRecords } from "@/lib/db/schema";
+import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
@@ -13,11 +18,6 @@ import {
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
-import { db } from "@/server/db/client";
-import { dnsRecords } from "@/server/db/schema";
-import { ttlForDnsRecord } from "@/server/db/ttl";
-import { replaceDns } from "@/server/repos/dns";
-import { upsertDomain } from "@/server/repos/domains";
 
 export type DohProvider = {
   key: DnsResolver;

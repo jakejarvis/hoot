@@ -12,7 +12,7 @@ import {
   registrationNameservers,
   registrations,
   seo,
-} from "@/server/db/schema";
+} from "@/lib/db/schema";
 
 // Factories: strict for reads; coerce dates for writes
 const zRead = createSchemaFactory({ zodInstance: z });

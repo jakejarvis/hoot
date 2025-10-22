@@ -2,16 +2,16 @@ import tls from "node:tls";
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
+import { db } from "@/lib/db/client";
+import { replaceCertificates } from "@/lib/db/repos/certificates";
+import { upsertDomain } from "@/lib/db/repos/domains";
+import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
+import { certificates as certTable } from "@/lib/db/schema";
+import { ttlForCertificates } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Certificate } from "@/lib/schemas";
-import { db } from "@/server/db/client";
-import { certificates as certTable } from "@/server/db/schema";
-import { ttlForCertificates } from "@/server/db/ttl";
-import { replaceCertificates } from "@/server/repos/certificates";
-import { upsertDomain } from "@/server/repos/domains";
-import { resolveOrCreateProviderId } from "@/server/repos/providers";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug("[certificates] start", { domain });

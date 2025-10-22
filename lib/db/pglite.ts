@@ -1,6 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import * as schema from "@/server/db/schema";
+import * as schema from "@/lib/db/schema";
 
 // Dynamic import via require pattern is recommended in community examples
 // to access drizzle-kit/api in Vitest.

@@ -23,16 +23,16 @@ vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
 vi.stubEnv("R2_BUCKET", "test-bucket");
 
 beforeAll(async () => {
-  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { makePGliteDb } = await import("@/lib/db/pglite");
   const { db } = await makePGliteDb();
-  vi.doMock("@/server/db/client", () => ({ db }));
+  vi.doMock("@/lib/db/client", () => ({ db }));
   const { makeInMemoryRedis } = await import("@/lib/redis-mock");
   const impl = makeInMemoryRedis();
   vi.doMock("@/lib/redis", () => impl);
 });
 
 beforeEach(async () => {
-  const { resetPGliteDb } = await import("@/server/db/pglite");
+  const { resetPGliteDb } = await import("@/lib/db/pglite");
   await resetPGliteDb();
   const { resetInMemoryRedis } = await import("@/lib/redis-mock");
   resetInMemoryRedis();
@@ -73,9 +73,9 @@ function textResponse(text: string, contentType = "text/plain") {
 
 describe("getSeo", () => {
   it("uses cached response when meta exists in cache", async () => {
-    const { upsertDomain } = await import("@/server/repos/domains");
-    const { upsertSeo } = await import("@/server/repos/seo");
-    const { ttlForSeo } = await import("@/server/db/ttl");
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    const { upsertSeo } = await import("@/lib/db/repos/seo");
+    const { ttlForSeo } = await import("@/lib/db/ttl");
 
     const now = new Date();
     const d = await upsertDomain({

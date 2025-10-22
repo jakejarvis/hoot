@@ -1,9 +1,9 @@
 import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { certificates } from "@/server/db/schema";
-import { CertificateInsert as CertificateInsertSchema } from "@/server/db/zod";
+import { db } from "@/lib/db/client";
+import { certificates } from "@/lib/db/schema";
+import { CertificateInsert as CertificateInsertSchema } from "@/lib/db/zod";
 
 type CertificateInsert = InferInsertModel<typeof certificates>;
 

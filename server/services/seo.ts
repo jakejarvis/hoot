@@ -3,6 +3,11 @@ import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { db } from "@/lib/db/client";
+import { upsertDomain } from "@/lib/db/repos/domains";
+import { upsertSeo } from "@/lib/db/repos/seo";
+import { seo as seoTable } from "@/lib/db/schema";
+import { ttlForSeo } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
@@ -17,11 +22,6 @@ import type {
 } from "@/lib/schemas";
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { storeImage } from "@/lib/storage";
-import { db } from "@/server/db/client";
-import { seo as seoTable } from "@/server/db/schema";
-import { ttlForSeo } from "@/server/db/ttl";
-import { upsertDomain } from "@/server/repos/domains";
-import { upsertSeo } from "@/server/repos/seo";
 
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;

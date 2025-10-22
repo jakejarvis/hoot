@@ -2,6 +2,15 @@ import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
+import { db } from "@/lib/db/client";
+import { upsertDomain } from "@/lib/db/repos/domains";
+import { upsertHosting } from "@/lib/db/repos/hosting";
+import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
+import {
+  hosting as hostingTable,
+  providers as providersTable,
+} from "@/lib/db/schema";
+import { ttlForHosting } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
   detectDnsProvider,
@@ -10,15 +19,6 @@ import {
 } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Hosting } from "@/lib/schemas";
-import { db } from "@/server/db/client";
-import {
-  hosting as hostingTable,
-  providers as providersTable,
-} from "@/server/db/schema";
-import { ttlForHosting } from "@/server/db/ttl";
-import { upsertDomain } from "@/server/repos/domains";
-import { upsertHosting } from "@/server/repos/hosting";
-import { resolveOrCreateProviderId } from "@/server/repos/providers";
 import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";

@@ -1,7 +1,7 @@
 import "server-only";
 import { eq, inArray } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { httpHeaders } from "@/server/db/schema";
+import { db } from "@/lib/db/client";
+import { httpHeaders } from "@/lib/db/schema";
 
 export type ReplaceHeadersParams = {
   domainId: string;

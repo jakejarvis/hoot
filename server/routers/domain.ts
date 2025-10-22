@@ -1,6 +1,7 @@
 import z from "zod";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { rateLimitMiddleware } from "@/lib/ratelimit";
 import {
   CertificatesSchema,
   DnsResolveResultSchema,
@@ -11,7 +12,6 @@ import {
   SeoResponseSchema,
   StorageUrlSchema,
 } from "@/lib/schemas";
-import { rateLimitMiddleware } from "@/server/ratelimit";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
 import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";

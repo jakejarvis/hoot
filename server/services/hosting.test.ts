@@ -51,16 +51,16 @@ vi.mock("@/lib/domain-server", async (importOriginal) => {
 });
 
 beforeAll(async () => {
-  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { makePGliteDb } = await import("@/lib/db/pglite");
   const { db } = await makePGliteDb();
-  vi.doMock("@/server/db/client", () => ({ db }));
+  vi.doMock("@/lib/db/client", () => ({ db }));
   const { makeInMemoryRedis } = await import("@/lib/redis-mock");
   const impl = makeInMemoryRedis();
   vi.doMock("@/lib/redis", () => impl);
 });
 
 beforeEach(async () => {
-  const { resetPGliteDb } = await import("@/server/db/pglite");
+  const { resetPGliteDb } = await import("@/lib/db/pglite");
   await resetPGliteDb();
 });
 
@@ -240,8 +240,8 @@ describe("detectHosting", () => {
 
     await detectHosting("provider-create.example");
 
-    const { db } = await import("@/server/db/client");
-    const { domains, hosting, providers } = await import("@/server/db/schema");
+    const { db } = await import("@/lib/db/client");
+    const { domains, hosting, providers } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })

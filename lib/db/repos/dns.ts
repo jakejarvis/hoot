@@ -1,16 +1,16 @@
 import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import {
   dnsRecords,
   type dnsRecordType,
   type dnsResolver,
-} from "@/server/db/schema";
+} from "@/lib/db/schema";
 import {
   DnsRecordInsert as DnsRecordInsertSchema,
   DnsRecordUpdate as DnsRecordUpdateSchema,
-} from "@/server/db/zod";
+} from "@/lib/db/zod";
 
 type DnsRecordInsert = InferInsertModel<typeof dnsRecords>;
 

@@ -1,6 +1,16 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld, lookup } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
+import { db } from "@/lib/db/client";
+import { upsertDomain } from "@/lib/db/repos/domains";
+import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
+import { upsertRegistration } from "@/lib/db/repos/registrations";
+import {
+  providers,
+  registrationNameservers,
+  registrations,
+} from "@/lib/db/schema";
+import { ttlForRegistration } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
@@ -9,16 +19,6 @@ import type {
   RegistrationContacts,
   RegistrationSource,
 } from "@/lib/schemas";
-import { db } from "@/server/db/client";
-import {
-  providers,
-  registrationNameservers,
-  registrations,
-} from "@/server/db/schema";
-import { ttlForRegistration } from "@/server/db/ttl";
-import { upsertDomain } from "@/server/repos/domains";
-import { resolveOrCreateProviderId } from "@/server/repos/providers";
-import { upsertRegistration } from "@/server/repos/registrations";
 
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.

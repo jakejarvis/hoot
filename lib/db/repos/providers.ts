@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { type providerCategory, providers } from "@/server/db/schema";
+import { db } from "@/lib/db/client";
+import { type providerCategory, providers } from "@/lib/db/schema";
 
 export type ResolveProviderInput = {
   category: (typeof providerCategory.enumValues)[number];

@@ -1,15 +1,15 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
+import { db } from "@/lib/db/client";
+import { upsertDomain } from "@/lib/db/repos/domains";
+import { replaceHeaders } from "@/lib/db/repos/headers";
+import { httpHeaders } from "@/lib/db/schema";
+import { ttlForHeaders } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { HttpHeader } from "@/lib/schemas";
-import { db } from "@/server/db/client";
-import { httpHeaders } from "@/server/db/schema";
-import { ttlForHeaders } from "@/server/db/ttl";
-import { upsertDomain } from "@/server/repos/domains";
-import { replaceHeaders } from "@/server/repos/headers";
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;

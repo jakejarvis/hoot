@@ -1,3 +1,5 @@
+import { db } from "@/lib/db/client";
+import { type providerCategory, providers } from "@/lib/db/schema";
 import {
   CA_PROVIDERS,
   DNS_PROVIDERS,
@@ -5,8 +7,6 @@ import {
   HOSTING_PROVIDERS,
   REGISTRAR_PROVIDERS,
 } from "@/lib/providers/catalog";
-import { db } from "@/server/db/client";
-import { type providerCategory, providers } from "@/server/db/schema";
 
 function slugify(input: string): string {
   return input

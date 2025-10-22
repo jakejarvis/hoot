@@ -38,16 +38,16 @@ import {
 } from "vitest";
 
 beforeAll(async () => {
-  const { makePGliteDb } = await import("@/server/db/pglite");
+  const { makePGliteDb } = await import("@/lib/db/pglite");
   const { db } = await makePGliteDb();
-  vi.doMock("@/server/db/client", () => ({ db }));
+  vi.doMock("@/lib/db/client", () => ({ db }));
   const { makeInMemoryRedis } = await import("@/lib/redis-mock");
   const impl = makeInMemoryRedis();
   vi.doMock("@/lib/redis", () => impl);
 });
 
 beforeEach(async () => {
-  const { resetPGliteDb } = await import("@/server/db/pglite");
+  const { resetPGliteDb } = await import("@/lib/db/pglite");
   await resetPGliteDb();
 });
 
@@ -112,9 +112,9 @@ describe("getCertificates", () => {
     expect(out.length).toBeGreaterThan(0);
 
     // Verify DB persistence and CA provider creation
-    const { db } = await import("@/server/db/client");
+    const { db } = await import("@/lib/db/client");
     const { certificates, domains, providers } = await import(
-      "@/server/db/schema"
+      "@/lib/db/schema"
     );
     const { eq } = await import("drizzle-orm");
     const d = await db

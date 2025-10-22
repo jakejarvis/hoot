@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { DnsResolverSchema, DnsTypeSchema } from "@/lib/schemas";
-import { dnsRecordType, dnsResolver } from "@/server/db/schema";
+import { dnsRecordType, dnsResolver } from "@/lib/db/schema";
 import {
   DomainInsert,
   DomainSelect,
   SeoRowInsert,
   SeoRowSelect,
-} from "@/server/db/zod";
+} from "@/lib/db/zod";
+import { DnsResolverSchema, DnsTypeSchema } from "@/lib/schemas";
 
 describe("drizzle-zod parity", () => {
   it("matches DNS enums with domain schemas", () => {

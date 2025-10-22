@@ -1,7 +1,7 @@
 import "server-only";
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { domains } from "@/server/db/schema";
+import { db } from "@/lib/db/client";
+import { domains } from "@/lib/db/schema";
 
 export type UpsertDomainParams = {
   name: string; // punycode lowercased
