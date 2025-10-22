@@ -84,6 +84,7 @@ export const dueDrain = inngest.createFunction(
     }));
 
     let emitted = 0;
+    let batchIndex = 0;
     for (let i = 0; i < events.length; ) {
       if (emitted >= globalMax) break;
       const remaining = Math.max(0, globalMax - emitted);
@@ -93,7 +94,7 @@ export const dueDrain = inngest.createFunction(
         name: string;
         data: { domain: string; sections: Section[] };
       }>;
-      await step.sendEvent(`enqueue-due-${i / (size || 1)}` as const, chunk);
+      await step.sendEvent(`enqueue-due-${batchIndex}` as const, chunk);
       // Best-effort cleanup; wrap to avoid aborting enqueue on cleanup failures
       try {
         for (const evt of chunk) {
@@ -105,6 +106,7 @@ export const dueDrain = inngest.createFunction(
       } catch {}
       emitted += chunk.length;
       i += size;
+      batchIndex += 1;
     }
 
     eventsSent = emitted;
