@@ -279,8 +279,8 @@ export async function pruneDueBlobsOnce(
       // Avoid infinite loop when a full batch fails to delete (e.g., network or token issue)
       if (succeeded.length === 0 && due.length > 0) break;
 
-      // Advance offset for next iteration
-      offset += dueRaw.length;
+      // Don't increment offset when items were removed (set shrunk); offset only advances
+      // in the "all filtered" case above to skip over alreadyFailed items
 
       // Nothing more due right now
       if (dueRaw.length < batch) break;
