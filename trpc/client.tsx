@@ -11,6 +11,7 @@ import { useState } from "react";
 import superjson from "superjson";
 import { TRPCProvider as Provider } from "@/lib/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
+import { errorToastLink } from "@/trpc/error-toast-link";
 import { getQueryClient } from "@/trpc/query-client";
 
 let browserQueryClient: ReturnType<typeof getQueryClient> | undefined;
@@ -37,6 +38,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             process.env.NODE_ENV === "development" ||
             (opts.direction === "down" && opts.result instanceof Error),
         }),
+        errorToastLink(),
         httpBatchStreamLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,

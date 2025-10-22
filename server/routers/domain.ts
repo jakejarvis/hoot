@@ -9,8 +9,10 @@ import {
   PricingSchema,
   RegistrationSchema,
   SeoResponseSchema,
+  StorageUrlSchema,
 } from "@/lib/schemas";
 import { inngest } from "@/server/inngest/client";
+import { rateLimitMiddleware } from "@/server/ratelimit";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
 import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";
@@ -20,9 +22,9 @@ import { getPricingForTld } from "@/server/services/pricing";
 import { getRegistration } from "@/server/services/registration";
 import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
 import { getSeo } from "@/server/services/seo";
-import { createTRPCRouter, loggedProcedure } from "@/trpc/init";
+import { createTRPCRouter, publicProcedure } from "@/trpc/init";
 
-export const domainInput = z
+const DomainInputSchema = z
   .object({ domain: z.string().min(1) })
   .transform(({ domain }) => ({ domain: normalizeDomainInput(domain) }))
   .refine(({ domain }) => toRegistrableDomain(domain) !== null, {
@@ -31,16 +33,22 @@ export const domainInput = z
   });
 
 export const domainRouter = createTRPCRouter({
-  registration: loggedProcedure
-    .input(domainInput)
+  registration: publicProcedure
+    .meta({ service: "registration" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(RegistrationSchema)
     .query(({ input }) => getRegistration(input.domain)),
-  pricing: loggedProcedure
-    .input(domainInput)
+  pricing: publicProcedure
+    .meta({ service: "pricing" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(PricingSchema)
     .query(({ input }) => getPricingForTld(input.domain)),
-  dns: loggedProcedure
-    .input(domainInput)
+  dns: publicProcedure
+    .meta({ service: "dns" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(DnsResolveResultSchema)
     .query(async ({ input }) => {
       const result = await resolveAll(input.domain);
@@ -51,26 +59,40 @@ export const domainRouter = createTRPCRouter({
       });
       return result;
     }),
-  hosting: loggedProcedure
-    .input(domainInput)
+  hosting: publicProcedure
+    .meta({ service: "hosting" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(HostingSchema)
     .query(({ input }) => detectHosting(input.domain)),
-  certificates: loggedProcedure
-    .input(domainInput)
+  certificates: publicProcedure
+    .meta({ service: "certs" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(CertificatesSchema)
     .query(({ input }) => getCertificates(input.domain)),
-  headers: loggedProcedure
-    .input(domainInput)
+  headers: publicProcedure
+    .meta({ service: "headers" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(HttpHeadersSchema)
     .query(({ input }) => probeHeaders(input.domain)),
-  seo: loggedProcedure
-    .input(domainInput)
+  seo: publicProcedure
+    .meta({ service: "seo" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
     .output(SeoResponseSchema)
     .query(({ input }) => getSeo(input.domain)),
-  favicon: loggedProcedure
-    .input(domainInput)
+  favicon: publicProcedure
+    .meta({ service: "favicon" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
+    .output(StorageUrlSchema)
     .query(({ input }) => getOrCreateFaviconBlobUrl(input.domain)),
-  screenshot: loggedProcedure
-    .input(domainInput)
+  screenshot: publicProcedure
+    .meta({ service: "screenshot" })
+    .use(rateLimitMiddleware)
+    .input(DomainInputSchema)
+    .output(StorageUrlSchema)
     .query(({ input }) => getOrCreateScreenshotBlobUrl(input.domain)),
 });
