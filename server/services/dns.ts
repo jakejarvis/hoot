@@ -215,16 +215,20 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             recordsByType: recordsByTypeToPersist,
           });
           try {
-            const soonest = Math.min(
-              ...Object.values(recordsByTypeToPersist)
-                .flat()
-                .map((r) => r.expiresAt.getTime()),
-            );
-            await scheduleSectionIfEarlier(
-              "dns",
-              registrable ?? domain,
-              soonest,
-            );
+            const times = Object.values(recordsByTypeToPersist)
+              .flat()
+              .map((r) => r.expiresAt?.getTime?.())
+              .filter(
+                (t): t is number => typeof t === "number" && Number.isFinite(t),
+              );
+            if (times.length > 0) {
+              const soonest = Math.min(...times);
+              await scheduleSectionIfEarlier(
+                "dns",
+                registrable ?? domain,
+                soonest,
+              );
+            }
           } catch {}
         }
 
@@ -349,12 +353,20 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           >,
         });
         try {
-          const soonest = Math.min(
-            ...Object.values(recordsByType)
-              .flat()
-              .map((r) => ttlForDnsRecord(now, r.ttl ?? null).getTime()),
-          );
-          await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
+          const times = Object.values(recordsByType)
+            .flat()
+            .map((r) => ttlForDnsRecord(now, r.ttl ?? null)?.getTime?.())
+            .filter(
+              (t): t is number => typeof t === "number" && Number.isFinite(t),
+            );
+          if (times.length > 0) {
+            const soonest = Math.min(...times);
+            await scheduleSectionIfEarlier(
+              "dns",
+              registrable ?? domain,
+              soonest,
+            );
+          }
         } catch {}
       }
       await captureServer("dns_resolve_all", {
