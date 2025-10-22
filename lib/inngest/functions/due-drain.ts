@@ -15,10 +15,7 @@ export const dueDrain = inngest.createFunction(
   { id: "due-drain" },
   // drain frequently with small budgets to smooth load
   {
-    cron:
-      DRAIN_CRON_MINUTES <= 60
-        ? `*/${DRAIN_CRON_MINUTES} * * * *`
-        : "*/1 * * * *", // fall back to every minute
+    cron: `*/${Math.max(1, Math.min(60, Number(DRAIN_CRON_MINUTES) || 1))} * * * *`,
   },
   async ({ step, logger }) => {
     const startedAt = Date.now();
@@ -51,7 +48,7 @@ export const dueDrain = inngest.createFunction(
           ex: leaseSecs,
         });
         // If lease not acquired, skip
-        if (ok !== "OK" && ok !== undefined) continue;
+        if (ok !== "OK") continue;
 
         // Enforce global budget at selection time: increment when first selecting a domain
         const previouslySelected = domainToSections.has(domain);
