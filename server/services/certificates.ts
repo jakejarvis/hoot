@@ -149,20 +149,26 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
         }),
       );
 
+      const nextDue = ttlForCertificates(now, earliestValidTo);
       await replaceCertificates({
         domainId: d.id,
         chain: chainWithIds,
         fetchedAt: now,
-        expiresAt: ttlForCertificates(now, earliestValidTo),
+        expiresAt: nextDue,
       });
       try {
-        const dueAtMs = ttlForCertificates(now, earliestValidTo).getTime();
+        const dueAtMs = nextDue.getTime();
         await scheduleSectionIfEarlier(
           "certificates",
           registrable ?? domain,
           dueAtMs,
         );
-      } catch {}
+      } catch (err) {
+        console.warn("[certificates] schedule failed", {
+          domain: registrable ?? domain,
+          error: (err as Error)?.message,
+        });
+      }
     }
 
     console.info("[certificates] ok", {
