@@ -7,6 +7,7 @@ import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
 import { ns, redis } from "@/lib/redis";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type {
   GeneralMeta,
   OpenGraphMeta,
@@ -230,6 +231,10 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       fetchedAt: now,
       expiresAt: ttlForSeo(now),
     });
+    try {
+      const dueAtMs = ttlForSeo(now).getTime();
+      await scheduleSectionIfEarlier("seo", registrable ?? domain, dueAtMs);
+    } catch {}
   }
 
   await captureServer("seo_fetch", {

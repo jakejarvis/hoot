@@ -31,6 +31,7 @@ export function resetInMemoryRedis(): void {
 export function makeInMemoryRedis() {
   const kv = new Map<string, ExpiryEntry>();
   const zsets = new Map<string, Map<string, number>>();
+  const hashes = new Map<string, Map<string, string>>();
 
   function getZset(key: string): Map<string, number> {
     let set = zsets.get(key);
@@ -39,6 +40,15 @@ export function makeInMemoryRedis() {
       zsets.set(key, set);
     }
     return set;
+  }
+
+  function getHash(key: string): Map<string, string> {
+    let hash = hashes.get(key);
+    if (!hash) {
+      hash = new Map<string, string>();
+      hashes.set(key, hash);
+    }
+    return hash;
   }
 
   async function get<T = unknown>(key: string): Promise<T | null> {
@@ -131,13 +141,24 @@ export function makeInMemoryRedis() {
     options?: { byScore?: boolean; offset?: number; count?: number },
   ): Promise<string[]> {
     const z = getZset(key);
-    const items = Array.from(z.entries())
-      .filter(([, score]) => score >= min && score <= max)
-      .sort((a, b) => a[1] - b[1])
-      .map(([member]) => member);
-    const offset = options?.offset ?? 0;
-    const count = options?.count ?? items.length;
-    return items.slice(offset, offset + count);
+    const sortedEntries = Array.from(z.entries()).sort((a, b) => a[1] - b[1]);
+
+    let items: string[];
+    if (options?.byScore) {
+      // Score-based range: filter by score values
+      items = sortedEntries
+        .filter(([, score]) => score >= min && score <= max)
+        .map(([member]) => member);
+      const offset = options.offset ?? 0;
+      const count = options.count ?? items.length;
+      return items.slice(offset, offset + count);
+    } else {
+      // Index-based range: slice by index positions
+      items = sortedEntries.map(([member]) => member);
+      const start = min < 0 ? items.length + min : min;
+      const end = max < 0 ? items.length + max + 1 : max + 1;
+      return items.slice(start, end);
+    }
   }
 
   async function zrem(key: string, ...members: string[]): Promise<number> {
@@ -149,12 +170,77 @@ export function makeInMemoryRedis() {
     return removed;
   }
 
+  async function zscore(key: string, member: string): Promise<number | null> {
+    const z = getZset(key);
+    const score = z.get(member);
+    return score !== undefined ? score : null;
+  }
+
+  async function hget(key: string, field: string): Promise<string | null> {
+    const h = hashes.get(key);
+    return h?.get(field) ?? null;
+  }
+
+  async function hset(
+    key: string,
+    fieldValues: Record<string, string | number>,
+  ): Promise<number> {
+    const h = getHash(key);
+    let added = 0;
+    for (const [field, value] of Object.entries(fieldValues)) {
+      const existed = h.has(field);
+      h.set(field, String(value));
+      if (!existed) added++;
+    }
+    return added;
+  }
+
+  async function hincrby(
+    key: string,
+    field: string,
+    increment: number,
+  ): Promise<number> {
+    // Validate increment is an integer
+    if (!Number.isInteger(increment)) {
+      throw new Error("ERR increment is not an integer");
+    }
+
+    const h = getHash(key);
+    const existingValue = h.get(field);
+
+    // Validate existing field value is an integer string if present
+    if (existingValue !== undefined) {
+      if (!/^-?\d+$/.test(existingValue)) {
+        throw new Error("ERR hash value is not an integer");
+      }
+    }
+
+    const current = existingValue !== undefined ? Number(existingValue) : 0;
+    const next = current + increment;
+    h.set(field, String(next));
+    return next;
+  }
+
+  async function hdel(key: string, ...fields: string[]): Promise<number> {
+    const h = hashes.get(key);
+    let removed = 0;
+    if (h) {
+      for (const f of fields) {
+        if (h.delete(f)) removed++;
+      }
+      // Optionally drop empty hash to mirror real-world memory behavior:
+      if (h.size === 0) hashes.delete(key);
+    }
+    return removed;
+  }
+
   const ns = (...parts: string[]) => parts.join(":");
 
   // Register the most recently created instance as the active one
   activeReset = () => {
     kv.clear();
-    for (const m of zsets.values()) m.clear();
+    zsets.clear();
+    hashes.clear();
   };
 
   return {
@@ -170,6 +256,11 @@ export function makeInMemoryRedis() {
       zadd,
       zrange,
       zrem,
+      zscore,
+      hget,
+      hset,
+      hincrby,
+      hdel,
     },
     reset: resetInMemoryRedis,
   } as const;

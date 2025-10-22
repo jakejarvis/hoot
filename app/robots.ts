@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        disallow: ["/api/"],
+        disallow: ["/api/cron/"],
       },
     ],
   };

@@ -3,6 +3,7 @@ import { getDomainTld, lookup } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type {
   Registration,
   RegistrationContacts,
@@ -205,6 +206,18 @@ export async function getRegistration(domain: string): Promise<Registration> {
         ipv6: n.ipv6 ?? [],
       })),
     });
+    try {
+      await scheduleSectionIfEarlier(
+        "registration",
+        registrable ?? domain,
+        expiresAt.getTime(),
+      );
+    } catch (err) {
+      console.warn("[registration] schedule failed", {
+        domain: registrable ?? domain,
+        error: (err as Error)?.message,
+      });
+    }
   }
   await captureServer("registration_lookup", {
     domain: registrable ?? domain,

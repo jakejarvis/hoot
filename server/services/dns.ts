@@ -5,6 +5,7 @@ import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
   type DnsResolveResult,
@@ -213,6 +214,26 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             fetchedAt: nowDate,
             recordsByType: recordsByTypeToPersist,
           });
+          try {
+            const times = Object.values(recordsByTypeToPersist)
+              .flat()
+              .map((r) => r.expiresAt?.getTime?.())
+              .filter(
+                (t): t is number => typeof t === "number" && Number.isFinite(t),
+              );
+            // Always schedule: use the soonest expiry if available, otherwise schedule immediately
+            const soonest = times.length > 0 ? Math.min(...times) : Date.now();
+            await scheduleSectionIfEarlier(
+              "dns",
+              registrable ?? domain,
+              soonest,
+            );
+          } catch (err) {
+            console.warn("[dns] schedule failed (partial)", {
+              domain: registrable ?? domain,
+              error: (err as Error)?.message,
+            });
+          }
         }
 
         // Merge cached fresh + newly fetched stale
@@ -335,6 +356,21 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             }>
           >,
         });
+        try {
+          const times = Object.values(recordsByType)
+            .flat()
+            .map((r) => ttlForDnsRecord(now, r.ttl ?? null)?.getTime?.())
+            .filter(
+              (t): t is number => typeof t === "number" && Number.isFinite(t),
+            );
+          const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
+          await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
+        } catch (err) {
+          console.warn("[dns] schedule failed (full)", {
+            domain: registrable ?? domain,
+            error: (err as Error)?.message,
+          });
+        }
       }
       await captureServer("dns_resolve_all", {
         domain: registrable ?? domain,

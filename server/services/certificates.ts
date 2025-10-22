@@ -4,6 +4,7 @@ import { getDomainTld } from "rdapper";
 import { captureServer } from "@/lib/analytics/server";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
+import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Certificate } from "@/lib/schemas";
 import { db } from "@/server/db/client";
 import { certificates as certTable } from "@/server/db/schema";
@@ -148,12 +149,26 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
         }),
       );
 
+      const nextDue = ttlForCertificates(now, earliestValidTo);
       await replaceCertificates({
         domainId: d.id,
         chain: chainWithIds,
         fetchedAt: now,
-        expiresAt: ttlForCertificates(now, earliestValidTo),
+        expiresAt: nextDue,
       });
+      try {
+        const dueAtMs = nextDue.getTime();
+        await scheduleSectionIfEarlier(
+          "certificates",
+          registrable ?? domain,
+          dueAtMs,
+        );
+      } catch (err) {
+        console.warn("[certificates] schedule failed", {
+          domain: registrable ?? domain,
+          error: (err as Error)?.message,
+        });
+      }
     }
 
     console.info("[certificates] ok", {

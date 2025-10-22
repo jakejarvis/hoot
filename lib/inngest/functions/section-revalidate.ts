@@ -1,9 +1,14 @@
 import "server-only";
 import { z } from "zod";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
+import { inngest } from "@/lib/inngest/client";
 import { ns, redis } from "@/lib/redis";
+import {
+  recordFailureAndBackoff,
+  resetFailureBackoff,
+  scheduleSectionIfEarlier,
+} from "@/lib/schedule";
 import { type Section, SectionEnum } from "@/lib/schemas";
-import { inngest } from "@/server/inngest/client";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
@@ -95,6 +100,21 @@ export const sectionRevalidate = inngest.createFunction(
           });
           return { domain: normalizedDomain, section };
         });
+        // On success: compute next due time using DB TTLs where applicable.
+        // We don't know exact DB values here, so schedule a conservative minimum
+        // to ensure the due queue repopulates even if on-write scheduling missed.
+        const fallbackMs = Date.now() + 60 * 60 * 1000; // 1h safety fallback
+        await step.run("reschedule-next-due", async () => {
+          try {
+            await scheduleSectionIfEarlier(
+              section,
+              normalizedDomain,
+              fallbackMs,
+            );
+            // Clear any accumulated failure backoff on success
+            await resetFailureBackoff(section, normalizedDomain);
+          } catch {}
+        });
         await step.run("write-result", async () => {
           try {
             await redis.set(
@@ -109,6 +129,13 @@ export const sectionRevalidate = inngest.createFunction(
               error: err,
             });
           }
+        });
+      } catch {
+        // On failure: backoff and reschedule
+        await step.run("backoff-on-failure", async () => {
+          try {
+            await recordFailureAndBackoff(section, normalizedDomain);
+          } catch {}
         });
       } finally {
         await step.run("release-lock", async () => {
