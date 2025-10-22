@@ -1,9 +1,9 @@
 "use client";
 
-import { Download, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
-import { exportDomainData } from "@/components/domain/export-data";
+import { ExportButton } from "@/components/domain/export-button";
 import { Favicon } from "@/components/domain/favicon";
 import { ScreenshotTooltip } from "@/components/domain/screenshot-tooltip";
 import { CertificatesSection } from "@/components/domain/sections/certificates-section";
@@ -12,16 +12,11 @@ import { HeadersSection } from "@/components/domain/sections/headers-section";
 import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
 import { RegistrationSection } from "@/components/domain/sections/registration-section";
 import { SeoSection } from "@/components/domain/sections/seo-section";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ToolsDropdown } from "@/components/domain/tools-dropdown";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useDomainQueries } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
-// no longer need SECTION_SLUGS now that accordions are removed
+import { exportDomainData } from "@/lib/json-export";
 
 export function DomainReportView({ domain }: { domain: string }) {
   const { registration, dns, hosting, certs, headers, seo } =
@@ -113,25 +108,15 @@ export function DomainReportView({ domain }: { domain: string }) {
             />
           </a>
         </ScreenshotTooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              onClick={handleExportJson}
-              disabled={areSecondarySectionsLoading}
-            >
-              <Download />
-              <span className="hidden sm:inline-block">Export</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              Save this report as a <span className="font-mono">JSON</span>{" "}
-              file.
-            </p>
-          </TooltipContent>
-        </Tooltip>
+
+        <div className="flex items-center gap-2">
+          <ExportButton
+            disabled={areSecondarySectionsLoading}
+            onExportAction={handleExportJson}
+          />
+
+          <ToolsDropdown domain={domain} />
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -201,6 +186,7 @@ export function DomainReportView({ domain }: { domain: string }) {
         />
 
         <SeoSection
+          domain={domain}
           data={seo.data || null}
           isLoading={!seoSettled}
           isError={!!seo.isError}
