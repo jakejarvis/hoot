@@ -374,7 +374,8 @@ describe("schedule", () => {
       const now = Date.now();
 
       // Add many domains to a single section (more than PER_SECTION_BATCH)
-      const batchSize = 50; // PER_SECTION_BATCH from config
+      const { PER_SECTION_BATCH } = await import("@/lib/revalidation-config");
+      const batchSize = PER_SECTION_BATCH;
       for (let i = 0; i < batchSize + 20; i++) {
         await redis.zadd(ns("due", "dns"), {
           score: now - 1000,
@@ -393,7 +394,8 @@ describe("schedule", () => {
       const now = Date.now();
 
       // Add many domains across multiple sections
-      const globalMax = 200; // MAX_EVENTS_PER_RUN from config
+      const { MAX_EVENTS_PER_RUN } = await import("@/lib/revalidation-config");
+      const globalMax = MAX_EVENTS_PER_RUN;
       for (let i = 0; i < globalMax + 50; i++) {
         await redis.zadd(ns("due", "dns"), {
           score: now - 1000,

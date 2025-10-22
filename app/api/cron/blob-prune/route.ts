@@ -25,23 +25,23 @@ export async function GET(request: Request) {
     const startedAt = Date.now();
     const result = await pruneDueBlobsOnce(startedAt);
 
-    if (result.errors.length > 0) {
+    if (result.errorCount > 0) {
       console.warn("[blob-prune] completed with errors", {
-        deletedCount: result.deleted.length,
-        errorCount: result.errors.length,
+        deletedCount: result.deletedCount,
+        errorCount: result.errorCount,
         duration_ms: Date.now() - startedAt,
       });
     } else {
       console.info("[blob-prune] completed", {
-        deletedCount: result.deleted.length,
+        deletedCount: result.deletedCount,
         duration_ms: Date.now() - startedAt,
       });
     }
 
     return NextResponse.json({
       success: true,
-      deletedCount: result.deleted.length,
-      errorCount: result.errors.length,
+      deletedCount: result.deletedCount,
+      errorCount: result.errorCount,
       duration_ms: Date.now() - startedAt,
     });
   } catch (error) {

@@ -214,8 +214,8 @@ export async function storeImage(options: {
 }
 
 export type BlobPruneResult = {
-  deleted: string[];
-  errors: Array<{ path: string; error: string }>;
+  deletedCount: number;
+  errorCount: number;
 };
 
 /**
@@ -230,35 +230,45 @@ export async function pruneDueBlobsOnce(
   const { ns, redis } = await import("@/lib/redis");
   const { StorageKindSchema } = await import("@/lib/schemas");
 
-  const deleted: string[] = [];
-  const errors: Array<{ path: string; error: string }> = [];
+  let deletedCount = 0;
+  let errorCount = 0;
+  const alreadyFailed = new Set<string>();
 
   for (const kind of StorageKindSchema.options) {
     // Drain due items in batches per storage kind
     // Upstash supports zrange by score; the SDK exposes options for byScore/offset/count
     // Use a loop to progressively drain without pulling too many at once
     while (true) {
-      const due = (await redis.zrange(ns("purge", kind), 0, now, {
+      const dueRaw = (await redis.zrange(ns("purge", kind), 0, now, {
         byScore: true,
         offset: 0,
         count: batch,
       })) as string[];
-      if (!due.length) break;
+      if (!dueRaw.length) break;
+
+      // Filter out paths that already failed during this run
+      const due = dueRaw.filter((path) => !alreadyFailed.has(path));
+      if (!due.length) {
+        // All items in this batch already failed, stop to avoid infinite loop
+        break;
+      }
 
       const succeeded: string[] = [];
       try {
         const result = await deleteObjects(due);
         const batchDeleted = result.filter((r) => r.deleted).map((r) => r.key);
-        deleted.push(...batchDeleted);
+        deletedCount += batchDeleted.length;
         succeeded.push(...batchDeleted);
         for (const r of result) {
           if (!r.deleted) {
-            errors.push({ path: r.key, error: r.error || "unknown" });
+            alreadyFailed.add(r.key);
+            errorCount++;
           }
         }
-      } catch (err) {
+      } catch {
         for (const path of due) {
-          errors.push({ path, error: (err as Error)?.message || "unknown" });
+          alreadyFailed.add(path);
+          errorCount++;
         }
       }
 
@@ -266,9 +276,9 @@ export async function pruneDueBlobsOnce(
       // Avoid infinite loop when a full batch fails to delete (e.g., network or token issue)
       if (succeeded.length === 0 && due.length > 0) break;
       // Nothing more due right now
-      if (due.length < batch) break;
+      if (dueRaw.length < batch) break;
     }
   }
 
-  return { deleted, errors };
+  return { deletedCount, errorCount };
 }

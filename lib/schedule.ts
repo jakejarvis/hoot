@@ -165,9 +165,12 @@ export async function drainDueDomainsOnce(): Promise<DueDrainResult> {
     if (eventsSent >= globalMax) break;
     const dueKey = ns("due", section);
     const now = Date.now();
+
     const remaining = Math.max(0, globalMax - eventsSent);
-    const fetchCount =
-      remaining > 0 ? Math.min(perSectionBatch, remaining) : perSectionBatch;
+    if (remaining === 0) break;
+
+    const fetchCount = Math.min(perSectionBatch, remaining);
+
     // Pull a small window of due domains
     const dueMembers = (await redis.zrange(dueKey, 0, now, {
       byScore: true,

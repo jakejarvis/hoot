@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { inngest } from "@/lib/inngest/client";
+import { ns, redis } from "@/lib/redis";
 import { drainDueDomainsOnce } from "@/lib/schedule";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,12 @@ export async function GET(request: Request) {
     for (let i = 0; i < result.events.length; i += BATCH_SIZE) {
       const chunk = result.events.slice(i, i + BATCH_SIZE);
       await inngest.send(chunk);
+      // Best-effort cleanup: remove drained domains from due sets for sections included
+      await Promise.all(
+        chunk.flatMap((e) =>
+          e.data.sections.map((s) => redis.zrem(ns("due", s), e.data.domain)),
+        ),
+      );
       emitted += chunk.length;
     }
 

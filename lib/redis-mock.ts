@@ -141,13 +141,24 @@ export function makeInMemoryRedis() {
     options?: { byScore?: boolean; offset?: number; count?: number },
   ): Promise<string[]> {
     const z = getZset(key);
-    const items = Array.from(z.entries())
-      .filter(([, score]) => score >= min && score <= max)
-      .sort((a, b) => a[1] - b[1])
-      .map(([member]) => member);
-    const offset = options?.offset ?? 0;
-    const count = options?.count ?? items.length;
-    return items.slice(offset, offset + count);
+    const sortedEntries = Array.from(z.entries()).sort((a, b) => a[1] - b[1]);
+
+    let items: string[];
+    if (options?.byScore) {
+      // Score-based range: filter by score values
+      items = sortedEntries
+        .filter(([, score]) => score >= min && score <= max)
+        .map(([member]) => member);
+      const offset = options.offset ?? 0;
+      const count = options.count ?? items.length;
+      return items.slice(offset, offset + count);
+    } else {
+      // Index-based range: slice by index positions
+      items = sortedEntries.map(([member]) => member);
+      const start = min < 0 ? items.length + min : min;
+      const end = max < 0 ? items.length + max + 1 : max + 1;
+      return items.slice(start, end);
+    }
   }
 
   async function zrem(key: string, ...members: string[]): Promise<number> {
@@ -166,8 +177,8 @@ export function makeInMemoryRedis() {
   }
 
   async function hget(key: string, field: string): Promise<string | null> {
-    const h = getHash(key);
-    return h.get(field) ?? null;
+    const h = hashes.get(key);
+    return h?.get(field) ?? null;
   }
 
   async function hset(
@@ -197,10 +208,14 @@ export function makeInMemoryRedis() {
   }
 
   async function hdel(key: string, ...fields: string[]): Promise<number> {
-    const h = getHash(key);
+    const h = hashes.get(key);
     let removed = 0;
-    for (const f of fields) {
-      if (h.delete(f)) removed++;
+    if (h) {
+      for (const f of fields) {
+        if (h.delete(f)) removed++;
+      }
+      // Optionally drop empty hash to mirror real-world memory behavior:
+      if (h.size === 0) hashes.delete(key);
     }
     return removed;
   }
@@ -210,8 +225,8 @@ export function makeInMemoryRedis() {
   // Register the most recently created instance as the active one
   activeReset = () => {
     kv.clear();
-    for (const m of zsets.values()) m.clear();
-    for (const m of hashes.values()) m.clear();
+    zsets.clear();
+    hashes.clear();
   };
 
   return {
