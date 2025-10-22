@@ -29,14 +29,14 @@ const limiters = Object.fromEntries(
         cfg.points,
         cfg.window as `${number} ${"s" | "m" | "h"}`,
       ),
+      prefix: `@upstash/ratelimit:${service}`,
       analytics: true,
     }),
   ]),
 ) as Record<ServiceName, Ratelimit>;
 
 export async function assertRateLimit(service: ServiceName, ip: string) {
-  const key = `${service}:${ip}`;
-  const res = await limiters[service].limit(key);
+  const res = await limiters[service].limit(ip);
 
   if (!res.success) {
     const retryAfterSec = Math.max(

@@ -47,18 +47,14 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
               opts.result instanceof TRPCClientError
             ) {
               const err = opts.result as TRPCClientError<AppRouter>;
-              const code =
-                (err as unknown as { data?: { code?: string } }).data?.code ??
-                (err as unknown as { code?: string }).code;
+              const code = err.data?.code;
               if (code === "TOO_MANY_REQUESTS") {
-                const cause = err.cause as
-                  | { retryAfter?: number; service?: string }
-                  | undefined;
+                // Prefer formatted data from errorFormatter
                 const retryAfterSec = Math.max(
                   1,
-                  Math.round(Number(cause?.retryAfter ?? 1)),
+                  Math.round(Number(err.data?.retryAfter ?? 1)),
                 );
-                const service = cause?.service;
+                const service = err.data?.service;
                 const friendly = formatWait(retryAfterSec);
                 const title = service
                   ? `Too many ${service} requests`

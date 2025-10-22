@@ -14,24 +14,21 @@ const handler = (req: Request) =>
       const err = errors.find((e) => e.code === "TOO_MANY_REQUESTS");
       if (!err) return {};
 
-      const cause = (
+      // Prefer formatted data from errorFormatter for consistent headers
+      const data = (
         err as {
-          cause?: { retryAfter?: number; limit?: number; remaining?: number };
+          data?: { retryAfter?: number; limit?: number; remaining?: number };
         }
-      ).cause;
-
-      const retryAfter = Math.max(
-        1,
-        Math.round(Number(cause?.retryAfter ?? 1)),
-      );
+      ).data;
+      const retryAfter = Math.max(1, Math.round(Number(data?.retryAfter ?? 1)));
       const headers: Record<string, string> = {
         "Retry-After": String(retryAfter),
         "Cache-Control": "no-cache, no-store",
       };
-      if (typeof cause?.limit === "number")
-        headers["X-RateLimit-Limit"] = String(cause.limit);
-      if (typeof cause?.remaining === "number")
-        headers["X-RateLimit-Remaining"] = String(cause.remaining);
+      if (typeof data?.limit === "number")
+        headers["X-RateLimit-Limit"] = String(data.limit);
+      if (typeof data?.remaining === "number")
+        headers["X-RateLimit-Remaining"] = String(data.remaining);
 
       return { headers, status: 429 };
     },
