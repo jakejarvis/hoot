@@ -75,10 +75,6 @@ export const dueDrain = inngest.createFunction(
 
     // Emit events, each event coalescing multiple sections per domain
     const BATCH_SIZE = 200;
-    const chunks: Array<{
-      name: string;
-      data: { domain: string; sections: Section[] };
-    }>[] = [];
     const events: Array<{
       name: string;
       data: { domain: string; sections: Section[] };
@@ -86,26 +82,29 @@ export const dueDrain = inngest.createFunction(
       name: "section/revalidate",
       data: { domain, sections: Array.from(set) },
     }));
-    for (let i = 0; i < events.length; i += BATCH_SIZE) {
-      chunks.push(events.slice(i, i + BATCH_SIZE));
-    }
 
     let emitted = 0;
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i] as Array<{
+    for (let i = 0; i < events.length; ) {
+      if (emitted >= globalMax) break;
+      const remaining = Math.max(0, globalMax - emitted);
+      const size = Math.min(BATCH_SIZE, remaining);
+      if (size <= 0) break;
+      const chunk = events.slice(i, i + size) as Array<{
         name: string;
         data: { domain: string; sections: Section[] };
       }>;
-      await step.sendEvent(`enqueue-due-${i}` as const, chunk);
-      // Only remove from due sets after successful enqueue
-      for (const evt of chunk) {
-        const { domain, sections } = evt.data;
-        // Best-effort cleanup; leases will expire automatically if this fails
-        await Promise.all(
-          sections.map((s) => redis.zrem(ns("due", s), domain)),
-        );
-      }
+      await step.sendEvent(`enqueue-due-${i / (size || 1)}` as const, chunk);
+      // Best-effort cleanup; wrap to avoid aborting enqueue on cleanup failures
+      try {
+        for (const evt of chunk) {
+          const { domain, sections } = evt.data;
+          await Promise.all(
+            sections.map((s) => redis.zrem(ns("due", s), domain)),
+          );
+        }
+      } catch {}
       emitted += chunk.length;
+      i += size;
     }
 
     eventsSent = emitted;
