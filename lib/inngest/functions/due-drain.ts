@@ -50,13 +50,21 @@ export const dueDrain = inngest.createFunction(
           nx: true,
           ex: leaseSecs,
         });
+        // If lease not acquired, skip
         if (ok !== "OK" && ok !== undefined) continue;
-        // Remove from due set to avoid reprocessing this cycle
-        await redis.zrem(dueKey, domain);
+
+        // Enforce global budget at selection time: increment when first selecting a domain
+        const previouslySelected = domainToSections.has(domain);
+        if (!previouslySelected) {
+          if (eventsSent >= globalMax) break;
+          eventsSent += 1;
+        }
+
         const set = domainToSections.get(domain) ?? new Set<Section>();
         set.add(section);
         domainToSections.set(domain, set);
       }
+      if (eventsSent >= globalMax) break;
     }
 
     const grouped = Array.from(domainToSections.entries());
@@ -89,6 +97,14 @@ export const dueDrain = inngest.createFunction(
         data: { domain: string; sections: Section[] };
       }>;
       await step.sendEvent(`enqueue-due-${i}` as const, chunk);
+      // Only remove from due sets after successful enqueue
+      for (const evt of chunk) {
+        const { domain, sections } = evt.data;
+        // Best-effort cleanup; leases will expire automatically if this fails
+        await Promise.all(
+          sections.map((s) => redis.zrem(ns("due", s), domain)),
+        );
+      }
       emitted += chunk.length;
     }
 
