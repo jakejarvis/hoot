@@ -8,6 +8,7 @@ import {
   loggerLink,
 } from "@trpc/client";
 import { useState } from "react";
+import { toast } from "sonner";
 import superjson from "superjson";
 import { TRPCProvider as Provider } from "@/lib/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
@@ -33,9 +34,38 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     createTRPCClient<AppRouter>({
       links: [
         loggerLink({
-          enabled: (opts) =>
-            process.env.NODE_ENV === "development" ||
-            (opts.direction === "down" && opts.result instanceof Error),
+          enabled: (opts) => {
+            const shouldLog =
+              process.env.NODE_ENV === "development" ||
+              (opts.direction === "down" && opts.result instanceof Error);
+
+            // Show a friendly toast for rate-limit errors
+            if (opts.direction === "down" && opts.result instanceof Error) {
+              const err = opts.result as Error;
+              const code = (err as unknown as { data?: { code?: string } }).data
+                ?.code;
+              if (code === "TOO_MANY_REQUESTS") {
+                const data = (
+                  err as unknown as {
+                    data?: { retryAfter?: number; service?: string };
+                  }
+                ).data;
+                const retryAfterSec = Number(data?.retryAfter ?? 1);
+                const service = data?.service;
+                const friendly = formatWait(retryAfterSec);
+                const title = service
+                  ? `Too many ${service} requests`
+                  : "You're doing that too much";
+                toast.error(title, {
+                  id: "rate-limit",
+                  description: `Try again in ${friendly}.`,
+                  position: "top-center",
+                });
+              }
+            }
+
+            return shouldLog;
+          },
         }),
         httpBatchStreamLink({
           url: `${getBaseUrl()}/api/trpc`,
@@ -55,4 +85,16 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
       </Provider>
     </QueryClientProvider>
   );
+}
+
+function formatWait(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 1) return "a moment";
+  const s = Math.round(seconds);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m <= 0) return `${sec}s`;
+  if (m < 60) return sec ? `${m}m ${sec}s` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const rm = m % 60;
+  return rm ? `${h}h ${rm}m` : `${h}h`;
 }

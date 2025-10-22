@@ -11,6 +11,7 @@ import {
   SeoResponseSchema,
 } from "@/lib/schemas";
 import { inngest } from "@/server/inngest/client";
+import { rateLimitMiddleware } from "@/server/ratelimit";
 import { getCertificates } from "@/server/services/certificates";
 import { resolveAll } from "@/server/services/dns";
 import { getOrCreateFaviconBlobUrl } from "@/server/services/favicon";
@@ -20,7 +21,7 @@ import { getPricingForTld } from "@/server/services/pricing";
 import { getRegistration } from "@/server/services/registration";
 import { getOrCreateScreenshotBlobUrl } from "@/server/services/screenshot";
 import { getSeo } from "@/server/services/seo";
-import { createTRPCRouter, loggedProcedure } from "@/trpc/init";
+import { createTRPCRouter, publicProcedure } from "@/trpc/init";
 
 export const domainInput = z
   .object({ domain: z.string().min(1) })
@@ -31,15 +32,21 @@ export const domainInput = z
   });
 
 export const domainRouter = createTRPCRouter({
-  registration: loggedProcedure
+  registration: publicProcedure
+    .meta({ service: "registration" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(RegistrationSchema)
     .query(({ input }) => getRegistration(input.domain)),
-  pricing: loggedProcedure
+  pricing: publicProcedure
+    .meta({ service: "pricing" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(PricingSchema)
     .query(({ input }) => getPricingForTld(input.domain)),
-  dns: loggedProcedure
+  dns: publicProcedure
+    .meta({ service: "dns" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(DnsResolveResultSchema)
     .query(async ({ input }) => {
@@ -51,26 +58,38 @@ export const domainRouter = createTRPCRouter({
       });
       return result;
     }),
-  hosting: loggedProcedure
+  hosting: publicProcedure
+    .meta({ service: "hosting" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(HostingSchema)
     .query(({ input }) => detectHosting(input.domain)),
-  certificates: loggedProcedure
+  certificates: publicProcedure
+    .meta({ service: "certs" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(CertificatesSchema)
     .query(({ input }) => getCertificates(input.domain)),
-  headers: loggedProcedure
+  headers: publicProcedure
+    .meta({ service: "headers" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(HttpHeadersSchema)
     .query(({ input }) => probeHeaders(input.domain)),
-  seo: loggedProcedure
+  seo: publicProcedure
+    .meta({ service: "seo" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .output(SeoResponseSchema)
     .query(({ input }) => getSeo(input.domain)),
-  favicon: loggedProcedure
+  favicon: publicProcedure
+    .meta({ service: "favicon" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .query(({ input }) => getOrCreateFaviconBlobUrl(input.domain)),
-  screenshot: loggedProcedure
+  screenshot: publicProcedure
+    .meta({ service: "screenshot" })
+    .use(rateLimitMiddleware)
     .input(domainInput)
     .query(({ input }) => getOrCreateScreenshotBlobUrl(input.domain)),
 });

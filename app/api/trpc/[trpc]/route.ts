@@ -9,7 +9,17 @@ const handler = (req: Request) =>
     endpoint: "/api/trpc",
     req,
     router: appRouter,
-    createContext,
+    createContext: () => createContext({ req }),
+    responseMeta: ({ errors }) => {
+      const tooMany = errors.find((e) => e.code === "TOO_MANY_REQUESTS");
+      if (tooMany) {
+        const data = (tooMany as unknown as { data?: { retryAfter?: number } })
+          .data;
+        const retry = (data?.retryAfter ?? 1) as number;
+        return { headers: { "Retry-After": String(retry) }, status: 429 };
+      }
+      return {};
+    },
     onError: ({ path, error }) => {
       // Development logging
       if (process.env.NODE_ENV === "development") {
