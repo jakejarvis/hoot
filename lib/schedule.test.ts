@@ -16,7 +16,6 @@ let recordFailureAndBackoff: typeof import("@/lib/schedule").recordFailureAndBac
 let resetFailureBackoff: typeof import("@/lib/schedule").resetFailureBackoff;
 let drainDueDomainsOnce: typeof import("@/lib/schedule").drainDueDomainsOnce;
 let allSections: typeof import("@/lib/schedule").allSections;
-let getLeaseSeconds: typeof import("@/lib/schedule").getLeaseSeconds;
 
 describe("schedule", () => {
   beforeAll(async () => {
@@ -31,7 +30,6 @@ describe("schedule", () => {
       resetFailureBackoff,
       drainDueDomainsOnce,
       allSections,
-      getLeaseSeconds,
     } = await import("@/lib/schedule"));
   });
 
@@ -192,8 +190,9 @@ describe("schedule", () => {
       const now = Date.now();
       const nextAtMs = await recordFailureAndBackoff("dns", "example.com");
 
-      // Should be at least 5 minutes (300 seconds) in the future
-      expect(nextAtMs).toBeGreaterThanOrEqual(now + 5 * 60 * 1000);
+      const { BACKOFF_BASE_SECS } = await import("@/lib/revalidation-config");
+      // Should be at least the configured base backoff
+      expect(nextAtMs).toBeGreaterThanOrEqual(now + BACKOFF_BASE_SECS * 1000);
 
       // Verify attempt count was incremented
       const { redis, ns } = await import("@/lib/redis");
@@ -230,8 +229,9 @@ describe("schedule", () => {
       const now = Date.now();
       const nextAtMs = await recordFailureAndBackoff("dns", "example.com");
 
-      // Should be capped at 6 hours
-      const maxBackoffMs = 6 * 60 * 60 * 1000;
+      const { BACKOFF_MAX_SECS } = await import("@/lib/revalidation-config");
+      // Should be capped at configured maximum
+      const maxBackoffMs = BACKOFF_MAX_SECS * 1000;
       expect(nextAtMs).toBeLessThanOrEqual(now + maxBackoffMs + 100); // small tolerance
     });
   });
@@ -344,7 +344,10 @@ describe("schedule", () => {
       });
 
       // Set an existing lease
-      await redis.set(ns("lease", "dns", "example.com"), "1", { ex: 120 });
+      const { LEASE_SECS } = await import("@/lib/revalidation-config");
+      await redis.set(ns("lease", "dns", "example.com"), "1", {
+        ex: LEASE_SECS,
+      });
 
       const result = await drainDueDomainsOnce();
 
@@ -421,12 +424,6 @@ describe("schedule", () => {
       expect(sections).toContain("seo");
       expect(sections).toContain("registration");
       expect(sections).toHaveLength(6);
-    });
-
-    it("getLeaseSeconds returns correct value", () => {
-      const leaseSecs = getLeaseSeconds();
-
-      expect(leaseSecs).toBe(120); // LEASE_SECS from config
     });
   });
 });
