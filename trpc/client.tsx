@@ -6,14 +6,12 @@ import {
   createTRPCClient,
   httpBatchStreamLink,
   loggerLink,
-  TRPCClientError,
 } from "@trpc/client";
-import { Siren } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import superjson from "superjson";
 import { TRPCProvider as Provider } from "@/lib/trpc/client";
 import type { AppRouter } from "@/server/routers/_app";
+import { errorToastLink } from "@/trpc/error-toast-link";
 import { getQueryClient } from "@/trpc/query-client";
 
 let browserQueryClient: ReturnType<typeof getQueryClient> | undefined;
@@ -36,41 +34,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     createTRPCClient<AppRouter>({
       links: [
         loggerLink({
-          enabled: (opts) => {
-            const shouldLog =
-              process.env.NODE_ENV === "development" ||
-              (opts.direction === "down" && opts.result instanceof Error);
-
-            // Show a friendly toast for rate-limit errors (standardized cause)
-            if (
-              opts.direction === "down" &&
-              opts.result instanceof TRPCClientError
-            ) {
-              const err = opts.result as TRPCClientError<AppRouter>;
-              const code = err.data?.code;
-              if (code === "TOO_MANY_REQUESTS") {
-                // Prefer formatted data from errorFormatter
-                const retryAfterSec = Math.max(
-                  1,
-                  Math.round(Number(err.data?.retryAfter ?? 1)),
-                );
-                const service = err.data?.service;
-                const friendly = formatWait(retryAfterSec);
-                const title = service
-                  ? `Too many ${service} requests`
-                  : "You're doing that too much";
-                toast.error(title, {
-                  id: "rate-limit",
-                  description: `Try again in ${friendly}.`,
-                  icon: <Siren className="h-4 w-4" />,
-                  position: "top-center",
-                });
-              }
-            }
-
-            return shouldLog;
-          },
+          enabled: (opts) =>
+            process.env.NODE_ENV === "development" ||
+            (opts.direction === "down" && opts.result instanceof Error),
         }),
+        errorToastLink(),
         httpBatchStreamLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,
@@ -91,14 +59,4 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function formatWait(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 1) return "a moment";
-  const s = Math.round(seconds);
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  if (m <= 0) return `${sec}s`;
-  if (m < 60) return sec ? `${m}m ${sec}s` : `${m}m`;
-  const h = Math.floor(m / 60);
-  const rm = m % 60;
-  return rm ? `${h}h ${rm}m` : `${h}h`;
-}
+// formatWait is defined in the errorToastLink
