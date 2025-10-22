@@ -14,7 +14,7 @@ import { inngest } from "@/server/inngest/client";
 
 export const scanDue = inngest.createFunction(
   { id: "scan-due-revalidations" },
-  { cron: "*/1 * * * *" },
+  { cron: "*/15 * * * *" },
   async ({ step, logger }) => {
     const now = new Date();
     const limit = 200;
