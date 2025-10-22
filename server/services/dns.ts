@@ -221,14 +221,13 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
               .filter(
                 (t): t is number => typeof t === "number" && Number.isFinite(t),
               );
-            if (times.length > 0) {
-              const soonest = Math.min(...times);
-              await scheduleSectionIfEarlier(
-                "dns",
-                registrable ?? domain,
-                soonest,
-              );
-            }
+            // Always schedule: use the soonest expiry if available, otherwise schedule immediately
+            const soonest = times.length > 0 ? Math.min(...times) : Date.now();
+            await scheduleSectionIfEarlier(
+              "dns",
+              registrable ?? domain,
+              soonest,
+            );
           } catch (err) {
             console.warn("[dns] schedule failed (partial)", {
               domain: registrable ?? domain,
