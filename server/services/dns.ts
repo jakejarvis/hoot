@@ -359,14 +359,8 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
             .filter(
               (t): t is number => typeof t === "number" && Number.isFinite(t),
             );
-          if (times.length > 0) {
-            const soonest = Math.min(...times);
-            await scheduleSectionIfEarlier(
-              "dns",
-              registrable ?? domain,
-              soonest,
-            );
-          }
+          const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
+          await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
         } catch {}
       }
       await captureServer("dns_resolve_all", {
