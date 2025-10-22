@@ -19,11 +19,11 @@ function minTtlSecondsForSection(section: Section): number {
 function backoffMsForAttempts(attempts: number): number {
   const baseSecs = BACKOFF_BASE_SECS;
   const maxSecs = BACKOFF_MAX_SECS;
-  const ms = Math.min(
+  const secs = Math.min(
     maxSecs,
     Math.max(baseSecs, baseSecs * 2 ** Math.max(0, attempts - 1)),
   );
-  return ms * 1000;
+  return secs * 1000;
 }
 
 export async function scheduleSectionIfEarlier(
@@ -81,6 +81,9 @@ export async function scheduleSectionsForDomain(
   );
 }
 
+/**
+ * Schedules sections soon; actual run time is bounded by each section's min TTL.
+ */
 export async function scheduleImmediate(
   domain: string,
   sections: Section[],
