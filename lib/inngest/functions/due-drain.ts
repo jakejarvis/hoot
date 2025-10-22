@@ -95,15 +95,6 @@ export const dueDrain = inngest.createFunction(
         data: { domain: string; sections: Section[] };
       }>;
       await step.sendEvent(`enqueue-due-${batchIndex}` as const, chunk);
-      // Best-effort cleanup; wrap to avoid aborting enqueue on cleanup failures
-      try {
-        for (const evt of chunk) {
-          const { domain, sections } = evt.data;
-          await Promise.all(
-            sections.map((s) => redis.zrem(ns("due", s), domain)),
-          );
-        }
-      } catch {}
       emitted += chunk.length;
       i += size;
       batchIndex += 1;
