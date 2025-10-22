@@ -5,5 +5,15 @@
       "ENABLE_EXPERIMENTAL_COREPACK": "1",
       "PUPPETEER_SKIP_DOWNLOAD": "1"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/due-drain",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/blob-prune",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }

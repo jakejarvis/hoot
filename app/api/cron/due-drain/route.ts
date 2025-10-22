@@ -1,0 +1,64 @@
+import { NextResponse } from "next/server";
+import { inngest } from "@/lib/inngest/client";
+import { drainDueDomainsOnce } from "@/lib/schedule";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  // Verify Vercel cron secret
+  const authHeader = request.headers.get("authorization");
+  const expectedAuth = process.env.CRON_SECRET
+    ? `Bearer ${process.env.CRON_SECRET}`
+    : null;
+
+  if (!expectedAuth) {
+    return NextResponse.json(
+      { error: "CRON_SECRET not configured" },
+      { status: 500 },
+    );
+  }
+
+  if (authHeader !== expectedAuth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const startedAt = Date.now();
+    const result = await drainDueDomainsOnce();
+
+    if (result.events.length === 0) {
+      return NextResponse.json({
+        success: true,
+        emitted: 0,
+        groups: 0,
+        message: "nothing due",
+      });
+    }
+
+    // Send events to Inngest in batches to respect any limits
+    const BATCH_SIZE = 200;
+    let emitted = 0;
+
+    for (let i = 0; i < result.events.length; i += BATCH_SIZE) {
+      const chunk = result.events.slice(i, i + BATCH_SIZE);
+      await inngest.send(chunk);
+      emitted += chunk.length;
+    }
+
+    return NextResponse.json({
+      success: true,
+      emitted,
+      groups: result.groups,
+      duration_ms: Date.now() - startedAt,
+    });
+  } catch (error) {
+    console.error("[due-drain] cron failed", error);
+    return NextResponse.json(
+      {
+        error: "Internal error",
+        message: error instanceof Error ? error.message : "unknown",
+      },
+      { status: 500 },
+    );
+  }
+}

@@ -31,6 +31,7 @@ export function resetInMemoryRedis(): void {
 export function makeInMemoryRedis() {
   const kv = new Map<string, ExpiryEntry>();
   const zsets = new Map<string, Map<string, number>>();
+  const hashes = new Map<string, Map<string, string>>();
 
   function getZset(key: string): Map<string, number> {
     let set = zsets.get(key);
@@ -39,6 +40,15 @@ export function makeInMemoryRedis() {
       zsets.set(key, set);
     }
     return set;
+  }
+
+  function getHash(key: string): Map<string, string> {
+    let hash = hashes.get(key);
+    if (!hash) {
+      hash = new Map<string, string>();
+      hashes.set(key, hash);
+    }
+    return hash;
   }
 
   async function get<T = unknown>(key: string): Promise<T | null> {
@@ -149,12 +159,59 @@ export function makeInMemoryRedis() {
     return removed;
   }
 
+  async function zscore(key: string, member: string): Promise<number | null> {
+    const z = getZset(key);
+    const score = z.get(member);
+    return score !== undefined ? score : null;
+  }
+
+  async function hget(key: string, field: string): Promise<string | null> {
+    const h = getHash(key);
+    return h.get(field) ?? null;
+  }
+
+  async function hset(
+    key: string,
+    fieldValues: Record<string, string | number>,
+  ): Promise<number> {
+    const h = getHash(key);
+    let added = 0;
+    for (const [field, value] of Object.entries(fieldValues)) {
+      const existed = h.has(field);
+      h.set(field, String(value));
+      if (!existed) added++;
+    }
+    return added;
+  }
+
+  async function hincrby(
+    key: string,
+    field: string,
+    increment: number,
+  ): Promise<number> {
+    const h = getHash(key);
+    const current = Number(h.get(field) ?? 0);
+    const next = current + increment;
+    h.set(field, String(next));
+    return next;
+  }
+
+  async function hdel(key: string, ...fields: string[]): Promise<number> {
+    const h = getHash(key);
+    let removed = 0;
+    for (const f of fields) {
+      if (h.delete(f)) removed++;
+    }
+    return removed;
+  }
+
   const ns = (...parts: string[]) => parts.join(":");
 
   // Register the most recently created instance as the active one
   activeReset = () => {
     kv.clear();
     for (const m of zsets.values()) m.clear();
+    for (const m of hashes.values()) m.clear();
   };
 
   return {
@@ -170,6 +227,11 @@ export function makeInMemoryRedis() {
       zadd,
       zrange,
       zrem,
+      zscore,
+      hget,
+      hset,
+      hincrby,
+      hdel,
     },
     reset: resetInMemoryRedis,
   } as const;

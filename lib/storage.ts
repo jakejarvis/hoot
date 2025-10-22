@@ -212,3 +212,63 @@ export async function storeImage(options: {
     cacheControl,
   });
 }
+
+export type BlobPruneResult = {
+  deleted: string[];
+  errors: Array<{ path: string; error: string }>;
+};
+
+/**
+ * Drains due object keys from our purge queues and attempts deletion in R2.
+ * Used by the Vercel cron job for blob cleanup.
+ */
+export async function pruneDueBlobsOnce(
+  now: number,
+  batch: number = 500,
+): Promise<BlobPruneResult> {
+  const { deleteObjects } = await import("@/lib/r2");
+  const { ns, redis } = await import("@/lib/redis");
+  const { StorageKindSchema } = await import("@/lib/schemas");
+
+  const deleted: string[] = [];
+  const errors: Array<{ path: string; error: string }> = [];
+
+  for (const kind of StorageKindSchema.options) {
+    // Drain due items in batches per storage kind
+    // Upstash supports zrange by score; the SDK exposes options for byScore/offset/count
+    // Use a loop to progressively drain without pulling too many at once
+    while (true) {
+      const due = (await redis.zrange(ns("purge", kind), 0, now, {
+        byScore: true,
+        offset: 0,
+        count: batch,
+      })) as string[];
+      if (!due.length) break;
+
+      const succeeded: string[] = [];
+      try {
+        const result = await deleteObjects(due);
+        const batchDeleted = result.filter((r) => r.deleted).map((r) => r.key);
+        deleted.push(...batchDeleted);
+        succeeded.push(...batchDeleted);
+        for (const r of result) {
+          if (!r.deleted) {
+            errors.push({ path: r.key, error: r.error || "unknown" });
+          }
+        }
+      } catch (err) {
+        for (const path of due) {
+          errors.push({ path, error: (err as Error)?.message || "unknown" });
+        }
+      }
+
+      if (succeeded.length) await redis.zrem(ns("purge", kind), ...succeeded);
+      // Avoid infinite loop when a full batch fails to delete (e.g., network or token issue)
+      if (succeeded.length === 0 && due.length > 0) break;
+      // Nothing more due right now
+      if (due.length < batch) break;
+    }
+  }
+
+  return { deleted, errors };
+}

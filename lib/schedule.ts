@@ -6,7 +6,9 @@ import {
   BACKOFF_BASE_SECS,
   BACKOFF_MAX_SECS,
   LEASE_SECS,
+  MAX_EVENTS_PER_RUN,
   MIN_TTL_SECS,
+  PER_SECTION_BATCH,
 } from "@/lib/revalidation-config";
 import { type Section, SectionEnum } from "@/lib/schemas";
 
@@ -135,4 +137,84 @@ export function allSections(): Section[] {
 
 export function getLeaseSeconds(): number {
   return LEASE_SECS;
+}
+
+type DueDrainResult = {
+  events: Array<{
+    name: string;
+    data: { domain: string; sections: Section[] };
+  }>;
+  groups: number;
+};
+
+/**
+ * Drains due domains from Redis sorted sets and builds revalidation events.
+ * Used by the Vercel cron job to trigger section revalidation via Inngest.
+ */
+export async function drainDueDomainsOnce(): Promise<DueDrainResult> {
+  const startedAt = Date.now();
+  const sections = allSections();
+  const perSectionBatch = PER_SECTION_BATCH;
+  const globalMax = MAX_EVENTS_PER_RUN;
+  const leaseSecs = getLeaseSeconds();
+
+  let eventsSent = 0;
+  const domainToSections = new Map<string, Set<Section>>();
+
+  for (const section of sections) {
+    if (eventsSent >= globalMax) break;
+    const dueKey = ns("due", section);
+    const now = Date.now();
+    const remaining = Math.max(0, globalMax - eventsSent);
+    const fetchCount =
+      remaining > 0 ? Math.min(perSectionBatch, remaining) : perSectionBatch;
+    // Pull a small window of due domains
+    const dueMembers = (await redis.zrange(dueKey, 0, now, {
+      byScore: true,
+      offset: 0,
+      count: fetchCount,
+    })) as string[];
+    if (!dueMembers.length) continue;
+
+    for (const domain of dueMembers) {
+      const previouslySelected = domainToSections.has(domain);
+      if (!previouslySelected && eventsSent >= globalMax) continue;
+      const leaseKey = ns("lease", section, domain);
+      // Attempt to acquire lease for this section+domain
+      const ok = await redis.set(leaseKey, "1", {
+        nx: true,
+        ex: leaseSecs,
+      });
+      // If lease not acquired, skip
+      if (ok !== "OK") continue;
+
+      // Enforce global budget at selection time: increment when first selecting a domain
+      if (!previouslySelected) {
+        eventsSent += 1;
+      }
+
+      const set = domainToSections.get(domain) ?? new Set<Section>();
+      set.add(section);
+      domainToSections.set(domain, set);
+    }
+  }
+
+  const grouped = Array.from(domainToSections.entries());
+  const events: Array<{
+    name: string;
+    data: { domain: string; sections: Section[] };
+  }> = grouped.map(([domain, set]) => ({
+    name: "section/revalidate",
+    data: { domain, sections: Array.from(set) },
+  }));
+
+  try {
+    await captureServer("due_drain", {
+      duration_ms: Date.now() - startedAt,
+      emitted: events.length,
+      groups: grouped.length,
+    });
+  } catch {}
+
+  return { events, groups: grouped.length };
 }
