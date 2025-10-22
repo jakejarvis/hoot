@@ -200,8 +200,22 @@ export function makeInMemoryRedis() {
     field: string,
     increment: number,
   ): Promise<number> {
+    // Validate increment is an integer
+    if (!Number.isInteger(increment)) {
+      throw new Error("ERR increment is not an integer");
+    }
+
     const h = getHash(key);
-    const current = Number(h.get(field) ?? 0);
+    const existingValue = h.get(field);
+
+    // Validate existing field value is an integer string if present
+    if (existingValue !== undefined) {
+      if (!/^-?\d+$/.test(existingValue)) {
+        throw new Error("ERR hash value is not an integer");
+      }
+    }
+
+    const current = existingValue !== undefined ? Number(existingValue) : 0;
     const next = current + increment;
     h.set(field, String(next));
     return next;
