@@ -1,6 +1,5 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
 import * as schema from "@/lib/db/schema";
 
 const connectionString = process.env.DATABASE_URL;
@@ -9,11 +8,10 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
-// Always set the WS constructor (needed in Node)
-neonConfig.webSocketConstructor = ws;
-
 // Local dev: route WebSockets via the Neon wsproxy on localhost:5433
 if (process.env.NODE_ENV !== "production") {
+  const { WebSocket } = await import("ws");
+  neonConfig.webSocketConstructor = WebSocket;
   // Tell the driver how to build the wsproxy URL from the DB host
   // With DATABASE_URL using host=localhost, this becomes "localhost:5433/v1"
   neonConfig.wsProxy = (host) => `${host}:5433/v1`;

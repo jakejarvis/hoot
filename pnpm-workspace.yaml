@@ -1,9 +1,8 @@
 onlyBuiltDependencies:
   - '@posthog/cli'
-  - '@tailwindcss/oxide'
+  - bufferutil
   - core-js
   - esbuild
-  - msgpackr-extract
   - protobufjs
   - puppeteer
   - sharp

@@ -124,7 +124,7 @@ importers:
         version: 5.10.3
       puppeteer-core:
         specifier: 24.22.3
-        version: 24.22.3
+        version: 24.22.3(bufferutil@4.0.9)
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.1.9(@types/react@19.1.16))(@types/react@19.1.16)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -163,7 +163,7 @@ importers:
         version: 1.1.2(@types/react-dom@19.1.9(@types/react@19.1.16))(@types/react@19.1.16)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       ws:
         specifier: ^8.18.3
-        version: 8.18.3
+        version: 8.18.3(bufferutil@4.0.9)
       zod:
         specifier: ^4.1.12
         version: 4.1.12
@@ -213,15 +213,18 @@ importers:
       babel-plugin-react-compiler:
         specifier: 19.1.0-rc.3
         version: 19.1.0-rc.3
+      bufferutil:
+        specifier: ^4.0.9
+        version: 4.0.9
       drizzle-kit:
         specifier: ^0.31.5
         version: 0.31.5
       jsdom:
         specifier: ^27.0.1
-        version: 27.0.1(postcss@8.5.6)
+        version: 27.0.1(bufferutil@4.0.9)(postcss@8.5.6)
       puppeteer:
         specifier: 24.22.3
-        version: 24.22.3(typescript@5.9.3)
+        version: 24.22.3(bufferutil@4.0.9)(typescript@5.9.3)
       tailwindcss:
         specifier: ^4.1.16
         version: 4.1.16
@@ -239,7 +242,7 @@ importers:
         version: 5.1.4(typescript@5.9.3)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6))
       vitest:
         specifier: ^3.2.4
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.0.9)(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6)
 
 packages:
 
@@ -3318,6 +3321,10 @@ packages:
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
+  bufferutil@4.0.9:
+    resolution: {integrity: sha512-WDtdLmJvAuNNPzByAYpRo2rF1Mmradw6gvWsQKf63476DDXmomT9zUiGypLcG4ibIM67vhAj8jJRdbmEws2Aqw==}
+    engines: {node: '>=6.14.2'}
+
   bytewise-core@1.2.3:
     resolution: {integrity: sha512-nZD//kc78OOxeYtRlVk8/zXqTB4gf/nlguL1ggWA8FuchMyOxcyHR4QPQZMUmA7czC+YnaBrPUCubqAWe50DaA==}
 
@@ -4415,6 +4422,10 @@ packages:
     peerDependenciesMeta:
       encoding:
         optional: true
+
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
 
   node-releases@2.0.26:
     resolution: {integrity: sha512-S2M9YimhSjBSvYnlr5/+umAnPHE++ODwt5e2Ij6FoX45HA/s4vHdkDx1eax2pAPeAOqu4s9b7ppahsyEFdVqQA==}
@@ -8666,7 +8677,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6)
+      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.0.9)(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -8715,7 +8726,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6)
+      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.0.9)(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6)
 
   '@vitest/utils@3.2.4':
     dependencies:
@@ -8881,6 +8892,10 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
+
+  bufferutil@4.0.9:
+    dependencies:
+      node-gyp-build: 4.8.4
 
   bytewise-core@1.2.3:
     dependencies:
@@ -9686,7 +9701,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdom@27.0.1(postcss@8.5.6):
+  jsdom@27.0.1(bufferutil@4.0.9)(postcss@8.5.6):
     dependencies:
       '@asamuzakjp/dom-selector': 6.7.2
       cssstyle: 5.3.1(postcss@8.5.6)
@@ -9706,7 +9721,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 15.1.0
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -9941,6 +9956,8 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
+  node-gyp-build@4.8.4: {}
+
   node-releases@2.0.26: {}
 
   nth-check@2.1.1:
@@ -10138,7 +10155,7 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.22.3:
+  puppeteer-core@24.22.3(bufferutil@4.0.9):
     dependencies:
       '@puppeteer/browsers': 2.10.10
       chromium-bidi: 9.1.0(devtools-protocol@0.0.1495869)
@@ -10146,7 +10163,7 @@ snapshots:
       devtools-protocol: 0.0.1495869
       typed-query-selector: 2.12.0
       webdriver-bidi-protocol: 0.2.11
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -10155,13 +10172,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.22.3(typescript@5.9.3):
+  puppeteer@24.22.3(bufferutil@4.0.9)(typescript@5.9.3):
     dependencies:
       '@puppeteer/browsers': 2.10.10
       chromium-bidi: 9.1.0(devtools-protocol@0.0.1495869)
       cosmiconfig: 9.0.0(typescript@5.9.3)
       devtools-protocol: 0.0.1495869
-      puppeteer-core: 24.22.3
+      puppeteer-core: 24.22.3(bufferutil@4.0.9)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-abort-controller
@@ -10805,7 +10822,7 @@ snapshots:
       lightningcss: 1.30.2
       tsx: 4.20.6
 
-  vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6):
+  vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.0.9)(postcss@8.5.6))(lightningcss@1.30.2)(tsx@4.20.6):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -10834,7 +10851,7 @@ snapshots:
       '@types/debug': 4.1.12
       '@types/node': 24.9.1
       '@vitest/ui': 3.2.4(vitest@3.2.4)
-      jsdom: 27.0.1(postcss@8.5.6)
+      jsdom: 27.0.1(bufferutil@4.0.9)(postcss@8.5.6)
     transitivePeerDependencies:
       - jiti
       - less
@@ -10907,7 +10924,9 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.18.3: {}
+  ws@8.18.3(bufferutil@4.0.9):
+    optionalDependencies:
+      bufferutil: 4.0.9
 
   xml-name-validator@5.0.0: {}
 
