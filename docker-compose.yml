@@ -1,0 +1,63 @@
+services:
+  # Local Postgres (TCP on 5432)
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: main
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d main"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Neon WebSocket proxy -> Postgres (WS on 5433)
+  # This mirrors the Neon Drizzle guide's example: proxy listens on :80 in-container,
+  # we publish it on localhost:5433, and point it at our local Postgres at postgres:5432
+  # See https://neon.com/guides/drizzle-local-vercel
+  pg_proxy:
+    image: ghcr.io/neondatabase/wsproxy:latest
+    environment:
+      APPEND_PORT: "postgres:5432"
+      ALLOW_ADDR_REGEX: ".*"
+      LOG_TRAFFIC: "true"
+    ports:
+      - "5433:80"
+    depends_on:
+      - postgres
+
+  # Local Redis (binary protocol on 6379)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Serverless Redis HTTP (SRH) — Upstash-compatible REST proxy on 8079
+  # Set KV_REST_API_URL to http://localhost:8079
+  srh:
+    image: hiett/serverless-redis-http:latest
+    environment:
+      SRH_MODE: "env"
+      SRH_TOKEN: "dev-token"
+      SRH_CONNECTION_STRING: "redis://redis:6379"
+    ports:
+      - "8079:80"
+    depends_on:
+      - redis
+
+  # Inngest Dev Server on 8288
+  # Next.js runs on the HOST at :3000; the dev server reaches it via host.docker.internal
+  inngest:
+    image: inngest/inngest:latest
+    command: >
+      inngest dev -u http://host.docker.internal:3000/api/inngest
+    ports:
+      - "8288:8288"
+
+volumes:
+  pg_data:

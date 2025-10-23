@@ -1,3 +1,9 @@
+import * as dotenv from "dotenv";
+
+// Load common local envs first if present, then default .env
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
 import { db } from "@/lib/db/client";
 import { type providerCategory, providers } from "@/lib/db/schema";
 import {
