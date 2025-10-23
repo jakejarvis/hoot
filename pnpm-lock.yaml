@@ -99,8 +99,8 @@ importers:
         specifier: ^0.546.0
         version: 0.546.0(react@19.1.1)
       mapbox-gl:
-        specifier: ^3.15.0
-        version: 3.15.0
+        specifier: ^3.16.0
+        version: 3.16.0
       motion:
         specifier: ^12.23.24
         version: 12.23.24(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -133,7 +133,7 @@ importers:
         version: 19.1.1(react@19.1.1)
       react-map-gl:
         specifier: ^8.1.0
-        version: 8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 8.1.0(mapbox-gl@3.16.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       server-only:
         specifier: 0.0.1
         version: 0.0.1
@@ -4273,8 +4273,8 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
-  mapbox-gl@3.15.0:
-    resolution: {integrity: sha512-I42ffZpiXwt0PG3PO6gMYQnoz+AInkirLe/+zoHjcfBTFoFkKYtu5gFwT1WGeSvNrVTqG2Bwp9zUjPw0PFGY+w==}
+  mapbox-gl@3.16.0:
+    resolution: {integrity: sha512-rluV1Zp/0oHf1Y9BV+nePRNnKyTdljko3E19CzO5rBqtQaNUYS0ePCMPRtxOuWRwSdKp3f9NWJkOCjemM8nmjw==}
 
   martinez-polygon-clipping@0.7.4:
     resolution: {integrity: sha512-jBEwrKtA0jTagUZj2bnmb4Yg2s4KnJGRePStgI7bAVjtcipKiF39R4LZ2V/UT61jMYWrTcBhPazexeqd6JAVtw==}
@@ -8607,12 +8607,12 @@ snapshots:
 
   '@vercel/oidc@3.0.3': {}
 
-  '@vis.gl/react-mapbox@8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@vis.gl/react-mapbox@8.1.0(mapbox-gl@3.16.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
     optionalDependencies:
-      mapbox-gl: 3.15.0
+      mapbox-gl: 3.16.0
 
   '@vis.gl/react-maplibre@8.1.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
@@ -9795,7 +9795,7 @@ snapshots:
     dependencies:
       semver: 7.7.3
 
-  mapbox-gl@3.15.0:
+  mapbox-gl@3.16.0:
     dependencies:
       '@mapbox/jsonlint-lines-primitives': 2.0.2
       '@mapbox/mapbox-gl-supported': 3.0.0
@@ -10224,14 +10224,14 @@ snapshots:
 
   react-is@17.0.2: {}
 
-  react-map-gl@8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  react-map-gl@8.1.0(mapbox-gl@3.16.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
-      '@vis.gl/react-mapbox': 8.1.0(mapbox-gl@3.15.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@vis.gl/react-mapbox': 8.1.0(mapbox-gl@3.16.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@vis.gl/react-maplibre': 8.1.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
     optionalDependencies:
-      mapbox-gl: 3.15.0
+      mapbox-gl: 3.16.0
 
   react-refresh@0.17.0: {}
 
