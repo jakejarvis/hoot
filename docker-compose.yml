@@ -33,7 +33,7 @@ services:
 
   # Local Redis (binary protocol on 6379)
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     ports:
       - "6379:6379"
 
