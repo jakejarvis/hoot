@@ -150,9 +150,22 @@ export function ToolsDropdown({ domain }: ToolsDropdownProps) {
         <DropdownMenuItem asChild>
           <a
             href={`https://github.com/${REPOSITORY_SLUG}/issues/new`}
-            className="cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              const url = new URL(
+                `https://github.com/${REPOSITORY_SLUG}/issues/new`,
+              );
+              url.searchParams.set("labels", "suggestion");
+              url.searchParams.set("title", "Add [TOOL] to tools dropdown");
+              url.searchParams.set(
+                "body",
+                "I suggest adding the following tool to the tools dropdown:\n\n[Add the name, URL, and a brief description of the tool here]",
+              );
+              window.open(url.toString(), "_blank", "noopener");
+            }}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener"
+            className="cursor-pointer"
           >
             <Plus />
             Suggest a tool
