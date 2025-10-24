@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { type providerCategory, providers } from "@/lib/db/schema";
 
@@ -26,6 +26,7 @@ export async function resolveProviderId(
       .where(
         and(eq(providers.category, category), eq(providers.domain, domain)),
       )
+      .orderBy(desc(eq(providers.source, "catalog")), desc(providers.updatedAt))
       .limit(1);
     if (byDomain[0]?.id) return byDomain[0].id;
   }
@@ -39,10 +40,20 @@ export async function resolveProviderId(
           sql`lower(${providers.name}) = lower(${name})`,
         ),
       )
+      .orderBy(desc(eq(providers.source, "catalog")), desc(providers.updatedAt))
       .limit(1);
     if (byName[0]?.id) return byName[0].id;
   }
   return null;
+}
+
+function isUniqueViolation(err: unknown): err is { code: string } {
+  return (
+    !!err &&
+    typeof err === "object" &&
+    "code" in err &&
+    (err as { code: string }).code === "23505"
+  );
 }
 
 /** Resolve a provider id, creating a provider row when not found. */
@@ -67,11 +78,13 @@ export async function resolveOrCreateProviderId(
         name,
         domain: domain ?? undefined,
         slug,
+        source: "discovered",
       })
       .returning({ id: providers.id });
     return inserted[0]?.id ?? null;
-  } catch {
-    // Possible race with another insert; try resolve again
-    return resolveProviderId(input);
+  } catch (err) {
+    // Possible race with another insert; try resolve again on unique violation
+    if (isUniqueViolation(err)) return resolveProviderId(input);
+    throw err;
   }
 }

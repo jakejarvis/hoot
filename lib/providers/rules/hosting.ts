@@ -205,6 +205,12 @@ export const HOSTING_PROVIDERS: Array<
     rule: { kind: "headerPresent", name: "x-kinsta-cache" },
   },
   {
+    name: "Atlassian Statuspage",
+    domain: "statuspage.io",
+    category: "hosting",
+    rule: { kind: "headerPresent", name: "x-statuspage-version" },
+  },
+  {
     name: "Railway",
     domain: "railway.app",
     category: "hosting",

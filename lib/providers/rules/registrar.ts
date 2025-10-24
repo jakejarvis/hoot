@@ -320,4 +320,16 @@ export const REGISTRAR_PROVIDERS: Array<
     category: "registrar",
     rule: { kind: "registrarIncludes", substr: "one.com" },
   },
+  {
+    name: "NameSilo",
+    domain: "namesilo.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "namesilo" },
+  },
+  {
+    name: "Name SRS",
+    domain: "namesrs.com",
+    category: "registrar",
+    rule: { kind: "registrarIncludes", substr: "namesrs" },
+  },
 ];

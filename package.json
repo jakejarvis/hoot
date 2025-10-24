@@ -26,6 +26,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed:providers": "tsx scripts/seed/providers.ts",
+    "db:merge:providers": "tsx scripts/merge-duplicate-providers.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
