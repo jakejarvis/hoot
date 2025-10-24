@@ -100,6 +100,18 @@ const TOOLS = (
       buildUrl: (domain) =>
         `https://search.censys.io/search?resource=hosts&q=${encodeURIComponent(domain)}`,
     },
+    {
+      name: "DNSViz",
+      faviconDomain: "dnsviz.net",
+      buildUrl: (domain) =>
+        `https://dnsviz.net/d/${encodeURIComponent(domain)}/dnssec/`,
+    },
+    {
+      name: "SSL Labs",
+      faviconDomain: "ssllabs.com",
+      buildUrl: (domain) =>
+        `https://www.ssllabs.com/ssltest/analyze.html?d=${encodeURIComponent(domain)}&hideResults=on`,
+    },
   ] satisfies Tool[]
 ).toSorted((a, b) =>
   a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
