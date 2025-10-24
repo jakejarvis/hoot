@@ -164,7 +164,9 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
         return { url: null };
       }
     }
-  } catch {}
+  } catch (err) {
+    log.debug("redis.index.read.failed", { indexKey, err });
+  }
 
   // 2) Acquire lock or wait
   const lockResult = await acquireLockOrWaitForResult<{ url: string | null }>({
@@ -199,12 +201,16 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
           member: produced.key,
         });
       }
-    } catch {}
+    } catch (err) {
+      log.warn("redis.cache.store.failed", { indexKey, purgeQueue, err });
+    }
 
     return { url: produced.url };
   } finally {
     try {
       await redis.del(lockKey);
-    } catch {}
+    } catch (err) {
+      log.debug("redis.lock.release.failed", { lockKey, err });
+    }
   }
 }

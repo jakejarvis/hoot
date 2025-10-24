@@ -115,9 +115,9 @@ async function uploadWithRetry(
     }
   }
 
-  throw new Error(
-    `Upload failed after ${maxAttempts} attempts: ${lastError?.message ?? "unknown error"}`,
-  );
+  throw new Error(`Upload failed after ${maxAttempts} attempts.`, {
+    cause: lastError ?? undefined,
+  });
 }
 
 export async function storeBlob(options: {
