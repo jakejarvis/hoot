@@ -180,7 +180,7 @@ export const DNS_PROVIDERS: Array<
     },
   },
   {
-    name: "Namecheap FreeDNS",
+    name: "Namecheap DNS",
     domain: "namecheap.com",
     category: "dns",
     rule: {
@@ -263,7 +263,7 @@ export const DNS_PROVIDERS: Array<
     rule: { kind: "nsSuffix", suffix: "messagingengine.com" },
   },
   {
-    name: "Gandi LiveDNS",
+    name: "Gandi",
     domain: "gandi.net",
     category: "dns",
     rule: { kind: "nsSuffix", suffix: "gandi.net" },
@@ -377,5 +377,18 @@ export const DNS_PROVIDERS: Array<
     domain: "bluehost.com",
     category: "dns",
     rule: { kind: "nsSuffix", suffix: "bluehost.com" },
+  },
+  {
+    name: "EuroDNS",
+    domain: "eurodns.com",
+    category: "dns",
+    rule: {
+      any: [
+        { kind: "nsSuffix", suffix: "eurodns.com" },
+        { kind: "nsSuffix", suffix: "eurodns.org" },
+        { kind: "nsSuffix", suffix: "eurodns.eu" },
+        { kind: "nsSuffix", suffix: "eurodns.biz" },
+      ],
+    },
   },
 ];

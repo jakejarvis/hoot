@@ -234,4 +234,22 @@ export const CA_PROVIDERS: Array<
     category: "ca",
     rule: { kind: "issuerIncludes", substr: "incommon" },
   },
+  {
+    name: "Microsoft Azure",
+    domain: "azure.microsoft.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "microsoft azure" },
+  },
+  {
+    name: "Gandi",
+    domain: "gandi.net",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "gandicert" },
+  },
+  {
+    name: "GoGetSSL",
+    domain: "gogetssl.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "gogetssl" },
+  },
 ];

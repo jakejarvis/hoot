@@ -30,6 +30,10 @@ export const providerCategory = pgEnum("provider_category", [
   "ca",
   "registrar",
 ]);
+export const providerSource = pgEnum("provider_source", [
+  "catalog",
+  "discovered",
+]);
 export const dnsRecordType = pgEnum("dns_record_type", [
   "A",
   "AAAA",
@@ -52,6 +56,7 @@ export const providers = pgTable(
     name: text("name").notNull(),
     domain: text("domain"),
     slug: text("slug").notNull(),
+    source: providerSource("source").notNull().default("discovered"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
