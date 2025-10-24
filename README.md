@@ -62,6 +62,14 @@ INNGEST_DEV=1
 INNGEST_BASE_URL=http://localhost:8288
 # If your Inngest handler lives at a custom route, set:
 INNGEST_SERVE_PATH=/api/inngest
+
+# --- Object Storage (Cloudflare R2 in prod; MinIO locally) ---
+# Local S3 emulator (MinIO) — the start script will auto-create the bucket when this endpoint is set:
+R2_ENDPOINT=http://localhost:9000
+R2_BUCKET=development
+R2_ACCESS_KEY_ID=minioadmin
+R2_SECRET_ACCESS_KEY=minioadmin
+R2_PUBLIC_BASE_URL=http://localhost:9000/development
 ```
 
 ### 3. Start local dev services (Docker)
@@ -73,18 +81,25 @@ We provide a single [`docker-compose.yml`](docker-compose.yml) and a helper scri
 - **Redis** on `localhost:6379`
 - **Serverless Redis HTTP (SRH)** on `http://localhost:8079` (Upstash-compatible REST proxy)
 - **Inngest Dev Server** on `http://localhost:8288`
+- **MinIO (S3 API)** on `http://localhost:9000` (console at `http://localhost:9001`)
 
 Run:
 
 ```bash
-pnpm dev:start-docker
+pnpm docker:up
 ```
 
-> On Linux, if `host.docker.internal` isn’t available, add `extra_hosts` to the Inngest service in `docker-compose.yml`:
+> On Linux, if `host.docker.internal` isn’t available, add `extra_hosts` to the Inngest and MinIO services in `docker-compose.yml`:
 >
 > ```yaml
 > extra_hosts: ["host.docker.internal:host-gateway"]
 > ```
+
+To stop everything cleanly:
+
+```bash
+pnpm docker:down
+```
 
 ### 4. Run Drizzle database migrations & seeds
 
@@ -104,18 +119,17 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-The Inngest Dev UI will be available at [http://localhost:8288](http://localhost:8288) and is already configured to call the local Next.js server at `http://localhost:3000/api/inngest`.
-
 ---
 
 ## 🧰 Useful Commands
 
 ```bash
-pnpm dev                  # start dev server (uses .env.development.local)
-pnpm dev:start-docker     # start Dockerized local services and wait until ready
-pnpm lint                 # Biome lint/format checks
-pnpm typecheck            # tsc --noEmit
-pnpm test:run             # Vitest
+pnpm dev           # start Next.js dev server
+pnpm docker:up     # start Dockerized local services and wait until ready
+pnpm docker:down   # stop all Dockerized local services (docker compose down)
+pnpm lint          # Biome lint/format checks
+pnpm typecheck     # tsc --noEmit
+pnpm test:run      # Vitest
 
 # Drizzle
 pnpm db:generate    # generate SQL migrations from schema
