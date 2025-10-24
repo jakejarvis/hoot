@@ -236,7 +236,12 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     try {
       const dueAtMs = ttlForSeo(now).getTime();
       await scheduleSectionIfEarlier("seo", registrable ?? domain, dueAtMs);
-    } catch {}
+    } catch (err) {
+      log.warn("schedule.failed", {
+        domain: registrable ?? domain,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
   }
 
   log.info("ok", {
