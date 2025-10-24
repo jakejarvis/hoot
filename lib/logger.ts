@@ -21,9 +21,11 @@ const RUNTIME: "node" | "edge" | "browser" =
       ? "edge"
       : "node";
 
-const isProd = process.env.NODE_ENV === "production";
+// Safe env access for Edge compatibility
+const env = globalThis?.process?.env ?? {};
+const isProd = env.NODE_ENV === "production";
 const defaultLevel =
-  (process.env.LOG_LEVEL as Level | undefined) ?? (isProd ? "info" : "debug");
+  (env.LOG_LEVEL as Level | undefined) ?? (isProd ? "info" : "debug");
 
 // ---------- console-based fallback (Edge/Browser) ----------
 function makeConsoleLogger(base: LogFields = {}): Logger {
@@ -58,7 +60,7 @@ async function getPinoRoot(): Promise<PinoLogger> {
 
   const pino = await import("pino");
   const transport =
-    !isProd && process.env.LOG_PRETTY !== "0"
+    !isProd && env.LOG_PRETTY !== "0"
       ? {
           target: "pino-pretty",
           options: { colorize: true, singleLine: true },
@@ -69,9 +71,9 @@ async function getPinoRoot(): Promise<PinoLogger> {
     level: defaultLevel,
     base: {
       app: "domainstack",
-      env: process.env.NODE_ENV,
-      commit: process.env.VERCEL_GIT_COMMIT_SHA,
-      region: process.env.VERCEL_REGION,
+      env: env.NODE_ENV,
+      commit: env.VERCEL_GIT_COMMIT_SHA,
+      region: env.VERCEL_REGION,
     },
     messageKey: "msg",
     timestamp: pino.default.stdTimeFunctions.isoTime,
