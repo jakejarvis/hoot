@@ -117,8 +117,8 @@ importers:
         specifier: ^3.4.7
         version: 3.4.7
       posthog-js:
-        specifier: ^1.280.0
-        version: 1.280.0
+        specifier: ^1.280.1
+        version: 1.280.1
       posthog-node:
         specifier: ^5.10.3
         version: 5.10.3
@@ -4558,8 +4558,8 @@ packages:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
-  posthog-js@1.280.0:
-    resolution: {integrity: sha512-vflwKD8spfsYf5oN8o/tB6MbRq4+Ozxd4tfZzHZSKJQzU2eOgxSzA76QX/+Rl9zXVCABUr/5S7KNauHFzCJ6NA==}
+  posthog-js@1.280.1:
+    resolution: {integrity: sha512-ZfXaExn42aZBQg88pBzGo71sy4hmei3ubBPb7DBbsfYC3ipZ6F6xmNr3ScNdOyF8cBTZbG24SlIvntp83jTlUA==}
 
   posthog-node@5.10.3:
     resolution: {integrity: sha512-pe0P/4MfTSBgM4PWRTeg2iKDSSX6nxnlxAyW+v2+acpCSU50KM2YE5UFJ1Vkq/PtwcJgrt2Ydj66IzuRn2uwFQ==}
@@ -10090,7 +10090,7 @@ snapshots:
 
   postgres@3.4.7: {}
 
-  posthog-js@1.280.0:
+  posthog-js@1.280.1:
     dependencies:
       '@posthog/core': 1.3.1
       core-js: 3.46.0
