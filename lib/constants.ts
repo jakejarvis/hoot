@@ -10,7 +10,7 @@ export const REPOSITORY_SLUG = "jakejarvis/domainstack.io";
 
 // Cache TTLs
 export const FAVICON_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
-export const SCREENSHOT_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
+export const SCREENSHOT_TTL_SECONDS = 14 * 24 * 60 * 60; // 2 weeks
 export const SOCIAL_PREVIEW_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
 
 export const DEFAULT_SUGGESTIONS = [

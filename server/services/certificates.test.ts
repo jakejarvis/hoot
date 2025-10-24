@@ -76,11 +76,19 @@ describe("getCertificates", () => {
       subject: {
         CN: "example.com",
       } as unknown as tls.PeerCertificate["subject"],
+      issuer: {
+        O: "Google Trust Services",
+      } as unknown as tls.PeerCertificate["issuer"],
       valid_from: "Jan 1 00:00:00 2039 GMT",
       valid_to: "Jan 8 00:00:00 2040 GMT",
     });
     const issuer = makePeer({
-      subject: { O: "LE" } as unknown as tls.PeerCertificate["subject"],
+      subject: {
+        O: "Google Trust Services",
+      } as unknown as tls.PeerCertificate["subject"],
+      issuer: {
+        O: "DigiCert",
+      } as unknown as tls.PeerCertificate["issuer"],
       valid_from: "Jan 1 00:00:00 2039 GMT",
       valid_to: "Jan 8 00:00:00 2040 GMT",
     });
@@ -128,13 +136,12 @@ describe("getCertificates", () => {
       .where(eq(certificates.domainId, d[0].id));
     expect(rows.length).toBeGreaterThan(0);
 
-    // Ensure a CA provider row exists for the issuer
+    // Ensure CA provider rows exist for both issuers
     const ca = await db
       .select()
       .from(providers)
-      .where(eq(providers.name, "Let's Encrypt"))
-      .limit(1);
-    expect(ca.length).toBe(1);
+      .where(eq(providers.category, "ca"));
+    expect(ca.length).toBeGreaterThanOrEqual(2);
 
     // Next call should use DB fast-path: no TLS listener invocation
     const prevCalls = (tlsMock.socketMock.getPeerCertificate as unknown as Mock)

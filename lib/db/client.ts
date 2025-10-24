@@ -9,7 +9,7 @@ if (!connectionString) {
 }
 
 // Local dev: route WebSockets via the Neon wsproxy on localhost:5433
-if (process.env.NODE_ENV !== "production") {
+if (connectionString.includes("localhost")) {
   const { WebSocket } = await import("ws");
   neonConfig.webSocketConstructor = WebSocket;
   // Tell the driver how to build the wsproxy URL from the DB host
