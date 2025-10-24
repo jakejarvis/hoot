@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 
-const log = logger();
+const log = logger({ module: "cache" });
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

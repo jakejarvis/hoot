@@ -11,11 +11,11 @@ import { logger } from "@/lib/logger";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { HttpHeader } from "@/lib/schemas";
 
-const log = logger();
+const log = logger({ module: "headers" });
 
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
-  log.debug("headers.start", { domain });
+  log.debug("start", { domain });
   // Fast path: read from Postgres if fresh
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -42,8 +42,8 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
-      log.info("headers.cache.hit", {
-        domain: registrable,
+      log.info("cache.hit", {
+        domain: registrable ?? domain,
         count: normalized.length,
       });
       return normalized;
@@ -83,14 +83,14 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         );
       } catch {}
     }
-    log.info("headers.ok", {
-      domain: registrable,
+    log.info("ok", {
+      domain: registrable ?? domain,
       status: final.status,
       count: normalized.length,
     });
     return normalized;
   } catch (err) {
-    log.warn("headers.error", {
+    log.error("error", {
       domain: registrable ?? domain,
       err,
     });

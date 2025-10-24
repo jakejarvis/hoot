@@ -116,9 +116,6 @@ importers:
       pino:
         specifier: ^10.1.0
         version: 10.1.0
-      pino-std-serializers:
-        specifier: ^7.0.0
-        version: 7.0.0
       postgres:
         specifier: ^3.4.7
         version: 3.4.7

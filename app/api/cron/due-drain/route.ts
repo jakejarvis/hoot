@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import { drainDueDomainsOnce } from "@/lib/schedule";
 
-const log = logger();
+const log = logger({ module: "cron:due-drain" });
 
 export const dynamic = "force-dynamic";
 
@@ -54,12 +54,12 @@ export async function GET(request: Request) {
           ),
         );
       } catch (e) {
-        log.warn("due-drain.cleanup.failed", { err: e });
+        log.warn("cleanup.failed", { err: e });
       }
       emitted += chunk.length;
     }
 
-    log.info("due-drain.cron.ok", {
+    log.info("cron.ok", {
       emitted,
       groups: result.groups,
       duration_ms: Date.now() - startedAt,
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       duration_ms: Date.now() - startedAt,
     });
   } catch (error) {
-    log.error("due-drain.cron.failed", { err: error });
+    log.error("cron.failed", { err: error });
     return NextResponse.json(
       {
         error: "Internal error",

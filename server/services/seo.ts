@@ -23,13 +23,13 @@ import type {
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { storeImage } from "@/lib/storage";
 
-const log = logger();
+const log = logger({ module: "seo" });
 
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
-  log.debug("seo.start", { domain });
+  log.debug("start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -239,7 +239,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     } catch {}
   }
 
-  log.info("seo.ok", {
+  log.info("ok", {
     domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,

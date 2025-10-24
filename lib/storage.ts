@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 import { makePublicUrl, putObject } from "@/lib/r2";
 import type { StorageKind } from "@/lib/schemas";
 
-const log = logger();
+const log = logger({ module: "storage" });
 
 const UPLOAD_MAX_ATTEMPTS = 3;
 const UPLOAD_BACKOFF_BASE_MS = 100;
@@ -71,7 +71,7 @@ async function uploadWithRetry(
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      log.debug("storage.upload.attempt", {
+      log.debug("upload.attempt", {
         key,
         attempt: attempt + 1,
         maxAttempts,
@@ -84,7 +84,7 @@ async function uploadWithRetry(
         cacheControl,
       });
 
-      log.info("storage.upload.ok", {
+      log.info("upload.ok", {
         key,
         attempt: attempt + 1,
       });
@@ -93,7 +93,7 @@ async function uploadWithRetry(
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
-      log.warn("storage.upload.attempt.failed", {
+      log.warn("upload.attempt.failed", {
         key,
         attempt: attempt + 1,
         err: lastError,
@@ -106,7 +106,7 @@ async function uploadWithRetry(
           UPLOAD_BACKOFF_BASE_MS,
           UPLOAD_BACKOFF_MAX_MS,
         );
-        log.debug("storage.retrying.after.delay", {
+        log.debug("retrying.after.delay", {
           key,
           delay_ms: delay,
         });

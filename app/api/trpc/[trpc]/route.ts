@@ -34,8 +34,8 @@ const handler = (req: Request) =>
       return { headers, status: 429 };
     },
     onError: ({ path, error }) => {
-      const log = logger();
-      log.error("trpc.unhandled", { path, err: error });
+      const log = logger({ module: "trpc:handler" });
+      log.error("unhandled", { path, err: error });
     },
   });
 

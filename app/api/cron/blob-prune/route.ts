@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pruneDueBlobsOnce } from "@/lib/storage";
 
-const log = logger();
+const log = logger({ module: "cron:blob-prune" });
 
 export const dynamic = "force-dynamic";
 
@@ -29,13 +29,13 @@ export async function GET(request: Request) {
     const result = await pruneDueBlobsOnce(startedAt);
 
     if (result.errorCount > 0) {
-      log.warn("blob-prune.completed.with.errors", {
+      log.warn("completed.with.errors", {
         deletedCount: result.deletedCount,
         errorCount: result.errorCount,
         duration_ms: Date.now() - startedAt,
       });
     } else {
-      log.info("blob-prune.completed", {
+      log.info("completed", {
         deletedCount: result.deletedCount,
         duration_ms: Date.now() - startedAt,
       });
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       duration_ms: Date.now() - startedAt,
     });
   } catch (error) {
-    log.error("blob-prune.cron.failed", { err: error });
+    log.error("cron.failed", { err: error });
     return NextResponse.json(
       {
         error: "Internal error",

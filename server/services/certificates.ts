@@ -13,10 +13,10 @@ import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Certificate } from "@/lib/schemas";
 
-const log = logger();
+const log = logger({ module: "certificates" });
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
-  log.debug("certificates.start", { domain });
+  log.debug("start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -155,20 +155,20 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           dueAtMs,
         );
       } catch (err) {
-        log.warn("certificates.schedule.failed", {
+        log.warn("schedule.failed", {
           domain: registrable ?? domain,
           err,
         });
       }
     }
 
-    log.info("certificates.ok", {
+    log.info("ok", {
       domain: registrable ?? domain,
       chain_length: out.length,
     });
     return out;
   } catch (err) {
-    log.warn("certificates.error", {
+    log.warn("error", {
       domain: registrable ?? domain,
       err,
     });

@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import type { Pricing } from "@/lib/schemas";
 
-const log = logger();
+const log = logger({ module: "pricing" });
 
 type DomainPricingResponse = {
   status: string;
@@ -54,12 +54,12 @@ export async function getPricingForTld(domain: string): Promise<Pricing> {
         if (res.ok) {
           payload = (await res.json()) as DomainPricingResponse;
           await redis.set(resultKey, payload, { ex: 7 * 24 * 60 * 60 });
-          log.info("pricing.fetch.ok", { cached: false });
+          log.info("fetch.ok", { cached: false });
         } else {
-          log.error("pricing.upstream.error", { status: res.status });
+          log.error("upstream.error", { status: res.status });
         }
       } catch (err) {
-        log.error("pricing.fetch.error", { err });
+        log.error("fetch.error", { err });
       }
     } else {
       payload = lock.cachedResult;

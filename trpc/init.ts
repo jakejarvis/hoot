@@ -69,17 +69,17 @@ export const createCallerFactory = t.createCallerFactory;
 
 const withLogging = t.middleware(async ({ ctx, path, type, next }) => {
   const start = performance.now();
-  ctx.log.debug("rpc.start", { rpcPath: path, rpcType: type });
+  ctx.log.debug("start", { rpcPath: path, rpcType: type });
   try {
     const result = await next();
-    ctx.log.info("rpc.ok", {
+    ctx.log.info("ok", {
       rpcPath: path,
       rpcType: type,
       duration_ms: Math.round(performance.now() - start),
     });
     return result;
   } catch (err) {
-    ctx.log.error("rpc.error", {
+    ctx.log.error("error", {
       rpcPath: path,
       rpcType: type,
       duration_ms: Math.round(performance.now() - start),

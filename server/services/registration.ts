@@ -20,13 +20,13 @@ import type {
   RegistrationSource,
 } from "@/lib/schemas";
 
-const log = logger();
+const log = logger({ module: "registration" });
 
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
 export async function getRegistration(domain: string): Promise<Registration> {
-  log.debug("registration.start", { domain });
+  log.debug("start", { domain });
 
   // Try current snapshot
   const registrable = toRegistrableDomain(domain);
@@ -103,7 +103,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         registrarProvider,
       };
 
-      log.info("registration.ok.cached", {
+      log.info("ok.cached", {
         domain: registrable ?? domain,
         registered: row.isRegistered,
         registrar: registrarProvider.name,
@@ -118,15 +118,16 @@ export async function getRegistration(domain: string): Promise<Registration> {
   });
 
   if (!ok || !record) {
-    log.warn("registration.error", {
+    const err = new Error(error || "Registration lookup failed");
+    log.error("error", {
       domain: registrable ?? domain,
-      error: error || "unknown",
+      err,
     });
-    throw new Error(error || "Registration lookup failed");
+    throw err;
   }
 
   // Log raw rdapper record for observability (safe; already public data)
-  log.debug("registration.rdapper.result", {
+  log.debug("rdapper.result", {
     ...record,
   });
 
@@ -200,13 +201,13 @@ export async function getRegistration(domain: string): Promise<Registration> {
         expiresAt.getTime(),
       );
     } catch (err) {
-      log.warn("registration.schedule.failed", {
+      log.warn("schedule.failed", {
         domain: registrable ?? domain,
         err,
       });
     }
   }
-  log.info("registration.ok", {
+  log.info("ok", {
     domain: registrable ?? domain,
     registered: record.isRegistered,
     registrar: withProvider.registrarProvider.name,

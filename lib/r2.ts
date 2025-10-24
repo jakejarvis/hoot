@@ -8,7 +8,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { logger } from "@/lib/logger";
 
-const log = logger();
+const log = logger({ module: "r2" });
 
 function getEnvOrThrow(name: string): string {
   const v = process.env[name];
@@ -171,7 +171,7 @@ export async function deleteObjects(keys: string[]): Promise<DeleteResult> {
       }
     } catch (err) {
       const message = (err as Error)?.message || "unknown";
-      log.error("r2.deleteObjects.failed", {
+      log.error("deleteObjects.failed", {
         keys: slice,
         err,
       });

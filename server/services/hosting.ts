@@ -23,10 +23,10 @@ import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
 
-const log = logger();
+const log = logger({ module: "hosting" });
 
 export async function detectHosting(domain: string): Promise<Hosting> {
-  log.debug("hosting.start", { domain });
+  log.debug("start", { domain });
 
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
@@ -119,7 +119,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           lon: row.geoLon ?? null,
         },
       };
-      log.info("hosting.cache.hit", {
+      log.info("cache.hit", {
         domain,
         hosting: info.hostingProvider.name,
         email: info.emailProvider.name,
@@ -247,7 +247,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
     } catch {}
   }
-  log.info("hosting.ok", {
+  log.info("ok", {
     domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,

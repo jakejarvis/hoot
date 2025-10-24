@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 
-const log = logger();
+const log = logger({ module: "ip" });
 
 export async function lookupIpMeta(ip: string): Promise<{
   geo: {
@@ -14,7 +14,7 @@ export async function lookupIpMeta(ip: string): Promise<{
   owner: string | null;
   domain: string | null;
 }> {
-  log.debug("ip.start", { ip });
+  log.debug("start", { ip });
   try {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
     if (!res.ok) throw new Error("ipwho.is fail");
@@ -60,7 +60,7 @@ export async function lookupIpMeta(ip: string): Promise<{
       };
     };
 
-    log.debug("ip.ipwho.is.result", { ip, json: j });
+    log.debug("ipwhois.result", { ip, json: j });
 
     const org = j.connection?.org?.trim();
     const isp = j.connection?.isp?.trim();
@@ -75,15 +75,15 @@ export async function lookupIpMeta(ip: string): Promise<{
       lon: typeof j.longitude === "number" ? j.longitude : null,
     };
 
-    log.info("ip.ok", {
+    log.info("ok", {
       ip,
       owner: owner || undefined,
       domain: domain || undefined,
       geo: geo || undefined,
     });
     return { geo, owner, domain };
-  } catch {
-    log.warn("ip.error", { ip });
+  } catch (err) {
+    log.warn("error", { ip, err });
     return {
       owner: null,
       domain: null,
