@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
@@ -10,6 +9,7 @@ import { dnsRecords } from "@/lib/db/schema";
 import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { logger } from "@/lib/logger";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
@@ -18,6 +18,8 @@ import {
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
+
+const log = logger({ module: "dns" });
 
 export type DohProvider = {
   key: DnsResolver;
@@ -54,8 +56,7 @@ export const DOH_PROVIDERS: DohProvider[] = [
 ];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
-  const startedAt = Date.now();
-  console.debug("[dns] start", { domain });
+  log.debug("start", { domain });
   const providers = providerOrderForLookup(domain);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
@@ -134,27 +135,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const resolverHint = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
     const sorted = sortDnsRecordsByType(assembled, types);
     if (allFreshAcrossTypes) {
-      await captureServer("dns_resolve_all", {
-        domain: registrable ?? domain,
-        duration_ms_total: Date.now() - startedAt,
-        counts: (() => {
-          return (types as DnsType[]).reduce(
-            (acc, t) => {
-              acc[t] = sorted.filter((r) => r.type === t).length;
-              return acc;
-            },
-            { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
-          );
-        })(),
-        cloudflare_ip_present: sorted.some(
-          (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-        ),
-        dns_provider_used: resolverHint,
-        provider_attempts: 0,
-        duration_ms_by_provider: {},
-        cache_hit: true,
-        cache_source: "postgres",
-      });
       return { records: sorted, resolver: resolverHint };
     }
 
@@ -229,9 +209,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
               soonest,
             );
           } catch (err) {
-            console.warn("[dns] schedule failed (partial)", {
+            log.warn("schedule.failed.partial", {
               domain: registrable ?? domain,
-              error: (err as Error)?.message,
+              err,
             });
           }
         }
@@ -258,35 +238,21 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           },
           { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
         );
-        const cloudflareIpPresent = merged.some(
-          (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-        );
-        await captureServer("dns_resolve_all", {
+        log.info("ok.partial", {
           domain: registrable ?? domain,
-          duration_ms_total: Date.now() - startedAt,
-          counts,
-          cloudflare_ip_present: cloudflareIpPresent,
-          dns_provider_used: pinnedProvider.key,
-          provider_attempts: 1,
-          duration_ms_by_provider: durationByProvider,
-          cache_hit: false,
-          cache_source: "partial",
-        });
-        console.info("[dns] ok (partial)", {
-          domain: registrable,
           counts,
           resolver: pinnedProvider.key,
-          duration_ms_total: Date.now() - startedAt,
+          durationMs: durationByProvider[pinnedProvider.key],
         });
         return {
           records: merged,
           resolver: pinnedProvider.key,
         } as DnsResolveResult;
       } catch (err) {
-        console.warn("[dns] partial refresh failed; falling back", {
-          domain: registrable,
+        log.warn("partial.refresh.failed", {
+          domain: registrable ?? domain,
           provider: pinnedProvider.key,
-          error: (err as Error)?.message,
+          err,
         });
         // Fall through to full provider loop below
       }
@@ -311,9 +277,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           return acc;
         },
         { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
-      );
-      const cloudflareIpPresent = flat.some(
-        (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
       );
       const resolverUsed = provider.key;
 
@@ -366,35 +329,24 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
           await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
         } catch (err) {
-          console.warn("[dns] schedule failed (full)", {
+          log.warn("schedule.failed.full", {
             domain: registrable ?? domain,
-            error: (err as Error)?.message,
+            err,
           });
         }
       }
-      await captureServer("dns_resolve_all", {
+      log.info("ok", {
         domain: registrable ?? domain,
-        duration_ms_total: Date.now() - startedAt,
-        counts,
-        cloudflare_ip_present: cloudflareIpPresent,
-        dns_provider_used: resolverUsed,
-        provider_attempts: attemptIndex + 1,
-        duration_ms_by_provider: durationByProvider,
-        cache_hit: false,
-        cache_source: "fresh",
-      });
-      console.info("[dns] ok", {
-        domain: registrable,
         counts,
         resolver: resolverUsed,
-        duration_ms_total: Date.now() - startedAt,
+        durationMs: durationByProvider,
       });
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
-      console.warn("[dns] provider attempt failed", {
-        domain: registrable,
+      log.warn("provider.attempt.failed", {
+        domain: registrable ?? domain,
         provider: provider.key,
-        error: (err as Error)?.message,
+        err,
       });
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
@@ -403,16 +355,10 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   }
 
   // All providers failed
-  await captureServer("dns_resolve_all", {
+  log.error("all.providers.failed", {
     domain: registrable ?? domain,
-    duration_ms_total: Date.now() - startedAt,
-    failure: true,
-    provider_attempts: providers.length,
-  });
-  console.error("[dns] all providers failed", {
-    domain: registrable,
     providers: providers.map((p) => p.key),
-    error: String(lastError),
+    err: lastError,
   });
   throw new Error(
     `All DoH providers failed for ${registrable ?? domain}: ${String(lastError)}`,

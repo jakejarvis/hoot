@@ -1,8 +1,11 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
+import { logger } from "@/lib/logger";
 import { makePublicUrl, putObject } from "@/lib/r2";
 import type { StorageKind } from "@/lib/schemas";
+
+const log = logger({ module: "storage" });
 
 const UPLOAD_MAX_ATTEMPTS = 3;
 const UPLOAD_BACKOFF_BASE_MS = 100;
@@ -68,7 +71,7 @@ async function uploadWithRetry(
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      console.debug("[storage] upload attempt", {
+      log.debug("upload.attempt", {
         key,
         attempt: attempt + 1,
         maxAttempts,
@@ -81,7 +84,7 @@ async function uploadWithRetry(
         cacheControl,
       });
 
-      console.info("[storage] upload success", {
+      log.info("upload.ok", {
         key,
         attempt: attempt + 1,
       });
@@ -90,10 +93,10 @@ async function uploadWithRetry(
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
-      console.warn("[storage] upload attempt failed", {
+      log.warn("upload.attempt.failed", {
         key,
         attempt: attempt + 1,
-        error: lastError.message,
+        err: lastError,
       });
 
       // Don't sleep on last attempt
@@ -103,7 +106,7 @@ async function uploadWithRetry(
           UPLOAD_BACKOFF_BASE_MS,
           UPLOAD_BACKOFF_MAX_MS,
         );
-        console.debug("[storage] retrying after delay", {
+        log.debug("retrying.after.delay", {
           key,
           delayMs: delay,
         });
@@ -112,9 +115,9 @@ async function uploadWithRetry(
     }
   }
 
-  throw new Error(
-    `Upload failed after ${maxAttempts} attempts: ${lastError?.message ?? "unknown error"}`,
-  );
+  throw new Error(`Upload failed after ${maxAttempts} attempts.`, {
+    cause: lastError ?? undefined,
+  });
 }
 
 export async function storeBlob(options: {

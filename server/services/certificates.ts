@@ -1,7 +1,6 @@
 import tls from "node:tls";
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { db } from "@/lib/db/client";
 import { replaceCertificates } from "@/lib/db/repos/certificates";
 import { upsertDomain } from "@/lib/db/repos/domains";
@@ -9,12 +8,15 @@ import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { logger } from "@/lib/logger";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Certificate } from "@/lib/schemas";
 
+const log = logger({ module: "certificates" });
+
 export async function getCertificates(domain: string): Promise<Certificate[]> {
-  console.debug("[certificates] start", { domain });
+  log.debug("start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -64,8 +66,6 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
 
-  const startedAt = Date.now();
-  let outcome: "ok" | "timeout" | "error" = "ok";
   try {
     const chain = await new Promise<tls.DetailedPeerCertificate[]>(
       (resolve, reject) => {
@@ -94,11 +94,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           },
         );
         socket.setTimeout(6000, () => {
-          outcome = "timeout";
           socket.destroy(new Error("TLS timeout"));
         });
         socket.on("error", (err) => {
-          outcome = "error";
           reject(err);
         });
       },
@@ -116,13 +114,6 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
         validTo: new Date(c.valid_to).toISOString(),
         caProvider: detectCertificateAuthority(issuerName),
       };
-    });
-
-    await captureServer("tls_probe", {
-      domain: registrable ?? domain,
-      chain_length: out.length,
-      duration_ms: Date.now() - startedAt,
-      outcome,
     });
 
     const now = new Date();
@@ -164,30 +155,22 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           dueAtMs,
         );
       } catch (err) {
-        console.warn("[certificates] schedule failed", {
+        log.warn("schedule.failed", {
           domain: registrable ?? domain,
-          error: (err as Error)?.message,
+          err: err instanceof Error ? err : new Error(String(err)),
         });
       }
     }
 
-    console.info("[certificates] ok", {
+    log.info("ok", {
       domain: registrable ?? domain,
-      chain_length: out.length,
-      duration_ms: Date.now() - startedAt,
+      chainLength: out.length,
     });
     return out;
   } catch (err) {
-    console.warn("[certificates] error", {
+    log.warn("error", {
       domain: registrable ?? domain,
-      error: (err as Error)?.message,
-    });
-    await captureServer("tls_probe", {
-      domain: registrable ?? domain,
-      chain_length: 0,
-      duration_ms: Date.now() - startedAt,
-      outcome,
-      error: String(err),
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     // Do not treat as fatal; return empty and avoid long-lived negative cache
     return [];

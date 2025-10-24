@@ -1,6 +1,5 @@
 import "server-only";
 
-import { captureServer } from "@/lib/analytics/server";
 import { ns, redis } from "@/lib/redis";
 import {
   BACKOFF_BASE_SECS,
@@ -33,14 +32,6 @@ export async function scheduleSectionIfEarlier(
 ): Promise<boolean> {
   // Validate dueAtMs before any computation or Redis writes
   if (!Number.isFinite(dueAtMs) || dueAtMs < 0) {
-    try {
-      await captureServer("schedule_section", {
-        section,
-        domain,
-        due_at_ms: dueAtMs,
-        outcome: "invalid_due",
-      });
-    } catch {}
     return false;
   }
   const now = Date.now();
@@ -59,16 +50,6 @@ export async function scheduleSectionIfEarlier(
     return false;
   }
   await redis.zadd(dueKey, { score: desired, member: domain });
-  try {
-    await captureServer("schedule_section", {
-      section,
-      domain,
-      due_at_ms: desired,
-      current_ms: current ?? null,
-      now_ms: now,
-      outcome: "scheduled",
-    });
-  } catch {}
   return true;
 }
 
@@ -110,14 +91,6 @@ export async function recordFailureAndBackoff(
   }
   const nextAtMs = Date.now() + backoffMsForAttempts(attempts);
   await redis.zadd(ns("due", section), { score: nextAtMs, member: domain });
-  try {
-    await captureServer("schedule_backoff", {
-      section,
-      domain,
-      attempts,
-      next_at_ms: nextAtMs,
-    });
-  } catch {}
   return nextAtMs;
 }
 
@@ -128,9 +101,6 @@ export async function resetFailureBackoff(
   const taskKey = ns("task", section);
   try {
     await redis.hdel(taskKey, domain);
-  } catch {}
-  try {
-    await captureServer("schedule_backoff_reset", { section, domain });
   } catch {}
 }
 
@@ -155,7 +125,6 @@ type DueDrainResult = {
  * Used by the Vercel cron job to trigger section revalidation via Inngest.
  */
 export async function drainDueDomainsOnce(): Promise<DueDrainResult> {
-  const startedAt = Date.now();
   const sections = allSections();
   const perSectionBatch = PER_SECTION_BATCH;
   const globalMax = MAX_EVENTS_PER_RUN;
@@ -213,14 +182,6 @@ export async function drainDueDomainsOnce(): Promise<DueDrainResult> {
     name: "section/revalidate",
     data: { domain, sections: Array.from(set) },
   }));
-
-  try {
-    await captureServer("due_drain", {
-      duration_ms: Date.now() - startedAt,
-      emitted: events.length,
-      groups: grouped.length,
-    });
-  } catch {}
 
   return { events, groups: grouped.length };
 }

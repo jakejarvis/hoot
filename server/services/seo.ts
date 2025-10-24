@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
@@ -11,6 +10,7 @@ import { ttlForSeo } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
+import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type {
@@ -23,11 +23,13 @@ import type {
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { storeImage } from "@/lib/storage";
 
+const log = logger({ module: "seo" });
+
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
-  console.debug("[seo] start", { domain });
+  log.debug("start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -237,15 +239,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     } catch {}
   }
 
-  await captureServer("seo_fetch", {
-    domain: registrable ?? domain,
-    status: status ?? -1,
-    has_meta: !!meta,
-    has_robots: !!robots,
-    has_errors: Boolean(htmlError || robotsError),
-  });
-
-  console.info("[seo] ok", {
+  log.info("ok", {
     domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,
@@ -260,7 +254,6 @@ async function getOrCreateSocialPreviewImageUrl(
   domain: string,
   imageUrl: string,
 ): Promise<{ url: string | null }> {
-  const startedAt = Date.now();
   const lower = domain.toLowerCase();
   const indexKey = ns(
     "seo-image",
@@ -283,15 +276,6 @@ async function getOrCreateSocialPreviewImageUrl(
       typeof raw === "object" &&
       typeof (raw as { url?: unknown }).url === "string"
     ) {
-      await captureServer("seo_image", {
-        domain: lower,
-        width: SOCIAL_WIDTH,
-        height: SOCIAL_HEIGHT,
-        source: "redis",
-        duration_ms: Date.now() - startedAt,
-        outcome: "ok",
-        cache: "hit",
-      });
       return { url: (raw as { url: string }).url };
     }
   } catch {
@@ -307,15 +291,6 @@ async function getOrCreateSocialPreviewImageUrl(
 
   if (!lockResult.acquired) {
     if (lockResult.cachedResult?.url) {
-      await captureServer("seo_image", {
-        domain: lower,
-        width: SOCIAL_WIDTH,
-        height: SOCIAL_HEIGHT,
-        source: "redis_wait",
-        duration_ms: Date.now() - startedAt,
-        outcome: "ok",
-        cache: "wait",
-      });
       return { url: lockResult.cachedResult.url };
     }
     return { url: null };
@@ -363,16 +338,6 @@ async function getOrCreateSocialPreviewImageUrl(
         member: key,
       });
     } catch {}
-
-    await captureServer("seo_image", {
-      domain: lower,
-      width: SOCIAL_WIDTH,
-      height: SOCIAL_HEIGHT,
-      source: "upload",
-      duration_ms: Date.now() - startedAt,
-      outcome: "ok",
-      cache: "store",
-    });
 
     return { url };
   } catch {

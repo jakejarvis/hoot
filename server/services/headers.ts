@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { db } from "@/lib/db/client";
 import { upsertDomain } from "@/lib/db/repos/domains";
 import { replaceHeaders } from "@/lib/db/repos/headers";
@@ -8,12 +7,15 @@ import { httpHeaders } from "@/lib/db/schema";
 import { ttlForHeaders } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { logger } from "@/lib/logger";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { HttpHeader } from "@/lib/schemas";
 
+const log = logger({ module: "headers" });
+
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
-  console.debug("[headers] start", { domain });
+  log.debug("start", { domain });
   // Fast path: read from Postgres if fresh
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -40,8 +42,8 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
-      console.info("[headers] db hit", {
-        domain: registrable,
+      log.info("cache.hit", {
+        domain: registrable ?? domain,
         count: normalized.length,
       });
       return normalized;
@@ -63,12 +65,6 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     });
     const normalized = normalize(headers);
 
-    await captureServer("headers_probe", {
-      domain: registrable ?? domain,
-      status: final.status,
-      used_method: "GET",
-      final_url: final.url,
-    });
     // Persist to Postgres
     const now = new Date();
     if (d) {
@@ -85,25 +81,23 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
           registrable ?? domain,
           dueAtMs,
         );
-      } catch {}
+      } catch (err) {
+        log.warn("schedule.failed", {
+          domain: registrable ?? domain,
+          err: err instanceof Error ? err : new Error(String(err)),
+        });
+      }
     }
-    console.info("[headers] ok", {
-      domain: registrable,
+    log.info("ok", {
+      domain: registrable ?? domain,
       status: final.status,
       count: normalized.length,
     });
     return normalized;
   } catch (err) {
-    console.warn("[headers] error", {
+    log.error("error", {
       domain: registrable ?? domain,
-      error: (err as Error)?.message,
-    });
-    await captureServer("headers_probe", {
-      domain: registrable ?? domain,
-      status: -1,
-      used_method: "ERROR",
-      final_url: url,
-      error: String(err),
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     // Return empty on failure without caching to avoid long-lived negatives
     return [];

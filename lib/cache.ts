@@ -1,5 +1,7 @@
-import { captureServer } from "@/lib/analytics/server";
+import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
+
+const log = logger({ module: "cache" });
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -45,22 +47,22 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       nx: true,
       ex: lockTtl,
     });
-    const acquired = setRes === "OK" || setRes === undefined;
+    const acquired = Boolean(setRes);
 
     if (acquired) {
-      console.debug("[redis] lock acquired", { lockKey });
+      log.debug("redis.lock.acquired", { lockKey });
       return { acquired: true, cachedResult: null };
     }
 
-    console.debug("[redis] lock not acquired, waiting for result", {
+    log.debug("redis.lock.not.acquired", {
       lockKey,
       resultKey,
       maxWaitMs,
     });
   } catch (err) {
-    console.warn("[redis] lock acquisition failed", {
+    log.warn("redis.lock.acquisition.failed", {
       lockKey,
-      error: (err as Error)?.message,
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     // If Redis is down, fail open (don't wait)
     return { acquired: true, cachedResult: null };
@@ -76,11 +78,11 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       const result = (await redis.get(resultKey)) as T | null;
 
       if (result !== null) {
-        console.debug("[redis] found cached result while waiting", {
+        log.debug("redis.cache.hit.waiting", {
           lockKey,
           resultKey,
           pollCount,
-          waitedMs: Date.now() - startTime,
+          durationMs: Date.now() - startTime,
         });
         return { acquired: false, cachedResult: result };
       }
@@ -88,7 +90,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       // Check if lock still exists - if not, the other process may have failed
       const lockExists = await redis.exists(lockKey);
       if (!lockExists) {
-        console.warn("[redis] lock disappeared without result", {
+        log.warn("redis.lock.disappeared", {
           lockKey,
           resultKey,
           pollCount,
@@ -99,27 +101,27 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
           nx: true,
           ex: lockTtl,
         });
-        const retryAcquired = retryRes === "OK" || retryRes === undefined;
+        const retryAcquired = Boolean(retryRes);
         if (retryAcquired) {
           return { acquired: true, cachedResult: null };
         }
       }
     } catch (err) {
-      console.warn("[redis] error polling for result", {
+      log.warn("redis.polling.error", {
         lockKey,
         resultKey,
-        error: (err as Error)?.message,
+        err: err instanceof Error ? err : new Error(String(err)),
       });
     }
 
     await sleep(pollIntervalMs);
   }
 
-  console.warn("[redis] wait timeout, no result found", {
+  log.warn("redis.wait.timeout", {
     lockKey,
     resultKey,
     pollCount,
-    waitedMs: Date.now() - startTime,
+    durationMs: Date.now() - startTime,
   });
 
   return { acquired: false, cachedResult: null };
@@ -129,8 +131,6 @@ type CachedAssetOptions<TProduceMeta extends Record<string, unknown>> = {
   indexKey: string;
   lockKey: string;
   ttlSeconds: number;
-  eventName: string;
-  baseMetrics?: Record<string, unknown>;
   /**
    * Produce and upload the asset, returning { url, key } and any metrics to attach
    */
@@ -149,16 +149,8 @@ type CachedAssetOptions<TProduceMeta extends Record<string, unknown>> = {
 export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
   options: CachedAssetOptions<T>,
 ): Promise<{ url: string | null }> {
-  const {
-    indexKey,
-    lockKey,
-    ttlSeconds,
-    eventName,
-    baseMetrics,
-    produceAndUpload,
-    purgeQueue,
-  } = options;
-  const startedAt = Date.now();
+  const { indexKey, lockKey, ttlSeconds, produceAndUpload, purgeQueue } =
+    options;
 
   // 1) Check index
   try {
@@ -166,27 +158,18 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     if (raw && typeof raw === "object") {
       const cachedUrl = (raw as { url?: unknown }).url;
       if (typeof cachedUrl === "string") {
-        await captureServer(eventName, {
-          ...baseMetrics,
-          source: "redis",
-          duration_ms: Date.now() - startedAt,
-          outcome: "ok",
-          cache: "hit",
-        });
         return { url: cachedUrl };
       }
       if (cachedUrl === null) {
-        await captureServer(eventName, {
-          ...baseMetrics,
-          source: "redis",
-          duration_ms: Date.now() - startedAt,
-          outcome: "not_found",
-          cache: "hit",
-        });
         return { url: null };
       }
     }
-  } catch {}
+  } catch (err) {
+    log.debug("redis.index.read.failed", {
+      indexKey,
+      err: err instanceof Error ? err : new Error(String(err)),
+    });
+  }
 
   // 2) Acquire lock or wait
   const lockResult = await acquireLockOrWaitForResult<{ url: string | null }>({
@@ -199,13 +182,6 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     const cached = lockResult.cachedResult;
     if (cached && typeof cached === "object" && "url" in cached) {
       const cachedUrl = (cached as { url: string | null }).url;
-      await captureServer(eventName, {
-        ...baseMetrics,
-        source: "redis_wait",
-        duration_ms: Date.now() - startedAt,
-        outcome: cachedUrl ? "ok" : "not_found",
-        cache: "wait",
-      });
       return { url: cachedUrl };
     }
     return { url: null };
@@ -228,19 +204,23 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
           member: produced.key,
         });
       }
-    } catch {}
+    } catch (err) {
+      log.warn("redis.cache.store.failed", {
+        indexKey,
+        purgeQueue,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
 
-    await captureServer(eventName, {
-      ...baseMetrics,
-      ...(produced.metrics ?? {}),
-      duration_ms: Date.now() - startedAt,
-      outcome: produced.url ? "ok" : "not_found",
-      cache: "store",
-    });
     return { url: produced.url };
   } finally {
     try {
       await redis.del(lockKey);
-    } catch {}
+    } catch (err) {
+      log.debug("redis.lock.release.failed", {
+        lockKey,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
   }
 }

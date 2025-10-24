@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { db } from "@/lib/db/client";
 import { upsertDomain } from "@/lib/db/repos/domains";
 import { upsertHosting } from "@/lib/db/repos/hosting";
@@ -12,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { ttlForHosting } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { logger } from "@/lib/logger";
 import {
   detectDnsProvider,
   detectEmailProvider,
@@ -23,9 +23,10 @@ import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
 
+const log = logger({ module: "hosting" });
+
 export async function detectHosting(domain: string): Promise<Hosting> {
-  const startedAt = Date.now();
-  console.debug("[hosting] start", { domain });
+  log.debug("start", { domain });
 
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
@@ -118,12 +119,11 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           lon: row.geoLon ?? null,
         },
       };
-      console.info("[hosting] cache", {
+      log.info("cache.hit", {
         domain,
         hosting: info.hostingProvider.name,
         email: info.emailProvider.name,
         dns_provider: info.dnsProvider.name,
-        duration_ms: Date.now() - startedAt,
       });
       return info;
     }
@@ -207,15 +207,6 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     dnsProvider: { name: dnsName, domain: dnsIconDomain },
     geo,
   };
-  await captureServer("hosting_detected", {
-    domain: registrable ?? domain,
-    hosting: hostingName,
-    email: emailName,
-    dns_provider: dnsName,
-    ip_present: Boolean(ip),
-    geo_country: geo.country || "",
-    duration_ms: Date.now() - startedAt,
-  });
   // Persist to Postgres
   const now = new Date();
   if (d) {
@@ -254,14 +245,18 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     try {
       const dueAtMs = ttlForHosting(now).getTime();
       await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
-    } catch {}
+    } catch (err) {
+      log.warn("schedule.failed", {
+        domain: registrable ?? domain,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
   }
-  console.info("[hosting] ok", {
+  log.info("ok", {
     domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,
     dns_provider: dnsName,
-    duration_ms: Date.now() - startedAt,
   });
   return info;
 }
