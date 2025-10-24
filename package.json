@@ -13,7 +13,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbo",
-    "dev:start-docker": "scripts/start-dev-infra.sh",
+    "docker:up": "scripts/start-dev-infra.sh",
+    "docker:down": "scripts/stop-dev-infra.sh",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",

@@ -25,7 +25,8 @@ services:
     environment:
       APPEND_PORT: "postgres:5432"
       ALLOW_ADDR_REGEX: ".*"
-      LOG_TRAFFIC: "true"
+      LOG_TRAFFIC: "false"
+      LOG_CONN_INFO: "true"
     ports:
       - "5433:80"
     depends_on:
@@ -59,5 +60,19 @@ services:
     ports:
       - "8288:8288"
 
+  # Local MinIO S3 (TCP on 9000)
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000" # S3 API endpoint
+      - "9001:9001" # Web console
+    volumes:
+      - minio_data:/data
+
 volumes:
   pg_data:
+  minio_data:
