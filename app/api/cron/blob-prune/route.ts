@@ -32,12 +32,12 @@ export async function GET(request: Request) {
       log.warn("completed.with.errors", {
         deletedCount: result.deletedCount,
         errorCount: result.errorCount,
-        duration_ms: Date.now() - startedAt,
+        durationMs: Date.now() - startedAt,
       });
     } else {
       log.info("completed", {
         deletedCount: result.deletedCount,
-        duration_ms: Date.now() - startedAt,
+        durationMs: Date.now() - startedAt,
       });
     }
 
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
       success: true,
       deletedCount: result.deletedCount,
       errorCount: result.errorCount,
-      duration_ms: Date.now() - startedAt,
+      durationMs: Date.now() - startedAt,
     });
   } catch (error) {
     log.error("cron.failed", { err: error });

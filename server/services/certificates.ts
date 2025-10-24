@@ -157,7 +157,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       } catch (err) {
         log.warn("schedule.failed", {
           domain: registrable ?? domain,
-          err,
+          err: err instanceof Error ? err : new Error(String(err)),
         });
       }
     }
@@ -170,7 +170,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   } catch (err) {
     log.warn("error", {
       domain: registrable ?? domain,
-      err,
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     // Do not treat as fatal; return empty and avoid long-lived negative cache
     return [];

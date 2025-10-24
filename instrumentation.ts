@@ -12,7 +12,9 @@ export const register = async () => {
       log.error("uncaughtException", { err }),
     );
     process.on("unhandledRejection", (reason) =>
-      log.error("unhandledRejection", { err: reason }),
+      log.error("unhandledRejection", {
+        err: reason instanceof Error ? reason : new Error(String(reason)),
+      }),
     );
   }
 };

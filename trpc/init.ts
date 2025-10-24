@@ -13,8 +13,8 @@ export const createContext = async (opts?: { req?: Request }) => {
       null)
     : null;
 
-  const requestId = req?.headers.get("x-request-id") || crypto.randomUUID();
   const path = req ? new URL(req.url).pathname : undefined;
+  const requestId = req?.headers.get("x-request-id");
   const vercelId = req?.headers.get("x-vercel-id");
 
   const log = createRequestLogger({
@@ -75,15 +75,15 @@ const withLogging = t.middleware(async ({ ctx, path, type, next }) => {
     ctx.log.info("ok", {
       rpcPath: path,
       rpcType: type,
-      duration_ms: Math.round(performance.now() - start),
+      durationMs: Math.round(performance.now() - start),
     });
     return result;
   } catch (err) {
     ctx.log.error("error", {
       rpcPath: path,
       rpcType: type,
-      duration_ms: Math.round(performance.now() - start),
-      err,
+      durationMs: Math.round(performance.now() - start),
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     throw err;
   }

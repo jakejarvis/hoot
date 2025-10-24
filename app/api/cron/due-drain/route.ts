@@ -62,14 +62,14 @@ export async function GET(request: Request) {
     log.info("cron.ok", {
       emitted,
       groups: result.groups,
-      duration_ms: Date.now() - startedAt,
+      durationMs: Date.now() - startedAt,
     });
 
     return NextResponse.json({
       success: true,
       emitted,
       groups: result.groups,
-      duration_ms: Date.now() - startedAt,
+      durationMs: Date.now() - startedAt,
     });
   } catch (error) {
     log.error("cron.failed", { err: error });

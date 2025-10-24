@@ -108,7 +108,7 @@ async function uploadWithRetry(
         );
         log.debug("retrying.after.delay", {
           key,
-          delay_ms: delay,
+          delayMs: delay,
         });
         await sleep(delay);
       }

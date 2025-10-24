@@ -127,8 +127,7 @@ export function createRequestLogger(opts: {
   method?: string;
   path?: string;
   ip?: string;
-  requestId?: string;
-  userId?: string;
+  requestId?: string | null;
   vercelId?: string | null;
 }) {
   return logger({
@@ -136,7 +135,6 @@ export function createRequestLogger(opts: {
     path: opts.path,
     ip: opts.ip,
     requestId: opts.requestId,
-    userId: opts.userId,
     vercelId: opts.vercelId ?? undefined,
   });
 }

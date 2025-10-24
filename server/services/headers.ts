@@ -92,7 +92,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   } catch (err) {
     log.error("error", {
       domain: registrable ?? domain,
-      err,
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     // Return empty on failure without caching to avoid long-lived negatives
     return [];

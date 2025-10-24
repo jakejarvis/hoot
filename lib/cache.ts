@@ -82,7 +82,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
           lockKey,
           resultKey,
           pollCount,
-          wait_ms: Date.now() - startTime,
+          waitMs: Date.now() - startTime,
         });
         return { acquired: false, cachedResult: result };
       }
@@ -121,7 +121,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
     lockKey,
     resultKey,
     pollCount,
-    wait_ms: Date.now() - startTime,
+    waitMs: Date.now() - startTime,
   });
 
   return { acquired: false, cachedResult: null };

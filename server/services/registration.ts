@@ -118,7 +118,9 @@ export async function getRegistration(domain: string): Promise<Registration> {
   });
 
   if (!ok || !record) {
-    const err = new Error(error || "Registration lookup failed");
+    const err = new Error(
+      `Registration lookup failed for ${registrable ?? domain}: ${error || "unknown error"}`,
+    );
     log.error("error", {
       domain: registrable ?? domain,
       err,
