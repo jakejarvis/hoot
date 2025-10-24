@@ -6,6 +6,9 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { logger } from "@/lib/logger";
+
+const log = logger();
 
 function getEnvOrThrow(name: string): string {
   const v = process.env[name];
@@ -168,9 +171,9 @@ export async function deleteObjects(keys: string[]): Promise<DeleteResult> {
       }
     } catch (err) {
       const message = (err as Error)?.message || "unknown";
-      console.error("[r2] deleteObjects failed", {
+      log.error("r2.deleteObjects.failed", {
         keys: slice,
-        error: message,
+        err,
       });
       for (const k of slice) {
         results.push({ key: k, deleted: false, error: message });

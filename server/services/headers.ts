@@ -8,12 +8,15 @@ import { httpHeaders } from "@/lib/db/schema";
 import { ttlForHeaders } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { logger } from "@/lib/logger";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { HttpHeader } from "@/lib/schemas";
 
+const log = logger();
+
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
-  console.debug("[headers] start", { domain });
+  log.debug("headers.start", { domain });
   // Fast path: read from Postgres if fresh
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -40,7 +43,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
-      console.info("[headers] db hit", {
+      log.info("headers.cache.hit", {
         domain: registrable,
         count: normalized.length,
       });
@@ -87,16 +90,16 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         );
       } catch {}
     }
-    console.info("[headers] ok", {
+    log.info("headers.ok", {
       domain: registrable,
       status: final.status,
       count: normalized.length,
     });
     return normalized;
   } catch (err) {
-    console.warn("[headers] error", {
+    log.warn("headers.error", {
       domain: registrable ?? domain,
-      error: (err as Error)?.message,
+      err,
     });
     await captureServer("headers_probe", {
       domain: registrable ?? domain,

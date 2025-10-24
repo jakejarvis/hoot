@@ -1,6 +1,7 @@
 import { initTRPC } from "@trpc/server";
 import { ipAddress } from "@vercel/functions";
 import superjson from "superjson";
+import { createRequestLogger } from "@/lib/logger";
 
 export const createContext = async (opts?: { req?: Request }) => {
   const req = opts?.req;
@@ -11,7 +12,20 @@ export const createContext = async (opts?: { req?: Request }) => {
       req.headers.get("cf-connecting-ip") ??
       null)
     : null;
-  return { ip, req } as const;
+
+  const requestId = req?.headers.get("x-request-id") || crypto.randomUUID();
+  const path = req ? new URL(req.url).pathname : undefined;
+  const vercelId = req?.headers.get("x-vercel-id");
+
+  const log = createRequestLogger({
+    ip: ip ?? undefined,
+    method: req?.method,
+    path,
+    requestId,
+    vercelId,
+  });
+
+  return { ip, req, log } as const;
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
@@ -52,4 +66,27 @@ export const t = initTRPC
 
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
-export const publicProcedure = t.procedure;
+
+const withLogging = t.middleware(async ({ ctx, path, type, next }) => {
+  const start = performance.now();
+  ctx.log.debug("rpc.start", { rpcPath: path, rpcType: type });
+  try {
+    const result = await next();
+    ctx.log.info("rpc.ok", {
+      rpcPath: path,
+      rpcType: type,
+      duration_ms: Math.round(performance.now() - start),
+    });
+    return result;
+  } catch (err) {
+    ctx.log.error("rpc.error", {
+      rpcPath: path,
+      rpcType: type,
+      duration_ms: Math.round(performance.now() - start),
+      err,
+    });
+    throw err;
+  }
+});
+
+export const publicProcedure = t.procedure.use(withLogging);

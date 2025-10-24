@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/schema";
 import { ttlForHosting } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { logger } from "@/lib/logger";
 import {
   detectDnsProvider,
   detectEmailProvider,
@@ -23,9 +24,11 @@ import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
 
+const log = logger();
+
 export async function detectHosting(domain: string): Promise<Hosting> {
   const startedAt = Date.now();
-  console.debug("[hosting] start", { domain });
+  log.debug("hosting.start", { domain });
 
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
@@ -118,12 +121,11 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           lon: row.geoLon ?? null,
         },
       };
-      console.info("[hosting] cache", {
+      log.info("hosting.cache.hit", {
         domain,
         hosting: info.hostingProvider.name,
         email: info.emailProvider.name,
         dns_provider: info.dnsProvider.name,
-        duration_ms: Date.now() - startedAt,
       });
       return info;
     }
@@ -256,12 +258,11 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
     } catch {}
   }
-  console.info("[hosting] ok", {
+  log.info("hosting.ok", {
     domain: registrable ?? domain,
     hosting: hostingName,
     email: emailName,
     dns_provider: dnsName,
-    duration_ms: Date.now() - startedAt,
   });
   return info;
 }

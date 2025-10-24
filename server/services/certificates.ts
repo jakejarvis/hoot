@@ -9,12 +9,15 @@ import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
+import { logger } from "@/lib/logger";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Certificate } from "@/lib/schemas";
 
+const log = logger();
+
 export async function getCertificates(domain: string): Promise<Certificate[]> {
-  console.debug("[certificates] start", { domain });
+  log.debug("certificates.start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -164,23 +167,22 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           dueAtMs,
         );
       } catch (err) {
-        console.warn("[certificates] schedule failed", {
+        log.warn("certificates.schedule.failed", {
           domain: registrable ?? domain,
-          error: (err as Error)?.message,
+          err,
         });
       }
     }
 
-    console.info("[certificates] ok", {
+    log.info("certificates.ok", {
       domain: registrable ?? domain,
       chain_length: out.length,
-      duration_ms: Date.now() - startedAt,
     });
     return out;
   } catch (err) {
-    console.warn("[certificates] error", {
+    log.warn("certificates.error", {
       domain: registrable ?? domain,
-      error: (err as Error)?.message,
+      err,
     });
     await captureServer("tls_probe", {
       domain: registrable ?? domain,

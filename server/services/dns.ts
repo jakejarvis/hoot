@@ -10,6 +10,7 @@ import { dnsRecords } from "@/lib/db/schema";
 import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
+import { logger } from "@/lib/logger";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
@@ -18,6 +19,8 @@ import {
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
+
+const log = logger();
 
 export type DohProvider = {
   key: DnsResolver;
@@ -55,7 +58,7 @@ export const DOH_PROVIDERS: DohProvider[] = [
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   const startedAt = Date.now();
-  console.debug("[dns] start", { domain });
+  log.debug("dns.start", { domain });
   const providers = providerOrderForLookup(domain);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
@@ -229,9 +232,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
               soonest,
             );
           } catch (err) {
-            console.warn("[dns] schedule failed (partial)", {
+            log.warn("dns.schedule.failed.partial", {
               domain: registrable ?? domain,
-              error: (err as Error)?.message,
+              err,
             });
           }
         }
@@ -272,21 +275,20 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           cache_hit: false,
           cache_source: "partial",
         });
-        console.info("[dns] ok (partial)", {
+        log.info("dns.ok.partial", {
           domain: registrable,
           counts,
           resolver: pinnedProvider.key,
-          duration_ms_total: Date.now() - startedAt,
         });
         return {
           records: merged,
           resolver: pinnedProvider.key,
         } as DnsResolveResult;
       } catch (err) {
-        console.warn("[dns] partial refresh failed; falling back", {
+        log.warn("dns.partial.refresh.failed", {
           domain: registrable,
           provider: pinnedProvider.key,
-          error: (err as Error)?.message,
+          err,
         });
         // Fall through to full provider loop below
       }
@@ -366,9 +368,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
           await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
         } catch (err) {
-          console.warn("[dns] schedule failed (full)", {
+          log.warn("dns.schedule.failed.full", {
             domain: registrable ?? domain,
-            error: (err as Error)?.message,
+            err,
           });
         }
       }
@@ -383,18 +385,17 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         cache_hit: false,
         cache_source: "fresh",
       });
-      console.info("[dns] ok", {
+      log.info("dns.ok", {
         domain: registrable,
         counts,
         resolver: resolverUsed,
-        duration_ms_total: Date.now() - startedAt,
       });
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
-      console.warn("[dns] provider attempt failed", {
+      log.warn("dns.provider.attempt.failed", {
         domain: registrable,
         provider: provider.key,
-        error: (err as Error)?.message,
+        err,
       });
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
@@ -409,10 +410,10 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     failure: true,
     provider_attempts: providers.length,
   });
-  console.error("[dns] all providers failed", {
+  log.error("dns.all.providers.failed", {
     domain: registrable,
     providers: providers.map((p) => p.key),
-    error: String(lastError),
+    err: lastError,
   });
   throw new Error(
     `All DoH providers failed for ${registrable ?? domain}: ${String(lastError)}`,

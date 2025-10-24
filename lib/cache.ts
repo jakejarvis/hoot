@@ -1,5 +1,8 @@
 import { captureServer } from "@/lib/analytics/server";
+import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
+
+const log = logger();
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -48,19 +51,19 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
     const acquired = setRes === "OK" || setRes === undefined;
 
     if (acquired) {
-      console.debug("[redis] lock acquired", { lockKey });
+      log.debug("redis.lock.acquired", { lockKey });
       return { acquired: true, cachedResult: null };
     }
 
-    console.debug("[redis] lock not acquired, waiting for result", {
+    log.debug("redis.lock.not.acquired", {
       lockKey,
       resultKey,
       maxWaitMs,
     });
   } catch (err) {
-    console.warn("[redis] lock acquisition failed", {
+    log.warn("redis.lock.acquisition.failed", {
       lockKey,
-      error: (err as Error)?.message,
+      err,
     });
     // If Redis is down, fail open (don't wait)
     return { acquired: true, cachedResult: null };
@@ -76,11 +79,11 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       const result = (await redis.get(resultKey)) as T | null;
 
       if (result !== null) {
-        console.debug("[redis] found cached result while waiting", {
+        log.debug("redis.cache.hit.waiting", {
           lockKey,
           resultKey,
           pollCount,
-          waitedMs: Date.now() - startTime,
+          wait_ms: Date.now() - startTime,
         });
         return { acquired: false, cachedResult: result };
       }
@@ -88,7 +91,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       // Check if lock still exists - if not, the other process may have failed
       const lockExists = await redis.exists(lockKey);
       if (!lockExists) {
-        console.warn("[redis] lock disappeared without result", {
+        log.warn("redis.lock.disappeared", {
           lockKey,
           resultKey,
           pollCount,
@@ -105,21 +108,21 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
         }
       }
     } catch (err) {
-      console.warn("[redis] error polling for result", {
+      log.warn("redis.polling.error", {
         lockKey,
         resultKey,
-        error: (err as Error)?.message,
+        err,
       });
     }
 
     await sleep(pollIntervalMs);
   }
 
-  console.warn("[redis] wait timeout, no result found", {
+  log.warn("redis.wait.timeout", {
     lockKey,
     resultKey,
     pollCount,
-    waitedMs: Date.now() - startTime,
+    wait_ms: Date.now() - startTime,
   });
 
   return { acquired: false, cachedResult: null };

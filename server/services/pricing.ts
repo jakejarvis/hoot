@@ -1,7 +1,10 @@
 import { getDomainTld } from "rdapper";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
+import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import type { Pricing } from "@/lib/schemas";
+
+const log = logger();
 
 type DomainPricingResponse = {
   status: string;
@@ -51,14 +54,12 @@ export async function getPricingForTld(domain: string): Promise<Pricing> {
         if (res.ok) {
           payload = (await res.json()) as DomainPricingResponse;
           await redis.set(resultKey, payload, { ex: 7 * 24 * 60 * 60 });
-          console.info("[pricing] fetched and cached full payload");
+          log.info("pricing.fetch.ok", { cached: false });
         } else {
-          console.error("[pricing] upstream error", { status: res.status });
+          log.error("pricing.upstream.error", { status: res.status });
         }
       } catch (err) {
-        console.error("[pricing] fetch error", {
-          error: (err as Error)?.message,
-        });
+        log.error("pricing.fetch.error", { err });
       }
     } else {
       payload = lock.cachedResult;

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { inngest } from "@/lib/inngest/client";
+import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import { drainDueDomainsOnce } from "@/lib/schedule";
+
+const log = logger();
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +54,7 @@ export async function GET(request: Request) {
           ),
         );
       } catch (e) {
-        console.warn("[due-drain] cleanup failed", e);
+        log.warn("due-drain.cleanup.failed", { err: e });
       }
       emitted += chunk.length;
     }
@@ -63,7 +66,7 @@ export async function GET(request: Request) {
       duration_ms: Date.now() - startedAt,
     });
   } catch (error) {
-    console.error("[due-drain] cron failed", error);
+    log.error("due-drain.cron.failed", { err: error });
     return NextResponse.json(
       {
         error: "Internal error",

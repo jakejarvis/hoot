@@ -1,4 +1,5 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { logger } from "@/lib/logger";
 import { appRouter } from "@/server/routers/_app";
 import { createContext } from "@/trpc/init";
 
@@ -33,12 +34,8 @@ const handler = (req: Request) =>
       return { headers, status: 429 };
     },
     onError: ({ path, error }) => {
-      // Development logging
-      if (process.env.NODE_ENV === "development") {
-        console.error(
-          `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`,
-        );
-      }
+      const log = logger();
+      log.error("trpc.unhandled", { path, err: error });
     },
   });
 

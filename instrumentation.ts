@@ -1,4 +1,18 @@
 import type { Instrumentation } from "next";
+import { logger } from "@/lib/logger";
+
+// Process-level error hooks (Node only)
+if (typeof process !== "undefined" && process?.on) {
+  const log = logger();
+  process.on("uncaughtException", (err) =>
+    log.error("uncaughtException", { err }),
+  );
+  process.on("unhandledRejection", (reason) =>
+    log.error("unhandledRejection", { err: reason }),
+  );
+}
+
+const log = logger();
 
 export const onRequestError: Instrumentation.onRequestError = async (
   err,
@@ -27,7 +41,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
             const postHogData = JSON.parse(decodedCookie);
             distinctId = postHogData.distinct_id;
           } catch (e) {
-            console.error("Error parsing PostHog cookie:", e);
+            log.error("posthog.cookie.parse.error", { err: e });
           }
         }
       }
@@ -40,10 +54,9 @@ export const onRequestError: Instrumentation.onRequestError = async (
       await phClient.shutdown();
     } catch (instrumentationError) {
       // Graceful degradation - log error but don't throw to avoid breaking the request
-      console.error(
-        "Instrumentation error tracking failed:",
-        instrumentationError,
-      );
+      log.error("instrumentation.error.tracking.failed", {
+        err: instrumentationError,
+      });
     }
   }
 };

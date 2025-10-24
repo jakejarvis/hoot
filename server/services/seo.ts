@@ -11,6 +11,7 @@ import { ttlForSeo } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
+import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type {
@@ -23,11 +24,13 @@ import type {
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { storeImage } from "@/lib/storage";
 
+const log = logger();
+
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
-  console.debug("[seo] start", { domain });
+  log.debug("seo.start", { domain });
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -245,7 +248,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     has_errors: Boolean(htmlError || robotsError),
   });
 
-  console.info("[seo] ok", {
+  log.info("seo.ok", {
     domain: registrable ?? domain,
     status: status ?? -1,
     has_meta: !!meta,
