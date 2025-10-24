@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld, lookup } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { db } from "@/lib/db/client";
 import { upsertDomain } from "@/lib/db/repos/domains";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
@@ -27,7 +26,6 @@ const log = logger();
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
 export async function getRegistration(domain: string): Promise<Registration> {
-  const startedAt = Date.now();
   log.debug("registration.start", { domain });
 
   // Try current snapshot
@@ -105,13 +103,6 @@ export async function getRegistration(domain: string): Promise<Registration> {
         registrarProvider,
       };
 
-      await captureServer("registration_lookup", {
-        domain: registrable ?? domain,
-        outcome: row.isRegistered ? "ok" : "unregistered",
-        cached: true,
-        duration_ms: Date.now() - startedAt,
-        source: row.source,
-      });
       log.info("registration.ok.cached", {
         domain: registrable ?? domain,
         registered: row.isRegistered,
@@ -129,12 +120,6 @@ export async function getRegistration(domain: string): Promise<Registration> {
   if (!ok || !record) {
     log.warn("registration.error", {
       domain: registrable ?? domain,
-      error: error || "unknown",
-    });
-    await captureServer("registration_lookup", {
-      domain: registrable ?? domain,
-      outcome: "error",
-      cached: false,
       error: error || "unknown",
     });
     throw new Error(error || "Registration lookup failed");
@@ -221,13 +206,6 @@ export async function getRegistration(domain: string): Promise<Registration> {
       });
     }
   }
-  await captureServer("registration_lookup", {
-    domain: registrable ?? domain,
-    outcome: record.isRegistered ? "ok" : "unregistered",
-    cached: false,
-    duration_ms: Date.now() - startedAt,
-    source: record.source,
-  });
   log.info("registration.ok", {
     domain: registrable ?? domain,
     registered: record.isRegistered,

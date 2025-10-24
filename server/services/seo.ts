@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
@@ -240,14 +239,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     } catch {}
   }
 
-  await captureServer("seo_fetch", {
-    domain: registrable ?? domain,
-    status: status ?? -1,
-    has_meta: !!meta,
-    has_robots: !!robots,
-    has_errors: Boolean(htmlError || robotsError),
-  });
-
   log.info("seo.ok", {
     domain: registrable ?? domain,
     status: status ?? -1,
@@ -263,7 +254,6 @@ async function getOrCreateSocialPreviewImageUrl(
   domain: string,
   imageUrl: string,
 ): Promise<{ url: string | null }> {
-  const startedAt = Date.now();
   const lower = domain.toLowerCase();
   const indexKey = ns(
     "seo-image",
@@ -286,15 +276,6 @@ async function getOrCreateSocialPreviewImageUrl(
       typeof raw === "object" &&
       typeof (raw as { url?: unknown }).url === "string"
     ) {
-      await captureServer("seo_image", {
-        domain: lower,
-        width: SOCIAL_WIDTH,
-        height: SOCIAL_HEIGHT,
-        source: "redis",
-        duration_ms: Date.now() - startedAt,
-        outcome: "ok",
-        cache: "hit",
-      });
       return { url: (raw as { url: string }).url };
     }
   } catch {
@@ -310,15 +291,6 @@ async function getOrCreateSocialPreviewImageUrl(
 
   if (!lockResult.acquired) {
     if (lockResult.cachedResult?.url) {
-      await captureServer("seo_image", {
-        domain: lower,
-        width: SOCIAL_WIDTH,
-        height: SOCIAL_HEIGHT,
-        source: "redis_wait",
-        duration_ms: Date.now() - startedAt,
-        outcome: "ok",
-        cache: "wait",
-      });
       return { url: lockResult.cachedResult.url };
     }
     return { url: null };
@@ -366,16 +338,6 @@ async function getOrCreateSocialPreviewImageUrl(
         member: key,
       });
     } catch {}
-
-    await captureServer("seo_image", {
-      domain: lower,
-      width: SOCIAL_WIDTH,
-      height: SOCIAL_HEIGHT,
-      source: "upload",
-      duration_ms: Date.now() - startedAt,
-      outcome: "ok",
-      cache: "store",
-    });
 
     return { url };
   } catch {

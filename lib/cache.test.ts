@@ -42,8 +42,6 @@ describe("cached assets", () => {
       indexKey,
       lockKey,
       ttlSeconds: 60,
-      eventName: "test_asset",
-      baseMetrics: { domain: "example.com" },
       produceAndUpload: async () => ({
         url: "https://cdn/y.webp",
         key: "k",
@@ -67,8 +65,6 @@ describe("cached assets", () => {
       indexKey,
       lockKey,
       ttlSeconds: 60,
-      eventName: "test_asset",
-      baseMetrics: { domain: "example.com" },
       produceAndUpload: async () => ({ url: "https://cdn/unused.webp" }),
     });
 
@@ -83,8 +79,6 @@ describe("cached assets", () => {
       indexKey,
       lockKey,
       ttlSeconds: 60,
-      eventName: "test_asset",
-      baseMetrics: { domain: "example.com" },
       purgeQueue: "purge-test",
       produceAndUpload: async () => ({
         url: "https://cdn/new.webp",
@@ -111,8 +105,6 @@ describe("cached assets", () => {
       indexKey,
       lockKey,
       ttlSeconds: 60,
-      eventName: "test_asset",
-      baseMetrics: { domain: "example.com" },
       produceAndUpload: async () => ({ url: null }),
     });
 

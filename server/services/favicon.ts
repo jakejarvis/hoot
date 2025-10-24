@@ -29,8 +29,6 @@ export async function getOrCreateFaviconBlobUrl(
     indexKey,
     lockKey,
     ttlSeconds: ttl,
-    eventName: "favicon_fetch",
-    baseMetrics: { domain, size: DEFAULT_SIZE },
     purgeQueue: "favicon",
     produceAndUpload: async () => {
       const sources = buildSources(domain);

@@ -1,4 +1,3 @@
-import { captureServer } from "@/lib/analytics/server";
 import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 
@@ -132,8 +131,6 @@ type CachedAssetOptions<TProduceMeta extends Record<string, unknown>> = {
   indexKey: string;
   lockKey: string;
   ttlSeconds: number;
-  eventName: string;
-  baseMetrics?: Record<string, unknown>;
   /**
    * Produce and upload the asset, returning { url, key } and any metrics to attach
    */
@@ -152,16 +149,8 @@ type CachedAssetOptions<TProduceMeta extends Record<string, unknown>> = {
 export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
   options: CachedAssetOptions<T>,
 ): Promise<{ url: string | null }> {
-  const {
-    indexKey,
-    lockKey,
-    ttlSeconds,
-    eventName,
-    baseMetrics,
-    produceAndUpload,
-    purgeQueue,
-  } = options;
-  const startedAt = Date.now();
+  const { indexKey, lockKey, ttlSeconds, produceAndUpload, purgeQueue } =
+    options;
 
   // 1) Check index
   try {
@@ -169,23 +158,9 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     if (raw && typeof raw === "object") {
       const cachedUrl = (raw as { url?: unknown }).url;
       if (typeof cachedUrl === "string") {
-        await captureServer(eventName, {
-          ...baseMetrics,
-          source: "redis",
-          duration_ms: Date.now() - startedAt,
-          outcome: "ok",
-          cache: "hit",
-        });
         return { url: cachedUrl };
       }
       if (cachedUrl === null) {
-        await captureServer(eventName, {
-          ...baseMetrics,
-          source: "redis",
-          duration_ms: Date.now() - startedAt,
-          outcome: "not_found",
-          cache: "hit",
-        });
         return { url: null };
       }
     }
@@ -202,13 +177,6 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     const cached = lockResult.cachedResult;
     if (cached && typeof cached === "object" && "url" in cached) {
       const cachedUrl = (cached as { url: string | null }).url;
-      await captureServer(eventName, {
-        ...baseMetrics,
-        source: "redis_wait",
-        duration_ms: Date.now() - startedAt,
-        outcome: cachedUrl ? "ok" : "not_found",
-        cache: "wait",
-      });
       return { url: cachedUrl };
     }
     return { url: null };
@@ -233,13 +201,6 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
       }
     } catch {}
 
-    await captureServer(eventName, {
-      ...baseMetrics,
-      ...(produced.metrics ?? {}),
-      duration_ms: Date.now() - startedAt,
-      outcome: produced.url ? "ok" : "not_found",
-      cache: "store",
-    });
     return { url: produced.url };
   } finally {
     try {

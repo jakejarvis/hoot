@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { db } from "@/lib/db/client";
 import { upsertDomain } from "@/lib/db/repos/domains";
 import { upsertHosting } from "@/lib/db/repos/hosting";
@@ -27,7 +26,6 @@ import { lookupIpMeta } from "@/server/services/ip";
 const log = logger();
 
 export async function detectHosting(domain: string): Promise<Hosting> {
-  const startedAt = Date.now();
   log.debug("hosting.start", { domain });
 
   // Fast path: DB
@@ -209,15 +207,6 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     dnsProvider: { name: dnsName, domain: dnsIconDomain },
     geo,
   };
-  await captureServer("hosting_detected", {
-    domain: registrable ?? domain,
-    hosting: hostingName,
-    email: emailName,
-    dns_provider: dnsName,
-    ip_present: Boolean(ip),
-    geo_country: geo.country || "",
-    duration_ms: Date.now() - startedAt,
-  });
   // Persist to Postgres
   const now = new Date();
   if (d) {

@@ -59,6 +59,12 @@ export async function GET(request: Request) {
       emitted += chunk.length;
     }
 
+    log.info("due-drain.cron.ok", {
+      emitted,
+      groups: result.groups,
+      duration_ms: Date.now() - startedAt,
+    });
+
     return NextResponse.json({
       success: true,
       emitted,

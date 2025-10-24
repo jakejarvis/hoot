@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
-import { captureServer } from "@/lib/analytics/server";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
@@ -57,7 +56,6 @@ export const DOH_PROVIDERS: DohProvider[] = [
 ];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
-  const startedAt = Date.now();
   log.debug("dns.start", { domain });
   const providers = providerOrderForLookup(domain);
   const durationByProvider: Record<string, number> = {};
@@ -137,27 +135,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     const resolverHint = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
     const sorted = sortDnsRecordsByType(assembled, types);
     if (allFreshAcrossTypes) {
-      await captureServer("dns_resolve_all", {
-        domain: registrable ?? domain,
-        duration_ms_total: Date.now() - startedAt,
-        counts: (() => {
-          return (types as DnsType[]).reduce(
-            (acc, t) => {
-              acc[t] = sorted.filter((r) => r.type === t).length;
-              return acc;
-            },
-            { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
-          );
-        })(),
-        cloudflare_ip_present: sorted.some(
-          (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-        ),
-        dns_provider_used: resolverHint,
-        provider_attempts: 0,
-        duration_ms_by_provider: {},
-        cache_hit: true,
-        cache_source: "postgres",
-      });
       return { records: sorted, resolver: resolverHint };
     }
 
@@ -261,20 +238,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           },
           { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
         );
-        const cloudflareIpPresent = merged.some(
-          (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
-        );
-        await captureServer("dns_resolve_all", {
-          domain: registrable ?? domain,
-          duration_ms_total: Date.now() - startedAt,
-          counts,
-          cloudflare_ip_present: cloudflareIpPresent,
-          dns_provider_used: pinnedProvider.key,
-          provider_attempts: 1,
-          duration_ms_by_provider: durationByProvider,
-          cache_hit: false,
-          cache_source: "partial",
-        });
         log.info("dns.ok.partial", {
           domain: registrable,
           counts,
@@ -313,9 +276,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           return acc;
         },
         { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
-      );
-      const cloudflareIpPresent = flat.some(
-        (r) => (r.type === "A" || r.type === "AAAA") && r.isCloudflare,
       );
       const resolverUsed = provider.key;
 
@@ -374,17 +334,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           });
         }
       }
-      await captureServer("dns_resolve_all", {
-        domain: registrable ?? domain,
-        duration_ms_total: Date.now() - startedAt,
-        counts,
-        cloudflare_ip_present: cloudflareIpPresent,
-        dns_provider_used: resolverUsed,
-        provider_attempts: attemptIndex + 1,
-        duration_ms_by_provider: durationByProvider,
-        cache_hit: false,
-        cache_source: "fresh",
-      });
       log.info("dns.ok", {
         domain: registrable,
         counts,
@@ -404,12 +353,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   }
 
   // All providers failed
-  await captureServer("dns_resolve_all", {
-    domain: registrable ?? domain,
-    duration_ms_total: Date.now() - startedAt,
-    failure: true,
-    provider_attempts: providers.length,
-  });
   log.error("dns.all.providers.failed", {
     domain: registrable,
     providers: providers.map((p) => p.key),

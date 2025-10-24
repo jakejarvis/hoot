@@ -66,8 +66,6 @@ export async function getOrCreateScreenshotBlobUrl(
     indexKey,
     lockKey,
     ttlSeconds: ttl,
-    eventName: "screenshot_capture",
-    baseMetrics: { domain, width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT },
     purgeQueue: "screenshot",
     produceAndUpload: async () => {
       let browser: Browser | null = null;
