@@ -95,13 +95,21 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
         // keep as-is on transient errors
       }
     }
+
+    // Normalize robots: convert empty object to valid RobotsTxt structure
+    const robotsData = existing[0].robots as RobotsTxt;
+    const normalizedRobots: RobotsTxt =
+      robotsData && "fetched" in robotsData
+        ? robotsData
+        : { fetched: false, groups: [], sitemaps: [] };
+
     const response: SeoResponse = {
       meta: {
         openGraph: existing[0].metaOpenGraph as OpenGraphMeta,
         twitter: existing[0].metaTwitter as TwitterMeta,
         general: existing[0].metaGeneral as GeneralMeta,
       },
-      robots: existing[0].robots as RobotsTxt,
+      robots: normalizedRobots,
       preview,
       source: {
         finalUrl: existing[0].sourceFinalUrl ?? null,
@@ -227,7 +235,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       previewImageUrl: response.preview?.image ?? null,
       previewImageUploadedUrl: response.preview?.imageUploaded ?? null,
       canonicalUrl: response.preview?.canonicalUrl ?? null,
-      robots: robots ?? ({} as RobotsTxt),
+      robots: robots ?? { fetched: false, groups: [], sitemaps: [] },
       robotsSitemaps: response.robots?.sitemaps ?? [],
       errors: response.errors ?? {},
       fetchedAt: now,
