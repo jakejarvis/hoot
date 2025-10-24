@@ -62,9 +62,9 @@
   --primary-foreground: oklch(98.5% 0 0);
   --secondary: oklch(92.2% 0 0);
   --secondary-foreground: oklch(20.5% 0 0);
-  --muted: oklch(92.2% 0 0);
+  --muted: oklch(94.2% 0 0);
   --muted-foreground: oklch(43.9% 0 0);
-  --accent: oklch(92.2% 0 0);
+  --accent: oklch(96% 0 0);
   --accent-foreground: oklch(14.5% 0 0);
   --destructive: oklch(50.5% 0.213 27.518);
   --destructive-foreground: oklch(98.5% 0 0);
@@ -165,6 +165,10 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  ::selection {
+    @apply bg-foreground text-background;
   }
 
   /* Custom Scrollbars with Frosted Glass Treatment */
