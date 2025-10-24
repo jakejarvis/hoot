@@ -59,14 +59,9 @@ async function getPinoRoot(): Promise<PinoLogger> {
   if (nodeRoot) return nodeRoot;
 
   const pino = await import("pino");
-  const transport =
-    !isProd && env.LOG_PRETTY !== "0"
-      ? {
-          target: "pino-pretty",
-          options: { colorize: true, singleLine: true },
-        }
-      : undefined;
 
+  // Best practice: Never use transports in Next.js (worker threads don't survive hot reloads)
+  // For pretty logs in dev, pipe output externally: `pnpm dev | pnpm exec pino-pretty`
   nodeRoot = pino.default({
     level: defaultLevel,
     base: {
@@ -77,7 +72,6 @@ async function getPinoRoot(): Promise<PinoLogger> {
     },
     messageKey: "msg",
     timestamp: pino.default.stdTimeFunctions.isoTime,
-    transport,
     serializers: {
       err: pino.default.stdSerializers.err,
     },

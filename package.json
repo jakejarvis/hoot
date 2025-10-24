@@ -13,6 +13,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbo",
+    "dev:pretty": "next dev --turbo 2>&1 | pino-pretty",
     "docker:up": "scripts/start-dev-infra.sh",
     "docker:down": "scripts/stop-dev-infra.sh",
     "build": "next build",

@@ -2,20 +2,21 @@ import type { Instrumentation } from "next";
 
 // Conditionally register Node.js-specific instrumentation
 export const register = async () => {
+  // Only register in Node.js runtime (not Edge)
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // Dynamic import to avoid bundling Node.js code into Edge runtime
     const { logger } = await import("@/lib/logger");
     const log = logger({ module: "instrumentation" });
 
-    // Process-level error hooks (Node only)
-    process.on("uncaughtException", (err) =>
-      log.error("uncaughtException", { err }),
-    );
-    process.on("unhandledRejection", (reason) =>
+    // Process-level error hooks
+    process.on("uncaughtException", (err) => {
+      log.error("uncaughtException", { err });
+    });
+    process.on("unhandledRejection", (reason) => {
       log.error("unhandledRejection", {
         err: reason instanceof Error ? reason : new Error(String(reason)),
-      }),
-    );
+      });
+    });
   }
 };
 
@@ -23,6 +24,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
   err,
   request,
 ) => {
+  // Only track errors in Node.js runtime (not Edge)
   if (process.env.NEXT_RUNTIME === "nodejs") {
     try {
       // Dynamic imports for Node.js-only code
@@ -63,9 +65,9 @@ export const onRequestError: Instrumentation.onRequestError = async (
       });
 
       await phClient.shutdown();
-    } catch (err) {
-      // Graceful degradation - log error but don't throw to avoid breaking the request
-      console.error("Instrumentation error", err);
+    } catch (trackingError) {
+      // Graceful degradation - don't throw to avoid breaking the request
+      console.error("Error tracking failed:", trackingError);
     }
   }
 };
