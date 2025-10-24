@@ -33,7 +33,7 @@ export function BrowserWindow({
         {/* Address Bar */}
         <div className="flex h-3.5 flex-1 items-center rounded-sm bg-zinc-200 px-2 dark:bg-zinc-800">
           <span className="inline-block w-full truncate text-center text-[8px] text-zinc-500 dark:text-zinc-400">
-            <a href={url} target="_blank" rel="noopener">
+            <a href={`https://${url}`} target="_blank" rel="noopener">
               {url}
             </a>
           </span>

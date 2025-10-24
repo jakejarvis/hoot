@@ -364,7 +364,7 @@ function RobotsSummary({
           href={`https://${domain}/robots.txt`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 hover:underline"
+          className="inline-flex items-center gap-1 hover:underline hover:underline-offset-3"
         >
           <span>robots.txt</span>
           <ExternalLink
