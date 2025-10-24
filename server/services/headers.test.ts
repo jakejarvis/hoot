@@ -48,11 +48,11 @@ describe("probeHeaders", () => {
     const { probeHeaders } = await import("./headers");
     const out1 = await probeHeaders("example.com");
     expect(out1.length).toBeGreaterThan(0);
-    const fetchSpy = vi.spyOn(global, "fetch");
+    // In Vitest v4, vi.spyOn on a mock returns the same mock, so clear its history
+    fetchMock.mockClear();
     const out2 = await probeHeaders("example.com");
     expect(out2.length).toBe(out1.length);
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
+    expect(fetchMock).not.toHaveBeenCalled();
     fetchMock.mockRestore();
   });
 

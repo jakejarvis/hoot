@@ -17,9 +17,18 @@ const deleteObjectsMock = vi.hoisted(() =>
 
 vi.mock("@aws-sdk/client-s3", () => {
   return {
-    S3Client: vi.fn().mockImplementation(() => ({ send: s3Send })),
-    PutObjectCommand: vi.fn().mockImplementation((input) => ({ input })),
-    DeleteObjectsCommand: vi.fn().mockImplementation((input) => ({ input })),
+    // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
+    S3Client: vi.fn().mockImplementation(function () {
+      return { send: s3Send };
+    }),
+    // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
+    PutObjectCommand: vi.fn().mockImplementation(function (input) {
+      return { input };
+    }),
+    // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
+    DeleteObjectsCommand: vi.fn().mockImplementation(function (input) {
+      return { input };
+    }),
   };
 });
 

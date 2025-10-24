@@ -14,8 +14,14 @@ let getSeo: typeof import("./seo").getSeo;
 
 const s3Send = vi.hoisted(() => vi.fn(async () => ({})));
 vi.mock("@aws-sdk/client-s3", () => ({
-  S3Client: vi.fn().mockImplementation(() => ({ send: s3Send })),
-  PutObjectCommand: vi.fn().mockImplementation((input) => ({ input })),
+  // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
+  S3Client: vi.fn().mockImplementation(function () {
+    return { send: s3Send };
+  }),
+  // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
+  PutObjectCommand: vi.fn().mockImplementation(function (input) {
+    return { input };
+  }),
 }));
 vi.stubEnv("R2_ACCOUNT_ID", "test-account");
 vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
