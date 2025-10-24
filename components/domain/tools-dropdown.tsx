@@ -16,6 +16,95 @@ type ToolsDropdownProps = {
   domain: string;
 };
 
+type Tool = {
+  name: string;
+  faviconDomain: string;
+  buildUrl: (domain: string) => string;
+};
+
+const TOOLS = (
+  [
+    {
+      name: "crt.sh",
+      faviconDomain: "crt.sh",
+      buildUrl: (domain) => `https://crt.sh/?q=${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "DomainTools",
+      faviconDomain: "domaintools.com",
+      buildUrl: (domain) =>
+        `https://whois.domaintools.com/${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "intoDNS",
+      faviconDomain: "intodns.com",
+      buildUrl: (domain) => `https://intodns.com/${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "MxToolbox",
+      faviconDomain: "mxtoolbox.com",
+      buildUrl: (domain) =>
+        `https://mxtoolbox.com/SuperTool.aspx?action=mx%3a${encodeURIComponent(domain)}&run=toolpage`,
+    },
+    {
+      name: "Security Headers",
+      faviconDomain: "securityheaders.io",
+      buildUrl: (domain) =>
+        `https://securityheaders.com/?q=${encodeURIComponent(`https://${domain}`)}&hide=on&followRedirects=on`,
+    },
+    {
+      name: "SecurityTrails",
+      faviconDomain: "securitytrails.com",
+      buildUrl: (domain) =>
+        `https://securitytrails.com/domain/${encodeURIComponent(domain)}/dns`,
+    },
+    {
+      name: "Sharing Debugger",
+      faviconDomain: "facebook.com",
+      buildUrl: (domain) =>
+        `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(`https://${domain}`)}`,
+    },
+    {
+      name: "VirusTotal",
+      faviconDomain: "virustotal.com",
+      buildUrl: (domain) =>
+        `https://www.virustotal.com/gui/domain/${encodeURIComponent(domain)}/relations`,
+    },
+    {
+      name: "Wayback Machine",
+      faviconDomain: "web.archive.org",
+      buildUrl: (domain) =>
+        `https://web.archive.org/web/*/${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "What's My DNS?",
+      faviconDomain: "whatsmydns.net",
+      buildUrl: (domain) =>
+        `https://www.whatsmydns.net/#A/${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "who.is",
+      faviconDomain: "who.is",
+      buildUrl: (domain) =>
+        `https://who.is/whois/${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "Shodan",
+      faviconDomain: "shodan.io",
+      buildUrl: (domain) =>
+        `https://www.shodan.io/search?query=hostname:${encodeURIComponent(domain)}`,
+    },
+    {
+      name: "Censys",
+      faviconDomain: "censys.io",
+      buildUrl: (domain) =>
+        `https://search.censys.io/search?resource=hosts&q=${encodeURIComponent(domain)}`,
+    },
+  ] satisfies Tool[]
+).toSorted((a, b) =>
+  a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+);
+
 export function ToolsDropdown({ domain }: ToolsDropdownProps) {
   return (
     <DropdownMenu>
@@ -25,127 +114,19 @@ export function ToolsDropdown({ domain }: ToolsDropdownProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://crt.sh/?q=${encodeURIComponent(domain)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="crt.sh" />
-            crt.sh
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://whois.domaintools.com/${encodeURIComponent(domain)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="domaintools.com" />
-            DomainTools
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://intodns.com/${encodeURIComponent(domain)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="intodns.com" />
-            intoDNS
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://mxtoolbox.com/SuperTool.aspx?action=mx%3a${encodeURIComponent(domain)}&run=toolpage`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="mxtoolbox.com" />
-            MxToolbox
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://securityheaders.com/?q=${encodeURIComponent(`https://${domain}`)}&hide=on&followRedirects=on`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="securityheaders.io" />
-            Security Headers
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://securitytrails.com/domain/${encodeURIComponent(domain)}/dns`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="securitytrails.com" />
-            SecurityTrails
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(`https://${domain}`)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="facebook.com" />
-            Sharing Debugger
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://www.virustotal.com/gui/domain/${encodeURIComponent(domain)}/relations`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="virustotal.com" />
-            VirusTotal
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://web.archive.org/web/*/${encodeURIComponent(domain)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="web.archive.org" />
-            Wayback Machine
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://www.whatsmydns.net/#A/${encodeURIComponent(domain)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="whatsmydns.net" />
-            What's My DNS?
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a
-            href={`https://who.is/whois/${encodeURIComponent(domain)}`}
-            className="cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Favicon domain="who.is" />
-            who.is
-          </a>
-        </DropdownMenuItem>
+        {TOOLS.map((tool) => (
+          <DropdownMenuItem key={tool.name} asChild>
+            <a
+              href={tool.buildUrl(domain)}
+              className="cursor-pointer"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Favicon domain={tool.faviconDomain} />
+              {tool.name}
+            </a>
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a
