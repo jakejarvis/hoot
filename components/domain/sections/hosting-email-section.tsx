@@ -73,7 +73,7 @@ export function HostingEmailSection({
           <KeyValueGrid colsDesktop={3}>
             <KeyValue
               label="DNS"
-              value={data.dnsProvider.name}
+              value={data.dnsProvider.name ?? "Not configured"}
               leading={
                 data.dnsProvider.domain ? (
                   <Favicon
@@ -86,7 +86,7 @@ export function HostingEmailSection({
             />
             <KeyValue
               label="Hosting"
-              value={data.hostingProvider.name}
+              value={data.hostingProvider.name ?? "Not configured"}
               leading={
                 data.hostingProvider.domain ? (
                   <Favicon
@@ -99,7 +99,7 @@ export function HostingEmailSection({
             />
             <KeyValue
               label="Email"
-              value={data.emailProvider.name}
+              value={data.emailProvider.name ?? "Not configured"}
               leading={
                 data.emailProvider.domain ? (
                   <Favicon

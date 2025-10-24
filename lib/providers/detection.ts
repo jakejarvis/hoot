@@ -133,7 +133,7 @@ function detectProviderFromList(
       return { name: provider.name, domain: provider.domain };
     }
   }
-  return { name: "Unknown", domain: null };
+  return { name: null, domain: null };
 }
 
 /**
@@ -149,13 +149,13 @@ export function detectHostingProvider(headers: HttpHeader[]): ProviderRef {
  */
 export function detectEmailProvider(mxHosts: string[]): ProviderRef {
   const found = detectProviderFromList(EMAIL_PROVIDERS, undefined, mxHosts);
-  if (found.name !== "Unknown") return found;
+  if (found.name) return found;
   const first = mxHosts[0];
   if (first) {
     const root = toRegistrableDomain(first);
     return { name: root || first, domain: root || null };
   }
-  return { name: "Unknown", domain: null };
+  return { name: null, domain: null };
 }
 
 /**
@@ -168,19 +168,19 @@ export function detectDnsProvider(nsHosts: string[]): ProviderRef {
     undefined,
     nsHosts,
   );
-  if (found.name !== "Unknown") return found;
+  if (found.name) return found;
   const first = nsHosts[0];
   if (first) {
     const root = toRegistrableDomain(first);
     return { name: root || first, domain: root || null };
   }
-  return { name: "Unknown", domain: null };
+  return { name: null, domain: null };
 }
 
 /** Detect registrar provider from registrar name */
 export function detectRegistrar(registrarName: string): ProviderRef {
   const name = (registrarName || "").toLowerCase();
-  if (!name) return { name: "Unknown", domain: null };
+  if (!name) return { name: null, domain: null };
   const ctx: DetectionContext = {
     headers: {},
     mx: [],
@@ -191,18 +191,18 @@ export function detectRegistrar(registrarName: string): ProviderRef {
   for (const reg of REGISTRAR_PROVIDERS) {
     if (evalRule(reg.rule, ctx)) return { name: reg.name, domain: reg.domain };
   }
-  return { name: "Unknown", domain: null };
+  return { name: null, domain: null };
 }
 
 /** Detect certificate authority from an issuer string */
 export function detectCertificateAuthority(issuer: string): ProviderRef {
   const name = (issuer || "").toLowerCase();
-  if (!name) return { name: "Unknown", domain: null };
+  if (!name) return { name: null, domain: null };
   const ctx: DetectionContext = { headers: {}, mx: [], ns: [], issuer: name };
   for (const ca of CA_PROVIDERS) {
     if (evalRule(ca.rule, ctx)) {
       return { name: ca.name, domain: ca.domain };
     }
   }
-  return { name: "Unknown", domain: null };
+  return { name: null, domain: null };
 }

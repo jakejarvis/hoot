@@ -99,15 +99,15 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     if (row) {
       const info: Hosting = {
         hostingProvider: {
-          name: row.hostingProviderName ?? "Unknown",
+          name: row.hostingProviderName ?? null,
           domain: row.hostingProviderDomain ?? null,
         },
         emailProvider: {
-          name: row.emailProviderName ?? "Unknown",
+          name: row.emailProviderName ?? null,
           domain: row.emailProviderDomain ?? null,
         },
         dnsProvider: {
-          name: row.dnsProviderName ?? "Unknown",
+          name: row.dnsProviderName ?? null,
           domain: row.dnsProviderDomain ?? null,
         },
         geo: {
@@ -156,24 +156,25 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   const geo = meta.geo;
 
   // Hosting provider detection with fallback:
-  // - If no A record/IP → unset → "Not configured"
+  // - If no A record/IP → null
   // - Else if unknown → try IP ownership org/ISP
   const hostingDetected = detectHostingProvider(headers);
 
   let hostingName = hostingDetected.name;
   let hostingIconDomain = hostingDetected.domain;
   if (!ip) {
-    hostingName = "Not configured";
+    hostingName = null;
     hostingIconDomain = null;
-  } else if (/^unknown$/i.test(hostingName)) {
+  } else if (!hostingName) {
+    // Unknown provider: try IP ownership org/ISP
     if (meta.owner) hostingName = meta.owner;
     hostingIconDomain = meta.domain ?? null;
   }
 
-  // Determine email provider, using "Not configured" when MX is unset
+  // Determine email provider, null when MX is unset
   const emailDetected =
     mx.length === 0
-      ? { name: "Not configured", domain: null }
+      ? { name: null, domain: null }
       : detectEmailProvider(mx.map((m) => m.value));
   let emailName = emailDetected.name;
   let emailIconDomain = emailDetected.domain;
@@ -184,7 +185,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   let dnsIconDomain = dnsDetected.domain;
 
   // If no known match for email provider, fall back to the root domain of the first MX host
-  if (emailName !== "Not configured" && !emailIconDomain && mx[0]?.value) {
+  if (emailName && !emailIconDomain && mx[0]?.value) {
     const root = toRegistrableDomain(mx[0].value);
     if (root) {
       emailName = root;
@@ -212,21 +213,27 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   if (d) {
     const [hostingProviderId, emailProviderId, dnsProviderId] =
       await Promise.all([
-        resolveOrCreateProviderId({
-          category: "hosting",
-          domain: hostingIconDomain,
-          name: hostingName,
-        }),
-        resolveOrCreateProviderId({
-          category: "email",
-          domain: emailIconDomain,
-          name: emailName,
-        }),
-        resolveOrCreateProviderId({
-          category: "dns",
-          domain: dnsIconDomain,
-          name: dnsName,
-        }),
+        hostingName
+          ? resolveOrCreateProviderId({
+              category: "hosting",
+              domain: hostingIconDomain,
+              name: hostingName,
+            })
+          : Promise.resolve(null),
+        emailName
+          ? resolveOrCreateProviderId({
+              category: "email",
+              domain: emailIconDomain,
+              name: emailName,
+            })
+          : Promise.resolve(null),
+        dnsName
+          ? resolveOrCreateProviderId({
+              category: "dns",
+              domain: dnsIconDomain,
+              name: dnsName,
+            })
+          : Promise.resolve(null),
       ]);
     await upsertHosting({
       domainId: d.id,

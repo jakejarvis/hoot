@@ -97,8 +97,7 @@ export function CertificatesSection({
                     ) : undefined
                   }
                   suffix={
-                    firstCert.caProvider?.name &&
-                    firstCert.caProvider.name !== "Unknown" ? (
+                    firstCert.caProvider?.name ? (
                       <span className="text-[11px] text-muted-foreground">
                         {firstCert.caProvider.name}
                       </span>
@@ -206,8 +205,7 @@ export function CertificatesSection({
                               ) : undefined
                             }
                             suffix={
-                              c.caProvider?.name &&
-                              c.caProvider.name !== "Unknown" ? (
+                              c.caProvider?.name ? (
                                 <span className="text-[11px] text-muted-foreground">
                                   {c.caProvider.name}
                                 </span>

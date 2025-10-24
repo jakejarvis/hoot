@@ -15,8 +15,8 @@ describe("ProviderValue", () => {
   });
 
   it("renders name only when domain is null", () => {
-    render(<ProviderValue name="Unknown" domain={null} />);
-    expect(screen.getByText("Unknown")).toBeInTheDocument();
+    render(<ProviderValue name="Not configured" domain={null} />);
+    expect(screen.getByText("Not configured")).toBeInTheDocument();
     expect(screen.queryByText(/icon:/)).toBeNull();
   });
 });
