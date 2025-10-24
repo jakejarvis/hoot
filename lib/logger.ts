@@ -87,11 +87,17 @@ async function getPinoRoot(): Promise<PinoLogger> {
 }
 
 function makeNodeLogger(base: LogFields = {}): Logger {
+  // Cache child logger per instance to avoid repeated allocations
+  let cachedChild: PinoLogger | undefined;
+
   const emit = async (level: Level, msg: string, fields?: LogFields) => {
-    const root = await getPinoRoot();
-    const child = Object.keys(base).length ? root.child(base) : root;
-    child[level]({ ...(fields ?? {}) }, msg);
+    if (!cachedChild) {
+      const root = await getPinoRoot();
+      cachedChild = Object.keys(base).length ? root.child(base) : root;
+    }
+    cachedChild[level]({ ...(fields ?? {}) }, msg);
   };
+
   // Sync facade; logs flush after first dynamic import resolves.
   return {
     debug: (m, f) => {
