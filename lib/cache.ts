@@ -47,7 +47,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       nx: true,
       ex: lockTtl,
     });
-    const acquired = setRes === "OK" || setRes === undefined;
+    const acquired = Boolean(setRes);
 
     if (acquired) {
       log.debug("redis.lock.acquired", { lockKey });
@@ -62,7 +62,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
   } catch (err) {
     log.warn("redis.lock.acquisition.failed", {
       lockKey,
-      err,
+      err: err instanceof Error ? err : new Error(String(err)),
     });
     // If Redis is down, fail open (don't wait)
     return { acquired: true, cachedResult: null };
@@ -82,7 +82,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
           lockKey,
           resultKey,
           pollCount,
-          waitMs: Date.now() - startTime,
+          durationMs: Date.now() - startTime,
         });
         return { acquired: false, cachedResult: result };
       }
@@ -101,7 +101,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
           nx: true,
           ex: lockTtl,
         });
-        const retryAcquired = retryRes === "OK" || retryRes === undefined;
+        const retryAcquired = Boolean(retryRes);
         if (retryAcquired) {
           return { acquired: true, cachedResult: null };
         }
@@ -110,7 +110,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       log.warn("redis.polling.error", {
         lockKey,
         resultKey,
-        err,
+        err: err instanceof Error ? err : new Error(String(err)),
       });
     }
 
@@ -121,7 +121,7 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
     lockKey,
     resultKey,
     pollCount,
-    waitMs: Date.now() - startTime,
+    durationMs: Date.now() - startTime,
   });
 
   return { acquired: false, cachedResult: null };
@@ -165,7 +165,10 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
       }
     }
   } catch (err) {
-    log.debug("redis.index.read.failed", { indexKey, err });
+    log.debug("redis.index.read.failed", {
+      indexKey,
+      err: err instanceof Error ? err : new Error(String(err)),
+    });
   }
 
   // 2) Acquire lock or wait
@@ -202,7 +205,11 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
         });
       }
     } catch (err) {
-      log.warn("redis.cache.store.failed", { indexKey, purgeQueue, err });
+      log.warn("redis.cache.store.failed", {
+        indexKey,
+        purgeQueue,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
     }
 
     return { url: produced.url };
@@ -210,7 +217,10 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     try {
       await redis.del(lockKey);
     } catch (err) {
-      log.debug("redis.lock.release.failed", { lockKey, err });
+      log.debug("redis.lock.release.failed", {
+        lockKey,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
     }
   }
 }

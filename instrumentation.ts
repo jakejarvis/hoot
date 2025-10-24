@@ -36,8 +36,8 @@ export const onRequestError: Instrumentation.onRequestError = async (
         return; // PostHog not available, skip error tracking
       }
 
-      let distinctId = null;
-      if (request.headers.cookie) {
+      let distinctId: string | null = null;
+      if (request.headers?.cookie) {
         const cookieString = request.headers.cookie;
         const postHogCookieMatch =
           typeof cookieString === "string"
@@ -49,8 +49,10 @@ export const onRequestError: Instrumentation.onRequestError = async (
             const decodedCookie = decodeURIComponent(postHogCookieMatch[1]);
             const postHogData = JSON.parse(decodedCookie);
             distinctId = postHogData.distinct_id;
-          } catch (e) {
-            log.error("cookie.parse.error", { err: e });
+          } catch (err) {
+            log.error("cookie.parse.error", {
+              err: err instanceof Error ? err : new Error(String(err)),
+            });
           }
         }
       }
@@ -61,9 +63,9 @@ export const onRequestError: Instrumentation.onRequestError = async (
       });
 
       await phClient.shutdown();
-    } catch (instrumentationError) {
+    } catch (err) {
       // Graceful degradation - log error but don't throw to avoid breaking the request
-      console.error("Instrumentation error", instrumentationError);
+      console.error("Instrumentation error", err);
     }
   }
 };

@@ -53,8 +53,10 @@ export async function GET(request: Request) {
             e.data.sections.map((s) => redis.zrem(ns("due", s), e.data.domain)),
           ),
         );
-      } catch (e) {
-        log.warn("cleanup.failed", { err: e });
+      } catch (err) {
+        log.warn("cleanup.failed", {
+          err: err instanceof Error ? err : new Error(String(err)),
+        });
       }
       emitted += chunk.length;
     }
@@ -71,12 +73,14 @@ export async function GET(request: Request) {
       groups: result.groups,
       durationMs: Date.now() - startedAt,
     });
-  } catch (error) {
-    log.error("cron.failed", { err: error });
+  } catch (err) {
+    log.error("cron.failed", {
+      err: err instanceof Error ? err : new Error(String(err)),
+    });
     return NextResponse.json(
       {
         error: "Internal error",
-        message: error instanceof Error ? error.message : "unknown",
+        message: err instanceof Error ? err.message : "unknown",
       },
       { status: 500 },
     );

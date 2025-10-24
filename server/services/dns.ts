@@ -242,6 +242,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
           domain: registrable ?? domain,
           counts,
           resolver: pinnedProvider.key,
+          durationMs: durationByProvider[pinnedProvider.key],
         });
         return {
           records: merged,
@@ -338,6 +339,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         domain: registrable ?? domain,
         counts,
         resolver: resolverUsed,
+        durationMs: durationByProvider,
       });
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {

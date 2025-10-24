@@ -164,7 +164,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
     log.info("ok", {
       domain: registrable ?? domain,
-      chain_length: out.length,
+      chainLength: out.length,
     });
     return out;
   } catch (err) {

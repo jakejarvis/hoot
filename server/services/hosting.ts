@@ -245,7 +245,12 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     try {
       const dueAtMs = ttlForHosting(now).getTime();
       await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
-    } catch {}
+    } catch (err) {
+      log.warn("schedule.failed", {
+        domain: registrable ?? domain,
+        err: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
   }
   log.info("ok", {
     domain: registrable ?? domain,

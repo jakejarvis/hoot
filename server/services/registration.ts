@@ -205,7 +205,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     } catch (err) {
       log.warn("schedule.failed", {
         domain: registrable ?? domain,
-        err,
+        err: err instanceof Error ? err : new Error(String(err)),
       });
     }
   }

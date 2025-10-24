@@ -81,7 +81,12 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
           registrable ?? domain,
           dueAtMs,
         );
-      } catch {}
+      } catch (err) {
+        log.warn("schedule.failed", {
+          domain: registrable ?? domain,
+          err: err instanceof Error ? err : new Error(String(err)),
+        });
+      }
     }
     log.info("ok", {
       domain: registrable ?? domain,
