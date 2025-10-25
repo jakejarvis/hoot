@@ -55,7 +55,7 @@
     "country-flag-icons": "^1.5.21",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.6",
+    "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
     "file-type": "^21.0.0",
     "geist": "^1.5.1",
