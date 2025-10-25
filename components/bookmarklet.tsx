@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, MousePointerClick } from "lucide-react";
+import { Bookmark, Layers2, MousePointerClick } from "lucide-react";
 import { useCallback } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -11,7 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+
+// retrieve this from the last segment of the icloud.com URL provided when sharing a shortcut
+const APPLE_SHORTCUT_ID = "fa17677a0d6440c2a195e608305d6f2b";
 
 export function Bookmarklet({ className }: { className?: string }) {
   // a little hack to "unsafely" use raw javascript as a link
@@ -29,35 +33,63 @@ export function Bookmarklet({ className }: { className?: string }) {
           <span className="sr-only">Open bookmarklet info</span>
         </Button>
       </DialogTrigger>
+
       <DialogContent className="border-border/80 dark:border-border/50">
-        <DialogHeader className="space-y-2">
+        <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5">
             <MousePointerClick className="h-4.5 w-4.5" />
             Bookmarklet
           </DialogTitle>
-          <DialogDescription>
-            Drag the button below to your bookmarks bar. Then, press it on any
-            site and the Domainstack report for that domain will open in a new
-            tab, like magic!
+          <DialogDescription className="sr-only">
+            Discover shortcuts to investigate domains from anywhere.
           </DialogDescription>
         </DialogHeader>
-        <button
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "w-fit p-0 leading-none",
-          )}
-          onClick={(e) => e.preventDefault()}
-          type="button"
-        >
-          {/** biome-ignore lint/a11y/useValidAnchor: we set the href above */}
+
+        <div className="space-y-3.5">
+          <p className="text-muted-foreground text-sm">
+            Drag the button below to your bookmarks bar. Then, press it on any
+            site and the report for that domain will open in a new tab, like
+            magic!
+          </p>
+          {/** biome-ignore lint/a11y/noStaticElementInteractions: the link is essentially a button */}
           <a
             ref={hrefScript}
-            className="flex items-center gap-1.5 px-3.5 py-1.5"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "!px-3",
+            )}
+            // biome-ignore lint/a11y/useValidAnchor: the href is a script, not a valid URL that we want to open now
+            onClick={(e) => e.preventDefault()}
           >
             <Bookmark />
             <span>Inspect Domain</span>
           </a>
-        </button>
+        </div>
+
+        <Separator className="bg-border/80 dark:bg-border/50" />
+
+        <div className="space-y-3.5">
+          <p className="text-muted-foreground text-sm">
+            Or, on Apple devices, add our Shortcut via the button below. An{" "}
+            <span className="font-semibold text-foreground/80">
+              Inspect Domain
+            </span>{" "}
+            option will now appear when you share a webpage from Safari.
+          </p>
+          <a
+            // https://www.icloud.com/shortcuts/fa17677a0d6440c2a195e608305d6f2b
+            href={`workflow://shortcuts/${APPLE_SHORTCUT_ID}`}
+            target="_blank"
+            rel="noopener"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "!px-3",
+            )}
+          >
+            <Layers2 />
+            <span>Add Shortcut</span>
+          </a>
+        </div>
       </DialogContent>
     </Dialog>
   );
