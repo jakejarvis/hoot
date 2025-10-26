@@ -197,4 +197,50 @@ describe("pricing service", () => {
       expect(cached).not.toEqual(oldData);
     });
   });
+
+  describe("getPricingForTld - lock management", () => {
+    it("releases lock after successful fetch", async () => {
+      const { redis } = await import("@/lib/redis");
+
+      vi.spyOn(global, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockPorkbunResponse,
+      } as unknown as Response);
+
+      await getPricingForTld("example.com");
+
+      // Verify lock was released
+      expect(await redis.exists("pricing:porkbun-lock")).toBe(0);
+    });
+
+    it("releases lock after fetch error", async () => {
+      const { redis } = await import("@/lib/redis");
+
+      vi.spyOn(global, "fetch").mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      await getPricingForTld("example.com");
+
+      // Verify lock was released even though fetch failed
+      expect(await redis.exists("pricing:porkbun-lock")).toBe(0);
+    });
+
+    it("sets negative cache on fetch error", async () => {
+      const { redis } = await import("@/lib/redis");
+
+      vi.spyOn(global, "fetch").mockRejectedValueOnce(new Error("API down"));
+
+      await getPricingForTld("example.com");
+
+      // Verify negative cache was set
+      const cached = await redis.get("pricing:porkbun");
+      expect(cached).toBeNull();
+
+      // Verify TTL is short (should be 5 seconds)
+      const ttl = await redis.ttl("pricing:porkbun");
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(5);
+    });
+  });
 });

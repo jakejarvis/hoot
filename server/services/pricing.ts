@@ -64,6 +64,25 @@ async function fetchProviderPricing(
         log.info("fetch.ok", { provider: provider.name, cached: false });
       } catch (err) {
         log.error("fetch.error", { provider: provider.name, err });
+        // Write a short-TTL negative cache to prevent hammering during outages
+        try {
+          await redis.set(provider.cacheKey, null, { ex: 5 });
+        } catch (cacheErr) {
+          log.warn("negative-cache.failed", {
+            provider: provider.name,
+            err: cacheErr,
+          });
+        }
+      } finally {
+        // Always release the lock so waiters don't stall
+        try {
+          await redis.del(provider.lockKey);
+        } catch (delErr) {
+          log.warn("lock.release.failed", {
+            provider: provider.name,
+            err: delErr,
+          });
+        }
       }
     } else {
       payload = lock.cachedResult;
@@ -86,21 +105,42 @@ const porkbunProvider: PricingProvider = {
   async fetchPricing(): Promise<RegistrarPricingResponse> {
     // Does not require authentication!
     // https://porkbun.com/api/json/v3/documentation#Domain%20Pricing
-    const res = await fetch("https://api.porkbun.com/api/json/v3/pricing/get", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10 second timeout
 
-    if (!res.ok) {
-      log.error("upstream.error", {
-        provider: "porkbun",
-        status: res.status,
-      });
-      throw new Error(`Porkbun API returned ${res.status}`);
+    try {
+      const res = await fetch(
+        "https://api.porkbun.com/api/json/v3/pricing/get",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+          signal: controller.signal,
+        },
+      );
+
+      if (!res.ok) {
+        log.error("upstream.error", {
+          provider: "porkbun",
+          status: res.status,
+        });
+        throw new Error(`Porkbun API returned ${res.status}`);
+      }
+
+      return (await res.json()) as RegistrarPricingResponse;
+    } catch (err) {
+      // Translate AbortError into a retryable timeout error
+      if (err instanceof Error && err.name === "AbortError") {
+        log.error("upstream.timeout", {
+          provider: "porkbun",
+          timeoutMs: 10_000,
+        });
+        throw new Error("Porkbun API request timed out after 10 seconds");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return (await res.json()) as RegistrarPricingResponse;
   },
 
   extractPrice(response: RegistrarPricingResponse, tld: string): string | null {
@@ -151,6 +191,7 @@ export async function getPricingForTld(domain: string): Promise<Pricing> {
 /**
  * Proactively refresh pricing data from all providers.
  * Called by the daily cron job to keep cache warm.
+ * Runs all provider refreshes in parallel for efficiency.
  */
 export async function refreshAllProviderPricing(): Promise<{
   refreshed: string[];
@@ -159,17 +200,35 @@ export async function refreshAllProviderPricing(): Promise<{
   const refreshed: string[] = [];
   const failed: string[] = [];
 
-  for (const provider of providers) {
+  // Run all provider refreshes in parallel
+  const tasks = providers.map(async (provider) => {
     try {
       const payload = await provider.fetchPricing();
       await redis.set(provider.cacheKey, payload, {
         ex: provider.cacheTtlSeconds,
       });
-      refreshed.push(provider.name);
-      log.info("refresh.ok", { provider: provider.name });
+      return { name: provider.name, success: true as const };
     } catch (err) {
-      log.error("refresh.failed", { provider: provider.name, err });
-      failed.push(provider.name);
+      return { name: provider.name, success: false as const, error: err };
+    }
+  });
+
+  const results = await Promise.allSettled(tasks);
+
+  // Process results and emit logs
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      const { name, success, error } = result.value;
+      if (success) {
+        refreshed.push(name);
+        log.info("refresh.ok", { provider: name });
+      } else {
+        failed.push(name);
+        log.error("refresh.failed", { provider: name, err: error });
+      }
+    } else {
+      // Promise itself was rejected (shouldn't happen with our error handling)
+      log.error("refresh.unexpected", { err: result.reason });
     }
   }
 
