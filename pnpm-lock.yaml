@@ -26,6 +26,9 @@ importers:
       '@react-email/components':
         specifier: ^0.5.7
         version: 0.5.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@react-email/render':
+        specifier: ^1.4.0
+        version: 1.4.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@sparticuz/chromium':
         specifier: 140.0.0
         version: 140.0.0

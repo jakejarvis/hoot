@@ -20,7 +20,7 @@ import { useRouter } from "@/hooks/use-router";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [redirect] = useState(searchParams.get("redirect") || "/dashboard");
+  const redirect = searchParams.get("redirect") || "/dashboard";
 
   useEffect(() => {
     // If user is already logged in, redirect them

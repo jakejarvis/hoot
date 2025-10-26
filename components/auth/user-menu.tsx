@@ -18,9 +18,11 @@ import { signOut, useSession } from "@/lib/auth/client";
  * Get user initials from name or email
  */
 function getUserInitials(name?: string | null, email?: string | null): string {
-  if (name) {
+  if (name?.trim()) {
     return name
+      .trim()
       .split(" ")
+      .filter((n) => n.length > 0)
       .map((n) => n[0])
       .join("")
       .toUpperCase()

@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { domains, user, userDomains } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/client";
 import { inngest } from "@/lib/inngest/client";
+import { logger } from "@/lib/logger";
 import {
   type ChangeDetection,
   detectChanges,
@@ -31,6 +32,8 @@ import { probeHeaders } from "@/server/services/headers";
 import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getSeo } from "@/server/services/seo";
+
+const log = logger({ module: "inngest" });
 
 const eventDataSchema = z.object({
   domain: z.string().min(1),
@@ -59,8 +62,14 @@ export async function revalidateSection(
       default:
         return null;
     }
-  } catch {
-    return null;
+  } catch (err) {
+    // Let the caller handle backoff/retry; avoids masking persistent failures.
+    log.error("Failed to revalidate section", {
+      domain,
+      section,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
   }
 }
 

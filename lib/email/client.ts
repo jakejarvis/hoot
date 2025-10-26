@@ -1,5 +1,4 @@
-import "server-only";
-import { render } from "@react-email/components";
+import { render } from "@react-email/render";
 import { Resend } from "resend";
 import { logger } from "@/lib/logger";
 
@@ -75,7 +74,7 @@ async function renderEmailTemplate<T extends EmailTemplate>(
 ): Promise<string> {
   try {
     // Dynamic import of the template component
-    const templateModule = await import(`@/emails/${template}.tsx`);
+    const templateModule = await import(`@/emails/${template}`);
     const TemplateComponent = templateModule.default;
 
     // Render the React component to HTML
