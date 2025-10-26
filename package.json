@@ -48,6 +48,7 @@
     "@upstash/redis": "^1.35.6",
     "@vercel/analytics": "^1.5.0",
     "@vercel/functions": "^3.1.4",
+    "better-auth": "^1.3.32",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -89,6 +90,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@better-auth/cli": "^1.3.32",
     "@biomejs/biome": "2.2.7",
     "@electric-sql/pglite": "^0.3.11",
     "@tailwindcss/postcss": "^4.1.16",

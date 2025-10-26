@@ -15,6 +15,13 @@
       "when": 1761315158458,
       "tag": "0001_lazy_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761488880576,
+      "tag": "0002_regular_purple_man",
+      "breakpoints": true
     }
   ]
 }
