@@ -107,19 +107,19 @@ const withLogging = t.middleware(async ({ ctx, path, type, next }) => {
 });
 
 const withAuth = t.middleware(async ({ ctx, next }) => {
-  if (!ctx.session || !ctx.user) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You must be logged in to access this resource",
-    });
+  // Destructure to local variables for proper type narrowing
+  const { session, user } = ctx;
+
+  if (!session || !user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
+  // Pass narrowed non-null session and user to next context
   return next({
     ctx: {
       ...ctx,
-      // Narrow types to non-nullable for protected procedures
-      session: ctx.session,
-      user: ctx.user,
+      session, // TypeScript infers as non-null
+      user, // TypeScript infers as non-null
     },
   });
 });

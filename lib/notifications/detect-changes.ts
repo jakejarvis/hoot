@@ -1,12 +1,11 @@
 import "server-only";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { domainSnapshots } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import type { Section } from "@/lib/schemas";
 
 const log = logger({ module: "change-detection" });
-
 export interface ChangeDetection {
   type:
     | "nameserver_changed"
@@ -215,7 +214,7 @@ export async function saveSnapshot(
       const toDelete = allSnapshots.slice(2).map((s) => s.id);
       await db
         .delete(domainSnapshots)
-        .where(sql`${domainSnapshots.id} = ANY(${toDelete})`);
+        .where(inArray(domainSnapshots.id, toDelete));
 
       log.debug("Cleaned up old snapshots", {
         domainId,

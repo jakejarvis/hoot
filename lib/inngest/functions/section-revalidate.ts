@@ -4,6 +4,7 @@ import { z } from "zod";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { db } from "@/lib/db/client";
 import { domains, user, userDomains } from "@/lib/db/schema";
+import { toRegistrableDomain } from "@/lib/domain-server";
 import { sendEmail } from "@/lib/email/client";
 import { inngest } from "@/lib/inngest/client";
 import { logger } from "@/lib/logger";
@@ -135,9 +136,19 @@ export const sectionRevalidate = inngest.createFunction(
             // Skip if no data was returned from revalidation
             if (!currentData) return;
 
-            // Get domain record from DB
+            // Convert to registrable/apex domain for DB lookup
+            // (e.g., www.example.com -> example.com)
+            const registrableDomain = toRegistrableDomain(normalizedDomain);
+            if (!registrableDomain) {
+              logger.warn("[section-revalidate] invalid registrable domain", {
+                domain: normalizedDomain,
+              });
+              return;
+            }
+
+            // Get domain record from DB using registrable domain
             const domainRecord = await db.query.domains.findFirst({
-              where: eq(domains.name, normalizedDomain),
+              where: eq(domains.name, registrableDomain),
             });
 
             if (!domainRecord) return;
