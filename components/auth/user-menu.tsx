@@ -38,14 +38,9 @@ export function UserMenu() {
 
   if (!session) {
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/sign-in">Sign in</Link>
-        </Button>
-        <Button size="sm" asChild>
-          <Link href="/sign-up">Sign up</Link>
-        </Button>
-      </div>
+      <Button size="sm" asChild>
+        <Link href="/login">Sign in</Link>
+      </Button>
     );
   }
 

@@ -12,7 +12,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 type EmailTemplate =
   | "registration-expiring"
   | "reset-password"
-  | "verify-email";
+  | "verify-email"
+  | "magic-link";
 
 interface EmailTemplateData {
   "registration-expiring": {
@@ -27,6 +28,10 @@ interface EmailTemplateData {
   "verify-email": {
     userName?: string;
     verificationUrl: string;
+  };
+  "magic-link": {
+    userName?: string;
+    magicLinkUrl: string;
   };
 }
 

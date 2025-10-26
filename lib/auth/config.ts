@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { magicLink } from "better-auth/plugins";
 import { db } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/client";
@@ -20,57 +21,6 @@ export const auth = betterAuth({
   // Custom cookie name
   advanced: {
     cookiePrefix: "domainstack",
-  },
-
-  // Email and password authentication
-  emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 8,
-    requireEmailVerification: true, // Set to true after configuring RESEND_API_KEY
-    async sendResetPassword({ user, url }) {
-      const result = await sendEmail({
-        to: user.email,
-        subject: "Reset Your Password - DomainStack",
-        template: "reset-password",
-        data: {
-          userName: user.name || undefined,
-          resetUrl: url,
-        },
-      });
-
-      if ("error" in result) {
-        log.error("Failed to send password reset email", {
-          userId: user.id,
-          email: user.email,
-          error: result.error,
-        });
-      }
-    },
-  },
-
-  // Email verification
-  emailVerification: {
-    async sendVerificationEmail({ user, url }) {
-      const result = await sendEmail({
-        to: user.email,
-        subject: "Verify Your Email Address - DomainStack",
-        template: "verify-email",
-        data: {
-          userName: user.name || undefined,
-          verificationUrl: url,
-        },
-      });
-
-      if ("error" in result) {
-        log.error("Failed to send verification email", {
-          userId: user.id,
-          email: user.email,
-          error: result.error,
-        });
-      }
-    },
-    sendOnSignUp: false, // Set to true after configuring RESEND_API_KEY
-    autoSignInAfterVerification: true,
   },
 
   // Conditional OAuth providers (only enabled if env vars are present)
@@ -97,6 +47,47 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // 1 day
   },
+
+  // Plugins
+  plugins: [
+    magicLink({
+      // Magic link expires in 5 minutes (default: 300 seconds)
+      expiresIn: 300,
+      // Disable sign up via magic link (optional, default: false)
+      disableSignUp: false,
+      // Send magic link email
+      async sendMagicLink({ email, url }) {
+        // Try to get user name from existing user
+        const existingUser = await db.query.user.findFirst({
+          where: (users, { eq }) => eq(users.email, email),
+          columns: { name: true },
+        });
+
+        const result = await sendEmail({
+          to: email,
+          subject: "Sign In to DomainStack",
+          template: "magic-link",
+          data: {
+            userName: existingUser?.name || undefined,
+            magicLinkUrl: url,
+          },
+        });
+
+        if ("error" in result) {
+          log.error("Failed to send magic link email", {
+            email,
+            error: result.error,
+          });
+          throw new Error("Failed to send magic link email");
+        }
+
+        log.info("Magic link email sent", {
+          email,
+          emailId: result.id,
+        });
+      },
+    }),
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session.session;
