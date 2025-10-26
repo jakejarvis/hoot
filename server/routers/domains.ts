@@ -1,10 +1,15 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import z from "zod";
 import { db } from "@/lib/db/client";
 import { upsertDomain } from "@/lib/db/repos/domains";
-import { domains, userDomains } from "@/lib/db/schema";
+import {
+  certificates,
+  domains,
+  registrations,
+  userDomains,
+} from "@/lib/db/schema";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import {
@@ -200,27 +205,86 @@ export const domainsRouter = createTRPCRouter({
     }),
 
   /**
-   * List all domains owned by the user
+   * List all domains owned by the user with expiry data
    */
   list: protectedProcedure.query(async ({ ctx }) => {
+    // Get user domains with registration data
     const records = await db
       .select({
-        userDomain: userDomains,
-        domain: domains,
+        id: userDomains.id,
+        domainId: userDomains.domainId,
+        domain: domains.name,
+        verified: sql<boolean>`${userDomains.verifiedAt} IS NOT NULL`,
+        verifiedAt: userDomains.verifiedAt,
+        verificationMethod: userDomains.verificationMethod,
+        createdAt: userDomains.createdAt,
+        registrationExpiresAt: registrations.expirationDate,
       })
       .from(userDomains)
       .innerJoin(domains, eq(domains.id, userDomains.domainId))
+      .leftJoin(registrations, eq(registrations.domainId, domains.id))
       .where(eq(userDomains.userId, ctx.user.id))
-      .orderBy((t) => t.userDomain.createdAt);
+      .orderBy(desc(userDomains.createdAt));
 
-    return records.map((record) => ({
-      id: record.userDomain.id,
-      domainId: record.userDomain.domainId,
-      domain: record.domain.name,
-      verified: !!record.userDomain.verifiedAt,
-      verifiedAt: record.userDomain.verifiedAt,
-      verificationMethod: record.userDomain.verificationMethod,
-      createdAt: record.userDomain.createdAt,
+    // Get the most recent certificate for each domain
+    const domainIds = records.map((r) => r.domainId);
+    const certs =
+      domainIds.length > 0
+        ? await db
+            .select({
+              domainId: certificates.domainId,
+              validTo: certificates.validTo,
+            })
+            .from(certificates)
+            .where(
+              sql`${certificates.domainId} IN ${domainIds} 
+                  AND ${certificates.fetchedAt} = (
+                    SELECT MAX(c2.fetched_at) 
+                    FROM certificates c2 
+                    WHERE c2.domain_id = ${certificates.domainId}
+                  )`,
+            )
+        : [];
+
+    // Map certificates to domains
+    const certMap = new Map(
+      certs.map((c) => [c.domainId, c.validTo?.toISOString()]),
+    );
+
+    // Combine results
+    return records.map((r) => ({
+      ...r,
+      certificateExpiresAt: certMap.get(r.domainId) ?? null,
     }));
   }),
+
+  /**
+   * Get a specific user domain for verification
+   */
+  getForVerification: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const record = await db
+        .select({
+          id: userDomains.id,
+          domain: domains.name,
+          verificationToken: userDomains.verificationToken,
+          verified: sql<boolean>`${userDomains.verifiedAt} IS NOT NULL`,
+        })
+        .from(userDomains)
+        .innerJoin(domains, eq(domains.id, userDomains.domainId))
+        .where(
+          and(
+            eq(userDomains.id, input.id),
+            eq(userDomains.userId, ctx.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!record[0]) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      return record[0];
+    }),
 });

@@ -1,33 +1,49 @@
+"use client";
+
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getSession } from "@/lib/auth/server";
+import { DomainList } from "@/components/dashboard/domain-list";
+import { useSession } from "@/lib/auth/client";
 
-export default async function DashboardPage() {
-  const session = await getSession();
+export default function DashboardPage() {
+  const { data: session, isPending } = useSession();
 
-  // Double-check on the server side (middleware should catch this, but belt-and-suspenders)
+  // Show loading state while checking auth
+  if (isPending) {
+    return (
+      <div className="container mx-auto max-w-6xl px-4 py-6">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="h-9 w-48 animate-pulse rounded-md bg-muted" />
+              <div className="h-4 w-64 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+          <div className="h-96 animate-pulse rounded-xl bg-muted" />
+        </div>
+      </div>
+    );
+  }
+
   if (!session) {
-    redirect("/login");
+    redirect("/login?redirect=/dashboard");
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="mb-6 font-bold text-3xl">Dashboard</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome back!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            You are logged in as <strong>{session.user.email}</strong>
-          </p>
-          {session.user.name && (
-            <p className="mt-2 text-muted-foreground">
-              Name: <strong>{session.user.name}</strong>
+    <div className="container mx-auto max-w-6xl px-4 py-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-semibold text-3xl tracking-tight">
+              My Domains
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Monitor and manage your verified domains
             </p>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+
+        <DomainList />
+      </div>
     </div>
   );
 }
