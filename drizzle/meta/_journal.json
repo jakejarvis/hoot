@@ -22,6 +22,13 @@
       "when": 1761488880576,
       "tag": "0002_regular_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761489770105,
+      "tag": "0003_dazzling_prima",
+      "breakpoints": true
     }
   ]
 }

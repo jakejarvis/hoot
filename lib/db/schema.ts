@@ -46,6 +46,11 @@ export const registrationSource = pgEnum("registration_source", [
   "rdap",
   "whois",
 ]);
+export const verificationMethod = pgEnum("verification_method", [
+  "dns",
+  "meta",
+  "file",
+]);
 
 // Providers
 export const providers = pgTable(
@@ -370,3 +375,32 @@ export const verification = pgTable("verification", {
     .$onUpdate(() => new Date())
     .notNull(),
 });
+
+// User Domains (for domain ownership verification)
+export const userDomains = pgTable(
+  "user_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    verificationToken: text("verification_token").unique(),
+    verificationMethod: verificationMethod("verification_method"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    unique("u_user_domains_user_domain").on(t.userId, t.domainId),
+    index("i_user_domains_user").on(t.userId),
+    index("i_user_domains_verified").on(t.verifiedAt),
+  ],
+);
