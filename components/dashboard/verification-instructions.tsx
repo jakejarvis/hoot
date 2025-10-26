@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useRouter } from "@/hooks/use-router";
 import { useTRPC, useTRPCClient } from "@/lib/trpc/client";
 
@@ -27,6 +28,7 @@ export function VerificationInstructions({
   verificationToken: string | null;
 }) {
   const [activeMethod, setActiveMethod] = useState<string | null>(null);
+  const [, copy] = useCopyToClipboard();
   const trpc = useTRPC();
   const trpcClient = useTRPCClient();
   const router = useRouter();
@@ -70,11 +72,6 @@ export function VerificationInstructions({
   const handleVerify = (method: "dns" | "meta" | "file") => {
     setActiveMethod(method);
     verifyMutation.mutate({ method });
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
   };
 
   if (!verificationToken) {
@@ -158,7 +155,7 @@ export function VerificationInstructions({
                     size="sm"
                     variant="ghost"
                     className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(dnsRecord)}
+                    onClick={() => copy(dnsRecord)}
                   >
                     <Copy className="size-3" />
                   </Button>
@@ -207,7 +204,7 @@ export function VerificationInstructions({
                     size="sm"
                     variant="ghost"
                     className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(metaTag)}
+                    onClick={() => copy(metaTag)}
                   >
                     <Copy className="size-3" />
                   </Button>
@@ -265,7 +262,7 @@ export function VerificationInstructions({
                     size="sm"
                     variant="ghost"
                     className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(verificationToken)}
+                    onClick={() => copy(verificationToken)}
                   >
                     <Copy className="size-3" />
                   </Button>

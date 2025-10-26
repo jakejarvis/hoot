@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
@@ -7,6 +8,17 @@ import { sendEmail } from "@/lib/email/client";
 import { logger } from "@/lib/logger";
 
 const log = logger({ module: "auth" });
+
+/**
+ * Redact email for logging by computing a stable hash
+ * Returns a hash that can be used for debugging without exposing PII
+ * Format: domain@hash (e.g., example.com@a3b2c1d4...)
+ */
+function redactEmail(email: string): string {
+  const [, domain] = email.split("@");
+  const hash = createHash("sha256").update(email).digest("hex").slice(0, 8);
+  return `${domain || "unknown"}@${hash}`;
+}
 
 export const auth = betterAuth({
   appName: "DomainStack",
@@ -75,14 +87,14 @@ export const auth = betterAuth({
 
         if ("error" in result) {
           log.error("Failed to send magic link email", {
-            email,
+            redactedEmail: redactEmail(email),
             error: result.error,
           });
           throw new Error("Failed to send magic link email");
         }
 
         log.info("Magic link email sent", {
-          email,
+          redactedEmail: redactEmail(email),
           emailId: result.id,
         });
       },

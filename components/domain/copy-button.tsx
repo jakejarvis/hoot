@@ -1,9 +1,10 @@
 "use client";
 
 import { Check, ClipboardCheck, Copy } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { captureClient } from "@/lib/analytics/client";
 
 interface CopyButtonProps {
@@ -13,26 +14,39 @@ interface CopyButtonProps {
 
 export function CopyButton({ value, label }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [, copy] = useCopyToClipboard();
   const resetTimerRef = useRef<number | null>(null);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    toast.success("Copied!", {
-      icon: <ClipboardCheck className="h-4 w-4" />,
-      position: "bottom-center",
-    });
-    captureClient("copy_clicked", {
-      label: label ?? null,
-      value_length: value.length,
-    });
-    setCopied(true);
-    if (resetTimerRef.current) {
-      window.clearTimeout(resetTimerRef.current);
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) {
+        window.clearTimeout(resetTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleCopy = async () => {
+    const success = await copy(value, { showToast: false });
+    if (success) {
+      // Show custom toast
+      toast.success("Copied!", {
+        icon: <ClipboardCheck className="h-4 w-4" />,
+        position: "bottom-center",
+      });
+      captureClient("copy_clicked", {
+        label: label ?? null,
+        value_length: value.length,
+      });
+      setCopied(true);
+      if (resetTimerRef.current) {
+        window.clearTimeout(resetTimerRef.current);
+      }
+      resetTimerRef.current = window.setTimeout(() => {
+        setCopied(false);
+        resetTimerRef.current = null;
+      }, 1200);
     }
-    resetTimerRef.current = window.setTimeout(() => {
-      setCopied(false);
-      resetTimerRef.current = null;
-    }, 1200);
   };
 
   return (
