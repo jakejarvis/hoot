@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
+import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
@@ -10,6 +11,7 @@ import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { logger } from "@/lib/logger";
+import { ns } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
@@ -57,6 +59,49 @@ export const DOH_PROVIDERS: DohProvider[] = [
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   log.debug("start", { domain });
+
+  // Try to acquire lock or wait for result from concurrent caller
+  const lockKey = ns("dns:lock", domain);
+  const resultKey = ns("dns:result", domain);
+
+  const lockResult = await acquireLockOrWaitForResult<DnsResolveResult>({
+    lockKey,
+    resultKey,
+    lockTtl: 30,
+    pollIntervalMs: 100,
+    maxWaitMs: 5000,
+  });
+
+  if (!lockResult.acquired && lockResult.cachedResult) {
+    log.debug("cache.hit.concurrent", { domain });
+    return lockResult.cachedResult;
+  }
+
+  // Lock acquired or no cached result - perform resolution
+  try {
+    const result = await resolveAllInternal(domain);
+
+    // Cache result for other concurrent callers
+    try {
+      const { redis } = await import("@/lib/redis");
+      await redis.set(resultKey, result, { ex: 5 });
+    } catch (err) {
+      log.debug("redis.result.cache.failed", { domain, err });
+    }
+
+    return result;
+  } finally {
+    // Release lock
+    try {
+      const { redis } = await import("@/lib/redis");
+      await redis.del(lockKey);
+    } catch (err) {
+      log.debug("redis.lock.release.failed", { domain, err });
+    }
+  }
+}
+
+async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
   const providers = providerOrderForLookup(domain);
   const durationByProvider: Record<string, number> = {};
   let lastError: unknown = null;
