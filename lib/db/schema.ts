@@ -404,3 +404,98 @@ export const userDomains = pgTable(
     index("i_user_domains_verified").on(t.verifiedAt),
   ],
 );
+
+// Notification preferences
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  emailEnabled: boolean("email_enabled").default(true).notNull(),
+
+  // Expiration notifications
+  notifyRegistrationExpiring: boolean("notify_registration_expiring")
+    .default(true)
+    .notNull(),
+  notifyCertificateExpiring: boolean("notify_certificate_expiring")
+    .default(true)
+    .notNull(),
+  registrationExpiryDays: integer("registration_expiry_days")
+    .array()
+    .default(sql`ARRAY[30, 14, 7, 1]`)
+    .notNull(),
+  certificateExpiryDays: integer("certificate_expiry_days")
+    .array()
+    .default(sql`ARRAY[30, 14, 7, 1]`)
+    .notNull(),
+
+  // Change notifications
+  notifyNameserverChange: boolean("notify_nameserver_change")
+    .default(true)
+    .notNull(),
+  notifyCertificateChange: boolean("notify_certificate_change")
+    .default(true)
+    .notNull(),
+  notifyDnsChange: boolean("notify_dns_change").default(false).notNull(),
+  notifyHostingChange: boolean("notify_hosting_change").default(true).notNull(),
+  notifyResolutionFailure: boolean("notify_resolution_failure")
+    .default(true)
+    .notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Notification log
+export const notificationLog = pgTable(
+  "notification_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    notificationType: text("notification_type").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
+    emailId: text("email_id"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+  },
+  (t) => [
+    index("i_notification_log_user").on(t.userId),
+    index("i_notification_log_domain").on(t.domainId),
+    index("i_notification_log_sent_at").on(t.sentAt),
+    index("i_notification_log_type").on(t.notificationType),
+  ],
+);
+
+// Domain snapshots for change detection
+export const domainSnapshots = pgTable(
+  "domain_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    snapshotType: text("snapshot_type").notNull(),
+    snapshotData: jsonb("snapshot_data")
+      .$type<Record<string, unknown>>()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("i_domain_snapshots_domain").on(t.domainId),
+    index("i_domain_snapshots_type").on(t.snapshotType),
+    index("i_domain_snapshots_created_at").on(t.createdAt),
+  ],
+);
