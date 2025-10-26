@@ -13,7 +13,10 @@ type EmailTemplate =
   | "registration-expiring"
   | "reset-password"
   | "verify-email"
-  | "magic-link";
+  | "magic-link"
+  | "certificate-expiring"
+  | "nameserver-changed"
+  | "certificate-changed";
 
 interface EmailTemplateData {
   "registration-expiring": {
@@ -32,6 +35,34 @@ interface EmailTemplateData {
   "magic-link": {
     userName?: string;
     magicLinkUrl: string;
+  };
+  "certificate-expiring": {
+    domain: string;
+    expiresAt: Date;
+    daysRemaining: number;
+    renewUrl: string;
+  };
+  "nameserver-changed": {
+    domain: string;
+    previousNs: string[];
+    currentNs: string[];
+    verifyUrl: string;
+  };
+  "certificate-changed": {
+    domain: string;
+    changeDetails: {
+      before: {
+        validFrom: string | null;
+        validTo: string | null;
+        issuer: string | null;
+      };
+      after: {
+        validFrom: string | null;
+        validTo: string | null;
+        issuer: string | null;
+      };
+    };
+    verifyUrl: string;
   };
 }
 
