@@ -1,11 +1,12 @@
 "use client";
 
-import { redirect } from "next/navigation";
 import { DomainList } from "@/components/dashboard/domain-list";
+import { useRouter } from "@/hooks/use-router";
 import { useSession } from "@/lib/auth/client";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
+  const router = useRouter();
 
   // Show loading state while checking auth
   if (isPending) {
@@ -25,7 +26,8 @@ export default function DashboardPage() {
   }
 
   if (!session) {
-    redirect("/login?redirect=/dashboard");
+    router.push("/login?redirect=/dashboard");
+    return null;
   }
 
   return (

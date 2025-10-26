@@ -89,6 +89,7 @@ export async function verifyMetaTag(
         headers: {
           "User-Agent": USER_AGENT,
         },
+        redirect: "manual",
       },
       { timeoutMs: 10000 },
     );

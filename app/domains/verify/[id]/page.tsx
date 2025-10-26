@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { notFound, redirect, useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { VerificationInstructions } from "@/components/dashboard/verification-instructions";
 import { VerificationInstructionsSkeleton } from "@/components/dashboard/verification-instructions-skeleton";
+import { useRouter } from "@/hooks/use-router";
 import { useSession } from "@/lib/auth/client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -11,6 +12,7 @@ export default function VerifyDomainPage() {
   const params = useParams<{ id: string }>();
   const { data: session, isPending: sessionPending } = useSession();
   const trpc = useTRPC();
+  const router = useRouter();
 
   // Fetch user domain details (call hooks before any conditional returns)
   const {
@@ -29,7 +31,8 @@ export default function VerifyDomainPage() {
   }
 
   if (!session) {
-    redirect("/login?redirect=/dashboard");
+    router.push("/login?redirect=/dashboard");
+    return null;
   }
 
   if (domainPending) {
@@ -46,7 +49,8 @@ export default function VerifyDomainPage() {
 
   // If already verified, redirect to dashboard
   if (userDomain.verified) {
-    redirect("/dashboard");
+    router.push("/dashboard");
+    return null;
   }
 
   return (
