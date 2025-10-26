@@ -133,9 +133,9 @@ const porkbunProvider: PricingProvider = {
       if (err instanceof Error && err.name === "AbortError") {
         log.error("upstream.timeout", {
           provider: "porkbun",
-          timeoutMs: 10_000,
+          timeoutMs: 60_000, // this endpoint takes a LONG time to respond.
         });
-        throw new Error("Porkbun API request timed out after 10 seconds");
+        throw new Error("Porkbun API request timed out after 60 seconds");
       }
       throw err;
     } finally {
