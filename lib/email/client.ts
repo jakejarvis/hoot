@@ -9,13 +9,24 @@ const log = logger({ module: "email" });
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email templates mapping
-type EmailTemplate = "registration-expiring";
+type EmailTemplate =
+  | "registration-expiring"
+  | "reset-password"
+  | "verify-email";
 
 interface EmailTemplateData {
   "registration-expiring": {
     domain: string;
     expiresAt: Date;
     verifyUrl: string;
+  };
+  "reset-password": {
+    userName?: string;
+    resetUrl: string;
+  };
+  "verify-email": {
+    userName?: string;
+    verificationUrl: string;
   };
 }
 

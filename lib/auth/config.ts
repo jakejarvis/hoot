@@ -2,24 +2,10 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
+import { sendEmail } from "@/lib/email/client";
+import { logger } from "@/lib/logger";
 
-/**
- * Placeholder email sending function.
- * TODO: Implement actual email sending logic via your preferred provider.
- */
-async function sendEmail({
-  to,
-  subject,
-  html,
-}: {
-  to: string;
-  subject: string;
-  html: string;
-}) {
-  // eslint-disable-next-line no-console
-  console.log("Email would be sent:", { to, subject, html });
-  // TODO: Integrate with email provider (e.g., Resend, SendGrid, etc.)
-}
+const log = logger({ module: "auth" });
 
 export const auth = betterAuth({
   appName: "DomainStack",
@@ -40,26 +26,50 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
-    requireEmailVerification: false, // Set to true when email sending is implemented
+    requireEmailVerification: true, // Set to true after configuring RESEND_API_KEY
     async sendResetPassword({ user, url }) {
-      await sendEmail({
+      const result = await sendEmail({
         to: user.email,
-        subject: "Reset your password",
-        html: `Click <a href="${url}">here</a> to reset your password.`,
+        subject: "Reset Your Password - DomainStack",
+        template: "reset-password",
+        data: {
+          userName: user.name || undefined,
+          resetUrl: url,
+        },
       });
+
+      if ("error" in result) {
+        log.error("Failed to send password reset email", {
+          userId: user.id,
+          email: user.email,
+          error: result.error,
+        });
+      }
     },
   },
 
   // Email verification
   emailVerification: {
     async sendVerificationEmail({ user, url }) {
-      await sendEmail({
+      const result = await sendEmail({
         to: user.email,
-        subject: "Verify your email",
-        html: `Click <a href="${url}">here</a> to verify your email address.`,
+        subject: "Verify Your Email Address - DomainStack",
+        template: "verify-email",
+        data: {
+          userName: user.name || undefined,
+          verificationUrl: url,
+        },
       });
+
+      if ("error" in result) {
+        log.error("Failed to send verification email", {
+          userId: user.id,
+          email: user.email,
+          error: result.error,
+        });
+      }
     },
-    sendOnSignUp: false, // Set to true when email sending is implemented
+    sendOnSignUp: false, // Set to true after configuring RESEND_API_KEY
     autoSignInAfterVerification: true,
   },
 
