@@ -61,7 +61,7 @@ export function RegistrationSection({
           <KeyValueGrid colsDesktop={2}>
             <KeyValue
               label="Registrar"
-              value={d.registrarProvider?.name || ""}
+              value={d.registrarProvider?.name || "Unknown"}
               leading={
                 d.registrarProvider?.domain ? (
                   <Favicon

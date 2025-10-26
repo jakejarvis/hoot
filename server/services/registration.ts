@@ -48,7 +48,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
       const row = existing[0];
       // Resolve registrar provider details if present
       let registrarProvider = {
-        name: "Unknown",
+        name: null as string | null,
         domain: null as string | null,
       };
       if (row.registrarProviderId) {
@@ -136,7 +136,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   let registrarName = (record.registrar?.name || "").toString();
   let registrarDomain: string | null = null;
   const det = detectRegistrar(registrarName);
-  if (det.name !== "Unknown") {
+  if (det.name) {
     registrarName = det.name;
   }
   if (det.domain) {
@@ -151,7 +151,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   const withProvider: Registration = {
     ...record,
     registrarProvider: {
-      name: registrarName.trim() || "Unknown",
+      name: registrarName.trim() || null,
       domain: registrarDomain,
     },
   };
