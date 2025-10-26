@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "@bprogress/next/app";
 import { CircleX } from "lucide-react";
 import { useParams } from "next/navigation";
 import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useRouter } from "@/hooks/use-router";
 import { captureClient } from "@/lib/analytics/client";
 import { isValidDomain, normalizeDomainInput } from "@/lib/domain";
 

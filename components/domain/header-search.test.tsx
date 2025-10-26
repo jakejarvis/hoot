@@ -9,7 +9,7 @@ const nav = vi.hoisted(() => ({
   params: { domain: "Example.COM" as string | undefined },
 }));
 
-vi.mock("@bprogress/next/app", () => ({
+vi.mock("@/hooks/use-router", () => ({
   useRouter: () => ({ push: nav.push }),
 }));
 
