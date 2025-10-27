@@ -21,7 +21,6 @@ import { exportDomainData } from "@/lib/json-export";
 export function DomainReportView({ domain }: { domain: string }) {
   const { registration, dns, hosting, certs, headers, seo } =
     useDomainQueries(domain);
-  // TTLs are always shown now; preference removed
 
   // Manage domain history
   useDomainHistory(

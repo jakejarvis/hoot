@@ -4,7 +4,7 @@ import {
 } from "@tanstack/react-query";
 import { cache } from "react";
 
-function makeQueryClient() {
+export const makeQueryClient = cache(() => {
   return new QueryClient({
     defaultOptions: {
       queries: {
@@ -24,7 +24,4 @@ function makeQueryClient() {
       },
     },
   });
-}
-
-// Stable per-request QueryClient
-export const getQueryClient = cache(makeQueryClient);
+});

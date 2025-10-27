@@ -5,7 +5,7 @@ import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { getQueryClient } from "@/trpc/query-client";
+import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 
 import "country-flag-icons/3x2/flags.css";
@@ -49,7 +49,7 @@ export default async function DomainPage({
   }
 
   // Minimal prefetch: registration only, let sections stream progressively
-  const queryClient = getQueryClient();
+  const queryClient = makeQueryClient();
   await queryClient.prefetchQuery(
     trpc.domain.registration.queryOptions({ domain: normalized }),
   );
