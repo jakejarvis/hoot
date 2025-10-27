@@ -100,7 +100,7 @@
     "@types/react": "19.1.16",
     "@types/react-dom": "19.1.9",
     "@types/ws": "^8.18.1",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react": "^5.1.0",
     "@vitest/coverage-v8": "^4.0.2",
     "@vitest/ui": "^4.0.2",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
