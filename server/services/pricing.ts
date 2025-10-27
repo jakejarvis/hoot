@@ -106,7 +106,7 @@ const porkbunProvider: PricingProvider = {
     // Does not require authentication!
     // https://porkbun.com/api/json/v3/documentation#Domain%20Pricing
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60_000); // 60 second timeout
 
     try {
       const res = await fetch(
@@ -133,9 +133,8 @@ const porkbunProvider: PricingProvider = {
       if (err instanceof Error && err.name === "AbortError") {
         log.error("upstream.timeout", {
           provider: "porkbun",
-          timeoutMs: 60_000, // this endpoint takes a LONG time to respond.
         });
-        throw new Error("Porkbun API request timed out after 60 seconds");
+        throw new Error("Porkbun API request timed out");
       }
       throw err;
     } finally {
