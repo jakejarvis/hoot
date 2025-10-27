@@ -46,6 +46,11 @@ export const registrationSource = pgEnum("registration_source", [
   "rdap",
   "whois",
 ]);
+export const verificationMethod = pgEnum("verification_method", [
+  "dns",
+  "meta",
+  "file",
+]);
 
 // Providers
 export const providers = pgTable(
@@ -295,5 +300,190 @@ export const seo = pgTable(
   (t) => [
     index("i_seo_src_final_url").on(t.sourceFinalUrl),
     index("i_seo_canonical").on(t.canonicalUrl),
+  ],
+);
+
+// Better Auth tables
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// User Domains (for domain ownership verification)
+export const userDomains = pgTable(
+  "user_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    verificationToken: text("verification_token").unique(),
+    verificationMethod: verificationMethod("verification_method"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    unique("u_user_domains_user_domain").on(t.userId, t.domainId),
+    index("i_user_domains_user").on(t.userId),
+    index("i_user_domains_verified").on(t.verifiedAt),
+  ],
+);
+
+// Notification preferences
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  emailEnabled: boolean("email_enabled").default(true).notNull(),
+
+  // Expiration notifications
+  notifyRegistrationExpiring: boolean("notify_registration_expiring")
+    .default(true)
+    .notNull(),
+  notifyCertificateExpiring: boolean("notify_certificate_expiring")
+    .default(true)
+    .notNull(),
+  registrationExpiryDays: integer("registration_expiry_days")
+    .array()
+    .default(sql`ARRAY[30, 14, 7, 1]`)
+    .notNull(),
+  certificateExpiryDays: integer("certificate_expiry_days")
+    .array()
+    .default(sql`ARRAY[30, 14, 7, 1]`)
+    .notNull(),
+
+  // Change notifications
+  notifyNameserverChange: boolean("notify_nameserver_change")
+    .default(true)
+    .notNull(),
+  notifyCertificateChange: boolean("notify_certificate_change")
+    .default(true)
+    .notNull(),
+  notifyDnsChange: boolean("notify_dns_change").default(false).notNull(),
+  notifyHostingChange: boolean("notify_hosting_change").default(true).notNull(),
+  notifyResolutionFailure: boolean("notify_resolution_failure")
+    .default(true)
+    .notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Notification log
+export const notificationLog = pgTable(
+  "notification_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    notificationType: text("notification_type").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
+    emailId: text("email_id"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+  },
+  (t) => [
+    index("i_notification_log_user").on(t.userId),
+    index("i_notification_log_domain").on(t.domainId),
+    index("i_notification_log_sent_at").on(t.sentAt),
+    index("i_notification_log_type").on(t.notificationType),
+  ],
+);
+
+// Domain snapshots for change detection
+export const domainSnapshots = pgTable(
+  "domain_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => domains.id, { onDelete: "cascade" }),
+    snapshotType: text("snapshot_type").notNull(),
+    snapshotData: jsonb("snapshot_data")
+      .$type<Record<string, unknown>>()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("i_domain_snapshots_domain").on(t.domainId),
+    index("i_domain_snapshots_type").on(t.snapshotType),
+    index("i_domain_snapshots_created_at").on(t.createdAt),
   ],
 );

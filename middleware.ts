@@ -7,8 +7,32 @@ import { toRegistrableDomain } from "@/lib/domain-server";
 // Then captures everything up to the next slash as the authority.
 const HTTP_PREFIX_CAPTURE_AUTHORITY = /^https?:[:/]+([^/]+)/i;
 
+// Protected paths that require authentication
+const PROTECTED_PATHS = ["/dashboard", "/settings", "/domains/verify"];
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // Check if this is a protected route
+  const isProtectedPath = PROTECTED_PATHS.some((protectedPath) =>
+    path.startsWith(protectedPath),
+  );
+
+  if (isProtectedPath) {
+    // Check for Better Auth session cookie (using our custom "domainstack" prefix)
+    const sessionCookie = request.cookies.get("domainstack.session_token");
+
+    if (!sessionCookie) {
+      // No session cookie found, redirect to login
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", path);
+      return NextResponse.redirect(url);
+    }
+
+    // Session cookie exists, allow access
+    return NextResponse.next();
+  }
 
   // Fast path: only act on non-root paths
   if (path.length <= 1) {

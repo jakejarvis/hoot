@@ -1,6 +1,8 @@
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { ipAddress } from "@vercel/functions";
 import superjson from "superjson";
+import type { Session, User } from "@/lib/auth/config";
+import { auth } from "@/lib/auth/config";
 import { createRequestLogger } from "@/lib/logger";
 
 export const createContext = async (opts?: { req?: Request }) => {
@@ -25,7 +27,22 @@ export const createContext = async (opts?: { req?: Request }) => {
     vercelId,
   });
 
-  return { ip, req, log } as const;
+  // Get Better Auth session from request headers
+  let session: Session | null = null;
+  let user: User | null = null;
+
+  if (req) {
+    const sessionData = await auth.api.getSession({
+      headers: req.headers,
+    });
+
+    if (sessionData) {
+      session = sessionData.session;
+      user = sessionData.user;
+    }
+  }
+
+  return { ip, req, log, session, user } as const;
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
@@ -89,4 +106,23 @@ const withLogging = t.middleware(async ({ ctx, path, type, next }) => {
   }
 });
 
+const withAuth = t.middleware(async ({ ctx, next }) => {
+  // Destructure to local variables for proper type narrowing
+  const { session, user } = ctx;
+
+  if (!session || !user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  // Pass narrowed non-null session and user to next context
+  return next({
+    ctx: {
+      ...ctx,
+      session, // TypeScript infers as non-null
+      user, // TypeScript infers as non-null
+    },
+  });
+});
+
 export const publicProcedure = t.procedure.use(withLogging);
+export const protectedProcedure = t.procedure.use(withLogging).use(withAuth);

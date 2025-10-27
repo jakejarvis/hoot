@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserMenu } from "@/components/auth/user-menu";
 import { Bookmarklet } from "@/components/bookmarklet";
 import { HeaderSearch } from "@/components/domain/header-search";
 import { GithubStars } from "@/components/github-stars";
@@ -26,6 +27,9 @@ export function AppHeader() {
         {/* Theme toggle is always shown */}
         <Separator orientation="vertical" className="!h-4" />
         <ThemeToggle />
+        {/* User authentication */}
+        <Separator orientation="vertical" className="!h-4" />
+        <UserMenu />
       </div>
     </header>
   );

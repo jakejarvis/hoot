@@ -5,7 +5,7 @@ import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 
-vi.mock("@bprogress/next/app", () => ({
+vi.mock("@/hooks/use-router", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 

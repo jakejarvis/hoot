@@ -5,9 +5,12 @@ import {
   dnsRecords,
   dnsRecordType,
   dnsResolver,
+  domainSnapshots,
   domains,
   hosting,
   httpHeaders,
+  notificationLog,
+  notificationPreferences,
   providers,
   registrationNameservers,
   registrations,
@@ -72,3 +75,24 @@ export const HostingRowUpdate = zWrite.createUpdateSchema(hosting);
 export const SeoRowSelect = zRead.createSelectSchema(seo);
 export const SeoRowInsert = zWrite.createInsertSchema(seo);
 export const SeoRowUpdate = zWrite.createUpdateSchema(seo);
+
+// Notification preferences
+export const NotificationPreferencesSelect = zRead.createSelectSchema(
+  notificationPreferences,
+);
+export const NotificationPreferencesInsert = zWrite.createInsertSchema(
+  notificationPreferences,
+);
+export const NotificationPreferencesUpdate = zWrite.createUpdateSchema(
+  notificationPreferences,
+);
+
+// Notification log
+export const NotificationLogSelect = zRead.createSelectSchema(notificationLog);
+export const NotificationLogInsert = zWrite.createInsertSchema(notificationLog);
+export const NotificationLogUpdate = zWrite.createUpdateSchema(notificationLog);
+
+// Domain snapshots
+export const DomainSnapshotSelect = zRead.createSelectSchema(domainSnapshots);
+export const DomainSnapshotInsert = zWrite.createInsertSchema(domainSnapshots);
+export const DomainSnapshotUpdate = zWrite.createUpdateSchema(domainSnapshots);

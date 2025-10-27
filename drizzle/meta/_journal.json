@@ -15,6 +15,34 @@
       "when": 1761315158458,
       "tag": "0001_lazy_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761488880576,
+      "tag": "0002_regular_purple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761489770105,
+      "tag": "0003_dazzling_prima",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761491350355,
+      "tag": "0004_cuddly_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1761509010508,
+      "tag": "0005_jazzy_nighthawk",
+      "breakpoints": true
     }
   ]
 }

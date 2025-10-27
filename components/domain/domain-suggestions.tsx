@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "@bprogress/next/app";
 import { useEffect, useMemo, useState } from "react";
 import { Favicon } from "@/components/domain/favicon";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/hooks/use-router";
 import { captureClient } from "@/lib/analytics/client";
 import { DEFAULT_SUGGESTIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";

@@ -1,7 +1,25 @@
 import "server-only";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
+import { db } from "@/lib/db/client";
+import { domains, user, userDomains } from "@/lib/db/schema";
+import { toRegistrableDomain } from "@/lib/domain-server";
+import { sendEmail } from "@/lib/email/client";
 import { inngest } from "@/lib/inngest/client";
+import { logger } from "@/lib/logger";
+import {
+  type ChangeDetection,
+  detectChanges,
+  getLatestSnapshot,
+  saveSnapshot,
+} from "@/lib/notifications/detect-changes";
+import {
+  canSendNotification,
+  getOrCreatePreferences,
+  logNotification,
+  type NotificationPreferences,
+} from "@/lib/notifications/helpers";
 import { ns, redis } from "@/lib/redis";
 import {
   recordFailureAndBackoff,
@@ -16,6 +34,8 @@ import { detectHosting } from "@/server/services/hosting";
 import { getRegistration } from "@/server/services/registration";
 import { getSeo } from "@/server/services/seo";
 
+const log = logger({ module: "inngest" });
+
 const eventDataSchema = z.object({
   domain: z.string().min(1),
   section: SectionEnum.optional(),
@@ -25,26 +45,32 @@ const eventDataSchema = z.object({
 export async function revalidateSection(
   domain: string,
   section: Section,
-): Promise<void> {
-  switch (section) {
-    case "dns":
-      await resolveAll(domain);
-      return;
-    case "headers":
-      await probeHeaders(domain);
-      return;
-    case "hosting":
-      await detectHosting(domain);
-      return;
-    case "certificates":
-      await getCertificates(domain);
-      return;
-    case "seo":
-      await getSeo(domain);
-      return;
-    case "registration":
-      await getRegistration(domain);
-      return;
+): Promise<unknown> {
+  try {
+    switch (section) {
+      case "dns":
+        return await resolveAll(domain);
+      case "headers":
+        return await probeHeaders(domain);
+      case "hosting":
+        return await detectHosting(domain);
+      case "certificates":
+        return await getCertificates(domain);
+      case "seo":
+        return await getSeo(domain);
+      case "registration":
+        return await getRegistration(domain);
+      default:
+        return null;
+    }
+  } catch (err) {
+    // Let the caller handle backoff/retry; avoids masking persistent failures.
+    log.error("Failed to revalidate section", {
+      domain,
+      section,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
   }
 }
 
@@ -88,18 +114,77 @@ export const sectionRevalidate = inngest.createFunction(
       );
       if (!wait.acquired) continue;
       try {
-        await step.run(`revalidate:${section}`, async () => {
-          logger.info("[section-revalidate] start", {
-            domain: normalizedDomain,
-            section,
-          });
-          await revalidateSection(normalizedDomain, section);
-          logger.info("[section-revalidate] done", {
-            domain: normalizedDomain,
-            section,
-          });
-          return { domain: normalizedDomain, section };
+        const currentData = await step.run(
+          `revalidate:${section}`,
+          async () => {
+            logger.info("[section-revalidate] start", {
+              domain: normalizedDomain,
+              section,
+            });
+            const data = await revalidateSection(normalizedDomain, section);
+            logger.info("[section-revalidate] done", {
+              domain: normalizedDomain,
+              section,
+            });
+            return data;
+          },
+        );
+
+        // Change detection: compare with previous snapshot and notify users
+        await step.run(`detect-changes:${section}`, async () => {
+          try {
+            // Skip if no data was returned from revalidation
+            if (!currentData) return;
+
+            // Convert to registrable/apex domain for DB lookup
+            // (e.g., www.example.com -> example.com)
+            const registrableDomain = toRegistrableDomain(normalizedDomain);
+            if (!registrableDomain) {
+              logger.warn("[section-revalidate] invalid registrable domain", {
+                domain: normalizedDomain,
+              });
+              return;
+            }
+
+            // Get domain record from DB using registrable domain
+            const domainRecord = await db.query.domains.findFirst({
+              where: eq(domains.name, registrableDomain),
+            });
+
+            if (!domainRecord) return;
+
+            // Get latest snapshot
+            const previous = await getLatestSnapshot(domainRecord.id, section);
+
+            // Detect changes
+            const changes = detectChanges(
+              section,
+              previous?.snapshotData ?? null,
+              currentData,
+            );
+
+            // Save new snapshot
+            await saveSnapshot(domainRecord.id, section, currentData);
+
+            // Process changes and send notifications
+            if (changes.length > 0) {
+              logger.info("[section-revalidate] changes detected", {
+                domain: normalizedDomain,
+                section,
+                changes: changes.map((c) => c.type),
+              });
+
+              await processChanges(domainRecord, changes, logger);
+            }
+          } catch (err) {
+            logger.warn("[section-revalidate] failed to detect changes", {
+              domain: normalizedDomain,
+              section,
+              error: err,
+            });
+          }
         });
+
         // On success: compute next due time using DB TTLs where applicable.
         // We don't know exact DB values here, so schedule a conservative minimum
         // to ensure the due queue repopulates even if on-write scheduling missed.
@@ -153,3 +238,135 @@ export const sectionRevalidate = inngest.createFunction(
     }
   },
 );
+
+/**
+ * Process changes and send notifications to all users monitoring this domain
+ */
+async function processChanges(
+  domainRecord: { id: string; name: string },
+  changes: ChangeDetection[],
+  logger: {
+    info: (msg: string, data?: unknown) => void;
+    error: (msg: string, data?: unknown) => void;
+  },
+) {
+  // Get all users monitoring this domain
+  const users = await db
+    .select({
+      userDomain: userDomains,
+      user: user,
+    })
+    .from(userDomains)
+    .innerJoin(user, eq(user.id, userDomains.userId))
+    .where(
+      and(
+        eq(userDomains.domainId, domainRecord.id),
+        sql`${userDomains.verifiedAt} IS NOT NULL`,
+      ),
+    );
+
+  for (const ud of users) {
+    try {
+      const prefs = await getOrCreatePreferences(ud.userDomain.userId);
+      if (!prefs.emailEnabled) continue;
+
+      for (const change of changes) {
+        // Check user preferences for this change type
+        const shouldNotify = shouldNotifyForChange(prefs, change.type);
+        if (!shouldNotify) continue;
+
+        // Check idempotency (max 1 per day for changes)
+        const canSend = await canSendNotification(
+          ud.userDomain.userId,
+          domainRecord.id,
+          change.type,
+        );
+
+        if (canSend) {
+          // Send email based on change type
+          let result: { id: string } | { error: string } | undefined;
+
+          switch (change.type) {
+            case "nameserver_changed":
+              result = await sendEmail({
+                to: ud.user.email,
+                subject: `Nameservers Changed for ${domainRecord.name}`,
+                template: "nameserver-changed",
+                data: {
+                  domain: domainRecord.name,
+                  previousNs: change.before as string[],
+                  currentNs: change.after as string[],
+                  verifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/domains/${domainRecord.id}`,
+                },
+              });
+              break;
+            case "certificate_changed":
+              result = await sendEmail({
+                to: ud.user.email,
+                subject: `Certificate Changed for ${domainRecord.name}`,
+                template: "certificate-changed",
+                data: {
+                  domain: domainRecord.name,
+                  changeDetails: {
+                    before: change.before as {
+                      validFrom: string | null;
+                      validTo: string | null;
+                      issuer: string | null;
+                    },
+                    after: change.after as {
+                      validFrom: string | null;
+                      validTo: string | null;
+                      issuer: string | null;
+                    },
+                  },
+                  verifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/domains/${domainRecord.id}`,
+                },
+              });
+              break;
+            // Add other change types as needed
+            default:
+              continue;
+          }
+
+          // Log notification
+          if (result && "id" in result) {
+            await logNotification(
+              ud.userDomain.userId,
+              domainRecord.id,
+              change.type,
+              result.id,
+              { change },
+            );
+          }
+        }
+      }
+    } catch (err) {
+      logger.error("[section-revalidate] failed to notify user of changes", {
+        userId: ud.userDomain.userId,
+        domain: domainRecord.name,
+        error: err,
+      });
+    }
+  }
+}
+
+/**
+ * Check if user preferences allow notification for this change type
+ */
+function shouldNotifyForChange(
+  prefs: NotificationPreferences,
+  changeType: string,
+): boolean {
+  switch (changeType) {
+    case "nameserver_changed":
+      return prefs.notifyNameserverChange;
+    case "certificate_changed":
+      return prefs.notifyCertificateChange;
+    case "hosting_changed":
+      return prefs.notifyHostingChange;
+    case "dns_changed":
+      return prefs.notifyDnsChange;
+    default:
+      return false;
+  }
+}
