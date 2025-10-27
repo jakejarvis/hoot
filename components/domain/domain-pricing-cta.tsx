@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PorkbunIcon } from "@/components/brand-icons";
+import { CloudflareIcon, PorkbunIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
@@ -16,9 +16,44 @@ export function DomainPricingCTASkeleton({
     <div className={cn("flex flex-col items-center justify-center", className)}>
       <Skeleton className="mt-1 h-3 w-20" aria-hidden />
       <Skeleton className="mt-3 h-8 w-48" aria-hidden />
+      <Skeleton className="mt-2 h-8 w-48" aria-hidden />
       <Skeleton className="mt-7 mb-1 h-3 w-64" aria-hidden />
     </div>
   );
+}
+
+const PROVIDER_CONFIG: Record<
+  string,
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    url: (domain: string) => string;
+    transparentIcon?: boolean;
+  }
+> = {
+  porkbun: {
+    icon: PorkbunIcon,
+    url: (domain) => `https://porkbun.com/checkout/search?q=${domain}`,
+    transparentIcon: false,
+  },
+  cloudflare: {
+    icon: CloudflareIcon,
+    url: (domain) => `https://domains.cloudflare.com/?domain=${domain}`,
+    transparentIcon: true,
+  },
+};
+
+function formatPrice(value: string): string | null {
+  const amount = Number.parseFloat(value);
+  if (!Number.isFinite(amount)) return null;
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `$${amount.toFixed(2)}`;
+  }
 }
 
 export function DomainPricingCTA({
@@ -43,53 +78,67 @@ export function DomainPricingCTA({
     return <DomainPricingCTASkeleton className={className} />;
   }
 
-  const priceString = data?.price ?? null;
-  if (!priceString) return null;
+  const providers = data?.providers ?? [];
+  if (providers.length === 0) return null;
 
-  const price = ((value: string) => {
-    const amount = Number.parseFloat(value);
-    if (!Number.isFinite(amount)) return null;
-    try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 2,
-      }).format(amount);
-    } catch {
-      return `$${amount.toFixed(2)}`;
-    }
-  })(priceString);
+  const tldSuffix = domain.split(".").slice(1).join(".");
 
-  if (!price) return null;
+  const sortedProviders = [...providers].sort((a, b) => {
+    const priceA = Number.parseFloat(a.price);
+    const priceB = Number.parseFloat(b.price);
+    return priceA - priceB;
+  });
 
   return (
     <div className={cn("flex flex-col items-center justify-center", className)}>
       <p className="mb-2 text-[13px] text-muted-foreground">…until now?</p>
 
-      <Button variant="outline" asChild>
-        <a
-          href={`https://porkbun.com/checkout/search?q=${domain}`}
-          target="_blank"
-          rel="noopener"
-          aria-label="Register this domain"
-          className="flex items-center gap-2"
-        >
-          <span className="rounded-full bg-white">
-            <PorkbunIcon className="size-5" />
-          </span>
+      <div className="flex flex-col gap-2">
+        {sortedProviders.map((providerPricing) => {
+          const config = PROVIDER_CONFIG[providerPricing.provider];
+          if (!config) return null;
 
-          <span>
-            <span className="text-foreground/85">
-              .{domain.split(".").slice(1).join(".")} from
-            </span>{" "}
-            <span className="font-semibold">{price}</span>
-            <span className="text-muted-foreground text-xs">/year</span>
-          </span>
-        </a>
-      </Button>
+          const price = formatPrice(providerPricing.price);
+          if (!price) return null;
+
+          const Icon = config.icon;
+
+          return (
+            <Button
+              key={providerPricing.provider}
+              variant="outline"
+              asChild
+              className="w-full min-w-[250px]"
+            >
+              <a
+                href={config.url(domain)}
+                target="_blank"
+                rel="noopener"
+                aria-label={`Register this domain with ${providerPricing.provider}`}
+                className="flex items-center gap-2"
+              >
+                <span
+                  className={cn(
+                    "rounded-full",
+                    config.transparentIcon ? "bg-transparent" : "bg-white",
+                  )}
+                >
+                  <Icon className="size-5" />
+                </span>
+
+                <span>
+                  <span className="text-foreground/85">.{tldSuffix} from</span>{" "}
+                  <span className="font-semibold">{price}</span>
+                  <span className="text-muted-foreground text-xs">/year</span>
+                </span>
+              </a>
+            </Button>
+          );
+        })}
+      </div>
 
       <p className="mt-6 text-muted-foreground text-xs">
-        This is not an affiliate link, but it{" "}
+        These are not affiliate links, but they{" "}
         <a
           href="https://jarv.is/contact"
           target="_blank"

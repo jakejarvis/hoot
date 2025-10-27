@@ -4,14 +4,17 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 let getPricingForTld: typeof import("./pricing").getPricingForTld;
 let refreshAllProviderPricing: typeof import("./pricing").refreshAllProviderPricing;
 
-// Mock registrar pricing response
+// Mock registrar pricing responses (standardized format)
 const mockPorkbunResponse = {
-  status: "SUCCESS",
-  pricing: {
-    com: { registration: "9.99", renewal: "10.99" },
-    dev: { registration: "12.00", renewal: "12.00" },
-    org: { registration: "11.50" },
-  },
+  com: { registration: "9.99", renewal: "10.99" },
+  dev: { registration: "12.00", renewal: "12.00" },
+  org: { registration: "11.50" },
+};
+
+const mockCloudflareResponse = {
+  com: { registration: "10.44" },
+  dev: { registration: "13.50" },
+  net: { registration: "12.88" },
 };
 
 describe("pricing service", () => {
@@ -31,216 +34,306 @@ describe("pricing service", () => {
   });
 
   describe("getPricingForTld", () => {
-    it("returns null price for single-label hosts", async () => {
+    it("returns empty providers for single-label hosts", async () => {
       const res = await getPricingForTld("localhost");
       expect(res.tld).toBeNull();
-      expect(res.price).toBeNull();
+      expect(res.providers).toEqual([]);
     });
 
-    it("returns null price for empty input", async () => {
+    it("returns empty providers for empty input", async () => {
       const res = await getPricingForTld("");
       expect(res.tld).toBeNull();
-      expect(res.price).toBeNull();
+      expect(res.providers).toEqual([]);
     });
 
-    it("fetches from porkbun provider and caches response on miss", async () => {
-      // Mock Porkbun API
-      vi.spyOn(global, "fetch").mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockPorkbunResponse,
-      } as unknown as Response);
+    it("fetches from all providers and caches responses on miss", async () => {
+      // Mock both Porkbun and Cloudflare APIs (raw formats)
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            status: "SUCCESS",
+            pricing: mockPorkbunResponse,
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockCloudflareResponse,
+        } as unknown as Response);
 
       const res = await getPricingForTld("example.com");
 
       expect(res.tld).toBe("com");
-      expect(res.price).toBe("9.99");
+      expect(res.providers).toHaveLength(2);
+      expect(res.providers).toContainEqual({
+        provider: "porkbun",
+        price: "9.99",
+      });
+      expect(res.providers).toContainEqual({
+        provider: "cloudflare",
+        price: "10.44",
+      });
 
-      // Verify cache was set
+      // Verify both caches were set
       const { redis } = await import("@/lib/redis");
       expect(await redis.exists("pricing:porkbun")).toBe(1);
+      expect(await redis.exists("pricing:cloudflare")).toBe(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 
     it("uses cached provider data without fetching again", async () => {
-      // Seed cache with porkbun data
+      // Seed cache with both provider data
       const { redis } = await import("@/lib/redis");
       await redis.set("pricing:porkbun", mockPorkbunResponse);
+      await redis.set("pricing:cloudflare", mockCloudflareResponse);
 
       const fetchSpy = vi.spyOn(global, "fetch");
       const res = await getPricingForTld("something.dev");
 
       expect(res.tld).toBe("dev");
-      expect(res.price).toBe("12.00");
+      expect(res.providers).toHaveLength(2);
+      expect(res.providers).toContainEqual({
+        provider: "porkbun",
+        price: "12.00",
+      });
+      expect(res.providers).toContainEqual({
+        provider: "cloudflare",
+        price: "13.50",
+      });
       expect(fetchSpy).not.toHaveBeenCalled();
     });
 
     it("handles upstream API error gracefully", async () => {
-      vi.spyOn(global, "fetch").mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-      } as unknown as Response);
+      vi.spyOn(global, "fetch")
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        } as unknown as Response);
 
       const res = await getPricingForTld("example.com");
       expect(res.tld).toBe("com");
-      expect(res.price).toBeNull();
+      expect(res.providers).toEqual([]);
     });
 
     it("handles network fetch error gracefully", async () => {
-      vi.spyOn(global, "fetch").mockRejectedValueOnce(
-        new Error("Network timeout"),
-      );
+      vi.spyOn(global, "fetch")
+        .mockRejectedValueOnce(new Error("Network timeout"))
+        .mockRejectedValueOnce(new Error("Network timeout"));
 
       const res = await getPricingForTld("example.org");
       expect(res.tld).toBe("org");
-      expect(res.price).toBeNull();
+      expect(res.providers).toEqual([]);
     });
 
-    it("returns null when TLD is not found in provider response", async () => {
+    it("returns empty providers when TLD is not found in any provider response", async () => {
       // Seed cache with data that doesn't include .xyz
       const { redis } = await import("@/lib/redis");
       await redis.set("pricing:porkbun", mockPorkbunResponse);
+      await redis.set("pricing:cloudflare", mockCloudflareResponse);
 
       const res = await getPricingForTld("example.xyz");
       expect(res.tld).toBe("xyz");
-      expect(res.price).toBeNull();
+      expect(res.providers).toEqual([]);
     });
 
     it("normalizes domain input (case, whitespace)", async () => {
       const { redis } = await import("@/lib/redis");
       await redis.set("pricing:porkbun", mockPorkbunResponse);
+      await redis.set("pricing:cloudflare", mockCloudflareResponse);
 
       const res = await getPricingForTld("  EXAMPLE.COM  ");
       expect(res.tld).toBe("com");
-      expect(res.price).toBe("9.99");
+      expect(res.providers).toHaveLength(2);
+      expect(res.providers).toContainEqual({
+        provider: "porkbun",
+        price: "9.99",
+      });
+      expect(res.providers).toContainEqual({
+        provider: "cloudflare",
+        price: "10.44",
+      });
     });
 
     it("handles subdomains correctly by extracting TLD", async () => {
       const { redis } = await import("@/lib/redis");
       await redis.set("pricing:porkbun", mockPorkbunResponse);
+      await redis.set("pricing:cloudflare", mockCloudflareResponse);
 
       const res = await getPricingForTld("www.example.dev");
       expect(res.tld).toBe("dev");
-      expect(res.price).toBe("12.00");
+      expect(res.providers).toHaveLength(2);
+      expect(res.providers).toContainEqual({
+        provider: "porkbun",
+        price: "12.00",
+      });
+      expect(res.providers).toContainEqual({
+        provider: "cloudflare",
+        price: "13.50",
+      });
     });
   });
 
   describe("refreshAllProviderPricing", () => {
     it("successfully refreshes all providers and populates cache", async () => {
-      // Mock Porkbun API
-      const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockPorkbunResponse,
-      } as unknown as Response);
+      // Mock both Porkbun and Cloudflare APIs (raw formats)
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            status: "SUCCESS",
+            pricing: mockPorkbunResponse,
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockCloudflareResponse,
+        } as unknown as Response);
 
       const result = await refreshAllProviderPricing();
 
-      expect(result.refreshed).toEqual(["porkbun"]);
+      expect(result.refreshed).toEqual(["porkbun", "cloudflare"]);
       expect(result.failed).toEqual([]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
 
-      // Verify cache was populated
+      // Verify both caches were populated
       const { redis } = await import("@/lib/redis");
-      const cached = await redis.get("pricing:porkbun");
-      expect(cached).toEqual(mockPorkbunResponse);
+      const porkbunCached = await redis.get("pricing:porkbun");
+      expect(porkbunCached).toEqual(mockPorkbunResponse);
+      const cloudflareCached = await redis.get("pricing:cloudflare");
+      expect(cloudflareCached).toEqual(mockCloudflareResponse);
     });
 
     it("handles API errors and reports failed providers", async () => {
-      vi.spyOn(global, "fetch").mockResolvedValueOnce({
-        ok: false,
-        status: 503,
-      } as unknown as Response);
+      vi.spyOn(global, "fetch")
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+        } as unknown as Response);
 
       const result = await refreshAllProviderPricing();
 
       expect(result.refreshed).toEqual([]);
-      expect(result.failed).toEqual(["porkbun"]);
+      expect(result.failed).toEqual(["porkbun", "cloudflare"]);
 
-      // Verify cache was not populated
+      // Verify caches were not populated
       const { redis } = await import("@/lib/redis");
       expect(await redis.exists("pricing:porkbun")).toBe(0);
+      expect(await redis.exists("pricing:cloudflare")).toBe(0);
     });
 
     it("handles network errors and reports failed providers", async () => {
-      vi.spyOn(global, "fetch").mockRejectedValueOnce(
-        new Error("ECONNREFUSED"),
-      );
+      vi.spyOn(global, "fetch")
+        .mockRejectedValueOnce(new Error("ECONNREFUSED"))
+        .mockRejectedValueOnce(new Error("ECONNREFUSED"));
 
       const result = await refreshAllProviderPricing();
 
       expect(result.refreshed).toEqual([]);
-      expect(result.failed).toEqual(["porkbun"]);
+      expect(result.failed).toEqual(["porkbun", "cloudflare"]);
     });
 
     it("refreshes even when cache already exists", async () => {
       // Pre-populate cache with old data
       const { redis } = await import("@/lib/redis");
-      const oldData = {
-        status: "SUCCESS",
-        pricing: { com: { registration: "8.88" } },
-      };
+      const oldData = { com: { registration: "8.88" } };
       await redis.set("pricing:porkbun", oldData);
+      await redis.set("pricing:cloudflare", oldData);
 
-      // Mock API with new data
-      const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockPorkbunResponse,
-      } as unknown as Response);
+      // Mock APIs with new data (raw formats)
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            status: "SUCCESS",
+            pricing: mockPorkbunResponse,
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockCloudflareResponse,
+        } as unknown as Response);
 
       const result = await refreshAllProviderPricing();
 
-      expect(result.refreshed).toEqual(["porkbun"]);
+      expect(result.refreshed).toEqual(["porkbun", "cloudflare"]);
       expect(result.failed).toEqual([]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
 
-      // Verify cache was updated with new data
-      const cached = await redis.get("pricing:porkbun");
-      expect(cached).toEqual(mockPorkbunResponse);
-      expect(cached).not.toEqual(oldData);
+      // Verify caches were updated with new data
+      const porkbunCached = await redis.get("pricing:porkbun");
+      expect(porkbunCached).toEqual(mockPorkbunResponse);
+      expect(porkbunCached).not.toEqual(oldData);
     });
   });
 
   describe("getPricingForTld - lock management", () => {
-    it("releases lock after successful fetch", async () => {
+    it("releases locks after successful fetch", async () => {
       const { redis } = await import("@/lib/redis");
 
-      vi.spyOn(global, "fetch").mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockPorkbunResponse,
-      } as unknown as Response);
+      vi.spyOn(global, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            status: "SUCCESS",
+            pricing: mockPorkbunResponse,
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockCloudflareResponse,
+        } as unknown as Response);
 
       await getPricingForTld("example.com");
 
-      // Verify lock was released
+      // Verify locks were released
       expect(await redis.exists("pricing:porkbun-lock")).toBe(0);
+      expect(await redis.exists("pricing:cloudflare-lock")).toBe(0);
     });
 
-    it("releases lock after fetch error", async () => {
+    it("releases locks after fetch error", async () => {
       const { redis } = await import("@/lib/redis");
 
-      vi.spyOn(global, "fetch").mockRejectedValueOnce(
-        new Error("Network error"),
-      );
+      vi.spyOn(global, "fetch")
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockRejectedValueOnce(new Error("Network error"));
 
       await getPricingForTld("example.com");
 
-      // Verify lock was released even though fetch failed
+      // Verify locks were released even though fetches failed
       expect(await redis.exists("pricing:porkbun-lock")).toBe(0);
+      expect(await redis.exists("pricing:cloudflare-lock")).toBe(0);
     });
 
     it("sets negative cache on fetch error", async () => {
       const { redis } = await import("@/lib/redis");
 
-      vi.spyOn(global, "fetch").mockRejectedValueOnce(new Error("API down"));
+      vi.spyOn(global, "fetch")
+        .mockRejectedValueOnce(new Error("API down"))
+        .mockRejectedValueOnce(new Error("API down"));
 
       await getPricingForTld("example.com");
 
-      // Verify negative cache was set
-      const cached = await redis.get("pricing:porkbun");
-      expect(cached).toBeNull();
+      // Verify negative cache was set for both providers
+      const porkbunCached = await redis.get("pricing:porkbun");
+      expect(porkbunCached).toBeNull();
+      const cloudflareCached = await redis.get("pricing:cloudflare");
+      expect(cloudflareCached).toBeNull();
 
       // Verify TTL is short (should be 5 seconds)
-      const ttl = await redis.ttl("pricing:porkbun");
-      expect(ttl).toBeGreaterThan(0);
-      expect(ttl).toBeLessThanOrEqual(5);
+      const porkbunTtl = await redis.ttl("pricing:porkbun");
+      expect(porkbunTtl).toBeGreaterThan(0);
+      expect(porkbunTtl).toBeLessThanOrEqual(5);
     });
   });
 });
