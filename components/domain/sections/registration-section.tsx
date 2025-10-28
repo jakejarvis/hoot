@@ -6,19 +6,15 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
+import { RelativeExpiryString } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
 import { SectionContent } from "@/components/domain/section-content";
-import { RelativeExpiryBadge } from "@/components/domain/time-badges";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  extractHostnameFromUrlish,
-  formatDate,
-  formatDateTimeUtc,
-} from "@/lib/format";
+import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
 import { SECTION_DEFS } from "@/lib/sections-meta";
 
@@ -94,7 +90,7 @@ export function RegistrationSection({
                               rel="noopener"
                               className="underline underline-offset-2"
                             >
-                              {extractHostnameFromUrlish(
+                              {extractSourceDomain(
                                 d.rdapServers[d.rdapServers.length - 1],
                               ) ?? "RDAP"}
                             </a>
@@ -156,12 +152,13 @@ export function RegistrationSection({
               }
               suffix={
                 d.expirationDate ? (
-                  <RelativeExpiryBadge
-                    to={d.expirationDate}
-                    dangerDays={30}
-                    warnDays={60}
-                    className="text-[11px] leading-none"
-                  />
+                  <span className="text-[11px] text-muted-foreground leading-none">
+                    <RelativeExpiryString
+                      to={d.expirationDate}
+                      dangerDays={30}
+                      warnDays={45}
+                    />
+                  </span>
                 ) : null
               }
             />
@@ -209,4 +206,18 @@ export function extractRegistrantView(
   ).toString();
   const state = (registrant.state || "").toString() || undefined;
   return { organization, country, state };
+}
+
+export function extractSourceDomain(
+  input: string | undefined | null,
+): string | undefined {
+  if (!input) return undefined;
+  const value = String(input).trim();
+  if (!value) return undefined;
+  try {
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.hostname || undefined;
+  } catch {
+    return undefined;
+  }
 }

@@ -13,8 +13,8 @@ import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
+import { RelativeExpiryString } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { RelativeExpiryBadge } from "@/components/domain/time-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,12 +145,13 @@ export function CertificatesSection({
                   value={formatDate(firstCert.validTo)}
                   valueTooltip={formatDateTimeUtc(firstCert.validTo)}
                   suffix={
-                    <RelativeExpiryBadge
-                      to={firstCert.validTo}
-                      dangerDays={7}
-                      warnDays={30}
-                      className="text-[11px] leading-none"
-                    />
+                    <span className="text-[11px] text-muted-foreground leading-none">
+                      <RelativeExpiryString
+                        to={firstCert.validTo}
+                        dangerDays={7}
+                        warnDays={21}
+                      />
+                    </span>
                   }
                 />
               </KeyValueGrid>
@@ -249,12 +250,13 @@ export function CertificatesSection({
                             value={formatDate(c.validTo)}
                             valueTooltip={formatDateTimeUtc(c.validTo)}
                             suffix={
-                              <RelativeExpiryBadge
-                                to={c.validTo}
-                                dangerDays={7}
-                                warnDays={30}
-                                className="text-[11px] leading-none"
-                              />
+                              <span className="text-[11px] text-muted-foreground leading-none">
+                                <RelativeExpiryString
+                                  to={c.validTo}
+                                  dangerDays={7}
+                                  warnDays={21}
+                                />
+                              </span>
                             }
                           />
                         </KeyValueGrid>

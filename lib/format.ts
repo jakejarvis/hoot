@@ -24,29 +24,3 @@ export function formatDateTimeUtc(iso: string) {
     return iso;
   }
 }
-
-export function formatTtl(ttl: number): string {
-  if (!Number.isFinite(ttl) || ttl <= 0) return `${ttl}s`;
-  const hours = Math.floor(ttl / 3600);
-  const minutes = Math.floor((ttl % 3600) / 60);
-  const seconds = ttl % 60;
-  const parts: string[] = [];
-  if (hours) parts.push(`${hours}h`);
-  if (minutes) parts.push(`${minutes}m`);
-  if (!hours && !minutes) parts.push(`${seconds}s`);
-  return parts.join(" ");
-}
-
-export function extractHostnameFromUrlish(
-  input: string | undefined | null,
-): string | undefined {
-  if (!input) return undefined;
-  const value = String(input).trim();
-  if (!value) return undefined;
-  try {
-    const url = new URL(value.includes("://") ? value : `https://${value}`);
-    return url.hostname || undefined;
-  } catch {
-    return undefined;
-  }
-}

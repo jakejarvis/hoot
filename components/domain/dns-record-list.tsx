@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
-import { TtlTimeBadge } from "@/components/domain/time-badges";
+import { TtlBadge } from "@/components/domain/ttl-badge";
 import {
   Tooltip,
   TooltipContent,
@@ -35,7 +35,7 @@ export function DnsRecordList({
           }
           value={r.value}
           trailing={
-            typeof r.ttl === "number" ? <TtlTimeBadge ttl={r.ttl} /> : undefined
+            typeof r.ttl === "number" ? <TtlBadge ttl={r.ttl} /> : undefined
           }
           suffix={
             r.isCloudflare ? (
