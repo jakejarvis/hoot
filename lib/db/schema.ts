@@ -41,7 +41,6 @@ export const dnsRecordType = pgEnum("dns_record_type", [
   "TXT",
   "NS",
 ]);
-export const dnsResolver = pgEnum("dns_resolver", ["cloudflare", "google"]);
 export const registrationSource = pgEnum("registration_source", [
   "rdap",
   "whois",
@@ -163,7 +162,7 @@ export const dnsRecords = pgTable(
     ttl: integer("ttl"),
     priority: integer("priority"),
     isCloudflare: boolean("is_cloudflare"),
-    resolver: dnsResolver("resolver").notNull(),
+    resolver: text("resolver").notNull(),
     fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },

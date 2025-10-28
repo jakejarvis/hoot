@@ -179,7 +179,7 @@ describe("resolveAll", () => {
     const fetchSpy = vi.spyOn(global, "fetch");
     const second = await resolveAll("example.com");
     expect(second.records.length).toBe(first.records.length);
-    expect(["cloudflare", "google"]).toContain(second.resolver);
+    expect(["cloudflare", "google", "quad9"]).toContain(second.resolver);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });

@@ -2,21 +2,18 @@ import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import {
-  dnsRecords,
-  type dnsRecordType,
-  type dnsResolver,
-} from "@/lib/db/schema";
+import { dnsRecords, type dnsRecordType } from "@/lib/db/schema";
 import {
   DnsRecordInsert as DnsRecordInsertSchema,
   DnsRecordUpdate as DnsRecordUpdateSchema,
 } from "@/lib/db/zod";
+import type { DnsResolver } from "@/lib/schemas";
 
 type DnsRecordInsert = InferInsertModel<typeof dnsRecords>;
 
 export type UpsertDnsParams = {
   domainId: string;
-  resolver: (typeof dnsResolver.enumValues)[number];
+  resolver: DnsResolver;
   fetchedAt: Date;
   // complete set per type
   recordsByType: Record<
