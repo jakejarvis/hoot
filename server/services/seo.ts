@@ -10,7 +10,6 @@ import { ttlForSeo } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { optimizeImageCover } from "@/lib/image";
-import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type {
@@ -23,13 +22,11 @@ import type {
 import { parseHtmlMeta, parseRobotsTxt, selectPreview } from "@/lib/seo";
 import { storeImage } from "@/lib/storage";
 
-const log = logger({ module: "seo" });
-
 const SOCIAL_WIDTH = 1200;
 const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
-  log.debug("start", { domain });
+  console.debug(`[seo] start ${domain}`);
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -242,20 +239,16 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       const dueAtMs = ttlForSeo(now).getTime();
       await scheduleSectionIfEarlier("seo", registrable ?? domain, dueAtMs);
     } catch (err) {
-      log.warn("schedule.failed", {
-        domain: registrable ?? domain,
-        err: err instanceof Error ? err : new Error(String(err)),
-      });
+      console.warn(
+        `[seo] schedule failed for ${registrable ?? domain}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
   }
 
-  log.info("ok", {
-    domain: registrable ?? domain,
-    status: status ?? -1,
-    has_meta: !!meta,
-    has_robots: !!robots,
-    has_errors: Boolean(htmlError || robotsError),
-  });
+  console.info(
+    `[seo] ok ${registrable ?? domain} status=${status ?? -1} has_meta=${!!meta} has_robots=${!!robots} has_errors=${Boolean(htmlError || robotsError)}`,
+  );
 
   return response;
 }

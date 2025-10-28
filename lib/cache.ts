@@ -1,7 +1,4 @@
-import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
-
-const log = logger({ module: "cache" });
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -50,20 +47,18 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
     const acquired = Boolean(setRes);
 
     if (acquired) {
-      log.debug("redis.lock.acquired", { lockKey });
+      console.debug(`[cache] redis lock acquired ${lockKey}`);
       return { acquired: true, cachedResult: null };
     }
 
-    log.debug("redis.lock.not.acquired", {
-      lockKey,
-      resultKey,
-      maxWaitMs,
-    });
+    console.debug(
+      `[cache] redis lock not acquired ${lockKey} maxWait=${maxWaitMs}ms`,
+    );
   } catch (err) {
-    log.warn("redis.lock.acquisition.failed", {
-      lockKey,
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.warn(
+      `[cache] redis lock acquisition failed ${lockKey}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
     // If Redis is down, fail open (don't wait)
     return { acquired: true, cachedResult: null };
   }
@@ -78,23 +73,18 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       const result = (await redis.get(resultKey)) as T | null;
 
       if (result !== null) {
-        log.debug("redis.cache.hit.waiting", {
-          lockKey,
-          resultKey,
-          pollCount,
-          durationMs: Date.now() - startTime,
-        });
+        console.debug(
+          `[cache] redis cache hit waiting ${resultKey} polls=${pollCount} duration=${Date.now() - startTime}ms`,
+        );
         return { acquired: false, cachedResult: result };
       }
 
       // Check if lock still exists - if not, the other process may have failed
       const lockExists = await redis.exists(lockKey);
       if (!lockExists) {
-        log.warn("redis.lock.disappeared", {
-          lockKey,
-          resultKey,
-          pollCount,
-        });
+        console.warn(
+          `[cache] redis lock disappeared ${lockKey} polls=${pollCount}`,
+        );
         // Lock gone but no result - other process likely failed
         // Try to acquire lock ourselves
         const retryRes = await redis.set(lockKey, "1", {
@@ -107,22 +97,18 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
         }
       }
     } catch (err) {
-      log.warn("redis.polling.error", {
-        lockKey,
-        resultKey,
-        err: err instanceof Error ? err : new Error(String(err)),
-      });
+      console.warn(
+        `[cache] redis polling error ${lockKey}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
 
     await sleep(pollIntervalMs);
   }
 
-  log.warn("redis.wait.timeout", {
-    lockKey,
-    resultKey,
-    pollCount,
-    durationMs: Date.now() - startTime,
-  });
+  console.warn(
+    `[cache] redis wait timeout ${lockKey} polls=${pollCount} duration=${Date.now() - startTime}ms`,
+  );
 
   return { acquired: false, cachedResult: null };
 }
@@ -165,10 +151,10 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
       }
     }
   } catch (err) {
-    log.debug("redis.index.read.failed", {
-      indexKey,
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.debug(
+      `[cache] redis index read failed ${indexKey}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
   }
 
   // 2) Acquire lock or wait
@@ -205,11 +191,10 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
         });
       }
     } catch (err) {
-      log.warn("redis.cache.store.failed", {
-        indexKey,
-        purgeQueue,
-        err: err instanceof Error ? err : new Error(String(err)),
-      });
+      console.warn(
+        `[cache] redis cache store failed ${indexKey}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
 
     return { url: produced.url };
@@ -217,10 +202,10 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     try {
       await redis.del(lockKey);
     } catch (err) {
-      log.debug("redis.lock.release.failed", {
-        lockKey,
-        err: err instanceof Error ? err : new Error(String(err)),
-      });
+      console.debug(
+        `[cache] redis lock release failed ${lockKey}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
   }
 }

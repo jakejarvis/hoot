@@ -11,7 +11,6 @@ import {
 } from "@/lib/db/schema";
 import { ttlForHosting } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { logger } from "@/lib/logger";
 import {
   detectDnsProvider,
   detectEmailProvider,
@@ -23,10 +22,8 @@ import { resolveAll } from "@/server/services/dns";
 import { probeHeaders } from "@/server/services/headers";
 import { lookupIpMeta } from "@/server/services/ip";
 
-const log = logger({ module: "hosting" });
-
 export async function detectHosting(domain: string): Promise<Hosting> {
-  log.debug("start", { domain });
+  console.debug(`[hosting] start ${domain}`);
 
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
@@ -119,12 +116,9 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           lon: row.geoLon ?? null,
         },
       };
-      log.info("cache.hit", {
-        domain,
-        hosting: info.hostingProvider.name,
-        email: info.emailProvider.name,
-        dns_provider: info.dnsProvider.name,
-      });
+      console.info(
+        `[hosting] cache hit ${domain} hosting=${info.hostingProvider.name} email=${info.emailProvider.name} dns=${info.dnsProvider.name}`,
+      );
       return info;
     }
   }
@@ -253,17 +247,14 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       const dueAtMs = ttlForHosting(now).getTime();
       await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
     } catch (err) {
-      log.warn("schedule.failed", {
-        domain: registrable ?? domain,
-        err: err instanceof Error ? err : new Error(String(err)),
-      });
+      console.warn(
+        `[hosting] schedule failed for ${registrable ?? domain}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
   }
-  log.info("ok", {
-    domain: registrable ?? domain,
-    hosting: hostingName,
-    email: emailName,
-    dns_provider: dnsName,
-  });
+  console.info(
+    `[hosting] ok ${registrable ?? domain} hosting=${hostingName} email=${emailName} dns=${dnsName}`,
+  );
   return info;
 }

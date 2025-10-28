@@ -1,5 +1,4 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { logger } from "@/lib/logger";
 import { appRouter } from "@/server/routers/_app";
 import { createContext } from "@/trpc/init";
 
@@ -34,8 +33,7 @@ const handler = (req: Request) =>
       return { headers, status: 429 };
     },
     onError: ({ path, error }) => {
-      const log = logger({ module: "trpc:handler" });
-      log.error("unhandled", { path, err: error });
+      console.error(`[trpc] unhandled error ${path}`, error);
     },
   });
 

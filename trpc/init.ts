@@ -1,7 +1,6 @@
 import { initTRPC } from "@trpc/server";
 import { ipAddress } from "@vercel/functions";
 import superjson from "superjson";
-import { createRequestLogger } from "@/lib/logger";
 
 export const createContext = async (opts?: { req?: Request }) => {
   const req = opts?.req;
@@ -13,19 +12,7 @@ export const createContext = async (opts?: { req?: Request }) => {
       null)
     : null;
 
-  const path = req ? new URL(req.url).pathname : undefined;
-  const requestId = req?.headers.get("x-request-id");
-  const vercelId = req?.headers.get("x-vercel-id");
-
-  const log = createRequestLogger({
-    ip: ip ?? undefined,
-    method: req?.method,
-    path,
-    requestId,
-    vercelId,
-  });
-
-  return { ip, req, log } as const;
+  return { ip, req } as const;
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
@@ -67,24 +54,20 @@ export const t = initTRPC
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 
-const withLogging = t.middleware(async ({ ctx, path, type, next }) => {
+const withLogging = t.middleware(async ({ path, type, next }) => {
   const start = performance.now();
-  ctx.log.debug("start", { rpcPath: path, rpcType: type });
+  console.debug(`[trpc] start ${path} (${type})`);
   try {
     const result = await next();
-    ctx.log.info("ok", {
-      rpcPath: path,
-      rpcType: type,
-      durationMs: Math.round(performance.now() - start),
-    });
+    const durationMs = Math.round(performance.now() - start);
+    console.info(`[trpc] ok ${path} (${type}) ${durationMs}ms`);
     return result;
   } catch (err) {
-    ctx.log.error("error", {
-      rpcPath: path,
-      rpcType: type,
-      durationMs: Math.round(performance.now() - start),
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    const durationMs = Math.round(performance.now() - start);
+    console.error(
+      `[trpc] error ${path} (${type}) ${durationMs}ms`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
     throw err;
   }
 });

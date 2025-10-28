@@ -1,23 +1,8 @@
+import { registerOTel } from "@vercel/otel";
 import type { Instrumentation } from "next";
 
-// Conditionally register Node.js-specific instrumentation
 export const register = async () => {
-  // Only register in Node.js runtime (not Edge)
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    // Dynamic import to avoid bundling Node.js code into Edge runtime
-    const { logger } = await import("@/lib/logger");
-    const log = logger({ module: "instrumentation" });
-
-    // Process-level error hooks
-    process.on("uncaughtException", (err) => {
-      log.error("uncaughtException", { err });
-    });
-    process.on("unhandledRejection", (reason) => {
-      log.error("unhandledRejection", {
-        err: reason instanceof Error ? reason : new Error(String(reason)),
-      });
-    });
-  }
+  registerOTel({ serviceName: "domainstack" });
 };
 
 export const onRequestError: Instrumentation.onRequestError = async (
@@ -28,9 +13,6 @@ export const onRequestError: Instrumentation.onRequestError = async (
   if (process.env.NEXT_RUNTIME === "nodejs") {
     try {
       // Dynamic imports for Node.js-only code
-      const { logger } = await import("@/lib/logger");
-      const log = logger({ module: "instrumentation" });
-
       const { getServerPosthog } = await import("@/lib/analytics/server");
       const phClient = getServerPosthog();
 
@@ -52,9 +34,10 @@ export const onRequestError: Instrumentation.onRequestError = async (
             const postHogData = JSON.parse(decodedCookie);
             distinctId = postHogData.distinct_id;
           } catch (err) {
-            log.error("cookie.parse.error", {
-              err: err instanceof Error ? err : new Error(String(err)),
-            });
+            console.error(
+              "[instrumentation] cookie parse error",
+              err instanceof Error ? err : new Error(String(err)),
+            );
           }
         }
       }
@@ -67,7 +50,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
       await phClient.shutdown();
     } catch (trackingError) {
       // Graceful degradation - don't throw to avoid breaking the request
-      console.error("Error tracking failed:", trackingError);
+      console.error("[instrumentation] error tracking failed:", trackingError);
     }
   }
 };

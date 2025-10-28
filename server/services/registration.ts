@@ -11,7 +11,6 @@ import {
 } from "@/lib/db/schema";
 import { ttlForRegistration } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { logger } from "@/lib/logger";
 import { detectRegistrar } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type {
@@ -20,13 +19,11 @@ import type {
   RegistrationSource,
 } from "@/lib/schemas";
 
-const log = logger({ module: "registration" });
-
 /**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
 export async function getRegistration(domain: string): Promise<Registration> {
-  log.debug("start", { domain });
+  console.debug(`[registration] start ${domain}`);
 
   // Try current snapshot
   const registrable = toRegistrableDomain(domain);
@@ -103,11 +100,9 @@ export async function getRegistration(domain: string): Promise<Registration> {
         registrarProvider,
       };
 
-      log.info("ok.cached", {
-        domain: registrable ?? domain,
-        registered: row.isRegistered,
-        registrar: registrarProvider.name,
-      });
+      console.info(
+        `[registration] ok cached ${registrable ?? domain} registered=${row.isRegistered} registrar=${registrarProvider.name}`,
+      );
 
       return response;
     }
@@ -121,17 +116,15 @@ export async function getRegistration(domain: string): Promise<Registration> {
     const err = new Error(
       `Registration lookup failed for ${registrable ?? domain}: ${error || "unknown error"}`,
     );
-    log.error("error", {
-      domain: registrable ?? domain,
-      err,
-    });
+    console.error(`[registration] error ${registrable ?? domain}`, err);
     throw err;
   }
 
   // Log raw rdapper record for observability (safe; already public data)
-  log.debug("rdapper.result", {
-    ...record,
-  });
+  console.debug(
+    `[registration] rdapper result for ${registrable ?? domain}`,
+    record,
+  );
 
   let registrarName = (record.registrar?.name || "").toString();
   let registrarDomain: string | null = null;
@@ -203,17 +196,15 @@ export async function getRegistration(domain: string): Promise<Registration> {
         expiresAt.getTime(),
       );
     } catch (err) {
-      log.warn("schedule.failed", {
-        domain: registrable ?? domain,
-        err: err instanceof Error ? err : new Error(String(err)),
-      });
+      console.warn(
+        `[registration] schedule failed for ${registrable ?? domain}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
   }
-  log.info("ok", {
-    domain: registrable ?? domain,
-    registered: record.isRegistered,
-    registrar: withProvider.registrarProvider.name,
-  });
+  console.info(
+    `[registration] ok ${registrable ?? domain} registered=${record.isRegistered} registrar=${withProvider.registrarProvider.name}`,
+  );
 
   return withProvider;
 }

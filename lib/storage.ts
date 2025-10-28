@@ -2,10 +2,7 @@ import "server-only";
 
 import { createHmac } from "node:crypto";
 import { putBlob } from "@/lib/blob";
-import { logger } from "@/lib/logger";
 import type { StorageKind } from "@/lib/schemas";
-
-const log = logger({ module: "storage" });
 
 const UPLOAD_MAX_ATTEMPTS = 3;
 const UPLOAD_BACKOFF_BASE_MS = 100;
@@ -67,11 +64,9 @@ async function uploadWithRetry(
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      log.debug("upload.attempt", {
-        pathname,
-        attempt: attempt + 1,
-        maxAttempts,
-      });
+      console.debug(
+        `[storage] upload attempt ${attempt + 1}/${maxAttempts} for ${pathname}`,
+      );
 
       const result = await putBlob({
         pathname,
@@ -80,21 +75,16 @@ async function uploadWithRetry(
         cacheControlMaxAge,
       });
 
-      log.info("upload.ok", {
-        pathname,
-        url: result.url,
-        attempt: attempt + 1,
-      });
+      console.info(`[storage] upload ok ${pathname} (attempt ${attempt + 1})`);
 
       return result;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
-      log.warn("upload.attempt.failed", {
-        pathname,
-        attempt: attempt + 1,
-        err: lastError,
-      });
+      console.warn(
+        `[storage] upload attempt failed ${attempt + 1}/${maxAttempts} for ${pathname}`,
+        lastError,
+      );
 
       // Don't sleep on last attempt
       if (attempt < maxAttempts - 1) {
@@ -103,10 +93,9 @@ async function uploadWithRetry(
           UPLOAD_BACKOFF_BASE_MS,
           UPLOAD_BACKOFF_MAX_MS,
         );
-        log.debug("retrying.after.delay", {
-          pathname,
-          delayMs: delay,
-        });
+        console.debug(
+          `[storage] retrying after ${delay}ms delay for ${pathname}`,
+        );
         await sleep(delay);
       }
     }

@@ -3,11 +3,8 @@ import "server-only";
 import { TRPCError } from "@trpc/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { waitUntil } from "@vercel/functions";
-import { logger } from "@/lib/logger";
 import { redis } from "@/lib/redis";
 import { t } from "@/trpc/init";
-
-const log = logger({ module: "ratelimit" });
 
 export const SERVICE_LIMITS = {
   dns: { points: 60, window: "1 m" },
@@ -46,14 +43,9 @@ export async function assertRateLimit(service: ServiceName, ip: string) {
       Math.ceil((res.reset - Date.now()) / 1000),
     );
 
-    log.warn("blocked", {
-      service,
-      ip,
-      limit: res.limit,
-      remaining: res.remaining,
-      reset: res.reset,
-      retryAfterSec,
-    });
+    console.warn(
+      `[ratelimit] blocked ${service} for ${ip} (limit=${res.limit}, retry in ${retryAfterSec}s)`,
+    );
 
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
