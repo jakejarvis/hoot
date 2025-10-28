@@ -20,13 +20,18 @@ export const GET = createFlagsDiscoveryEndpoint(async () => {
   ];
 
   // If Statsig Console API credentials are available, enhance with metadata
-  if (process.env.STATSIG_CONSOLE_API_KEY && process.env.STATSIG_PROJECT_ID) {
-    providers.push(
-      await getStatsigProviderData({
-        projectId: process.env.STATSIG_PROJECT_ID,
-        consoleApiKey: process.env.STATSIG_CONSOLE_API_KEY,
-      }),
-    );
+  if (process.env.STATSIG_CONSOLE_API_KEY) {
+    try {
+      providers.push(
+        await getStatsigProviderData({
+          projectId: process.env.STATSIG_PROJECT_ID,
+          consoleApiKey: process.env.STATSIG_CONSOLE_API_KEY,
+        }),
+      );
+    } catch (err) {
+      console.error("Flags Explorer: Statsig metadata fetch failed:", err);
+      // Continue without Statsig metadata
+    }
   }
 
   return mergeProviderData(providers);
