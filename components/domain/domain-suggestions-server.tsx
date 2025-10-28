@@ -18,7 +18,11 @@ type DomainSuggestionsServerProps = {
 export async function DomainSuggestionsServer(
   props: DomainSuggestionsServerProps,
 ) {
-  const suggestions = await domainSuggestionsFlag();
+  // Evaluate flag with defensive fallback in case of unexpected values
+  const flagValue = await domainSuggestionsFlag();
+
+  // Validate the flag value is an array, otherwise fall back to empty array
+  const suggestions = Array.isArray(flagValue) ? flagValue : [];
 
   return <DomainSuggestionsClient {...props} suggestions={suggestions} />;
 }
