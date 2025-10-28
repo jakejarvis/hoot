@@ -8,15 +8,12 @@ import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
-import { logger } from "@/lib/logger";
 import { detectCertificateAuthority } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Certificate } from "@/lib/schemas";
 
-const log = logger({ module: "certificates" });
-
 export async function getCertificates(domain: string): Promise<Certificate[]> {
-  log.debug("start", { domain });
+  console.debug(`[certificates] start ${domain}`);
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -155,23 +152,22 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           dueAtMs,
         );
       } catch (err) {
-        log.warn("schedule.failed", {
-          domain: registrable ?? domain,
-          err: err instanceof Error ? err : new Error(String(err)),
-        });
+        console.warn(
+          `[certificates] schedule failed for ${registrable ?? domain}`,
+          err instanceof Error ? err : new Error(String(err)),
+        );
       }
     }
 
-    log.info("ok", {
-      domain: registrable ?? domain,
-      chainLength: out.length,
-    });
+    console.info(
+      `[certificates] ok ${registrable ?? domain} chainLength=${out.length}`,
+    );
     return out;
   } catch (err) {
-    log.warn("error", {
-      domain: registrable ?? domain,
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.warn(
+      `[certificates] error ${registrable ?? domain}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
     // Do not treat as fatal; return empty and avoid long-lived negative cache
     return [];
   }

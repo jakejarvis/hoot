@@ -1,10 +1,7 @@
 import { getDomainTld } from "rdapper";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
-import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import type { Pricing } from "@/lib/schemas";
-
-const log = logger({ module: "pricing" });
 
 /**
  * Normalized pricing response shape that all registrars conform to.
@@ -59,27 +56,27 @@ async function fetchProviderPricing(
         await redis.set(provider.cacheKey, payload, {
           ex: provider.cacheTtlSeconds,
         });
-        log.info("fetch.ok", { provider: provider.name, cached: false });
+        console.info(`[pricing] fetch ok ${provider.name} (not cached)`);
       } catch (err) {
-        log.error("fetch.error", { provider: provider.name, err });
+        console.error(`[pricing] fetch error ${provider.name}`, err);
         // Write a short-TTL negative cache to prevent hammering during outages
         try {
           await redis.set(provider.cacheKey, null, { ex: 5 });
         } catch (cacheErr) {
-          log.warn("negative-cache.failed", {
-            provider: provider.name,
-            err: cacheErr,
-          });
+          console.warn(
+            `[pricing] negative cache failed ${provider.name}`,
+            cacheErr,
+          );
         }
       } finally {
         // Always release the lock so waiters don't stall
         try {
           await redis.del(provider.lockKey);
         } catch (delErr) {
-          log.warn("lock.release.failed", {
-            provider: provider.name,
-            err: delErr,
-          });
+          console.warn(
+            `[pricing] lock release failed ${provider.name}`,
+            delErr,
+          );
         }
       }
     } else {
@@ -118,10 +115,7 @@ const porkbunProvider: PricingProvider = {
       );
 
       if (!res.ok) {
-        log.error("upstream.error", {
-          provider: "porkbun",
-          status: res.status,
-        });
+        console.error(`[pricing] upstream error porkbun status=${res.status}`);
         throw new Error(`Porkbun API returned ${res.status}`);
       }
 
@@ -132,9 +126,7 @@ const porkbunProvider: PricingProvider = {
     } catch (err) {
       // Translate AbortError into a retryable timeout error
       if (err instanceof Error && err.name === "AbortError") {
-        log.error("upstream.timeout", {
-          provider: "porkbun",
-        });
+        console.error("[pricing] upstream timeout porkbun");
         throw new Error("Porkbun API request timed out");
       }
       throw err;
@@ -168,10 +160,9 @@ const cloudflareProvider: PricingProvider = {
       });
 
       if (!res.ok) {
-        log.error("upstream.error", {
-          provider: "cloudflare",
-          status: res.status,
-        });
+        console.error(
+          `[pricing] upstream error cloudflare status=${res.status}`,
+        );
         throw new Error(`Cloudflare pricing API returned ${res.status}`);
       }
 
@@ -199,9 +190,7 @@ const cloudflareProvider: PricingProvider = {
     } catch (err) {
       // Translate AbortError into a retryable timeout error
       if (err instanceof Error && err.name === "AbortError") {
-        log.error("upstream.timeout", {
-          provider: "cloudflare",
-        });
+        console.error("[pricing] upstream timeout cloudflare");
         throw new Error("Cloudflare pricing API request timed out");
       }
       throw err;
@@ -303,14 +292,14 @@ export async function refreshAllProviderPricing(): Promise<{
       const { name, success, error } = result.value;
       if (success) {
         refreshed.push(name);
-        log.info("refresh.ok", { provider: name });
+        console.info(`[pricing] refresh ok ${name}`);
       } else {
         failed.push(name);
-        log.error("refresh.failed", { provider: name, err: error });
+        console.error(`[pricing] refresh failed ${name}`, error);
       }
     } else {
       // Promise itself was rejected (shouldn't happen with our error handling)
-      log.error("refresh.unexpected", { err: result.reason });
+      console.error("[pricing] refresh unexpected", result.reason);
     }
   }
 

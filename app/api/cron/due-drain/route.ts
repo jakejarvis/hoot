@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { inngest } from "@/lib/inngest/client";
-import { logger } from "@/lib/logger";
 import { ns, redis } from "@/lib/redis";
 import { drainDueDomainsOnce } from "@/lib/schedule";
-
-const log = logger({ module: "cron:due-drain" });
 
 export const dynamic = "force-dynamic";
 
@@ -54,18 +51,17 @@ export async function GET(request: Request) {
           ),
         );
       } catch (err) {
-        log.warn("cleanup.failed", {
-          err: err instanceof Error ? err : new Error(String(err)),
-        });
+        console.warn(
+          "[due-drain] cleanup failed",
+          err instanceof Error ? err : new Error(String(err)),
+        );
       }
       emitted += chunk.length;
     }
 
-    log.info("cron.ok", {
-      emitted,
-      groups: result.groups,
-      durationMs: Date.now() - startedAt,
-    });
+    console.info(
+      `[due-drain] ok emitted=${emitted} groups=${result.groups} ${Date.now() - startedAt}ms`,
+    );
 
     return NextResponse.json({
       success: true,
@@ -74,9 +70,10 @@ export async function GET(request: Request) {
       durationMs: Date.now() - startedAt,
     });
   } catch (err) {
-    log.error("cron.failed", {
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.error(
+      "[due-drain] cron failed",
+      err instanceof Error ? err : new Error(String(err)),
+    );
     return NextResponse.json(
       {
         error: "Internal error",

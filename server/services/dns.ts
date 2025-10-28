@@ -10,7 +10,6 @@ import { dnsRecords } from "@/lib/db/schema";
 import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { logger } from "@/lib/logger";
 import { ns } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
@@ -20,8 +19,6 @@ import {
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
-
-const log = logger({ module: "dns" });
 
 export type DohProvider = {
   key: DnsResolver;
@@ -58,7 +55,7 @@ export const DOH_PROVIDERS: DohProvider[] = [
 ];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
-  log.debug("start", { domain });
+  console.debug(`[dns] start ${domain}`);
 
   // Try to acquire lock or wait for result from concurrent caller
   const lockKey = ns("dns:lock", domain);
@@ -73,7 +70,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   });
 
   if (!lockResult.acquired && lockResult.cachedResult) {
-    log.debug("cache.hit.concurrent", { domain });
+    console.debug(`[dns] cache hit concurrent ${domain}`);
     return lockResult.cachedResult;
   }
 
@@ -86,7 +83,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const { redis } = await import("@/lib/redis");
       await redis.set(resultKey, result, { ex: 5 });
     } catch (err) {
-      log.debug("redis.result.cache.failed", { domain, err });
+      console.debug(`[dns] redis result cache failed ${domain}`, err);
     }
 
     return result;
@@ -96,7 +93,7 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const { redis } = await import("@/lib/redis");
       await redis.del(lockKey);
     } catch (err) {
-      log.debug("redis.lock.release.failed", { domain, err });
+      console.debug(`[dns] redis lock release failed ${domain}`, err);
     }
   }
 }
@@ -254,10 +251,10 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
               soonest,
             );
           } catch (err) {
-            log.warn("schedule.failed.partial", {
-              domain: registrable ?? domain,
+            console.warn(
+              `[dns] schedule failed partial ${registrable ?? domain}`,
               err,
-            });
+            );
           }
         }
 
@@ -283,22 +280,18 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
           },
           { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
         );
-        log.info("ok.partial", {
-          domain: registrable ?? domain,
-          counts,
-          resolver: pinnedProvider.key,
-          durationMs: durationByProvider[pinnedProvider.key],
-        });
+        console.info(
+          `[dns] ok partial ${registrable ?? domain} counts=${JSON.stringify(counts)} resolver=${pinnedProvider.key} duration=${durationByProvider[pinnedProvider.key]}ms`,
+        );
         return {
           records: merged,
           resolver: pinnedProvider.key,
         } as DnsResolveResult;
       } catch (err) {
-        log.warn("partial.refresh.failed", {
-          domain: registrable ?? domain,
-          provider: pinnedProvider.key,
+        console.warn(
+          `[dns] partial refresh failed ${registrable ?? domain} provider=${pinnedProvider.key}`,
           err,
-        });
+        );
         // Fall through to full provider loop below
       }
     }
@@ -374,25 +367,21 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
           const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
           await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
         } catch (err) {
-          log.warn("schedule.failed.full", {
-            domain: registrable ?? domain,
+          console.warn(
+            `[dns] schedule failed full ${registrable ?? domain}`,
             err,
-          });
+          );
         }
       }
-      log.info("ok", {
-        domain: registrable ?? domain,
-        counts,
-        resolver: resolverUsed,
-        durationMs: durationByProvider,
-      });
+      console.info(
+        `[dns] ok ${registrable ?? domain} counts=${JSON.stringify(counts)} resolver=${resolverUsed} durations=${JSON.stringify(durationByProvider)}`,
+      );
       return { records: flat, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
-      log.warn("provider.attempt.failed", {
-        domain: registrable ?? domain,
-        provider: provider.key,
+      console.warn(
+        `[dns] provider attempt failed ${registrable ?? domain} provider=${provider.key}`,
         err,
-      });
+      );
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;
       // Try next provider in rotation
@@ -400,11 +389,10 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
   }
 
   // All providers failed
-  log.error("all.providers.failed", {
-    domain: registrable ?? domain,
-    providers: providers.map((p) => p.key),
-    err: lastError,
-  });
+  console.error(
+    `[dns] all providers failed ${registrable ?? domain} tried=${providers.map((p) => p.key).join(",")}`,
+    lastError,
+  );
   throw new Error(
     `All DoH providers failed for ${registrable ?? domain}: ${String(lastError)}`,
   );

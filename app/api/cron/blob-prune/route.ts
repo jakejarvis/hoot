@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
 import { pruneDueBlobsOnce } from "@/lib/storage";
-
-const log = logger({ module: "cron:blob-prune" });
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +11,7 @@ export async function GET(request: Request) {
     : null;
 
   if (!expectedAuth) {
-    log.error("cron.misconfigured", { reason: "CRON_SECRET missing" });
+    console.error("[blob-prune] cron misconfigured: CRON_SECRET missing");
     return NextResponse.json(
       { error: "CRON_SECRET not configured" },
       { status: 500 },
@@ -22,7 +19,7 @@ export async function GET(request: Request) {
   }
 
   if (authHeader !== expectedAuth) {
-    log.warn("cron.unauthorized", { provided: Boolean(authHeader) });
+    console.warn("[blob-prune] cron unauthorized");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -32,16 +29,13 @@ export async function GET(request: Request) {
 
     const durationMs = Date.now() - startedAt;
     if (result.errorCount > 0) {
-      log.warn("completed.with.errors", {
-        deletedCount: result.deletedCount,
-        errorCount: result.errorCount,
-        durationMs,
-      });
+      console.warn(
+        `[blob-prune] completed with errors: deleted=${result.deletedCount} errors=${result.errorCount} ${durationMs}ms`,
+      );
     } else {
-      log.info("completed", {
-        deletedCount: result.deletedCount,
-        durationMs,
-      });
+      console.info(
+        `[blob-prune] completed: deleted=${result.deletedCount} ${durationMs}ms`,
+      );
     }
 
     return NextResponse.json({
@@ -51,9 +45,10 @@ export async function GET(request: Request) {
       durationMs,
     });
   } catch (err) {
-    log.error("cron.failed", {
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.error(
+      "[blob-prune] cron failed",
+      err instanceof Error ? err : new Error(String(err)),
+    );
     return NextResponse.json(
       {
         error: "Internal error",

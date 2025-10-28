@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
 import { refreshAllProviderPricing } from "@/server/services/pricing";
-
-const log = logger({ module: "cron:pricing-refresh" });
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +11,7 @@ export async function GET(request: Request) {
     : null;
 
   if (!expectedAuth) {
-    log.error("cron.misconfigured", { reason: "CRON_SECRET missing" });
+    console.error("[pricing-refresh] cron misconfigured: CRON_SECRET missing");
     return NextResponse.json(
       { error: "CRON_SECRET not configured" },
       { status: 500 },
@@ -22,7 +19,7 @@ export async function GET(request: Request) {
   }
 
   if (authHeader !== expectedAuth) {
-    log.warn("cron.unauthorized", { provided: Boolean(authHeader) });
+    console.warn("[pricing-refresh] cron unauthorized");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -32,16 +29,13 @@ export async function GET(request: Request) {
 
     const durationMs = Date.now() - startedAt;
     if (result.failed.length > 0) {
-      log.warn("completed.with.errors", {
-        refreshed: result.refreshed,
-        failed: result.failed,
-        durationMs,
-      });
+      console.warn(
+        `[pricing-refresh] completed with errors: refreshed=${result.refreshed.length} failed=${result.failed.length} ${durationMs}ms`,
+      );
     } else {
-      log.info("completed", {
-        refreshed: result.refreshed,
-        durationMs,
-      });
+      console.info(
+        `[pricing-refresh] completed: refreshed=${result.refreshed.length} ${durationMs}ms`,
+      );
     }
 
     return NextResponse.json({
@@ -51,9 +45,10 @@ export async function GET(request: Request) {
       durationMs,
     });
   } catch (err) {
-    log.error("cron.failed", {
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.error(
+      "[pricing-refresh] cron failed",
+      err instanceof Error ? err : new Error(String(err)),
+    );
     return NextResponse.json(
       {
         error: "Internal error",

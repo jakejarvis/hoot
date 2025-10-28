@@ -7,15 +7,12 @@ import { httpHeaders } from "@/lib/db/schema";
 import { ttlForHeaders } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { logger } from "@/lib/logger";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { HttpHeader } from "@/lib/schemas";
 
-const log = logger({ module: "headers" });
-
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
-  log.debug("start", { domain });
+  console.debug(`[headers] start ${domain}`);
   // Fast path: read from Postgres if fresh
   const registrable = toRegistrableDomain(domain);
   const d = registrable
@@ -42,10 +39,9 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
       const normalized = normalize(
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
-      log.info("cache.hit", {
-        domain: registrable ?? domain,
-        count: normalized.length,
-      });
+      console.info(
+        `[headers] cache hit ${registrable ?? domain} count=${normalized.length}`,
+      );
       return normalized;
     }
   }
@@ -82,23 +78,21 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
           dueAtMs,
         );
       } catch (err) {
-        log.warn("schedule.failed", {
-          domain: registrable ?? domain,
-          err: err instanceof Error ? err : new Error(String(err)),
-        });
+        console.warn(
+          `[headers] schedule failed for ${registrable ?? domain}`,
+          err instanceof Error ? err : new Error(String(err)),
+        );
       }
     }
-    log.info("ok", {
-      domain: registrable ?? domain,
-      status: final.status,
-      count: normalized.length,
-    });
+    console.info(
+      `[headers] ok ${registrable ?? domain} status=${final.status} count=${normalized.length}`,
+    );
     return normalized;
   } catch (err) {
-    log.error("error", {
-      domain: registrable ?? domain,
-      err: err instanceof Error ? err : new Error(String(err)),
-    });
+    console.error(
+      `[headers] error ${registrable ?? domain}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
     // Return empty on failure without caching to avoid long-lived negatives
     return [];
   }
