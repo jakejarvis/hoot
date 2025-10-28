@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DomainSearch } from "@/components/domain/domain-search";
@@ -62,14 +62,16 @@ describe("DomainSearch (form variant)", () => {
       />,
     );
 
-    // Input should reflect the triggered domain
-    const input = screen.getByLabelText(
+    // Wait for input to reflect the triggered domain (async due to useEffect)
+    const input = (await screen.findByLabelText(
       /Search any domain/i,
-    ) as HTMLInputElement;
+    )) as HTMLInputElement;
     expect(input.value).toBe("example.com");
-    // Navigation should have been triggered
-    expect(nav.push).toHaveBeenCalledWith("/example.com");
-    // Completion callback should be called
-    expect(onComplete).toHaveBeenCalled();
+
+    // Wait for navigation and completion callback to be triggered
+    await waitFor(() => {
+      expect(nav.push).toHaveBeenCalledWith("/example.com");
+      expect(onComplete).toHaveBeenCalled();
+    });
   });
 });
