@@ -252,4 +252,10 @@ export const CA_PROVIDERS: Array<
     category: "ca",
     rule: { kind: "issuerIncludes", substr: "gogetssl" },
   },
+  {
+    name: "Apple",
+    domain: "apple.com",
+    category: "ca",
+    rule: { kind: "issuerIncludes", substr: "apple public" },
+  },
 ];

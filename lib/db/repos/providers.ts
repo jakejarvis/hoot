@@ -2,6 +2,7 @@ import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { type providerCategory, providers } from "@/lib/db/schema";
+import { slugify } from "@/lib/slugify";
 
 export type ResolveProviderInput = {
   category: (typeof providerCategory.enumValues)[number];
@@ -66,10 +67,7 @@ export async function resolveOrCreateProviderId(
   if (!name) return null;
   const domain = input.domain?.toLowerCase() ?? null;
   // Use a simple slug derived from name for uniqueness within category
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+  const slug = slugify(name);
   try {
     const inserted = await db
       .insert(providers)

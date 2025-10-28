@@ -1,3 +1,18 @@
+/**
+ * Seed providers from catalog into the database.
+ *
+ * This script syncs the provider catalog to the database by:
+ * - Inserting new catalog providers (matched by name/slug)
+ * - Updating existing providers to match catalog definitions (matched by name/slug)
+ *
+ * Providers are matched solely by their slug (derived from name).
+ * Multiple providers can share the same domain (e.g., Amazon S3, CloudFront both use aws.amazon.com).
+ *
+ * Usage:
+ *   pnpm db:seed             # Apply changes to database
+ *   pnpm db:seed --dry-run   # Preview changes without applying them
+ */
+
 import * as dotenv from "dotenv";
 
 // Load common local envs first if present, then default .env
@@ -14,14 +29,7 @@ import {
   HOSTING_PROVIDERS,
   REGISTRAR_PROVIDERS,
 } from "@/lib/providers/catalog";
-
-function slugify(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-}
+import { slugify } from "@/lib/slugify";
 
 type SeedDef = {
   name: string;
@@ -48,6 +56,13 @@ function collect(): SeedDef[] {
 }
 
 async function main() {
+  // Parse command-line arguments
+  const isDryRun = process.argv.includes("--dry-run");
+
+  if (isDryRun) {
+    console.log("🔍 DRY RUN MODE - No changes will be made to the database\n");
+  }
+
   const defs = collect();
   let inserted = 0;
   let updated = 0;
@@ -56,21 +71,10 @@ async function main() {
   // Fetch all existing providers at once to avoid N+1 queries
   const allExisting = await db.select().from(providers);
 
-  // Build lookup maps for fast comparison
-  const byDomain = new Map<string, typeof allExisting>();
+  // Build lookup map for fast slug-based comparison
   const bySlug = new Map<string, (typeof allExisting)[number]>();
 
   for (const existing of allExisting) {
-    // Key: "category:domain"
-    if (existing.domain) {
-      const key = `${existing.category}:${existing.domain}`;
-      const domainList = byDomain.get(key);
-      if (domainList) {
-        domainList.push(existing);
-      } else {
-        byDomain.set(key, [existing]);
-      }
-    }
     // Key: "category:slug"
     const slugKey = `${existing.category}:${existing.slug}`;
     bySlug.set(slugKey, existing);
@@ -90,22 +94,12 @@ async function main() {
     const slug = slugify(def.name);
     const lowerDomain = def.domain ? def.domain.toLowerCase() : null;
 
-    // Check domain match first (for promoting discovered records)
-    let existing: (typeof allExisting)[number] | undefined;
-    if (lowerDomain) {
-      const domainKey = `${def.category}:${lowerDomain}`;
-      const domainMatches = byDomain.get(domainKey) || [];
-      // Only match discovered records OR records with matching slug
-      existing = domainMatches.find(
-        (r) => r.source === "discovered" || r.slug === slug,
-      );
-    }
-
-    // Fall back to slug match
-    if (!existing) {
-      const slugKey = `${def.category}:${slug}`;
-      existing = bySlug.get(slugKey);
-    }
+    // Match by slug (name-based matching)
+    // The slug (derived from provider name) is the ONLY identifier
+    // Domain is NOT unique since multiple services share parent company domains
+    // (e.g., Amazon S3, CloudFront, Route 53 all use aws.amazon.com)
+    const slugKey = `${def.category}:${slug}`;
+    const existing = bySlug.get(slugKey);
 
     if (!existing) {
       // New record - queue for insert
@@ -134,7 +128,7 @@ async function main() {
           // Conflict: another record already has this (category, slug)
           // Skip this update to avoid violating unique constraint
           console.warn(
-            `Skipping update: (${def.category}, ${slug}) already exists in a different record`,
+            `⚠️  Skipping update for "${def.name}": (${def.category}, ${slug}) conflicts with existing record "${conflictingRecord.name}"`,
           );
         } else {
           toUpdate.push({
@@ -152,28 +146,52 @@ async function main() {
 
   // Batch insert new providers
   if (toInsert.length > 0) {
-    console.log(`Inserting ${toInsert.length} new providers...`);
-    await db.insert(providers).values(toInsert);
+    console.log(
+      `${isDryRun ? "[DRY RUN] Would insert" : "Inserting"} ${toInsert.length} new provider(s)...`,
+    );
+    if (isDryRun) {
+      for (const ins of toInsert) {
+        console.log(
+          `  - ${ins.category}: ${ins.name} (${ins.domain || "no domain"})`,
+        );
+      }
+    } else {
+      await db.insert(providers).values(toInsert);
+    }
   }
 
   // Batch update existing providers
   if (toUpdate.length > 0) {
-    console.log(`Updating ${toUpdate.length} providers...`);
-    for (const update of toUpdate) {
-      await db
-        .update(providers)
-        .set({
-          name: update.name,
-          slug: update.slug,
-          source: update.source,
-          domain: update.domain,
-          updatedAt: sql`now()`,
-        })
-        .where(eq(providers.id, update.id));
+    console.log(
+      `${isDryRun ? "[DRY RUN] Would update" : "Updating"} ${toUpdate.length} provider(s)...`,
+    );
+    if (isDryRun) {
+      for (const update of toUpdate) {
+        console.log(`  - ${update.name} (${update.domain || "no domain"})`);
+      }
+    } else {
+      for (const update of toUpdate) {
+        await db
+          .update(providers)
+          .set({
+            name: update.name,
+            slug: update.slug,
+            source: update.source,
+            domain: update.domain,
+            updatedAt: sql`now()`,
+          })
+          .where(eq(providers.id, update.id));
+      }
     }
   }
 
-  console.log(`Seeded ${inserted} inserted, ${updated} updated`);
+  if (isDryRun) {
+    console.log(
+      `\n✅ DRY RUN COMPLETE: Would have inserted ${inserted}, updated ${updated}`,
+    );
+  } else {
+    console.log(`\n✅ Seeded ${inserted} inserted, ${updated} updated`);
+  }
 }
 
 main().catch((err) => {
