@@ -112,6 +112,12 @@ const TOOLS = (
       buildUrl: (domain) =>
         `https://www.ssllabs.com/ssltest/analyze.html?d=${encodeURIComponent(domain)}&hideResults=on`,
     },
+    {
+      name: "Open Threat Exchange",
+      faviconDomain: "ssllabs.com",
+      buildUrl: (domain) =>
+        `https://otx.alienvault.com/indicator/domain/${encodeURIComponent(domain)}`,
+    },
   ] satisfies Tool[]
 ).toSorted((a, b) =>
   a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
