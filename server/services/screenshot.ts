@@ -115,7 +115,7 @@ export async function getOrCreateScreenshotBlobUrl(
                 VIEWPORT_WIDTH,
                 VIEWPORT_HEIGHT,
               );
-              const { url: storedUrl, key: fileKey } = await storeImage({
+              const { url: storedUrl, pathname } = await storeImage({
                 kind: "screenshot",
                 domain,
                 buffer: withWatermark,
@@ -124,7 +124,7 @@ export async function getOrCreateScreenshotBlobUrl(
               });
               return {
                 url: storedUrl,
-                key: fileKey,
+                key: pathname,
                 metrics: {
                   source: url.startsWith("https://")
                     ? "direct_https"

@@ -10,7 +10,7 @@
 
 - **Instant domain reports**: Registration, DNS, certificates, HTTP headers, hosting & email, and geolocation.
 - **SEO insights**: Extract titles, meta tags, social previews, canonical data, and `robots.txt` signals.
-- **Screenshots & favicons**: Server-side screenshots and favicon extraction, cached in Cloudflare R2.
+- **Screenshots & favicons**: Server-side screenshots and favicon extraction, stored in Vercel Blob.
 - **Fast, private, no sign-up**: Live fetches with smart caching.
 - **Reliable data pipeline**: Postgres persistence (Drizzle), background revalidation (Inngest), and Redis for short-lived caching/locks.
 
@@ -24,7 +24,7 @@
 - **Postgres** + **Drizzle ORM**
 - **Inngest** for background jobs and scheduled revalidation
 - **Upstash Redis** for caching, rate limits, and locks
-- **Cloudflare R2** (S3 API) for favicon/screenshot storage
+- **Vercel Blob** for favicon/screenshot storage
 - **Vercel Flags SDK** + **Statsig** for feature flags (via Edge Config)
 - [**rdapper**](https://github.com/jakejarvis/rdapper) for RDAP lookups with WHOIS fallback
 - **Puppeteer** (with `@sparticuz/chromium` on server) for screenshots
@@ -64,13 +64,9 @@ INNGEST_BASE_URL=http://localhost:8288
 # If your Inngest handler lives at a custom route, set:
 INNGEST_SERVE_PATH=/api/inngest
 
-# --- Object Storage (Cloudflare R2 in prod; MinIO locally) ---
-# Local S3 emulator (MinIO) — the start script will auto-create the bucket when this endpoint is set:
-R2_ENDPOINT=http://localhost:9000
-R2_BUCKET=development
-R2_ACCESS_KEY_ID=minioadmin
-R2_SECRET_ACCESS_KEY=minioadmin
-R2_PUBLIC_BASE_URL=http://localhost:9000/development
+# --- Vercel Blob Storage ---
+# Obtain from Vercel dashboard or use test token locally
+BLOB_READ_WRITE_TOKEN=your-token-here
 ```
 
 ### 3. Start local dev services (Docker)
@@ -82,7 +78,6 @@ We provide a single [`docker-compose.yml`](docker-compose.yml) and a helper scri
 - **Redis** on `localhost:6379`
 - **Serverless Redis HTTP (SRH)** on `http://localhost:8079` (Upstash-compatible REST proxy)
 - **Inngest Dev Server** on `http://localhost:8288`
-- **MinIO (S3 API)** on `http://localhost:9000` (console at `http://localhost:9001`)
 
 Run:
 
@@ -90,7 +85,7 @@ Run:
 pnpm docker:up
 ```
 
-> On Linux, if `host.docker.internal` isn’t available, add `extra_hosts` to the Inngest and MinIO services in `docker-compose.yml`:
+> On Linux, if `host.docker.internal` isn't available, add `extra_hosts` to the Inngest service in `docker-compose.yml`:
 >
 > ```yaml
 > extra_hosts: ["host.docker.internal:host-gateway"]

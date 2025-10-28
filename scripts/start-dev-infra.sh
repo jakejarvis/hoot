@@ -69,47 +69,6 @@ wait_for_port "127.0.0.1" 6379 "Redis"
 wait_for_port "127.0.0.1" 8079 "SRH (Upstash-compatible HTTP)"
 # Inngest Dev Server
 wait_for_port "127.0.0.1" 8288 "Inngest Dev Server"
-# MinIO S3 API
-wait_for_port "127.0.0.1" 9000 "MinIO S3 API"
-
-# --- MinIO bucket setup ------------------------------------------------------
-# Defaults for local emulator if not provided in .env.local
-: "${R2_ACCESS_KEY_ID:=minioadmin}"
-: "${R2_SECRET_ACCESS_KEY:=minioadmin}"
-: "${R2_BUCKET:=development}"
-
-echo "🪣 Ensuring MinIO bucket exists: ${R2_BUCKET}"
-
-# Cross-platform networking for the disposable mc container
-OS="$(uname -s || echo unknown)"
-if [[ "$OS" == "Linux" ]]; then
-  MC_NET_FLAG="--network=host"
-  MINIO_ENDPOINT="http://localhost:9000"
-else
-  MC_NET_FLAG=""
-  MINIO_ENDPOINT="http://host.docker.internal:9000"
-fi
-
-# Reuse a persistent config volume so the 'local' alias persists across runs
-docker volume create mc-config >/dev/null
-
-# 1) define/update the alias
-if ! docker run --rm $MC_NET_FLAG \
-  -v mc-config:/root/.mc \
-  minio/mc alias set local "$MINIO_ENDPOINT" "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" >/dev/null; then
-  echo "⚠️  Warning: Could not set MinIO alias (may already exist)"
-fi
-
-# 2) create bucket if missing
-if ! docker run --rm $MC_NET_FLAG -v mc-config:/root/.mc minio/mc ls "local/${R2_BUCKET}" >/dev/null 2>&1; then
-  docker run --rm $MC_NET_FLAG -v mc-config:/root/.mc minio/mc mb -p "local/${R2_BUCKET}"
-fi
-
-# 3) 🔓 allow anonymous GET (public-read) so the browser can load images
-docker run --rm $MC_NET_FLAG -v mc-config:/root/.mc minio/mc anonymous set download "local/${R2_BUCKET}" >/dev/null
-
-# 4) quick listing
-docker run --rm $MC_NET_FLAG -v mc-config:/root/.mc minio/mc ls local | sed -n '1,5p' || true
 
 # --- Done! (hopefully) ------------------------------------------------------
 echo
@@ -119,7 +78,6 @@ echo "  * wsproxy:   ws://localhost:5433/v1  (driver uses this automatically)"
 echo "  * Redis:     redis://localhost:6379"
 echo "  * SRH:       http://localhost:8079"
 echo "  * Inngest:   http://localhost:8288"
-echo "  * MinIO:     http://localhost:9000   (console: http://localhost:9001)"
 echo
 
 # graceful shutdown on Ctrl+C / SIGTERM

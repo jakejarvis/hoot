@@ -57,7 +57,7 @@ export async function getOrCreateFaviconBlobUrl(
             contentType,
           );
           if (!webp) continue;
-          const { url, key } = await storeImage({
+          const { url, pathname } = await storeImage({
             kind: "favicon",
             domain,
             buffer: webp,
@@ -73,7 +73,7 @@ export async function getOrCreateFaviconBlobUrl(
           })();
           return {
             url,
-            key,
+            key: pathname,
             metrics: {
               source,
               upstream_status: res.status,

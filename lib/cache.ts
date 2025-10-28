@@ -198,10 +198,10 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
         { url: produced.url, key: produced.key, expiresAtMs },
         { ex: ttlSeconds },
       );
-      if (purgeQueue && produced.key) {
+      if (purgeQueue && produced.url) {
         await redis.zadd(ns("purge", purgeQueue), {
           score: expiresAtMs,
-          member: produced.key,
+          member: produced.url,
         });
       }
     } catch (err) {

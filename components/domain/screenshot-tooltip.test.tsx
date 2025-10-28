@@ -75,7 +75,7 @@ describe("ScreenshotTooltip", () => {
   it("renders image when loaded", () => {
     (useQuery as unknown as Mock).mockReturnValue({
       data: {
-        url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
+        url: "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
       },
       isLoading: false,
       isFetching: false,
@@ -91,7 +91,7 @@ describe("ScreenshotTooltip", () => {
     });
     expect(img).toHaveAttribute(
       "src",
-      "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
+      "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
     );
   });
 });

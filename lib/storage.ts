@@ -1,8 +1,8 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
+import { putBlob } from "@/lib/blob";
 import { logger } from "@/lib/logger";
-import { makePublicUrl, putObject } from "@/lib/r2";
 import type { StorageKind } from "@/lib/schemas";
 
 const log = logger({ module: "storage" });
@@ -28,7 +28,7 @@ function deterministicHash(input: string, length = 32): string {
     .slice(0, length);
 }
 
-function makeObjectKey(
+function makeBlobPathname(
   kind: StorageKind,
   filename: string,
   extension = "bin",
@@ -38,10 +38,6 @@ function makeObjectKey(
   const digest = deterministicHash(base);
   return `${digest}/${filename}.${extension}`;
 }
-
-/**
- * Build a deterministic object key for image-like blobs.
- */
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -58,43 +54,44 @@ function backoffDelayMs(
 }
 
 /**
- * Upload buffer to R2 with retry logic and exponential backoff
+ * Upload buffer to Vercel Blob with retry logic and exponential backoff
  */
 async function uploadWithRetry(
-  key: string,
+  pathname: string,
   buffer: Buffer,
   contentType: string,
-  cacheControl?: string,
+  cacheControlMaxAge?: number,
   maxAttempts = UPLOAD_MAX_ATTEMPTS,
-): Promise<void> {
+): Promise<{ url: string; pathname: string }> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       log.debug("upload.attempt", {
-        key,
+        pathname,
         attempt: attempt + 1,
         maxAttempts,
       });
 
-      await putObject({
-        key,
+      const result = await putBlob({
+        pathname,
         body: buffer,
         contentType,
-        cacheControl,
+        cacheControlMaxAge,
       });
 
       log.info("upload.ok", {
-        key,
+        pathname,
+        url: result.url,
         attempt: attempt + 1,
       });
 
-      return;
+      return result;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
       log.warn("upload.attempt.failed", {
-        key,
+        pathname,
         attempt: attempt + 1,
         err: lastError,
       });
@@ -107,7 +104,7 @@ async function uploadWithRetry(
           UPLOAD_BACKOFF_MAX_MS,
         );
         log.debug("retrying.after.delay", {
-          key,
+          pathname,
           delayMs: delay,
         });
         await sleep(delay);
@@ -123,22 +120,22 @@ async function uploadWithRetry(
 export async function storeBlob(options: {
   kind: StorageKind;
   buffer: Buffer;
-  key?: string;
+  pathname?: string;
   contentType?: string;
   extension?: string;
   filename?: string;
   extraParts?: Array<string | number>;
-  cacheControl?: string;
-}): Promise<{ url: string; key: string }> {
+  cacheControlMaxAge?: number;
+}): Promise<{ url: string; pathname: string }> {
   const {
     kind,
     buffer,
-    key: providedKey,
+    pathname: providedPathname,
     contentType: providedCt,
     extension: providedExt,
     filename: providedFilename,
     extraParts = [],
-    cacheControl,
+    cacheControlMaxAge,
   } = options;
 
   let contentType = providedCt;
@@ -160,10 +157,15 @@ export async function storeBlob(options: {
   extension = extension || "bin";
   filename = filename || "file";
 
-  const key =
-    providedKey || makeObjectKey(kind, filename, extension, extraParts);
-  await uploadWithRetry(key, buffer, contentType, cacheControl);
-  return { url: makePublicUrl(key), key };
+  const pathname =
+    providedPathname || makeBlobPathname(kind, filename, extension, extraParts);
+  const result = await uploadWithRetry(
+    pathname,
+    buffer,
+    contentType,
+    cacheControlMaxAge,
+  );
+  return result;
 }
 
 export async function storeImage(options: {
@@ -174,8 +176,8 @@ export async function storeImage(options: {
   height?: number;
   contentType?: string;
   extension?: string;
-  cacheControl?: string;
-}): Promise<{ url: string; key: string }> {
+  cacheControlMaxAge?: number;
+}): Promise<{ url: string; pathname: string }> {
   const {
     kind,
     domain,
@@ -184,7 +186,7 @@ export async function storeImage(options: {
     height: providedH,
     contentType,
     extension,
-    cacheControl,
+    cacheControlMaxAge,
   } = options;
 
   let width = providedW;
@@ -212,7 +214,7 @@ export async function storeImage(options: {
     extraParts: [domain, `${finalWidth}x${finalHeight}`],
     contentType: contentType || undefined,
     extension: extension || undefined,
-    cacheControl,
+    cacheControlMaxAge,
   });
 }
 
@@ -222,14 +224,14 @@ export type BlobPruneResult = {
 };
 
 /**
- * Drains due object keys from our purge queues and attempts deletion in R2.
+ * Drains due blob URLs from our purge queues and attempts deletion in Vercel Blob.
  * Used by the Vercel cron job for blob cleanup.
  */
 export async function pruneDueBlobsOnce(
   now: number,
   batch: number = 500,
 ): Promise<BlobPruneResult> {
-  const { deleteObjects } = await import("@/lib/r2");
+  const { deleteBlobs } = await import("@/lib/blob");
   const { ns, redis } = await import("@/lib/redis");
   const { StorageKindSchema } = await import("@/lib/schemas");
 
@@ -250,8 +252,8 @@ export async function pruneDueBlobsOnce(
       })) as string[];
       if (!dueRaw.length) break;
 
-      // Filter out paths that already failed during this run
-      const due = dueRaw.filter((path) => !alreadyFailed.has(path));
+      // Filter out URLs that already failed during this run
+      const due = dueRaw.filter((url) => !alreadyFailed.has(url));
       if (!due.length) {
         // All items in this batch already failed, advance to next window
         offset += dueRaw.length;
@@ -261,19 +263,19 @@ export async function pruneDueBlobsOnce(
 
       const succeeded: string[] = [];
       try {
-        const result = await deleteObjects(due);
-        const batchDeleted = result.filter((r) => r.deleted).map((r) => r.key);
+        const result = await deleteBlobs(due);
+        const batchDeleted = result.filter((r) => r.deleted).map((r) => r.url);
         deletedCount += batchDeleted.length;
         succeeded.push(...batchDeleted);
         for (const r of result) {
           if (!r.deleted) {
-            alreadyFailed.add(r.key);
+            alreadyFailed.add(r.url);
             errorCount++;
           }
         }
       } catch {
-        for (const path of due) {
-          alreadyFailed.add(path);
+        for (const url of due) {
+          alreadyFailed.add(url);
           errorCount++;
         }
       }

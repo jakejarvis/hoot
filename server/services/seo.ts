@@ -334,7 +334,7 @@ async function getOrCreateSocialPreviewImageUrl(
     const image = await optimizeImageCover(raw, SOCIAL_WIDTH, SOCIAL_HEIGHT);
     if (!image || image.length === 0) return { url: null };
 
-    const { url, key } = await storeImage({
+    const { url, pathname } = await storeImage({
       kind: "social",
       domain: lower,
       buffer: image,
@@ -345,10 +345,14 @@ async function getOrCreateSocialPreviewImageUrl(
     try {
       const ttl = SOCIAL_PREVIEW_TTL_SECONDS;
       const expiresAtMs = Date.now() + ttl * 1000;
-      await redis.set(indexKey, { url, key, expiresAtMs }, { ex: ttl });
+      await redis.set(
+        indexKey,
+        { url, key: pathname, expiresAtMs },
+        { ex: ttl },
+      );
       await redis.zadd(ns("purge", "social"), {
         score: expiresAtMs,
-        member: key,
+        member: url,
       });
     } catch {}
 
