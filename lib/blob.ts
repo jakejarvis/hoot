@@ -33,34 +33,24 @@ export type DeleteResult = Array<{
 }>;
 
 /**
- * Delete one or more blobs by URL
+ * Delete one or more blobs by URL, tracking each URL's deletion status individually
  */
 export async function deleteBlobs(urls: string[]): Promise<DeleteResult> {
   const results: DeleteResult = [];
   if (!urls.length) return results;
 
-  // Vercel Blob's del() can handle multiple URLs at once
-  // but we process in batches for safety and to track individual failures
-  const BATCH_SIZE = 100;
-
-  for (let i = 0; i < urls.length; i += BATCH_SIZE) {
-    const batch = urls.slice(i, i + BATCH_SIZE);
+  // Process each URL individually to track per-URL success/failure
+  for (const url of urls) {
     try {
-      await del(batch);
-      // If del() succeeds, all were deleted
-      for (const url of batch) {
-        results.push({ url, deleted: true });
-      }
+      await del(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+      results.push({ url, deleted: true });
     } catch (err) {
       const message = (err as Error)?.message || "unknown";
       log.error("deleteBlobs.failed", {
-        urls: batch,
+        url,
         err,
       });
-      // If batch fails, mark all as failed
-      for (const url of batch) {
-        results.push({ url, deleted: false, error: message });
-      }
+      results.push({ url, deleted: false, error: message });
     }
   }
 
