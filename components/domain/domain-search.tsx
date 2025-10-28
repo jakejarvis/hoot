@@ -10,13 +10,11 @@ import {
 } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
-import { useDomainSearch } from "@/hooks/use-domain-search";
+import { type Source, useDomainSearch } from "@/hooks/use-domain-search";
 import { useIsMac } from "@/hooks/use-is-mac";
 import { cn } from "@/lib/utils";
 
 export type DomainSearchVariant = "sm" | "lg";
-
-type Source = "form" | "header" | "suggestion";
 
 export type DomainSearchProps = {
   variant?: DomainSearchVariant;

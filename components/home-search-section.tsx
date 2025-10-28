@@ -3,10 +3,11 @@
 import { useCallback, useState } from "react";
 import { DomainSearch } from "@/components/domain/domain-search";
 import { HomeSearchProvider } from "@/components/home-search-context";
+import type { Source } from "@/hooks/use-domain-search";
 
 type NavigationTrigger = {
   domain: string;
-  source: "form" | "header" | "suggestion";
+  source: Source;
 };
 
 /**

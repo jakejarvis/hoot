@@ -16,7 +16,7 @@ const domainSchema = z
     message: "Please enter a valid domain.",
   });
 
-type Source = "form" | "header" | "suggestion";
+export type Source = "form" | "header" | "suggestion";
 
 export type UseDomainSearchOptions = {
   initialValue?: string;
