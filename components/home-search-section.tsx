@@ -37,7 +37,7 @@ export function HomeSearchSection({ children }: { children: React.ReactNode }) {
         <DomainSearch
           variant="lg"
           externalNavigation={domainToNavigate}
-          onNavigationComplete={handleNavigationComplete}
+          onNavigationCompleteAction={handleNavigationComplete}
         />
         {children}
       </div>

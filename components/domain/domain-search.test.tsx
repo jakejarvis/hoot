@@ -50,7 +50,7 @@ describe("DomainSearch (form variant)", () => {
   it("handles external navigation trigger", async () => {
     const onComplete = vi.fn();
     const { rerender } = render(
-      <DomainSearch variant="lg" onNavigationComplete={onComplete} />,
+      <DomainSearch variant="lg" onNavigationCompleteAction={onComplete} />,
     );
 
     // Simulate external navigation request (e.g., from suggestion click)
@@ -58,7 +58,7 @@ describe("DomainSearch (form variant)", () => {
       <DomainSearch
         variant="lg"
         externalNavigation={{ domain: "example.com", source: "suggestion" }}
-        onNavigationComplete={onComplete}
+        onNavigationCompleteAction={onComplete}
       />,
     );
 

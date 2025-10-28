@@ -22,14 +22,14 @@ export type DomainSearchProps = {
   variant?: DomainSearchVariant;
   initialValue?: string;
   externalNavigation?: { domain: string; source: Source } | null;
-  onNavigationComplete?: () => void;
+  onNavigationCompleteAction?: () => void;
 };
 
 export function DomainSearch({
   variant = "lg",
   initialValue = "",
   externalNavigation,
-  onNavigationComplete,
+  onNavigationCompleteAction,
 }: DomainSearchProps) {
   const { value, setValue, loading, inputRef, submit, navigateToDomain } =
     useDomainSearch({
@@ -45,17 +45,27 @@ export function DomainSearch({
   const [isFocused, setIsFocused] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Store function refs to avoid unnecessary effect re-runs
+  const navigateRef = useRef(navigateToDomain);
+  const onCompleteRef = useRef(onNavigationCompleteAction);
+
+  // Update refs when functions change
+  useEffect(() => {
+    navigateRef.current = navigateToDomain;
+    onCompleteRef.current = onNavigationCompleteAction;
+  }, [navigateToDomain, onNavigationCompleteAction]);
+
   // Handle external navigation requests (e.g., from suggestion clicks)
   useEffect(() => {
     if (externalNavigation) {
       // Mirror the selected domain in the input so the form appears submitted
       setValue(externalNavigation.domain);
-      // Trigger navigation
-      navigateToDomain(externalNavigation.domain, externalNavigation.source);
+      // Trigger navigation using ref to avoid dependency issues
+      navigateRef.current(externalNavigation.domain, externalNavigation.source);
       // Notify parent that navigation was handled
-      onNavigationComplete?.();
+      onCompleteRef.current?.();
     }
-  }, [externalNavigation, setValue, navigateToDomain, onNavigationComplete]);
+  }, [externalNavigation, setValue]);
 
   // Select all on first focus from keyboard or first click; allow precise cursor on next click.
   const pointerDownRef = useRef(false);
