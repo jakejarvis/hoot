@@ -76,7 +76,10 @@ export async function lookupIpMeta(ip: string): Promise<{
     );
     return { geo, owner, domain };
   } catch (err) {
-    console.warn(`[ip] error looking up ${ip}`, err);
+    console.warn(
+      `[ip] error looking up ${ip}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
     return {
       owner: null,
       domain: null,

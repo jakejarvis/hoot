@@ -83,7 +83,10 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const { redis } = await import("@/lib/redis");
       await redis.set(resultKey, result, { ex: 5 });
     } catch (err) {
-      console.debug(`[dns] redis result cache failed ${domain}`, err);
+      console.debug(
+        `[dns] redis result cache failed ${domain}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
 
     return result;
@@ -93,7 +96,10 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
       const { redis } = await import("@/lib/redis");
       await redis.del(lockKey);
     } catch (err) {
-      console.debug(`[dns] redis lock release failed ${domain}`, err);
+      console.debug(
+        `[dns] redis lock release failed ${domain}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
   }
 }
@@ -253,7 +259,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
           } catch (err) {
             console.warn(
               `[dns] schedule failed partial ${registrable ?? domain}`,
-              err,
+              err instanceof Error ? err : new Error(String(err)),
             );
           }
         }
@@ -290,7 +296,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
       } catch (err) {
         console.warn(
           `[dns] partial refresh failed ${registrable ?? domain} provider=${pinnedProvider.key}`,
-          err,
+          err instanceof Error ? err : new Error(String(err)),
         );
         // Fall through to full provider loop below
       }
@@ -369,7 +375,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
         } catch (err) {
           console.warn(
             `[dns] schedule failed full ${registrable ?? domain}`,
-            err,
+            err instanceof Error ? err : new Error(String(err)),
           );
         }
       }
@@ -380,7 +386,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
     } catch (err) {
       console.warn(
         `[dns] provider attempt failed ${registrable ?? domain} provider=${provider.key}`,
-        err,
+        err instanceof Error ? err : new Error(String(err)),
       );
       durationByProvider[provider.key] = Date.now() - attemptStart;
       lastError = err;

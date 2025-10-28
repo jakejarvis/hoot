@@ -58,7 +58,10 @@ async function fetchProviderPricing(
         });
         console.info(`[pricing] fetch ok ${provider.name} (not cached)`);
       } catch (err) {
-        console.error(`[pricing] fetch error ${provider.name}`, err);
+        console.error(
+          `[pricing] fetch error ${provider.name}`,
+          err instanceof Error ? err : new Error(String(err)),
+        );
         // Write a short-TTL negative cache to prevent hammering during outages
         try {
           await redis.set(provider.cacheKey, null, { ex: 5 });

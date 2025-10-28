@@ -1,7 +1,7 @@
 import { registerOTel } from "@vercel/otel";
 import type { Instrumentation } from "next";
 
-export const register = async () => {
+export const register = () => {
   registerOTel({ serviceName: "domainstack" });
 };
 
