@@ -1,11 +1,12 @@
+import type { ComponentProps } from "react";
 import { domainSuggestionsFlag } from "@/flags";
 import { DomainSuggestionsClient } from "./domain-suggestions-client";
 
-type DomainSuggestionsServerProps = {
-  className?: string;
-  faviconSize?: number;
-  max?: number;
-};
+// Derive props from client component, omitting 'suggestions' which we fetch via flag
+type DomainSuggestionsServerProps = Omit<
+  ComponentProps<typeof DomainSuggestionsClient>,
+  "suggestions"
+>;
 
 /**
  * Server wrapper for DomainSuggestions that evaluates the feature flag.
