@@ -25,6 +25,7 @@
 - **Inngest** for background jobs and scheduled revalidation
 - **Upstash Redis** for caching, rate limits, and locks
 - **Cloudflare R2** (S3 API) for favicon/screenshot storage
+- **Vercel Flags SDK** + **Statsig** for feature flags (via Edge Config)
 - [**rdapper**](https://github.com/jakejarvis/rdapper) for RDAP lookups with WHOIS fallback
 - **Puppeteer** (with `@sparticuz/chromium` on server) for screenshots
 - **Mapbox** for IP geolocation maps

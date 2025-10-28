@@ -5,15 +5,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Favicon } from "@/components/domain/favicon";
 import { Button } from "@/components/ui/button";
 import { captureClient } from "@/lib/analytics/client";
-import { DEFAULT_SUGGESTIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function DomainSuggestions({
+  suggestions,
   onSelectAction,
   className,
   faviconSize = 16,
   max = 5,
 }: {
+  suggestions: string[];
   onSelectAction?: (domain: string) => void;
   className?: string;
   faviconSize?: number;
@@ -35,13 +36,13 @@ export function DomainSuggestions({
     }
   }, []);
 
-  const suggestions = useMemo(() => {
+  const displayedSuggestions = useMemo(() => {
     const merged = [
       ...history,
-      ...DEFAULT_SUGGESTIONS.filter((d) => !history.includes(d)),
+      ...suggestions.filter((d) => !history.includes(d)),
     ];
     return merged.slice(0, max);
-  }, [history, max]);
+  }, [history, suggestions, max]);
 
   function handleClick(domain: string) {
     captureClient("search_suggestion_clicked", {
@@ -57,7 +58,7 @@ export function DomainSuggestions({
 
   return (
     <div className={cn("flex flex-wrap justify-center gap-2", className)}>
-      {(historyLoaded ? suggestions : DEFAULT_SUGGESTIONS).map((domain) => (
+      {(historyLoaded ? displayedSuggestions : suggestions).map((domain) => (
         <Button
           key={domain}
           variant="secondary"

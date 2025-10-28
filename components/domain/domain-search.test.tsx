@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DomainSearch } from "@/components/domain/domain-search";
@@ -14,18 +14,6 @@ vi.mock("@bprogress/next/app", () => ({
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({}),
-}));
-
-vi.mock("@/components/domain/domain-suggestions", () => ({
-  DomainSuggestions: ({
-    onSelectAction,
-  }: {
-    onSelectAction?: (domain: string) => void;
-  }) => (
-    <button type="button" onClick={() => onSelectAction?.("example.com")}>
-      example.com
-    </button>
-  ),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
@@ -59,25 +47,31 @@ describe("DomainSearch (form variant)", () => {
     expect(toast.error).toHaveBeenCalled();
   });
 
-  it("fills input and navigates when a suggestion is clicked", async () => {
-    render(<DomainSearch variant="lg" />);
-    // Click the mocked suggestion button
-    await userEvent.click(
-      screen.getByRole("button", { name: /example\.com/i }),
+  it("handles external navigation trigger", async () => {
+    const onComplete = vi.fn();
+    const { rerender } = render(
+      <DomainSearch variant="lg" onNavigationCompleteAction={onComplete} />,
     );
-    // Input should reflect the selected domain immediately
-    const input = screen.getByLabelText(
+
+    // Simulate external navigation request (e.g., from suggestion click)
+    rerender(
+      <DomainSearch
+        variant="lg"
+        externalNavigation={{ domain: "example.com", source: "suggestion" }}
+        onNavigationCompleteAction={onComplete}
+      />,
+    );
+
+    // Wait for input to reflect the triggered domain (async due to useEffect)
+    const input = (await screen.findByLabelText(
       /Search any domain/i,
-    ) as HTMLInputElement;
+    )) as HTMLInputElement;
     expect(input.value).toBe("example.com");
-    // Navigation should have been triggered
-    expect(nav.push).toHaveBeenCalledWith("/example.com");
-    // Submit button shows a loading spinner and is disabled while navigating
-    expect(screen.getByRole("button", { name: /loading/i })).toBeDisabled();
-    // Input should be disabled while loading
-    expect(
-      (screen.getByLabelText(/Search any domain/i) as HTMLInputElement)
-        .disabled,
-    ).toBe(true);
+
+    // Wait for navigation and completion callback to be triggered
+    await waitFor(() => {
+      expect(nav.push).toHaveBeenCalledWith("/example.com");
+      expect(onComplete).toHaveBeenCalled();
+    });
   });
 });
