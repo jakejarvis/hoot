@@ -1,0 +1,1 @@
+ALTER TABLE "seo" DROP COLUMN "preview_image_uploaded_url";
