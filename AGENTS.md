@@ -68,3 +68,13 @@
 - Persist domain data in Postgres via Drizzle; use Redis for short-lived caching/locks. Apply retry backoff to respect provider limits.
 - Background revalidation runs via Inngest functions (scheduled and event-driven).
 - Review `server/trpc.ts` when extending procedures to ensure auth/context remain intact.
+
+## Feature Flags
+- Uses **Vercel Flags SDK** with **Statsig** adapter via Edge Config for server-evaluated feature flags.
+- Flag definitions: `flags.ts` at project root exports flag declarations.
+- Flags API endpoint: `app/.well-known/vercel/flags/route.ts` for Vercel Toolbar integration.
+- Server-side evaluation: Use flags in server components or API routes via `await flagName()`.
+- Required env: `FLAGS_SECRET` (for encryption/overrides), `EDGE_CONFIG` (Vercel Edge Config URL).
+- Optional env: `STATSIG_CONSOLE_API_KEY` and `STATSIG_PROJECT_ID` for Flags Explorer metadata in Vercel Toolbar.
+- Statsig config structure: Dynamic configs return JSON objects (e.g., `{ domains: [...] }`); use adapter's mapping function to extract values.
+- Defensive validation: Always validate flag return values with `Array.isArray()` or similar checks before use to handle null/undefined/invalid types gracefully.
