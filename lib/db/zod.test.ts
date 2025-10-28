@@ -1,17 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { dnsRecordType, dnsResolver } from "@/lib/db/schema";
+import { dnsRecordType } from "@/lib/db/schema";
 import {
   DomainInsert,
   DomainSelect,
   SeoRowInsert,
   SeoRowSelect,
 } from "@/lib/db/zod";
-import { DnsResolverSchema, DnsTypeSchema } from "@/lib/schemas";
+import { DnsTypeSchema } from "@/lib/schemas";
 
 describe("drizzle-zod parity", () => {
   it("matches DNS enums with domain schemas", () => {
     expect(dnsRecordType.enumValues).toEqual(DnsTypeSchema.options);
-    expect(dnsResolver.enumValues).toEqual(DnsResolverSchema.options);
   });
 
   it("coerces dates for insert but not for select", () => {

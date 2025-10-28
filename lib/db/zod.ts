@@ -4,7 +4,6 @@ import {
   certificates,
   dnsRecords,
   dnsRecordType,
-  dnsResolver,
   domains,
   hosting,
   httpHeaders,
@@ -20,7 +19,6 @@ const zWrite = createSchemaFactory({ zodInstance: z, coerce: { date: true } });
 
 // Enums
 export const DnsRecordTypeDbSchema = zRead.createSelectSchema(dnsRecordType);
-export const DnsResolverDbSchema = zRead.createSelectSchema(dnsResolver);
 
 // Providers
 export const ProviderSelect = zRead.createSelectSchema(providers);

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const DnsResolverSchema = z.enum(["cloudflare", "google"]);
+export const DnsResolverSchema = z.enum(["cloudflare", "google", "quad9"]);
 
 export const DnsTypeSchema = z.enum(["A", "AAAA", "MX", "TXT", "NS"]);
 

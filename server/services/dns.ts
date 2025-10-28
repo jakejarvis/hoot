@@ -52,6 +52,16 @@ export const DOH_PROVIDERS: DohProvider[] = [
     },
     headers: DEFAULT_HEADERS,
   },
+  {
+    key: "quad9",
+    buildUrl: (domain, type) => {
+      const u = new URL("https://dns10.quad9.net/dns-query");
+      u.searchParams.set("name", domain);
+      u.searchParams.set("type", type);
+      return u;
+    },
+    headers: DEFAULT_HEADERS,
+  },
 ];
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
@@ -119,30 +129,32 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
         unicodeName: domain,
       })
     : null;
-  const rows = d
-    ? await db
-        .select({
-          type: dnsRecords.type,
-          name: dnsRecords.name,
-          value: dnsRecords.value,
-          ttl: dnsRecords.ttl,
-          priority: dnsRecords.priority,
-          isCloudflare: dnsRecords.isCloudflare,
-          resolver: dnsRecords.resolver,
-          expiresAt: dnsRecords.expiresAt,
-        })
-        .from(dnsRecords)
-        .where(eq(dnsRecords.domainId, d.id))
-    : ([] as Array<{
-        type: DnsType;
-        name: string;
-        value: string;
-        ttl: number | null;
-        priority: number | null;
-        isCloudflare: boolean | null;
-        resolver: DnsResolver | null;
-        expiresAt: Date | null;
-      }>);
+  const rows = (
+    d
+      ? await db
+          .select({
+            type: dnsRecords.type,
+            name: dnsRecords.name,
+            value: dnsRecords.value,
+            ttl: dnsRecords.ttl,
+            priority: dnsRecords.priority,
+            isCloudflare: dnsRecords.isCloudflare,
+            resolver: dnsRecords.resolver,
+            expiresAt: dnsRecords.expiresAt,
+          })
+          .from(dnsRecords)
+          .where(eq(dnsRecords.domainId, d.id))
+      : []
+  ) as Array<{
+    type: DnsType;
+    name: string;
+    value: string;
+    ttl: number | null;
+    priority: number | null;
+    isCloudflare: boolean | null;
+    resolver: DnsResolver | null;
+    expiresAt: Date | null;
+  }>;
   if (rows.length > 0) {
     const now = Date.now();
     // Group cached rows by type
