@@ -106,7 +106,7 @@
     "@vitest/ui": "^4.0.4",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "bufferutil": "^4.0.9",
-    "drizzle-kit": "^0.31.5",
+    "drizzle-kit": "^0.31.6",
     "jsdom": "^27.0.1",
     "pino-pretty": "^13.1.2",
     "puppeteer": "24.22.3",
