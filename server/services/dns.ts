@@ -22,7 +22,7 @@ import {
 
 export type DohProvider = {
   key: DnsResolver;
-  buildUrl: (domain: string, type: DnsType) => URL;
+  url: string;
   headers?: Record<string, string>;
 };
 
@@ -34,35 +34,29 @@ const DEFAULT_HEADERS: Record<string, string> = {
 export const DOH_PROVIDERS: DohProvider[] = [
   {
     key: "cloudflare",
-    buildUrl: (domain, type) => {
-      const u = new URL("https://cloudflare-dns.com/dns-query");
-      u.searchParams.set("name", domain);
-      u.searchParams.set("type", type);
-      return u;
-    },
-    headers: DEFAULT_HEADERS,
+    url: "https://cloudflare-dns.com/dns-query",
   },
   {
     key: "google",
-    buildUrl: (domain, type) => {
-      const u = new URL("https://dns.google/resolve");
-      u.searchParams.set("name", domain);
-      u.searchParams.set("type", type);
-      return u;
-    },
-    headers: DEFAULT_HEADERS,
+    url: "https://dns.google/resolve",
   },
   {
     key: "quad9",
-    buildUrl: (domain, type) => {
-      const u = new URL("https://dns10.quad9.net/dns-query");
-      u.searchParams.set("name", domain);
-      u.searchParams.set("type", type);
-      return u;
-    },
-    headers: DEFAULT_HEADERS,
+    // dns10 is the unfiltered server
+    url: "https://dns10.quad9.net/dns-query",
   },
 ];
+
+function buildDohUrl(
+  provider: DohProvider,
+  domain: string,
+  type: DnsType,
+): URL {
+  const url = new URL(provider.url);
+  url.searchParams.set("name", domain);
+  url.searchParams.set("type", type);
+  return url;
+}
 
 export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   console.debug(`[dns] start ${domain}`);
@@ -421,11 +415,11 @@ async function resolveTypeWithProvider(
   type: DnsType,
   provider: DohProvider,
 ): Promise<DnsRecord[]> {
-  const url = provider.buildUrl(domain, type);
+  const url = buildDohUrl(provider, domain, type);
   const res = await fetchWithTimeout(
     url,
     {
-      headers: provider.headers,
+      headers: { ...DEFAULT_HEADERS, ...provider.headers },
     },
     { timeoutMs: 2000, retries: 1, backoffMs: 150 },
   );
@@ -535,14 +529,25 @@ type DnsAnswer = {
   data: string;
 };
 
-function providerOrderForLookup(_domain: string): DohProvider[] {
-  // Randomize order to distribute load; could be replaced with hash-based rotation
-  const providers = DOH_PROVIDERS.slice();
-  for (let i = providers.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = providers[i] as DohProvider;
-    providers[i] = providers[j] as DohProvider;
-    providers[j] = tmp;
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
-  return providers;
+  return Math.abs(hash);
+}
+
+export function providerOrderForLookup(domain: string): DohProvider[] {
+  // Deterministic provider selection based on domain hash for cache consistency
+  // Same domain always uses same primary provider, with others as fallbacks
+  const hash = simpleHash(domain.toLowerCase());
+  const primaryIndex = hash % DOH_PROVIDERS.length;
+
+  // Return primary provider first, followed by others in original order
+  const primary = DOH_PROVIDERS[primaryIndex] as DohProvider;
+  const fallbacks = DOH_PROVIDERS.filter((_, i) => i !== primaryIndex);
+
+  return [primary, ...fallbacks];
 }

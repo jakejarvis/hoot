@@ -293,3 +293,108 @@ describe("resolveAll", () => {
     ).toBe(true);
   });
 });
+
+describe("providerOrderForLookup (hash-based selection)", () => {
+  it("returns deterministic provider order for same domain", async () => {
+    const { DOH_PROVIDERS, providerOrderForLookup } = await import("./dns");
+
+    const order1 = providerOrderForLookup("example.com");
+    const order2 = providerOrderForLookup("example.com");
+    const order3 = providerOrderForLookup("example.com");
+
+    expect(order1).toEqual(order2);
+    expect(order2).toEqual(order3);
+    expect(order1.length).toBe(DOH_PROVIDERS.length);
+  });
+
+  it("is case-insensitive for domain hashing", async () => {
+    const { providerOrderForLookup } = await import("./dns");
+
+    const order1 = providerOrderForLookup("Example.COM");
+    const order2 = providerOrderForLookup("example.com");
+    const order3 = providerOrderForLookup("EXAMPLE.COM");
+
+    expect(order1).toEqual(order2);
+    expect(order2).toEqual(order3);
+  });
+
+  it("distributes different domains across providers", async () => {
+    const { DOH_PROVIDERS, providerOrderForLookup } = await import("./dns");
+
+    const domains = [
+      "example.com",
+      "google.com",
+      "github.com",
+      "stackoverflow.com",
+      "reddit.com",
+      "twitter.com",
+      "facebook.com",
+      "amazon.com",
+      "wikipedia.org",
+      "cloudflare.com",
+    ];
+
+    const primaryProviders = domains.map(
+      (domain) => providerOrderForLookup(domain)[0].key,
+    );
+
+    // Check that we get some variety (at least 2 different providers used)
+    const uniqueProviders = new Set(primaryProviders);
+    expect(uniqueProviders.size).toBeGreaterThanOrEqual(
+      Math.min(2, DOH_PROVIDERS.length),
+    );
+  });
+
+  it("maintains consistent fallback order for a domain", async () => {
+    const { DOH_PROVIDERS, providerOrderForLookup } = await import("./dns");
+
+    const order = providerOrderForLookup("test-domain.com");
+
+    // Verify all providers are present exactly once
+    expect(order.length).toBe(DOH_PROVIDERS.length);
+    const providerKeys = order.map((p) => p.key);
+    const uniqueKeys = new Set(providerKeys);
+    expect(uniqueKeys.size).toBe(DOH_PROVIDERS.length);
+  });
+
+  it("ensures resolver consistency improves cache hits", async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    const { resolveAll } = await import("./dns");
+    resetInMemoryRedis();
+
+    // First request for domain1
+    const fetchMock1 = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "domain1.com.", TTL: 60, data: "1.2.3.4" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "domain1.com.", TTL: 60, data: "::1" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          { name: "domain1.com.", TTL: 300, data: "10 mx.domain1.com." },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "domain1.com.", TTL: 120, data: '"v=spf1"' }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          { name: "domain1.com.", TTL: 600, data: "ns1.domain1.com." },
+        ]),
+      );
+
+    const result1 = await resolveAll("domain1.com");
+    expect(result1.records.length).toBeGreaterThan(0);
+    const resolver1 = result1.resolver;
+    fetchMock1.mockRestore();
+
+    // Second request for same domain - should use same resolver from cache
+    const fetchSpy = vi.spyOn(global, "fetch");
+    const result2 = await resolveAll("domain1.com");
+    expect(result2.resolver).toBe(resolver1);
+    expect(fetchSpy).not.toHaveBeenCalled(); // DB cache hit
+    fetchSpy.mockRestore();
+  });
+});
