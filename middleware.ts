@@ -126,6 +126,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Exclude API and Next internals/static assets for performance and to avoid side effects
-    "/((?!api|_next/static|_next/image|_next/webpack-hmr|_vercel|_proxy|favicon.ico|robots.txt|sitemap.xml).*)",
+    // Static files use (?:[?#]|$) to match exactly (not as prefixes) so domains like "favicon.icon.com" are not excluded
+    "/((?!api/|_next/|_vercel/|_proxy/|(?:favicon.ico|icon.svg|robots.txt|sitemap.xml|manifest.webmanifest)(?:[?#]|$)).*)",
   ],
 };
