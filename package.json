@@ -32,7 +32,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.917.0",
     "@bprogress/next": "^3.2.12",
     "@date-fns/utc": "^2.1.1",
     "@flags-sdk/statsig": "^0.2.4",
@@ -47,6 +46,7 @@
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.6",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/blob": "^2.0.0",
     "@vercel/functions": "^3.1.4",
     "@vercel/toolbar": "^0.1.41",
     "cheerio": "^1.1.2",

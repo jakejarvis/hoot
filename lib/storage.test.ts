@@ -8,54 +8,49 @@ import {
   it,
   vi,
 } from "vitest";
-import type { DeleteResult } from "@/lib/r2";
+import type { DeleteResult } from "@/lib/blob";
 
-const s3Send = vi.hoisted(() => vi.fn(async () => ({})));
-const deleteObjectsMock = vi.hoisted(() =>
-  vi.fn<(keys: string[]) => Promise<DeleteResult>>(async () => []),
+const blobPutMock = vi.hoisted(() =>
+  vi.fn(async (pathname: string) => ({
+    url: `https://test-store.public.blob.vercel-storage.com/${pathname}`,
+    downloadUrl: `https://test-store.public.blob.vercel-storage.com/${pathname}?download=1`,
+    contentType: "image/webp",
+  })),
 );
 
-vi.mock("@aws-sdk/client-s3", () => {
-  return {
-    // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
-    S3Client: vi.fn().mockImplementation(function () {
-      return { send: s3Send };
-    }),
-    // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
-    PutObjectCommand: vi.fn().mockImplementation(function (input) {
-      return { input };
-    }),
-    // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
-    DeleteObjectsCommand: vi.fn().mockImplementation(function (input) {
-      return { input };
-    }),
-  };
-});
+const blobDelMock = vi.hoisted(() => vi.fn(async () => undefined));
 
-vi.mock("@/lib/r2", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/r2")>();
+vi.mock("@vercel/blob", () => ({
+  put: blobPutMock,
+  del: blobDelMock,
+}));
+
+const deleteBlobsMock = vi.hoisted(() =>
+  vi.fn<(urls: string[]) => Promise<DeleteResult>>(async () => []),
+);
+
+vi.mock("@/lib/blob", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/blob")>();
   return {
     ...actual,
-    deleteObjects: deleteObjectsMock,
+    deleteBlobs: deleteBlobsMock,
   };
 });
 
-vi.stubEnv("R2_ACCOUNT_ID", "test-account");
-vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
-vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
-vi.stubEnv("R2_BUCKET", "test-bucket");
+vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-token");
 vi.stubEnv("BLOB_SIGNING_SECRET", "secret");
 
 import { storeImage } from "./storage";
 
 afterEach(() => {
   vi.restoreAllMocks();
-  s3Send.mockClear();
-  deleteObjectsMock.mockClear();
+  blobPutMock.mockClear();
+  blobDelMock.mockClear();
+  deleteBlobsMock.mockClear();
 });
 
 describe("storage uploads", () => {
-  it("storeImage (favicon) returns R2 public URL and key and calls S3", async () => {
+  it("storeImage (favicon) returns Vercel Blob public URL and pathname", async () => {
     const res = await storeImage({
       kind: "favicon",
       domain: "example.com",
@@ -64,13 +59,13 @@ describe("storage uploads", () => {
       height: 32,
     });
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
+      /^https:\/\/.*\.blob\.vercel-storage\.com\/[a-f0-9]{32}\/32x32\./,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
-    expect(s3Send).toHaveBeenCalledTimes(1);
+    expect(res.pathname).toMatch(/^[a-f0-9]{32}\/32x32\./);
+    expect(blobPutMock).toHaveBeenCalledTimes(1);
   });
 
-  it("storeImage (screenshot) returns R2 public URL and key and calls S3", async () => {
+  it("storeImage (screenshot) returns Vercel Blob public URL and pathname", async () => {
     const res = await storeImage({
       kind: "screenshot",
       domain: "example.com",
@@ -79,16 +74,21 @@ describe("storage uploads", () => {
       height: 630,
     });
     expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/1200x630\.bin$/,
+      /^https:\/\/.*\.blob\.vercel-storage\.com\/[a-f0-9]{32}\/1200x630\./,
     );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/1200x630\.bin$/);
-    expect(s3Send).toHaveBeenCalledTimes(1);
+    expect(res.pathname).toMatch(/^[a-f0-9]{32}\/1200x630\./);
+    expect(blobPutMock).toHaveBeenCalledTimes(1);
   });
 
   it("retries on upload failure and succeeds on second attempt", async () => {
-    s3Send
+    blobPutMock
       .mockRejectedValueOnce(new Error("Network error"))
-      .mockResolvedValueOnce({});
+      .mockResolvedValueOnce({
+        url: "https://test-store.public.blob.vercel-storage.com/favicon/hash/32x32.webp",
+        downloadUrl:
+          "https://test-store.public.blob.vercel-storage.com/favicon/hash/32x32.webp?download=1",
+        contentType: "image/webp",
+      });
 
     const res = await storeImage({
       kind: "favicon",
@@ -98,17 +98,20 @@ describe("storage uploads", () => {
       height: 32,
     });
 
-    expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
-    );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
-    expect(s3Send).toHaveBeenCalledTimes(2);
+    expect(res.url).toMatch(/^https:\/\/.*\.blob\.vercel-storage\.com\//);
+    expect(res.pathname).toMatch(/^[a-f0-9]{32}\/32x32\./);
+    expect(blobPutMock).toHaveBeenCalledTimes(2);
   });
 
   it("retries once on transient failure then succeeds", async () => {
-    s3Send
+    blobPutMock
       .mockRejectedValueOnce(new Error("Transient"))
-      .mockResolvedValueOnce({});
+      .mockResolvedValueOnce({
+        url: "https://test-store.public.blob.vercel-storage.com/favicon/hash/32x32.webp",
+        downloadUrl:
+          "https://test-store.public.blob.vercel-storage.com/favicon/hash/32x32.webp?download=1",
+        contentType: "image/webp",
+      });
 
     const res = await storeImage({
       kind: "favicon",
@@ -118,15 +121,13 @@ describe("storage uploads", () => {
       height: 32,
     });
 
-    expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
-    );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
-    expect(s3Send).toHaveBeenCalledTimes(2);
+    expect(res.url).toMatch(/^https:\/\/.*\.blob\.vercel-storage\.com\//);
+    expect(res.pathname).toMatch(/^[a-f0-9]{32}\/32x32\./);
+    expect(blobPutMock).toHaveBeenCalledTimes(2);
   });
 
   it("throws after exhausting all retry attempts", async () => {
-    s3Send.mockRejectedValue(new Error("Persistent error"));
+    blobPutMock.mockRejectedValue(new Error("Persistent error"));
 
     await expect(
       storeImage({
@@ -138,13 +139,18 @@ describe("storage uploads", () => {
       }),
     ).rejects.toThrow(/Upload failed after 3 attempts/);
 
-    expect(s3Send).toHaveBeenCalledTimes(3);
+    expect(blobPutMock).toHaveBeenCalledTimes(3);
   });
 
   it("succeeds after initial failure", async () => {
-    s3Send
-      .mockRejectedValueOnce(new Error("S3 API error"))
-      .mockResolvedValueOnce({});
+    blobPutMock
+      .mockRejectedValueOnce(new Error("Blob API error"))
+      .mockResolvedValueOnce({
+        url: "https://test-store.public.blob.vercel-storage.com/favicon/hash/32x32.webp",
+        downloadUrl:
+          "https://test-store.public.blob.vercel-storage.com/favicon/hash/32x32.webp?download=1",
+        contentType: "image/webp",
+      });
 
     const res = await storeImage({
       kind: "favicon",
@@ -154,11 +160,9 @@ describe("storage uploads", () => {
       height: 32,
     });
 
-    expect(res.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/[a-f0-9]{32}\/32x32\.bin$/,
-    );
-    expect(res.key).toMatch(/^[a-f0-9]{32}\/32x32\.bin$/);
-    expect(s3Send).toHaveBeenCalledTimes(2);
+    expect(res.url).toMatch(/^https:\/\/.*\.blob\.vercel-storage\.com\//);
+    expect(res.pathname).toMatch(/^[a-f0-9]{32}\/32x32\./);
+    expect(blobPutMock).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -187,16 +191,23 @@ describe("pruneDueBlobsOnce", () => {
 
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-1",
+      member: "https://test.blob.vercel-storage.com/test-url-1",
     });
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-2",
+      member: "https://test.blob.vercel-storage.com/test-url-2",
     });
 
-    deleteObjectsMock.mockResolvedValueOnce([
-      { key: "test-key-1", deleted: false, error: "Access denied" },
-      { key: "test-key-2", deleted: true },
+    deleteBlobsMock.mockResolvedValueOnce([
+      {
+        url: "https://test.blob.vercel-storage.com/test-url-1",
+        deleted: false,
+        error: "Access denied",
+      },
+      {
+        url: "https://test.blob.vercel-storage.com/test-url-2",
+        deleted: true,
+      },
     ]);
 
     const result = await pruneDueBlobsOnce(200);
@@ -206,8 +217,12 @@ describe("pruneDueBlobsOnce", () => {
 
     // Only successful item should be removed
     const remaining = await redis.zrange(ns("purge", "favicon"), 0, -1);
-    expect(remaining).toEqual(["test-key-1"]);
-    expect(remaining).not.toContain("test-key-2");
+    expect(remaining).toEqual([
+      "https://test.blob.vercel-storage.com/test-url-1",
+    ]);
+    expect(remaining).not.toContain(
+      "https://test.blob.vercel-storage.com/test-url-2",
+    );
   });
 
   it("does not reprocess failed items within one run", async () => {
@@ -216,57 +231,71 @@ describe("pruneDueBlobsOnce", () => {
     // Add items to purge queue first
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-1",
+      member: "https://test.blob.vercel-storage.com/url-1",
     });
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-2",
+      member: "https://test.blob.vercel-storage.com/url-2",
     });
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-3",
+      member: "https://test.blob.vercel-storage.com/url-3",
     });
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-4",
+      member: "https://test.blob.vercel-storage.com/url-4",
     });
 
-    // Mock deleteObjects to fail on first two items, succeed on others
-    deleteObjectsMock.mockResolvedValueOnce([
-      { key: "test-key-1", deleted: false, error: "Access denied" },
-      { key: "test-key-2", deleted: false, error: "Access denied" },
-      { key: "test-key-3", deleted: true },
+    // Mock deleteBlobs to fail on first two items, succeed on others
+    deleteBlobsMock.mockResolvedValueOnce([
+      {
+        url: "https://test.blob.vercel-storage.com/url-1",
+        deleted: false,
+        error: "Access denied",
+      },
+      {
+        url: "https://test.blob.vercel-storage.com/url-2",
+        deleted: false,
+        error: "Access denied",
+      },
+      { url: "https://test.blob.vercel-storage.com/url-3", deleted: true },
     ]);
 
-    // Second call should only receive non-failed items (test-key-4)
-    deleteObjectsMock.mockResolvedValueOnce([
-      { key: "test-key-4", deleted: true },
+    // Second call should only receive non-failed items (url-4)
+    deleteBlobsMock.mockResolvedValueOnce([
+      { url: "https://test.blob.vercel-storage.com/url-4", deleted: true },
     ]);
 
     const result = await pruneDueBlobsOnce(200, 3);
 
-    // Verify deleteObjects was called correctly
-    expect(deleteObjectsMock).toHaveBeenCalledTimes(2);
+    // Verify deleteBlobs was called correctly
+    expect(deleteBlobsMock).toHaveBeenCalledTimes(2);
 
     // First call should have all 3 items
-    expect(deleteObjectsMock).toHaveBeenNthCalledWith(1, [
-      "test-key-1",
-      "test-key-2",
-      "test-key-3",
+    expect(deleteBlobsMock).toHaveBeenNthCalledWith(1, [
+      "https://test.blob.vercel-storage.com/url-1",
+      "https://test.blob.vercel-storage.com/url-2",
+      "https://test.blob.vercel-storage.com/url-3",
     ]);
 
-    // Second call should only have test-key-4 (test-key-1 and test-key-2 are filtered out)
-    expect(deleteObjectsMock).toHaveBeenNthCalledWith(2, ["test-key-4"]);
+    // Second call should only have url-4 (url-1 and url-2 are filtered out)
+    expect(deleteBlobsMock).toHaveBeenNthCalledWith(2, [
+      "https://test.blob.vercel-storage.com/url-4",
+    ]);
 
     expect(result.deletedCount).toBe(2);
     expect(result.errorCount).toBe(2);
 
     // Verify failed items are still in the queue
     const remaining = await redis.zrange(ns("purge", "favicon"), 0, -1);
-    expect(remaining).toContain("test-key-1");
-    expect(remaining).toContain("test-key-2");
-    expect(remaining).not.toContain("test-key-3");
-    expect(remaining).not.toContain("test-key-4");
+    expect(remaining).toContain("https://test.blob.vercel-storage.com/url-1");
+    expect(remaining).toContain("https://test.blob.vercel-storage.com/url-2");
+    expect(remaining).not.toContain(
+      "https://test.blob.vercel-storage.com/url-3",
+    );
+    expect(remaining).not.toContain(
+      "https://test.blob.vercel-storage.com/url-4",
+    );
   });
 
   it("returns counts instead of full arrays", async () => {
@@ -274,21 +303,25 @@ describe("pruneDueBlobsOnce", () => {
 
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-1",
+      member: "https://test.blob.vercel-storage.com/url-1",
     });
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-2",
+      member: "https://test.blob.vercel-storage.com/url-2",
     });
     await redis.zadd(ns("purge", "favicon"), {
       score: 100,
-      member: "test-key-3",
+      member: "https://test.blob.vercel-storage.com/url-3",
     });
 
-    deleteObjectsMock.mockResolvedValueOnce([
-      { key: "test-key-1", deleted: true },
-      { key: "test-key-2", deleted: true },
-      { key: "test-key-3", deleted: false, error: "Failed" },
+    deleteBlobsMock.mockResolvedValueOnce([
+      { url: "https://test.blob.vercel-storage.com/url-1", deleted: true },
+      { url: "https://test.blob.vercel-storage.com/url-2", deleted: true },
+      {
+        url: "https://test.blob.vercel-storage.com/url-3",
+        deleted: false,
+        error: "Failed",
+      },
     ]);
 
     const result = await pruneDueBlobsOnce(200);

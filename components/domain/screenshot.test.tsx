@@ -70,7 +70,7 @@ describe("Screenshot", () => {
   it("renders image when url present", () => {
     (useQuery as unknown as Mock).mockReturnValue({
       data: {
-        url: "https://test-bucket.test-account.r2.cloudflarestorage.com/screenshot/url.webp",
+        url: "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
       },
       isLoading: false,
       isFetching: false,
@@ -81,7 +81,7 @@ describe("Screenshot", () => {
     });
     expect(img).toHaveAttribute(
       "src",
-      "https://test-bucket.test-account.r2.cloudflarestorage.com/screenshot/url.webp",
+      "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
     );
   });
 

@@ -12,21 +12,19 @@ import {
 // getSeo is imported dynamically after mocks are applied
 let getSeo: typeof import("./seo").getSeo;
 
-const s3Send = vi.hoisted(() => vi.fn(async () => ({})));
-vi.mock("@aws-sdk/client-s3", () => ({
-  // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
-  S3Client: vi.fn().mockImplementation(function () {
-    return { send: s3Send };
-  }),
-  // biome-ignore lint/complexity/useArrowFunction: Vitest v4 requires function keyword for constructor mocks
-  PutObjectCommand: vi.fn().mockImplementation(function (input) {
-    return { input };
-  }),
+const blobPutMock = vi.hoisted(() =>
+  vi.fn(async (pathname: string) => ({
+    url: `https://test-store.public.blob.vercel-storage.com/${pathname}`,
+    downloadUrl: `https://test-store.public.blob.vercel-storage.com/${pathname}?download=1`,
+    contentType: "image/webp",
+  })),
+);
+
+vi.mock("@vercel/blob", () => ({
+  put: blobPutMock,
 }));
-vi.stubEnv("R2_ACCOUNT_ID", "test-account");
-vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
-vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
-vi.stubEnv("R2_BUCKET", "test-bucket");
+
+vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-token");
 
 beforeAll(async () => {
   const { makePGliteDb } = await import("@/lib/db/pglite");
@@ -99,7 +97,6 @@ describe("getSeo", () => {
       previewTitle: null,
       previewDescription: null,
       previewImageUrl: null,
-      previewImageUploadedUrl: null,
       canonicalUrl: null,
       robots: { fetched: true, groups: [], sitemaps: [] },
       robotsSitemaps: [],

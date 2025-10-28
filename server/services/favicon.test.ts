@@ -3,17 +3,14 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const storageMock = vi.hoisted(() => ({
   storeImage: vi.fn(async () => ({
-    url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/32x32.webp",
-    key: "abcdef0123456789abcdef0123456789/32x32.webp",
+    url: "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/32x32.webp",
+    pathname: "abcdef0123456789abcdef0123456789/32x32.webp",
   })),
   getFaviconTtlSeconds: vi.fn(() => 60),
 }));
 
 vi.mock("@/lib/storage", () => storageMock);
-vi.stubEnv("R2_ACCOUNT_ID", "test-account");
-vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
-vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
-vi.stubEnv("R2_BUCKET", "test-bucket");
+vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-token");
 
 // Mock sharp to return a pipeline that resolves a buffer (now using webp)
 vi.mock("sharp", () => ({
@@ -91,7 +88,7 @@ describe("getOrCreateFaviconBlobUrl", () => {
 
     const out = await getOrCreateFaviconBlobUrl("example.com");
     expect(out.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/32x32\.webp$/,
+      /^https:\/\/.*\.blob\.vercel-storage\.com\/[a-f0-9]{32}\/32x32\.webp$/,
     );
     expect(storageMock.storeImage).toHaveBeenCalled();
     fetchSpy.mockRestore();

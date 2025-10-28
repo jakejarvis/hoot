@@ -50,7 +50,6 @@ describe("drizzle-zod parity", () => {
       previewTitle: null,
       previewDescription: null,
       previewImageUrl: null,
-      previewImageUploadedUrl: null,
       canonicalUrl: null,
       robots: { fetched: false, groups: [], sitemaps: [] },
       robotsSitemaps: [],

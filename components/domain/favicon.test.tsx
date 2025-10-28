@@ -80,7 +80,7 @@ describe("Favicon", () => {
   it("renders Image when url present", () => {
     (useQuery as unknown as Mock).mockReturnValue({
       data: {
-        url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/32x32.webp",
+        url: "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/32x32.webp",
       },
       isLoading: false,
     });
@@ -88,7 +88,7 @@ describe("Favicon", () => {
     const img = screen.getByRole("img", { name: /icon/i });
     expect(img).toHaveAttribute(
       "src",
-      "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/32x32.webp",
+      "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/32x32.webp",
     );
   });
 });

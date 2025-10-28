@@ -50,7 +50,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           previewTitle: seoTable.previewTitle,
           previewDescription: seoTable.previewDescription,
           previewImageUrl: seoTable.previewImageUrl,
-          previewImageUploadedUrl: seoTable.previewImageUploadedUrl,
           canonicalUrl: seoTable.canonicalUrl,
           robots: seoTable.robots,
           errors: seoTable.errors,
@@ -67,7 +66,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
         previewTitle: string | null;
         previewDescription: string | null;
         previewImageUrl: string | null;
-        previewImageUploadedUrl: string | null;
         canonicalUrl: string | null;
         robots: RobotsTxt;
         errors: Record<string, unknown>;
@@ -79,7 +77,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           title: existing[0].previewTitle ?? null,
           description: existing[0].previewDescription ?? null,
           image: existing[0].previewImageUrl ?? null,
-          imageUploaded: existing[0].previewImageUploadedUrl ?? null,
+          imageUploaded: null as string | null, // Will be fetched from Redis below
           canonicalUrl: existing[0].canonicalUrl,
         }
       : null;
@@ -90,7 +88,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           registrable ?? domain,
           preview.image,
         );
-        preview.imageUploaded = refreshed?.url ?? preview.imageUploaded ?? null;
+        preview.imageUploaded = refreshed?.url ?? null;
       } catch {
         // keep as-is on transient errors
       }
@@ -233,7 +231,6 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       previewTitle: response.preview?.title ?? null,
       previewDescription: response.preview?.description ?? null,
       previewImageUrl: response.preview?.image ?? null,
-      previewImageUploadedUrl: response.preview?.imageUploaded ?? null,
       canonicalUrl: response.preview?.canonicalUrl ?? null,
       robots: robots ?? { fetched: false, groups: [], sitemaps: [] },
       robotsSitemaps: response.robots?.sitemaps ?? [],
@@ -334,7 +331,7 @@ async function getOrCreateSocialPreviewImageUrl(
     const image = await optimizeImageCover(raw, SOCIAL_WIDTH, SOCIAL_HEIGHT);
     if (!image || image.length === 0) return { url: null };
 
-    const { url, key } = await storeImage({
+    const { url, pathname } = await storeImage({
       kind: "social",
       domain: lower,
       buffer: image,
@@ -345,10 +342,14 @@ async function getOrCreateSocialPreviewImageUrl(
     try {
       const ttl = SOCIAL_PREVIEW_TTL_SECONDS;
       const expiresAtMs = Date.now() + ttl * 1000;
-      await redis.set(indexKey, { url, key, expiresAtMs }, { ex: ttl });
+      await redis.set(
+        indexKey,
+        { url, key: pathname, expiresAtMs },
+        { ex: ttl },
+      );
       await redis.zadd(ns("purge", "social"), {
         score: expiresAtMs,
-        member: key,
+        member: url,
       });
     } catch {}
 

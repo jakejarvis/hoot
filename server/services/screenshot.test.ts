@@ -11,16 +11,13 @@ import {
 
 const storageMock = vi.hoisted(() => ({
   storeImage: vi.fn(async () => ({
-    url: "https://test-bucket.test-account.r2.cloudflarestorage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
-    key: "abcdef0123456789abcdef0123456789/1200x630.webp",
+    url: "https://test-store.public.blob.vercel-storage.com/abcdef0123456789abcdef0123456789/1200x630.webp",
+    pathname: "abcdef0123456789abcdef0123456789/1200x630.webp",
   })),
 }));
 
 vi.mock("@/lib/storage", () => storageMock);
-vi.stubEnv("R2_ACCOUNT_ID", "test-account");
-vi.stubEnv("R2_ACCESS_KEY_ID", "akid");
-vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
-vi.stubEnv("R2_BUCKET", "test-bucket");
+vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-token");
 
 // Mock puppeteer environments
 const pageMock = {
@@ -92,7 +89,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
   it("captures, uploads and returns url when not cached", async () => {
     const out = await getOrCreateScreenshotBlobUrl("example.com");
     expect(out.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/1200x630\.webp$/,
+      /^https:\/\/.*\.blob\.vercel-storage\.com\/[a-f0-9]{32}\/1200x630\.webp$/,
     );
     expect(storageMock.storeImage).toHaveBeenCalled();
   });
@@ -112,7 +109,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
     });
     Math.random = originalRandom;
     expect(out.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/1200x630\.webp$/,
+      /^https:\/\/.*\.blob\.vercel-storage\.com\/[a-f0-9]{32}\/1200x630\.webp$/,
     );
     expect(pageMock.goto).toHaveBeenCalledTimes(2);
   });
@@ -134,7 +131,7 @@ describe("getOrCreateScreenshotBlobUrl", () => {
     });
     Math.random = originalRandom;
     expect(out.url).toMatch(
-      /^https:\/\/test-bucket\.test-account\.r2\.cloudflarestorage\.com\/abcdef0123456789abcdef0123456789\/1200x630\.webp$/,
+      /^https:\/\/.*\.blob\.vercel-storage\.com\/[a-f0-9]{32}\/1200x630\.webp$/,
     );
     expect(pageMock.screenshot).toHaveBeenCalledTimes(2);
   });
