@@ -2,7 +2,6 @@
 
 import { ArrowRight, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import {
   InputGroup,
   InputGroupAddon,
@@ -17,16 +16,20 @@ import { cn } from "@/lib/utils";
 
 export type DomainSearchVariant = "sm" | "lg";
 
+type Source = "form" | "header" | "suggestion";
+
 export type DomainSearchProps = {
   variant?: DomainSearchVariant;
   initialValue?: string;
-  showSuggestions?: boolean;
+  externalNavigation?: { domain: string; source: Source } | null;
+  onNavigationComplete?: () => void;
 };
 
 export function DomainSearch({
   variant = "lg",
   initialValue = "",
-  showSuggestions = true,
+  externalNavigation,
+  onNavigationComplete,
 }: DomainSearchProps) {
   const { value, setValue, loading, inputRef, submit, navigateToDomain } =
     useDomainSearch({
@@ -41,6 +44,18 @@ export function DomainSearch({
   const [mounted, setMounted] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Handle external navigation requests (e.g., from suggestion clicks)
+  useEffect(() => {
+    if (externalNavigation) {
+      // Mirror the selected domain in the input so the form appears submitted
+      setValue(externalNavigation.domain);
+      // Trigger navigation
+      navigateToDomain(externalNavigation.domain, externalNavigation.source);
+      // Notify parent that navigation was handled
+      onNavigationComplete?.();
+    }
+  }, [externalNavigation, setValue, navigateToDomain, onNavigationComplete]);
 
   // Select all on first focus from keyboard or first click; allow precise cursor on next click.
   const pointerDownRef = useRef(false);
@@ -181,17 +196,6 @@ export function DomainSearch({
           </InputGroup>
         </div>
       </form>
-
-      {variant === "lg" && showSuggestions && (
-        <DomainSuggestions
-          onSelectAction={(d) => {
-            // Mirror the selected domain in the input so the form
-            // appears submitted while navigation is in-flight.
-            setValue(d);
-            navigateToDomain(d, "suggestion");
-          }}
-        />
-      )}
     </div>
   );
 }

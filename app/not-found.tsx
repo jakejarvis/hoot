@@ -24,7 +24,7 @@ export default function NotFound() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="w-full">
-          <DomainSearch showSuggestions={false} />
+          <DomainSearch variant="lg" />
         </EmptyContent>
       </Empty>
     </div>

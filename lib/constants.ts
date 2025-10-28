@@ -13,14 +13,6 @@ export const FAVICON_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
 export const SCREENSHOT_TTL_SECONDS = 14 * 24 * 60 * 60; // 2 weeks
 export const SOCIAL_PREVIEW_TTL_SECONDS = 7 * 24 * 60 * 60; // 1 week
 
-export const DEFAULT_SUGGESTIONS = [
-  "github.com",
-  "reddit.com",
-  "wikipedia.org",
-  "firefox.com",
-  "jarv.is",
-];
-
 // File-like suffixes and extensions that should not be treated as TLDs/domains
 // This is an allowlist of obvious web asset extensions and build artifacts
 // that commonly appear in 404s (e.g., sourcemaps) and should be ignored.
