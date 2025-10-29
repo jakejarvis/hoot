@@ -1,18 +1,26 @@
 /* @vitest-environment node */
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Hoist mock functions before vi.mock calls
+const mockSetex = vi.hoisted(() => vi.fn());
 
 // Mock the DB client to prevent DATABASE_URL requirement
 vi.mock("@/lib/db/client", () => ({
   db: {},
 }));
 
-// Mock Redis to prevent connection attempts
+// Mock Redis with a spy for setex
 vi.mock("@/lib/redis", () => ({
-  redis: {},
+  redis: {
+    setex: mockSetex,
+  },
   ns: (...parts: string[]) => parts.join(":"),
 }));
 
-import { getRegistrationCacheKey } from "./registrations";
+import {
+  getRegistrationCacheKey,
+  setRegistrationStatusInCache,
+} from "./registrations";
 
 describe("getRegistrationCacheKey", () => {
   it("normalizes domain to lowercase", () => {
@@ -60,5 +68,81 @@ describe("getRegistrationCacheKey", () => {
     const key2 = getRegistrationCacheKey("sub.example.com.");
     expect(key1).toBe(key2);
     expect(key1).toContain("sub.example.com");
+  });
+});
+
+describe("setRegistrationStatusInCache", () => {
+  beforeEach(() => {
+    mockSetex.mockClear();
+  });
+
+  it("calls redis.setex with valid TTL", async () => {
+    await setRegistrationStatusInCache("example.com", true, 3600);
+    expect(mockSetex).toHaveBeenCalledOnce();
+    expect(mockSetex).toHaveBeenCalledWith("reg:example.com", 3600, "1");
+  });
+
+  it("skips redis.setex when TTL is zero", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await setRegistrationStatusInCache("example.com", true, 0);
+    expect(mockSetex).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[redis] setRegistrationStatusInCache skipped for example.com: invalid TTL 0",
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("skips redis.setex when TTL is negative", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await setRegistrationStatusInCache("example.com", true, -100);
+    expect(mockSetex).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[redis] setRegistrationStatusInCache skipped for example.com: invalid TTL -100",
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("skips redis.setex when TTL is NaN", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await setRegistrationStatusInCache("example.com", true, Number.NaN);
+    expect(mockSetex).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[redis] setRegistrationStatusInCache skipped for example.com: invalid TTL NaN",
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("skips redis.setex when TTL is Infinity", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await setRegistrationStatusInCache(
+      "example.com",
+      true,
+      Number.POSITIVE_INFINITY,
+    );
+    expect(mockSetex).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[redis] setRegistrationStatusInCache skipped for example.com: invalid TTL Infinity",
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("skips redis.setex when TTL is not an integer", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await setRegistrationStatusInCache("example.com", true, 1.5);
+    expect(mockSetex).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[redis] setRegistrationStatusInCache skipped for example.com: invalid TTL 1.5",
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("uses '1' for registered domains", async () => {
+    await setRegistrationStatusInCache("example.com", true, 3600);
+    expect(mockSetex).toHaveBeenCalledWith("reg:example.com", 3600, "1");
+  });
+
+  it("uses '0' for unregistered domains", async () => {
+    await setRegistrationStatusInCache("example.com", false, 1800);
+    expect(mockSetex).toHaveBeenCalledWith("reg:example.com", 1800, "0");
   });
 });

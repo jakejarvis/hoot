@@ -119,6 +119,18 @@ export async function setRegistrationStatusInCache(
   isRegistered: boolean,
   ttlSeconds: number,
 ): Promise<void> {
+  // Validate TTL before writing to Redis
+  if (
+    !Number.isFinite(ttlSeconds) ||
+    !Number.isInteger(ttlSeconds) ||
+    ttlSeconds <= 0
+  ) {
+    console.warn(
+      `[redis] setRegistrationStatusInCache skipped for ${domain}: invalid TTL ${ttlSeconds}`,
+    );
+    return;
+  }
+
   try {
     const key = getRegistrationCacheKey(domain);
     const value = isRegistered ? "1" : "0";

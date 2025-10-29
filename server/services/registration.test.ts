@@ -174,16 +174,11 @@ describe("getRegistration", () => {
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
 
-    // Pre-cache unregistered status
-    const { redis } = await import("@/lib/redis");
-    const { getRegistrationCacheKey } = await import(
+    // Pre-cache unregistered status using the canonical helper
+    const { setRegistrationStatusInCache } = await import(
       "@/lib/db/repos/registrations"
     );
-    await redis.setex(
-      getRegistrationCacheKey("cached-unregistered.test"),
-      3600,
-      "0",
-    );
+    await setRegistrationStatusInCache("cached-unregistered.test", false, 3600);
 
     const { lookup } = await import("rdapper");
     const spy = lookup as unknown as import("vitest").Mock;
