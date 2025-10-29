@@ -117,11 +117,7 @@ export const sectionRevalidate = inngest.createFunction(
         });
         await step.run("write-result", async () => {
           try {
-            await redis.set(
-              resultKey,
-              JSON.stringify({ completedAt: Date.now() }),
-              { ex: 55 },
-            );
+            await redis.set(resultKey, { completedAt: Date.now() }, { ex: 55 });
           } catch (err) {
             logger.warn("[section-revalidate] failed to write result", {
               domain: normalizedDomain,
