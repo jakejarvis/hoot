@@ -26,9 +26,12 @@ vi.mock("@/lib/domain-server", async (importOriginal) => {
   return {
     ...actual,
     toRegistrableDomain: (input: string) => {
-      const v = (input ?? "").trim().toLowerCase();
-      if (!v) return null;
-      return v;
+      // Allow reserved TLDs for safe testing
+      if (input.endsWith(".invalid") || input.endsWith(".test")) {
+        return input.toLowerCase();
+      }
+      // Use real implementation for everything else
+      return actual.toRegistrableDomain(input);
     },
   };
 });

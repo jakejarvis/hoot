@@ -152,7 +152,7 @@ describe("getSeo", () => {
       .mockResolvedValueOnce(htmlResponse("<html></html>", "https://x/"))
       .mockResolvedValueOnce(textResponse("{}", "application/json"));
 
-    const out = await getSeo("robots-content.com");
+    const out = await getSeo("robots-content.invalid");
     expect(out.errors?.robots ?? "").toMatch(/Unexpected robots content-type/i);
     fetchMock.mockRestore();
   });
