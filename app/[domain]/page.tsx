@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
+import { updateLastAccessed } from "@/lib/db/repos/domains";
 import { normalizeDomainInput } from "@/lib/domain";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { makeQueryClient } from "@/trpc/query-client";
@@ -10,8 +11,6 @@ import { trpc } from "@/trpc/server";
 
 import "country-flag-icons/3x2/flags.css";
 import "mapbox-gl/dist/mapbox-gl.css";
-
-export const experimental_ppr = true;
 
 export async function generateMetadata({
   params,
@@ -47,6 +46,9 @@ export default async function DomainPage({
   if (normalized !== decoded) {
     redirect(`/${encodeURIComponent(normalized)}`);
   }
+
+  // Update access timestamp for pruning stale domains (fire-and-forget)
+  updateLastAccessed(normalized).catch(() => {});
 
   // Minimal prefetch: registration only, let sections stream progressively
   const queryClient = makeQueryClient();

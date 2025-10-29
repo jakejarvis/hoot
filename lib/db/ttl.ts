@@ -72,3 +72,23 @@ export function ttlForHosting(now: Date): Date {
 export function ttlForSeo(now: Date): Date {
   return addSeconds(now, TTL_SEO);
 }
+
+/**
+ * Adjust TTL based on domain change frequency.
+ * Stable domains (rarely change) get longer TTLs, volatile domains get shorter TTLs.
+ */
+export function adaptiveTtl(
+  baseSeconds: number,
+  changeFrequency: number,
+): number {
+  // Stable domains (< 2 changes/month): check less often (2x TTL)
+  if (changeFrequency < 2) {
+    return baseSeconds * 2;
+  }
+  // Volatile domains (> 10 changes/month): check more often (0.5x TTL)
+  if (changeFrequency > 10) {
+    return Math.max(baseSeconds / 2, 60 * 60); // Min 1 hour
+  }
+  // Normal domains: use base TTL
+  return baseSeconds;
+}

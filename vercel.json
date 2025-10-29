@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/cron/due-drain",
-      "schedule": "*/2 * * * *"
+      "schedule": "*/10 * * * *"
     },
     {
       "path": "/api/cron/blob-prune",
@@ -18,6 +18,10 @@
     {
       "path": "/api/cron/pricing-refresh",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/queue-cleanup",
+      "schedule": "0 0 * * 0"
     }
   ]
 }
