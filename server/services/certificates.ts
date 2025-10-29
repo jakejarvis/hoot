@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
 import { replaceCertificates } from "@/lib/db/repos/certificates";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
@@ -16,13 +16,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug(`[certificates] start ${domain}`);
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
+  const d = registrable ? await findDomainByName(registrable) : null;
   const existing = d
     ? await db
         .select({
@@ -118,7 +112,12 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       out.length > 0
         ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
         : new Date(Date.now() + 3600_000);
-    if (d) {
+    if (registrable) {
+      const domainRecord = await upsertDomain({
+        name: registrable,
+        tld: getDomainTld(registrable) ?? "",
+        unicodeName: domain,
+      });
       const chainWithIds = await Promise.all(
         out.map(async (c) => {
           const caProviderId = await resolveOrCreateProviderId({
@@ -139,7 +138,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
       const nextDue = ttlForCertificates(now, earliestValidTo);
       await replaceCertificates({
-        domainId: d.id,
+        domainId: domainRecord.id,
         chain: chainWithIds,
         fetchedAt: now,
         expiresAt: nextDue,

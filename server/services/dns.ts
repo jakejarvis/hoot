@@ -5,7 +5,7 @@ import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
 import { replaceDns } from "@/lib/db/repos/dns";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { dnsRecords } from "@/lib/db/schema";
 import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
@@ -116,13 +116,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
 
   // Read from Postgres first; return if fresh
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
+  const d = registrable ? await findDomainByName(registrable) : null;
   const rows = (
     d
       ? await db
@@ -241,9 +235,14 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
             expiresAt: Date;
           }>
         >;
-        if (d) {
+        if (registrable) {
+          const domainRecord = await upsertDomain({
+            name: registrable,
+            tld: getDomainTld(registrable) ?? "",
+            unicodeName: domain,
+          });
           await replaceDns({
-            domainId: d.id,
+            domainId: domainRecord.id,
             resolver: pinnedProvider.key,
             fetchedAt: nowDate,
             recordsByType: recordsByTypeToPersist,
@@ -340,9 +339,14 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
         NS: [],
       };
       for (const r of flat) recordsByType[r.type].push(r);
-      if (d) {
+      if (registrable) {
+        const domainRecord = await upsertDomain({
+          name: registrable,
+          tld: getDomainTld(registrable) ?? "",
+          unicodeName: domain,
+        });
         await replaceDns({
-          domainId: d.id,
+          domainId: domainRecord.id,
           resolver: resolverUsed,
           fetchedAt: now,
           recordsByType: Object.fromEntries(

@@ -8,6 +8,7 @@ import {
   RegistrationNameserverInsert as RegistrationNameserverInsertSchema,
   RegistrationUpdate as RegistrationUpdateSchema,
 } from "@/lib/db/zod";
+import { ns, redis } from "@/lib/redis";
 
 type RegistrationInsert = InferInsertModel<typeof registrations>;
 type RegistrationNameserverInsert = InferInsertModel<
@@ -74,4 +75,48 @@ export async function upsertRegistration(
         });
     }
   });
+}
+
+/**
+ * Get cached registration status from Redis.
+ * Returns true if registered, false if unregistered, null on cache miss or error.
+ */
+export async function getRegistrationStatusFromCache(
+  domain: string,
+): Promise<boolean | null> {
+  try {
+    const key = ns("reg", domain.toLowerCase());
+    const value = await redis.get<string>(key);
+    if (value === "1") return true;
+    if (value === "0") return false;
+    return null;
+  } catch (err) {
+    // Redis failures should not break the flow; log and return null to fall back
+    console.warn(
+      `[redis] getRegistrationStatusFromCache failed for ${domain}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
+    return null;
+  }
+}
+
+/**
+ * Set registration status in Redis with TTL.
+ */
+export async function setRegistrationStatusInCache(
+  domain: string,
+  isRegistered: boolean,
+  ttlSeconds: number,
+): Promise<void> {
+  try {
+    const key = ns("reg", domain.toLowerCase());
+    const value = isRegistered ? "1" : "0";
+    await redis.setex(key, ttlSeconds, value);
+  } catch (err) {
+    // Log but don't throw; Redis cache failures should not break the flow
+    console.warn(
+      `[redis] setRegistrationStatusInCache failed for ${domain}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
+  }
 }

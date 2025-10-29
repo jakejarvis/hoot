@@ -1,15 +1,23 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld, lookup } from "rdapper";
 import { db } from "@/lib/db/client";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
-import { upsertRegistration } from "@/lib/db/repos/registrations";
+import {
+  getRegistrationStatusFromCache,
+  setRegistrationStatusInCache,
+  upsertRegistration,
+} from "@/lib/db/repos/registrations";
 import {
   providers,
   registrationNameservers,
   registrations,
 } from "@/lib/db/schema";
-import { ttlForRegistration } from "@/lib/db/ttl";
+import {
+  REDIS_TTL_REGISTERED,
+  REDIS_TTL_UNREGISTERED,
+  ttlForRegistration,
+} from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
@@ -25,15 +33,26 @@ import type {
 export async function getRegistration(domain: string): Promise<Registration> {
   console.debug(`[registration] start ${domain}`);
 
-  // Try current snapshot
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
+
+  // Step 1: Check Redis for cached registration status
+  const cachedStatus = registrable
+    ? await getRegistrationStatusFromCache(registrable)
     : null;
+
+  // If Redis says unregistered, fail fast
+  if (cachedStatus === false) {
+    const err = new Error(
+      `Domain ${registrable ?? domain} is not registered (cached)`,
+    );
+    console.info(
+      `[registration] cache hit unregistered ${registrable ?? domain}`,
+    );
+    throw err;
+  }
+
+  // Step 2: Check Postgres for full registration data (if domain exists)
+  const d = registrable ? await findDomainByName(registrable) : null;
   if (d) {
     const existing = await db
       .select()
@@ -108,6 +127,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     }
   }
 
+  // Step 3: Call rdapper to fetch fresh data
   const { ok, record, error } = await lookup(registrable ?? domain, {
     timeoutMs: 5000,
   });
@@ -129,6 +149,45 @@ export async function getRegistration(domain: string): Promise<Registration> {
     record,
   );
 
+  // Step 4: Cache registration status in Redis
+  if (registrable) {
+    const ttl = record.isRegistered
+      ? REDIS_TTL_REGISTERED
+      : REDIS_TTL_UNREGISTERED;
+    await setRegistrationStatusInCache(registrable, record.isRegistered, ttl);
+  }
+
+  // Step 5: If unregistered, return early without persisting
+  if (!record.isRegistered) {
+    console.info(
+      `[registration] ok ${registrable ?? domain} unregistered (not persisted)`,
+    );
+
+    let registrarName = (record.registrar?.name || "").toString();
+    let registrarDomain: string | null = null;
+    const det = detectRegistrar(registrarName);
+    if (det.name) {
+      registrarName = det.name;
+    }
+    if (det.domain) {
+      registrarDomain = det.domain;
+    }
+    try {
+      if (!registrarDomain && record.registrar?.url) {
+        registrarDomain = new URL(record.registrar.url).hostname || null;
+      }
+    } catch {}
+
+    return {
+      ...record,
+      registrarProvider: {
+        name: registrarName.trim() || null,
+        domain: registrarDomain,
+      },
+    };
+  }
+
+  // Step 6: For registered domains, persist to Postgres
   let registrarName = (record.registrar?.name || "").toString();
   let registrarDomain: string | null = null;
   const det = detectRegistrar(registrarName);
@@ -152,8 +211,14 @@ export async function getRegistration(domain: string): Promise<Registration> {
     },
   };
 
-  // Persist snapshot
-  if (d) {
+  // Create domain record and persist registration snapshot
+  if (registrable) {
+    const domainRecord = await upsertDomain({
+      name: registrable,
+      tld: getDomainTld(registrable) ?? "",
+      unicodeName: domain,
+    });
+
     const fetchedAt = new Date();
     const registrarProviderId = await resolveOrCreateProviderId({
       category: "registrar",
@@ -166,7 +231,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
       record.expirationDate ? new Date(record.expirationDate) : null,
     );
     await upsertRegistration({
-      domainId: d.id,
+      domainId: domainRecord.id,
       isRegistered: record.isRegistered,
       privacyEnabled: record.privacyEnabled ?? false,
       registry: record.registry ?? null,
@@ -195,12 +260,12 @@ export async function getRegistration(domain: string): Promise<Registration> {
     try {
       await scheduleSectionIfEarlier(
         "registration",
-        registrable ?? domain,
+        registrable,
         expiresAt.getTime(),
       );
     } catch (err) {
       console.warn(
-        `[registration] schedule failed for ${registrable ?? domain}`,
+        `[registration] schedule failed for ${registrable}`,
         err instanceof Error ? err : new Error(String(err)),
       );
     }

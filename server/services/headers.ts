@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { replaceHeaders } from "@/lib/db/repos/headers";
 import { httpHeaders } from "@/lib/db/schema";
 import { ttlForHeaders } from "@/lib/db/ttl";
@@ -15,13 +15,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   console.debug(`[headers] start ${domain}`);
   // Fast path: read from Postgres if fresh
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
+  const d = registrable ? await findDomainByName(registrable) : null;
   const existing = d
     ? await db
         .select({
@@ -63,9 +57,14 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
 
     // Persist to Postgres
     const now = new Date();
-    if (d) {
+    if (registrable) {
+      const domainRecord = await upsertDomain({
+        name: registrable,
+        tld: getDomainTld(registrable) ?? "",
+        unicodeName: domain,
+      });
       await replaceHeaders({
-        domainId: d.id,
+        domainId: domainRecord.id,
         headers: normalized,
         fetchedAt: now,
         expiresAt: ttlForHeaders(now),

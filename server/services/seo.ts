@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld } from "rdapper";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
-import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { TTL_SOCIAL_PREVIEW, USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { upsertSeo } from "@/lib/db/repos/seo";
 import { seo as seoTable } from "@/lib/db/schema";
 import { ttlForSeo } from "@/lib/db/ttl";
@@ -29,13 +29,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
   console.debug(`[seo] start ${domain}`);
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
+  const d = registrable ? await findDomainByName(registrable) : null;
   const existing = d
     ? await db
         .select({
@@ -217,9 +211,14 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   // Persist to Postgres only when we have a domainId
   const now = new Date();
-  if (d) {
+  if (registrable) {
+    const domainRecord = await upsertDomain({
+      name: registrable,
+      tld: getDomainTld(registrable) ?? "",
+      unicodeName: domain,
+    });
     await upsertSeo({
-      domainId: d.id,
+      domainId: domainRecord.id,
       sourceFinalUrl: response.source.finalUrl ?? null,
       sourceStatus: response.source.status ?? null,
       metaOpenGraph: response.meta?.openGraph ?? ({} as OpenGraphMeta),
@@ -333,7 +332,7 @@ async function getOrCreateSocialPreviewImageUrl(
     });
 
     try {
-      const ttl = SOCIAL_PREVIEW_TTL_SECONDS;
+      const ttl = TTL_SOCIAL_PREVIEW;
       const expiresAtMs = Date.now() + ttl * 1000;
       await redis.set(
         indexKey,

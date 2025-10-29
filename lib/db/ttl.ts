@@ -1,3 +1,24 @@
+import {
+  REDIS_TTL_REGISTERED,
+  REDIS_TTL_UNREGISTERED,
+  TTL_CERTIFICATES_EXPIRY_BUFFER,
+  TTL_CERTIFICATES_MIN,
+  TTL_CERTIFICATES_WINDOW,
+  TTL_DNS_DEFAULT,
+  TTL_DNS_MAX,
+  TTL_HEADERS,
+  TTL_HOSTING,
+  TTL_REGISTRATION_EXPIRY_THRESHOLD,
+  TTL_REGISTRATION_NEAR_EXPIRY,
+  TTL_REGISTRATION_REGISTERED,
+  TTL_REGISTRATION_UNREGISTERED,
+  TTL_SEO,
+} from "@/lib/constants";
+
+// Re-export Redis TTLs for services that import from this module
+export { REDIS_TTL_REGISTERED, REDIS_TTL_UNREGISTERED };
+
+// Helper functions
 export function addSeconds(base: Date, seconds: number): Date {
   return new Date(base.getTime() + seconds * 1000);
 }
@@ -8,6 +29,7 @@ export function clampFuture(min: Date, max: Date): Date {
   );
 }
 
+// TTL calculation functions (return Date objects for Postgres timestamps)
 export function ttlForRegistration(
   now: Date,
   isRegistered: boolean,
@@ -15,41 +37,46 @@ export function ttlForRegistration(
 ): Date {
   if (expirationDate) {
     const msUntil = expirationDate.getTime() - now.getTime();
-    if (msUntil <= 7 * 24 * 60 * 60 * 1000) {
+    if (msUntil <= TTL_REGISTRATION_EXPIRY_THRESHOLD * 1000) {
       // Revalidate more aggressively near expiry
-      return addSeconds(now, 60 * 60); // 1h
+      return addSeconds(now, TTL_REGISTRATION_NEAR_EXPIRY);
     }
   }
-  return addSeconds(now, isRegistered ? 24 * 60 * 60 : 6 * 60 * 60);
+  return addSeconds(
+    now,
+    isRegistered ? TTL_REGISTRATION_REGISTERED : TTL_REGISTRATION_UNREGISTERED,
+  );
 }
 
 export function ttlForDnsRecord(now: Date, ttlSeconds?: number | null): Date {
   const ttl =
     typeof ttlSeconds === "number" && ttlSeconds > 0
-      ? Math.min(ttlSeconds, 24 * 60 * 60)
-      : 60 * 60;
+      ? Math.min(ttlSeconds, TTL_DNS_MAX)
+      : TTL_DNS_DEFAULT;
   return addSeconds(now, ttl);
 }
 
 export function ttlForCertificates(now: Date, validTo: Date): Date {
   // Revalidate certificates within a 24h sliding window, but start checking
   // more aggressively 48h before expiry to catch upcoming expirations.
-  const window = addSeconds(now, 24 * 60 * 60);
-  const revalidateBefore = new Date(validTo.getTime() - 48 * 60 * 60 * 1000);
+  const window = addSeconds(now, TTL_CERTIFICATES_WINDOW);
+  const revalidateBefore = new Date(
+    validTo.getTime() - TTL_CERTIFICATES_EXPIRY_BUFFER * 1000,
+  );
   return clampFuture(
-    addSeconds(now, 60 * 60),
+    addSeconds(now, TTL_CERTIFICATES_MIN),
     new Date(Math.min(window.getTime(), revalidateBefore.getTime())),
   );
 }
 
 export function ttlForHeaders(now: Date): Date {
-  return addSeconds(now, 12 * 60 * 60);
+  return addSeconds(now, TTL_HEADERS);
 }
 
 export function ttlForHosting(now: Date): Date {
-  return addSeconds(now, 24 * 60 * 60);
+  return addSeconds(now, TTL_HOSTING);
 }
 
 export function ttlForSeo(now: Date): Date {
-  return addSeconds(now, 24 * 60 * 60);
+  return addSeconds(now, TTL_SEO);
 }

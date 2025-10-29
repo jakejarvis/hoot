@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { upsertHosting } from "@/lib/db/repos/hosting";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import {
@@ -27,13 +27,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
 
   // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
+  const d = registrable ? await findDomainByName(registrable) : null;
   const existing = d
     ? await db
         .select({
@@ -204,7 +198,12 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   };
   // Persist to Postgres
   const now = new Date();
-  if (d) {
+  if (registrable) {
+    const domainRecord = await upsertDomain({
+      name: registrable,
+      tld: getDomainTld(registrable) ?? "",
+      unicodeName: domain,
+    });
     const [hostingProviderId, emailProviderId, dnsProviderId] =
       await Promise.all([
         hostingName
@@ -230,7 +229,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           : Promise.resolve(null),
       ]);
     await upsertHosting({
-      domainId: d.id,
+      domainId: domainRecord.id,
       hostingProviderId,
       emailProviderId,
       dnsProviderId,

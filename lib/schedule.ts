@@ -1,18 +1,36 @@
 import "server-only";
 
-import { ns, redis } from "@/lib/redis";
 import {
   BACKOFF_BASE_SECS,
   BACKOFF_MAX_SECS,
   LEASE_SECS,
   MAX_EVENTS_PER_RUN,
-  MIN_TTL_SECS,
   PER_SECTION_BATCH,
-} from "@/lib/revalidation-config";
+  REVALIDATE_MIN_CERTIFICATES,
+  REVALIDATE_MIN_DNS,
+  REVALIDATE_MIN_HEADERS,
+  REVALIDATE_MIN_HOSTING,
+  REVALIDATE_MIN_REGISTRATION,
+  REVALIDATE_MIN_SEO,
+} from "@/lib/constants";
+import { ns, redis } from "@/lib/redis";
 import { type Section, SectionEnum } from "@/lib/schemas";
 
 function minTtlSecondsForSection(section: Section): number {
-  return MIN_TTL_SECS[section];
+  switch (section) {
+    case "dns":
+      return REVALIDATE_MIN_DNS;
+    case "headers":
+      return REVALIDATE_MIN_HEADERS;
+    case "hosting":
+      return REVALIDATE_MIN_HOSTING;
+    case "certificates":
+      return REVALIDATE_MIN_CERTIFICATES;
+    case "seo":
+      return REVALIDATE_MIN_SEO;
+    case "registration":
+      return REVALIDATE_MIN_REGISTRATION;
+  }
 }
 
 function backoffMsForAttempts(attempts: number): number {
