@@ -1,6 +1,4 @@
 import {
-  REDIS_TTL_REGISTERED,
-  REDIS_TTL_UNREGISTERED,
   TTL_CERTIFICATES_EXPIRY_BUFFER,
   TTL_CERTIFICATES_MIN,
   TTL_CERTIFICATES_WINDOW,
@@ -13,9 +11,6 @@ import {
   TTL_REGISTRATION_REGISTERED,
   TTL_SEO,
 } from "@/lib/constants";
-
-// Re-export Redis TTLs for services that import from this module
-export { REDIS_TTL_REGISTERED, REDIS_TTL_UNREGISTERED };
 
 // Helper functions
 export function addSeconds(base: Date, seconds: number): Date {

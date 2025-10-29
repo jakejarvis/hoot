@@ -80,9 +80,12 @@ export async function upsertRegistration(
 /**
  * Build the Redis cache key for registration status.
  * This helper ensures consistent key format across the codebase.
+ * Normalizes domain by trimming whitespace, removing trailing dots, and lowercasing.
  */
 export function getRegistrationCacheKey(domain: string): string {
-  return ns("reg", domain.toLowerCase());
+  // Normalize: trim whitespace, remove trailing dots, then lowercase
+  const normalized = (domain || "").trim().replace(/\.+$/, "").toLowerCase();
+  return ns("reg", normalized);
 }
 
 /**

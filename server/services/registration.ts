@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDomainTld, lookup } from "rdapper";
+import { REDIS_TTL_REGISTERED, REDIS_TTL_UNREGISTERED } from "@/lib/constants";
 import { db } from "@/lib/db/client";
 import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
@@ -13,11 +14,7 @@ import {
   registrationNameservers,
   registrations,
 } from "@/lib/db/schema";
-import {
-  REDIS_TTL_REGISTERED,
-  REDIS_TTL_UNREGISTERED,
-  ttlForRegistration,
-} from "@/lib/db/ttl";
+import { ttlForRegistration } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
