@@ -227,7 +227,6 @@ export async function getRegistration(domain: string): Promise<Registration> {
     });
     const expiresAt = ttlForRegistration(
       fetchedAt,
-      record.isRegistered,
       record.expirationDate ? new Date(record.expirationDate) : null,
     );
     await upsertRegistration({

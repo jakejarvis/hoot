@@ -19,39 +19,51 @@ export const TTL_SCREENSHOT = 14 * SECONDS_PER_DAY; // 2 weeks
 export const TTL_SOCIAL_PREVIEW = 7 * SECONDS_PER_DAY; // 1 week
 
 // ===== Database Cache Expiry TTLs =====
-// When cached data in Postgres becomes stale and needs refresh
-// (Used by lib/db/ttl.ts functions to calculate expiresAt timestamps)
+// When cached data in Postgres becomes stale and needs refresh.
+// Used by lib/db/ttl.ts functions to calculate expiresAt timestamps.
 
+// Registration data
 export const TTL_REGISTRATION_REGISTERED = SECONDS_PER_DAY; // 24 hours
-export const TTL_REGISTRATION_UNREGISTERED = 6 * SECONDS_PER_HOUR; // 6 hours
-export const TTL_REGISTRATION_NEAR_EXPIRY = SECONDS_PER_HOUR; // 1 hour
-export const TTL_REGISTRATION_EXPIRY_THRESHOLD = 7 * SECONDS_PER_DAY; // 7 days
+export const TTL_REGISTRATION_NEAR_EXPIRY = SECONDS_PER_HOUR; // 1 hour (aggressive near expiry)
+export const TTL_REGISTRATION_EXPIRY_THRESHOLD = 7 * SECONDS_PER_DAY; // 7 days (when to switch to aggressive)
 
-export const TTL_DNS_DEFAULT = SECONDS_PER_HOUR; // 1 hour
+// DNS records
+export const TTL_DNS_DEFAULT = SECONDS_PER_HOUR; // 1 hour (fallback when no TTL provided)
 export const TTL_DNS_MAX = SECONDS_PER_DAY; // 24 hours (cap for received TTLs)
 
-export const TTL_CERTIFICATES_WINDOW = SECONDS_PER_DAY; // 24 hours
-export const TTL_CERTIFICATES_MIN = SECONDS_PER_HOUR; // 1 hour
-export const TTL_CERTIFICATES_EXPIRY_BUFFER = 48 * SECONDS_PER_HOUR; // 48 hours before expiry
+// TLS certificates
+export const TTL_CERTIFICATES_WINDOW = SECONDS_PER_DAY; // 24 hours (normal refresh window)
+export const TTL_CERTIFICATES_MIN = SECONDS_PER_HOUR; // 1 hour (minimum check interval)
+export const TTL_CERTIFICATES_EXPIRY_BUFFER = 48 * SECONDS_PER_HOUR; // 48 hours (start aggressive checking before expiry)
 
+// HTTP headers, hosting, SEO
 export const TTL_HEADERS = 12 * SECONDS_PER_HOUR; // 12 hours
 export const TTL_HOSTING = SECONDS_PER_DAY; // 24 hours
 export const TTL_SEO = SECONDS_PER_DAY; // 24 hours
 
 // ===== Redis Cache TTLs =====
-// Lightweight registration status cache (true/false only)
+// Lightweight registration status cache (stores only true/false, not full data).
+// Unregistered domains are ONLY cached here, never in Postgres.
 export const REDIS_TTL_REGISTERED = SECONDS_PER_DAY; // 24 hours
 export const REDIS_TTL_UNREGISTERED = SECONDS_PER_HOUR; // 1 hour
 
-// ===== Background Job Revalidation Minimums =====
-// Minimum time between Inngest-triggered refreshes (prevents too-frequent updates)
-// Should be <= corresponding cache TTL (no point refreshing more often than cache expires)
-export const REVALIDATE_MIN_DNS = SECONDS_PER_HOUR; // 1 hour
-export const REVALIDATE_MIN_HEADERS = 6 * SECONDS_PER_HOUR; // 6 hours
-export const REVALIDATE_MIN_HOSTING = SECONDS_PER_DAY; // 24 hours
-export const REVALIDATE_MIN_CERTIFICATES = 6 * SECONDS_PER_HOUR; // 6 hours
-export const REVALIDATE_MIN_SEO = SECONDS_PER_DAY; // 24 hours
-export const REVALIDATE_MIN_REGISTRATION = SECONDS_PER_DAY; // 24 hours
+// ===== Background Job Revalidation =====
+// How often Inngest jobs attempt to refresh each section's data.
+// These intervals determine "freshness" - shorter = more up-to-date but more load.
+//
+// Strategy:
+// - Refresh at 100% of TTL (when cache expires): DNS, Hosting, SEO, Registration
+// - Refresh at 50% of TTL (proactive refresh): Headers (6h for 12h TTL)
+// - Refresh at 25% of TTL (aggressive): Certificates (6h for 24h window)
+//
+// Note: Actual refresh timing is bounded by these minimums via scheduleSectionIfEarlier().
+// If a domain tries to schedule sooner, it gets pushed to the minimum interval.
+export const REVALIDATE_MIN_DNS = TTL_DNS_DEFAULT; // 1h (refresh when expires)
+export const REVALIDATE_MIN_HEADERS = TTL_HEADERS / 2; // 6h (proactive: refresh at 50% of 12h)
+export const REVALIDATE_MIN_HOSTING = TTL_HOSTING; // 24h (refresh when expires)
+export const REVALIDATE_MIN_CERTIFICATES = TTL_CERTIFICATES_WINDOW / 4; // 6h (aggressive: refresh at 25% of 24h)
+export const REVALIDATE_MIN_SEO = TTL_SEO; // 24h (refresh when expires)
+export const REVALIDATE_MIN_REGISTRATION = TTL_REGISTRATION_REGISTERED; // 24h (refresh when expires)
 
 // ===== Background Job Configuration =====
 export const DRAIN_CRON_MINUTES = 2;

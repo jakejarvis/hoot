@@ -6,23 +6,25 @@ import {
 } from "@/lib/db/ttl";
 
 describe("TTL policy", () => {
-  it("registration: 24h when registered and far from expiry", () => {
+  it("registration: 24h when far from expiry", () => {
     const now = new Date("2024-01-01T00:00:00.000Z");
     const exp = new Date("2024-02-01T00:00:00.000Z");
-    const d = ttlForRegistration(now, true, exp);
+    const d = ttlForRegistration(now, exp);
     expect(d.getTime() - now.getTime()).toBe(24 * 60 * 60 * 1000);
   });
 
-  it("registration: 6h when unregistered", () => {
+  it("registration: 24h when no expiry date", () => {
+    // Note: Unregistered domains are never stored in Postgres, only in Redis.
+    // This function only runs for registered domains in practice.
     const now = new Date("2024-01-01T00:00:00.000Z");
-    const d = ttlForRegistration(now, false, null);
-    expect(d.getTime() - now.getTime()).toBe(6 * 60 * 60 * 1000);
+    const d = ttlForRegistration(now, null);
+    expect(d.getTime() - now.getTime()).toBe(24 * 60 * 60 * 1000);
   });
 
   it("registration: <=1h when expiry within 7d", () => {
     const now = new Date("2024-01-01T00:00:00.000Z");
     const exp = new Date("2024-01-05T00:00:00.000Z");
-    const d = ttlForRegistration(now, true, exp);
+    const d = ttlForRegistration(now, exp);
     expect(d.getTime() - now.getTime()).toBe(60 * 60 * 1000);
   });
 

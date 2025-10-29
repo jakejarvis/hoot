@@ -11,7 +11,6 @@ import {
   TTL_REGISTRATION_EXPIRY_THRESHOLD,
   TTL_REGISTRATION_NEAR_EXPIRY,
   TTL_REGISTRATION_REGISTERED,
-  TTL_REGISTRATION_UNREGISTERED,
   TTL_SEO,
 } from "@/lib/constants";
 
@@ -32,20 +31,18 @@ export function clampFuture(min: Date, max: Date): Date {
 // TTL calculation functions (return Date objects for Postgres timestamps)
 export function ttlForRegistration(
   now: Date,
-  isRegistered: boolean,
   expirationDate?: Date | null,
 ): Date {
+  // Note: Only registered domains are stored in Postgres.
+  // Unregistered domains are cached in Redis only (see REDIS_TTL_UNREGISTERED).
   if (expirationDate) {
     const msUntil = expirationDate.getTime() - now.getTime();
     if (msUntil <= TTL_REGISTRATION_EXPIRY_THRESHOLD * 1000) {
-      // Revalidate more aggressively near expiry
+      // Revalidate more aggressively near expiry (within 7 days)
       return addSeconds(now, TTL_REGISTRATION_NEAR_EXPIRY);
     }
   }
-  return addSeconds(
-    now,
-    isRegistered ? TTL_REGISTRATION_REGISTERED : TTL_REGISTRATION_UNREGISTERED,
-  );
+  return addSeconds(now, TTL_REGISTRATION_REGISTERED);
 }
 
 export function ttlForDnsRecord(now: Date, ttlSeconds?: number | null): Date {
