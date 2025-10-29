@@ -74,11 +74,19 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // ===== Fast path 1: Redis cache for registration status =====
   const cachedStatus = await getRegistrationStatusFromCache(registrable);
 
-  // If Redis cache says unregistered, fail fast without checking Postgres
+  // If Redis cache says unregistered, return minimal Registration object
   if (cachedStatus === false) {
-    const err = new Error(`Domain ${registrable} is not registered (cached)`);
     console.info(`[registration] cache hit unregistered ${registrable}`);
-    throw err;
+    return {
+      domain: registrable,
+      tld: getDomainTld(registrable) ?? "",
+      isRegistered: false,
+      source: "rdap" as const,
+      registrarProvider: {
+        name: null,
+        domain: null,
+      },
+    };
   }
 
   // ===== Fast path 2: Postgres cache for full registration data =====

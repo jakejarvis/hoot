@@ -190,9 +190,19 @@ describe("getRegistration", () => {
     spy.mockClear();
 
     const { getRegistration } = await import("./registration");
-    await expect(getRegistration("cached-unregistered.test")).rejects.toThrow(
-      /not registered/i,
-    );
+    const result = await getRegistration("cached-unregistered.test");
+
+    // Should return a minimal Registration object with isRegistered: false
+    expect(result).toMatchObject({
+      domain: "cached-unregistered.test",
+      tld: "test",
+      isRegistered: false,
+      source: "rdap",
+      registrarProvider: {
+        name: null,
+        domain: null,
+      },
+    });
 
     // rdapper should not have been called
     expect(spy).not.toHaveBeenCalled();
