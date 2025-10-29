@@ -48,6 +48,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         })
         .from(hostingTable)
         .where(eq(hostingTable.domainId, existingDomain.id))
+        .limit(1)
     : ([] as Array<{
         hostingProviderId: string | null;
         emailProviderId: string | null;
