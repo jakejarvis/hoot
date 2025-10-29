@@ -59,34 +59,31 @@ export async function getRegistration(domain: string): Promise<Registration> {
     const now = new Date();
     if (existing[0] && existing[0].expiresAt > now) {
       const row = existing[0];
-      // Resolve registrar provider details if present
-      let registrarProvider = {
-        name: null as string | null,
-        domain: null as string | null,
-      };
-      if (row.registrarProviderId) {
-        const prov = await db
-          .select({ name: providers.name, domain: providers.domain })
-          .from(providers)
-          .where(eq(providers.id, row.registrarProviderId))
-          .limit(1);
-        if (prov[0]) {
-          registrarProvider = {
-            name: prov[0].name,
-            domain: prov[0].domain ?? null,
-          };
-        }
-      }
 
-      // Load nameservers for this domain
-      const ns = await db
-        .select({
-          host: registrationNameservers.host,
-          ipv4: registrationNameservers.ipv4,
-          ipv6: registrationNameservers.ipv6,
-        })
-        .from(registrationNameservers)
-        .where(eq(registrationNameservers.domainId, existingDomain.id));
+      // Resolve registrar provider details (if present) and nameservers in parallel
+      const [prov, ns] = await Promise.all([
+        row.registrarProviderId
+          ? db
+              .select({ name: providers.name, domain: providers.domain })
+              .from(providers)
+              .where(eq(providers.id, row.registrarProviderId))
+              .limit(1)
+          : Promise.resolve(
+              [] as Array<{ name: string; domain: string | null }>,
+            ),
+        db
+          .select({
+            host: registrationNameservers.host,
+            ipv4: registrationNameservers.ipv4,
+            ipv6: registrationNameservers.ipv6,
+          })
+          .from(registrationNameservers)
+          .where(eq(registrationNameservers.domainId, existingDomain.id)),
+      ]);
+
+      const registrarProvider = prov[0]
+        ? { name: prov[0].name, domain: prov[0].domain ?? null }
+        : { name: null as string | null, domain: null as string | null };
 
       const contactsArray: RegistrationContacts = row.contacts ?? [];
 
@@ -210,7 +207,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     const domainRecord = await upsertDomain({
       name: registrable,
       tld: getDomainTld(registrable) ?? "",
-      unicodeName: domain,
+      unicodeName: record.unicodeName ?? registrable,
     });
 
     const fetchedAt = new Date();
