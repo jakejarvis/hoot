@@ -216,6 +216,9 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   // Persist to Postgres only if domain exists (i.e., is registered)
   const now = new Date();
+  const expiresAt = ttlForSeo(now);
+  const dueAtMs = expiresAt.getTime();
+
   if (existingDomain) {
     await upsertSeo({
       domainId: existingDomain.id,
@@ -232,10 +235,9 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       robotsSitemaps: response.robots?.sitemaps ?? [],
       errors: response.errors ?? {},
       fetchedAt: now,
-      expiresAt: ttlForSeo(now),
+      expiresAt,
     });
     try {
-      const dueAtMs = ttlForSeo(now).getTime();
       await scheduleSectionIfEarlier("seo", registrable, dueAtMs);
     } catch (err) {
       console.warn(

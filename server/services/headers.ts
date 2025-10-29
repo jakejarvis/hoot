@@ -62,15 +62,17 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
 
     // Persist to Postgres only if domain exists (i.e., is registered)
     const now = new Date();
+    const expiresAt = ttlForHeaders(now);
+    const dueAtMs = expiresAt.getTime();
+
     if (existingDomain) {
       await replaceHeaders({
         domainId: existingDomain.id,
         headers: normalized,
         fetchedAt: now,
-        expiresAt: ttlForHeaders(now),
+        expiresAt,
       });
       try {
-        const dueAtMs = ttlForHeaders(now).getTime();
         await scheduleSectionIfEarlier("headers", registrable, dueAtMs);
       } catch (err) {
         console.warn(

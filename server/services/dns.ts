@@ -337,39 +337,42 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
       for (const r of flat) recordsByType[r.type].push(r);
 
       // Persist to Postgres only if domain exists (i.e., is registered)
+      // Compute expiresAt for each record once before persistence
+      const recordsByTypeToPersist = Object.fromEntries(
+        (Object.keys(recordsByType) as DnsType[]).map((t) => [
+          t,
+          (recordsByType[t] as DnsRecord[]).map((r) => ({
+            name: r.name,
+            value: r.value,
+            ttl: r.ttl ?? null,
+            priority: r.priority ?? null,
+            isCloudflare: r.isCloudflare ?? null,
+            expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
+          })),
+        ]),
+      ) as Record<
+        DnsType,
+        Array<{
+          name: string;
+          value: string;
+          ttl: number | null;
+          priority: number | null;
+          isCloudflare: boolean | null;
+          expiresAt: Date;
+        }>
+      >;
+
       if (existingDomain) {
         await replaceDns({
           domainId: existingDomain.id,
           resolver: resolverUsed,
           fetchedAt: now,
-          recordsByType: Object.fromEntries(
-            (Object.keys(recordsByType) as DnsType[]).map((t) => [
-              t,
-              (recordsByType[t] as DnsRecord[]).map((r) => ({
-                name: r.name,
-                value: r.value,
-                ttl: r.ttl ?? null,
-                priority: r.priority ?? null,
-                isCloudflare: r.isCloudflare ?? null,
-                expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
-              })),
-            ]),
-          ) as Record<
-            DnsType,
-            Array<{
-              name: string;
-              value: string;
-              ttl: number | null;
-              priority: number | null;
-              isCloudflare: boolean | null;
-              expiresAt: Date;
-            }>
-          >,
+          recordsByType: recordsByTypeToPersist,
         });
         try {
-          const times = Object.values(recordsByType)
+          const times = Object.values(recordsByTypeToPersist)
             .flat()
-            .map((r) => ttlForDnsRecord(now, r.ttl ?? null)?.getTime?.())
+            .map((r) => r.expiresAt?.getTime?.())
             .filter(
               (t): t is number => typeof t === "number" && Number.isFinite(t),
             );

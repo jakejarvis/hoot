@@ -203,6 +203,9 @@ export async function detectHosting(domain: string): Promise<Hosting> {
 
   // Persist to Postgres only if domain exists (i.e., is registered)
   const now = new Date();
+  const expiresAt = ttlForHosting(now);
+  const dueAtMs = expiresAt.getTime();
+
   if (existingDomain) {
     const [hostingProviderId, emailProviderId, dnsProviderId] =
       await Promise.all([
@@ -240,10 +243,9 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       geoLat: geo.lat ?? null,
       geoLon: geo.lon ?? null,
       fetchedAt: now,
-      expiresAt: ttlForHosting(now),
+      expiresAt,
     });
     try {
-      const dueAtMs = ttlForHosting(now).getTime();
       await scheduleSectionIfEarlier("hosting", registrable, dueAtMs);
     } catch (err) {
       console.warn(

@@ -148,26 +148,20 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       });
       try {
         const dueAtMs = nextDue.getTime();
-        await scheduleSectionIfEarlier(
-          "certificates",
-          registrable ?? domain,
-          dueAtMs,
-        );
+        await scheduleSectionIfEarlier("certificates", registrable, dueAtMs);
       } catch (err) {
         console.warn(
-          `[certificates] schedule failed for ${registrable ?? domain}`,
+          `[certificates] schedule failed for ${registrable}`,
           err instanceof Error ? err : new Error(String(err)),
         );
       }
     }
 
-    console.info(
-      `[certificates] ok ${registrable ?? domain} chainLength=${out.length}`,
-    );
+    console.info(`[certificates] ok ${registrable} chainLength=${out.length}`);
     return out;
   } catch (err) {
     console.warn(
-      `[certificates] error ${registrable ?? domain}`,
+      `[certificates] error ${registrable}`,
       err instanceof Error ? err : new Error(String(err)),
     );
     // Do not treat as fatal; return empty and avoid long-lived negative cache
