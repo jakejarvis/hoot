@@ -70,7 +70,11 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
   while (Date.now() - startTime < maxWaitMs) {
     try {
       pollCount++;
-      const result = (await redis.get(resultKey)) as T | null;
+      // Batch check for result and lock existence in parallel
+      const [result, lockExists] = await Promise.all([
+        redis.get(resultKey) as Promise<T | null>,
+        redis.exists(lockKey),
+      ]);
 
       if (result !== null) {
         console.debug(
@@ -80,7 +84,6 @@ export async function acquireLockOrWaitForResult<T = unknown>(options: {
       }
 
       // Check if lock still exists - if not, the other process may have failed
-      const lockExists = await redis.exists(lockKey);
       if (!lockExists) {
         console.warn(
           `[cache] redis lock disappeared ${lockKey} polls=${pollCount}`,
@@ -179,33 +182,40 @@ export async function getOrCreateCachedAsset<T extends Record<string, unknown>>(
     const expiresAtMs = Date.now() + ttlSeconds * 1000;
 
     try {
-      await redis.set(
+      // Use pipeline to batch cache writes and lock release
+      const pipeline = redis.pipeline();
+      pipeline.set(
         indexKey,
         { url: produced.url, key: produced.key, expiresAtMs },
         { ex: ttlSeconds },
       );
       if (purgeQueue && produced.url) {
-        await redis.zadd(ns("purge", purgeQueue), {
+        pipeline.zadd(ns("purge", purgeQueue), {
           score: expiresAtMs,
           member: produced.url,
         });
       }
+      pipeline.del(lockKey);
+
+      await pipeline.exec();
     } catch (err) {
       console.warn(
-        `[cache] redis cache store failed ${indexKey}`,
+        `[cache] redis operations failed ${indexKey}`,
         err instanceof Error ? err : new Error(String(err)),
       );
     }
 
     return { url: produced.url };
-  } finally {
+  } catch (produceErr) {
+    // If production failed, still clean up the lock
     try {
       await redis.del(lockKey);
-    } catch (err) {
+    } catch (delErr) {
       console.debug(
         `[cache] redis lock release failed ${lockKey}`,
-        err instanceof Error ? err : new Error(String(err)),
+        delErr instanceof Error ? delErr : new Error(String(delErr)),
       );
     }
+    throw produceErr;
   }
 }

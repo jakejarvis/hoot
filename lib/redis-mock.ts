@@ -245,6 +245,79 @@ export function makeInMemoryRedis() {
 
   const ns = (...parts: string[]) => parts.join(":");
 
+  // Mock pipeline implementation for tests
+  function pipeline() {
+    type Command = {
+      method: string;
+      args: unknown[];
+    };
+    const commands: Command[] = [];
+
+    const pipelineApi = {
+      get(key: string) {
+        commands.push({ method: "get", args: [key] });
+        return pipelineApi;
+      },
+      set(key: string, value: unknown, options?: SetOptions) {
+        commands.push({ method: "set", args: [key, value, options] });
+        return pipelineApi;
+      },
+      setex(key: string, seconds: number, value: unknown) {
+        commands.push({ method: "setex", args: [key, seconds, value] });
+        return pipelineApi;
+      },
+      del(key: string) {
+        commands.push({ method: "del", args: [key] });
+        return pipelineApi;
+      },
+      zadd(key: string, entry: ZAddEntry | ZAddEntry[]) {
+        commands.push({ method: "zadd", args: [key, entry] });
+        return pipelineApi;
+      },
+      async exec<T = unknown[]>(): Promise<T> {
+        const results: unknown[] = [];
+        for (const cmd of commands) {
+          const { method, args } = cmd;
+          let result: unknown;
+          switch (method) {
+            case "get":
+              result = await get(args[0] as string);
+              break;
+            case "set":
+              result = await set(
+                args[0] as string,
+                args[1],
+                args[2] as SetOptions | undefined,
+              );
+              break;
+            case "setex":
+              result = await setex(
+                args[0] as string,
+                args[1] as number,
+                args[2],
+              );
+              break;
+            case "del":
+              result = await del(args[0] as string);
+              break;
+            case "zadd":
+              result = await zadd(
+                args[0] as string,
+                args[1] as ZAddEntry | ZAddEntry[],
+              );
+              break;
+            default:
+              throw new Error(`Unsupported pipeline method: ${method}`);
+          }
+          results.push(result);
+        }
+        return results as T;
+      },
+    };
+
+    return pipelineApi;
+  }
+
   // Register the most recently created instance as the active one
   activeReset = () => {
     kv.clear();
@@ -271,6 +344,7 @@ export function makeInMemoryRedis() {
       hset,
       hincrby,
       hdel,
+      pipeline,
     },
     reset: resetInMemoryRedis,
   } as const;
