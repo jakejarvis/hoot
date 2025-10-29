@@ -1,8 +1,7 @@
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
-import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName } from "@/lib/db/repos/domains";
 import { upsertHosting } from "@/lib/db/repos/hosting";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import {
@@ -25,10 +24,14 @@ import { lookupIpMeta } from "@/server/services/ip";
 export async function detectHosting(domain: string): Promise<Hosting> {
   console.debug(`[hosting] start ${domain}`);
 
-  // Fast path: DB
   const registrable = toRegistrableDomain(domain);
-  const d = registrable ? await findDomainByName(registrable) : null;
-  const existing = d
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
+
+  // Fast path: DB
+  const existingDomain = await findDomainByName(registrable);
+  const existing = existingDomain
     ? await db
         .select({
           hostingProviderId: hostingTable.hostingProviderId,
@@ -43,7 +46,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           expiresAt: hostingTable.expiresAt,
         })
         .from(hostingTable)
-        .where(eq(hostingTable.domainId, d.id))
+        .where(eq(hostingTable.domainId, existingDomain.id))
     : ([] as Array<{
         hostingProviderId: string | null;
         emailProviderId: string | null;
@@ -57,7 +60,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         expiresAt: Date | null;
       }>);
   if (
-    d &&
+    existingDomain &&
     existing[0] &&
     (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()
   ) {
@@ -84,7 +87,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       .leftJoin(hp, eq(hp.id, hostingTable.hostingProviderId))
       .leftJoin(ep, eq(ep.id, hostingTable.emailProviderId))
       .leftJoin(dp, eq(dp.id, hostingTable.dnsProviderId))
-      .where(eq(hostingTable.domainId, d.id))
+      .where(eq(hostingTable.domainId, existingDomain.id))
       .limit(1);
     const row = hydrated[0];
     if (row) {
@@ -196,14 +199,9 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     dnsProvider: { name: dnsName, domain: dnsIconDomain },
     geo,
   };
-  // Persist to Postgres
+  // Persist to Postgres only if domain exists (i.e., is registered)
   const now = new Date();
-  if (registrable) {
-    const domainRecord = await upsertDomain({
-      name: registrable,
-      tld: getDomainTld(registrable) ?? "",
-      unicodeName: domain,
-    });
+  if (existingDomain) {
     const [hostingProviderId, emailProviderId, dnsProviderId] =
       await Promise.all([
         hostingName
@@ -229,7 +227,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
           : Promise.resolve(null),
       ]);
     await upsertHosting({
-      domainId: domainRecord.id,
+      domainId: existingDomain.id,
       hostingProviderId,
       emailProviderId,
       dnsProviderId,
@@ -244,16 +242,16 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     });
     try {
       const dueAtMs = ttlForHosting(now).getTime();
-      await scheduleSectionIfEarlier("hosting", registrable ?? domain, dueAtMs);
+      await scheduleSectionIfEarlier("hosting", registrable, dueAtMs);
     } catch (err) {
       console.warn(
-        `[hosting] schedule failed for ${registrable ?? domain}`,
+        `[hosting] schedule failed for ${registrable}`,
         err instanceof Error ? err : new Error(String(err)),
       );
     }
   }
   console.info(
-    `[hosting] ok ${registrable ?? domain} hosting=${hostingName} email=${emailName} dns=${dnsName}`,
+    `[hosting] ok ${registrable} hosting=${hostingName} email=${emailName} dns=${dnsName}`,
   );
   return info;
 }

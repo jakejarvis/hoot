@@ -34,30 +34,27 @@ export async function getRegistration(domain: string): Promise<Registration> {
   console.debug(`[registration] start ${domain}`);
 
   const registrable = toRegistrableDomain(domain);
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
 
   // Step 1: Check Redis for cached registration status
-  const cachedStatus = registrable
-    ? await getRegistrationStatusFromCache(registrable)
-    : null;
+  const cachedStatus = await getRegistrationStatusFromCache(registrable);
 
   // If Redis says unregistered, fail fast
   if (cachedStatus === false) {
-    const err = new Error(
-      `Domain ${registrable ?? domain} is not registered (cached)`,
-    );
-    console.info(
-      `[registration] cache hit unregistered ${registrable ?? domain}`,
-    );
+    const err = new Error(`Domain ${registrable} is not registered (cached)`);
+    console.info(`[registration] cache hit unregistered ${registrable}`);
     throw err;
   }
 
   // Step 2: Check Postgres for full registration data (if domain exists)
-  const d = registrable ? await findDomainByName(registrable) : null;
-  if (d) {
+  const existingDomain = await findDomainByName(registrable);
+  if (existingDomain) {
     const existing = await db
       .select()
       .from(registrations)
-      .where(eq(registrations.domainId, d.id))
+      .where(eq(registrations.domainId, existingDomain.id))
       .limit(1);
     const now = new Date();
     if (existing[0] && existing[0].expiresAt > now) {
@@ -89,17 +86,17 @@ export async function getRegistration(domain: string): Promise<Registration> {
           ipv6: registrationNameservers.ipv6,
         })
         .from(registrationNameservers)
-        .where(eq(registrationNameservers.domainId, d.id));
+        .where(eq(registrationNameservers.domainId, existingDomain.id));
 
       const contactsArray: RegistrationContacts = row.contacts ?? [];
 
       const response: Registration = {
-        domain: registrable as string,
-        tld: d.tld,
+        domain: registrable,
+        tld: existingDomain.tld,
         isRegistered: row.isRegistered,
         privacyEnabled: row.privacyEnabled ?? false,
-        unicodeName: d.unicodeName,
-        punycodeName: d.name,
+        unicodeName: existingDomain.unicodeName,
+        punycodeName: existingDomain.name,
         registry: row.registry ?? undefined,
         // registrar object is optional; we don't persist its full details, so omit
         statuses: row.statuses ?? undefined,
@@ -120,7 +117,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
       };
 
       console.info(
-        `[registration] ok cached ${registrable ?? domain} registered=${row.isRegistered} registrar=${registrarProvider.name}`,
+        `[registration] ok cached ${registrable} registered=${row.isRegistered} registrar=${registrarProvider.name}`,
       );
 
       return response;
@@ -128,26 +125,23 @@ export async function getRegistration(domain: string): Promise<Registration> {
   }
 
   // Step 3: Call rdapper to fetch fresh data
-  const { ok, record, error } = await lookup(registrable ?? domain, {
+  const { ok, record, error } = await lookup(registrable, {
     timeoutMs: 5000,
   });
 
   if (!ok || !record) {
     const err = new Error(
-      `Registration lookup failed for ${registrable ?? domain}: ${error || "unknown error"}`,
+      `Registration lookup failed for ${registrable}: ${error || "unknown error"}`,
     );
     console.error(
-      `[registration] error ${registrable ?? domain}`,
+      `[registration] error ${registrable}`,
       err instanceof Error ? err : new Error(String(err)),
     );
     throw err;
   }
 
   // Log raw rdapper record for observability (safe; already public data)
-  console.debug(
-    `[registration] rdapper result for ${registrable ?? domain}`,
-    record,
-  );
+  console.debug(`[registration] rdapper result for ${registrable}`, record);
 
   // Step 4: Cache registration status in Redis
   if (registrable) {
@@ -160,7 +154,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // Step 5: If unregistered, return early without persisting
   if (!record.isRegistered) {
     console.info(
-      `[registration] ok ${registrable ?? domain} unregistered (not persisted)`,
+      `[registration] ok ${registrable} unregistered (not persisted)`,
     );
 
     let registrarName = (record.registrar?.name || "").toString();
@@ -270,7 +264,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     }
   }
   console.info(
-    `[registration] ok ${registrable ?? domain} registered=${record.isRegistered} registrar=${withProvider.registrarProvider.name}`,
+    `[registration] ok ${registrable} registered=${record.isRegistered} registrar=${withProvider.registrarProvider.name}`,
   );
 
   return withProvider;

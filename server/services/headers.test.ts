@@ -31,6 +31,15 @@ afterEach(async () => {
 
 describe("probeHeaders", () => {
   it("uses GET and caches result", async () => {
+    // Create domain record first (simulates registered domain)
+    const { db } = await import("@/lib/db/client");
+    const { domains } = await import("@/lib/db/schema");
+    await db.insert(domains).values({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+
     const get = new Response(null, {
       status: 200,
       headers: {
@@ -89,7 +98,7 @@ describe("probeHeaders", () => {
       throw new Error("network");
     });
     const { probeHeaders } = await import("./headers");
-    const out = await probeHeaders("fail.example");
+    const out = await probeHeaders("fail.com");
     expect(out.length).toBe(0);
     fetchMock.mockRestore();
   });

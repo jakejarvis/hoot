@@ -238,15 +238,23 @@ describe("detectHosting", () => {
     });
     (probeHeaders as unknown as Mock).mockResolvedValue([]);
 
-    await detectHosting("provider-create.example");
-
+    // Create domain record first (simulates registered domain)
     const { db } = await import("@/lib/db/client");
-    const { domains, hosting, providers } = await import("@/lib/db/schema");
+    const { domains } = await import("@/lib/db/schema");
+    await db.insert(domains).values({
+      name: "provider-create.com",
+      tld: "com",
+      unicodeName: "provider-create.com",
+    });
+
+    await detectHosting("provider-create.com");
+
+    const { hosting, providers } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })
       .from(domains)
-      .where(eq(domains.name, "provider-create.example"))
+      .where(eq(domains.name, "provider-create.com"))
       .limit(1);
     const row = (
       await db

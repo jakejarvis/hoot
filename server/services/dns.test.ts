@@ -140,6 +140,16 @@ describe("resolveAll", () => {
     const { resolveAll } = await import("./dns");
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { db } = await import("@/lib/db/client");
+    const { domains } = await import("@/lib/db/schema");
+    await db.insert(domains).values({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+
     // First run: succeed and populate cache and resolver meta
     const firstFetch = vi
       .spyOn(global, "fetch")
@@ -361,6 +371,15 @@ describe("providerOrderForLookup (hash-based selection)", () => {
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     const { resolveAll } = await import("./dns");
     resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { db } = await import("@/lib/db/client");
+    const { domains } = await import("@/lib/db/schema");
+    await db.insert(domains).values({
+      name: "domain1.com",
+      tld: "com",
+      unicodeName: "domain1.com",
+    });
 
     // First request for domain1
     const fetchMock1 = vi

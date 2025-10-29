@@ -115,15 +115,22 @@ describe("getCertificates", () => {
 
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { db } = await import("@/lib/db/client");
+    const { domains } = await import("@/lib/db/schema");
+    await db.insert(domains).values({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+
     const { getCertificates } = await import("./certificates");
     const out = await getCertificates("example.com");
     expect(out.length).toBeGreaterThan(0);
 
     // Verify DB persistence and CA provider creation
-    const { db } = await import("@/lib/db/client");
-    const { certificates, domains, providers } = await import(
-      "@/lib/db/schema"
-    );
+    const { certificates, providers } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })
@@ -179,7 +186,7 @@ describe("getCertificates", () => {
 
     const { getCertificates } = await import("./certificates");
     // Kick off without awaiting so the function can attach error handler first
-    const pending = getCertificates("timeout.test");
+    const pending = getCertificates("timeout.com");
     // Yield to event loop to allow synchronous setup inside getCertificates
     await Promise.resolve();
     // Now trigger the timeout callback

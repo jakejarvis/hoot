@@ -121,7 +121,7 @@ describe("getSeo", () => {
       } as unknown as Response)
       .mockResolvedValueOnce(textResponse("", "text/plain"));
 
-    const out = await getSeo("nonhtml.invalid");
+    const out = await getSeo("nonhtml.com");
     expect(out.errors?.html).toMatch(/Non-HTML content-type/i);
     fetchMock.mockRestore();
   });
@@ -132,7 +132,7 @@ describe("getSeo", () => {
       .mockResolvedValueOnce(htmlResponse("<html></html>", "https://x/"))
       .mockResolvedValueOnce(textResponse("{}", "application/json"));
 
-    const out = await getSeo("robots-content.invalid");
+    const out = await getSeo("robots-content.com");
     expect(out.errors?.robots ?? "").toMatch(/Unexpected robots content-type/i);
     fetchMock.mockRestore();
   });
@@ -160,7 +160,7 @@ describe("getSeo", () => {
         url: "",
       } as unknown as Response);
 
-    const out = await getSeo("img-fail.invalid");
+    const out = await getSeo("img-fail.com");
     // original image remains for Meta Tags display
     expect(out.preview?.image ?? "").toContain("/og.png");
     // uploaded url is null on failure for privacy-safe rendering

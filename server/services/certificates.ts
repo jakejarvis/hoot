@@ -1,9 +1,8 @@
 import tls from "node:tls";
 import { eq } from "drizzle-orm";
-import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
 import { replaceCertificates } from "@/lib/db/repos/certificates";
-import { findDomainByName, upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName } from "@/lib/db/repos/domains";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
@@ -14,10 +13,15 @@ import type { Certificate } from "@/lib/schemas";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug(`[certificates] start ${domain}`);
-  // Fast path: DB
+
   const registrable = toRegistrableDomain(domain);
-  const d = registrable ? await findDomainByName(registrable) : null;
-  const existing = d
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
+
+  // Fast path: DB
+  const existingDomain = await findDomainByName(registrable);
+  const existing = existingDomain
     ? await db
         .select({
           issuer: certTable.issuer,
@@ -28,7 +32,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           expiresAt: certTable.expiresAt,
         })
         .from(certTable)
-        .where(eq(certTable.domainId, d.id))
+        .where(eq(certTable.domainId, existingDomain.id))
     : ([] as Array<{
         issuer: string;
         subject: string;
@@ -112,12 +116,8 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       out.length > 0
         ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
         : new Date(Date.now() + 3600_000);
-    if (registrable) {
-      const domainRecord = await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      });
+    // Only persist if domain exists (i.e., is registered)
+    if (existingDomain) {
       const chainWithIds = await Promise.all(
         out.map(async (c) => {
           const caProviderId = await resolveOrCreateProviderId({
@@ -138,7 +138,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
       const nextDue = ttlForCertificates(now, earliestValidTo);
       await replaceCertificates({
-        domainId: domainRecord.id,
+        domainId: existingDomain.id,
         chain: chainWithIds,
         fetchedAt: now,
         expiresAt: nextDue,
