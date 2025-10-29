@@ -158,20 +158,28 @@ export async function batchResolveOrCreateProviderIds(
       : [];
 
   // Build map of existing providers
+  // Store both domain-specific and name-only keys to mirror single-row fallback semantics
   const existingMap = new Map<string, string>();
   for (const row of existing) {
-    const key = makeProviderKey(row.category, row.domain, row.name);
-    if (!existingMap.has(key)) {
-      existingMap.set(key, row.id);
+    const domainKey = makeProviderKey(row.category, row.domain, row.name);
+    const nameOnlyKey = makeProviderKey(row.category, null, row.name);
+
+    if (!existingMap.has(domainKey)) {
+      existingMap.set(domainKey, row.id);
+    }
+    // Also record name-only key so inputs with domain can fall back to name-only rows
+    if (!existingMap.has(nameOnlyKey)) {
+      existingMap.set(nameOnlyKey, row.id);
     }
   }
 
   // Identify missing providers
+  // Check domain-specific key first, then fall back to name-only key
   const toCreate = uniqueInputs.filter((input) => {
     if (!input.name) return false;
-    return !existingMap.has(
-      makeProviderKey(input.category, input.domain, input.name),
-    );
+    const domainKey = makeProviderKey(input.category, input.domain, input.name);
+    const nameOnlyKey = makeProviderKey(input.category, null, input.name);
+    return !existingMap.has(domainKey) && !existingMap.has(nameOnlyKey);
   });
 
   // Batch create missing providers
@@ -199,20 +207,29 @@ export async function batchResolveOrCreateProviderIds(
         });
 
       // Add newly created providers to the map
+      // Store both domain-specific and name-only keys for fallback
       for (const row of inserted) {
-        const key = makeProviderKey(row.category, row.domain, row.name);
-        if (!existingMap.has(key)) {
-          existingMap.set(key, row.id);
+        const domainKey = makeProviderKey(row.category, row.domain, row.name);
+        const nameOnlyKey = makeProviderKey(row.category, null, row.name);
+
+        if (!existingMap.has(domainKey)) {
+          existingMap.set(domainKey, row.id);
+        }
+        if (!existingMap.has(nameOnlyKey)) {
+          existingMap.set(nameOnlyKey, row.id);
         }
       }
 
       // Handle any that weren't inserted due to conflicts (race condition)
-      const stillMissing = toCreate.filter(
-        (input) =>
-          !existingMap.has(
-            makeProviderKey(input.category, input.domain, input.name),
-          ),
-      );
+      const stillMissing = toCreate.filter((input) => {
+        const domainKey = makeProviderKey(
+          input.category,
+          input.domain,
+          input.name,
+        );
+        const nameOnlyKey = makeProviderKey(input.category, null, input.name);
+        return !existingMap.has(domainKey) && !existingMap.has(nameOnlyKey);
+      });
       if (stillMissing.length > 0) {
         // Fetch the conflicted ones
         const conflictConditions = stillMissing
@@ -239,9 +256,18 @@ export async function batchResolveOrCreateProviderIds(
             .where(or(...conflictConditions));
 
           for (const row of conflicted) {
-            const key = makeProviderKey(row.category, row.domain, row.name);
-            if (!existingMap.has(key)) {
-              existingMap.set(key, row.id);
+            const domainKey = makeProviderKey(
+              row.category,
+              row.domain,
+              row.name,
+            );
+            const nameOnlyKey = makeProviderKey(row.category, null, row.name);
+
+            if (!existingMap.has(domainKey)) {
+              existingMap.set(domainKey, row.id);
+            }
+            if (!existingMap.has(nameOnlyKey)) {
+              existingMap.set(nameOnlyKey, row.id);
             }
           }
         }
@@ -250,12 +276,19 @@ export async function batchResolveOrCreateProviderIds(
       console.warn("[providers] batch insert partial failure", err);
       // Fall back to individual resolution for failed items
       for (const input of toCreate) {
-        const key = makeProviderKey(input.category, input.domain, input.name);
-        if (!existingMap.has(key)) {
+        const domainKey = makeProviderKey(
+          input.category,
+          input.domain,
+          input.name,
+        );
+        const nameOnlyKey = makeProviderKey(input.category, null, input.name);
+
+        if (!existingMap.has(domainKey) && !existingMap.has(nameOnlyKey)) {
           try {
             const id = await resolveOrCreateProviderId(input);
             if (id) {
-              existingMap.set(key, id);
+              existingMap.set(domainKey, id);
+              existingMap.set(nameOnlyKey, id);
             }
           } catch {
             // Skip individual failures
@@ -266,10 +299,21 @@ export async function batchResolveOrCreateProviderIds(
   }
 
   // Build final result map matching original inputs
+  // Use domain-specific key first, fall back to name-only key (mirrors single-row resolver)
   const result = new Map<string, string | null>();
   for (const input of normalized) {
-    const key = makeProviderKey(input.category, input.domain, input.name);
-    result.set(key, existingMap.get(key) ?? null);
+    const requestKey = makeProviderKey(
+      input.category,
+      input.domain,
+      input.name,
+    );
+    const domainKey = makeProviderKey(input.category, input.domain, input.name);
+    const nameOnlyKey = makeProviderKey(input.category, null, input.name);
+
+    // Try domain-specific key first, then fall back to name-only key
+    const id =
+      existingMap.get(domainKey) ?? existingMap.get(nameOnlyKey) ?? null;
+    result.set(requestKey, id);
   }
 
   return result;
