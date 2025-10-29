@@ -28,6 +28,41 @@ import type {
 } from "@/lib/schemas";
 
 /**
+ * Normalize registrar provider information from raw rdapper data.
+ * Applies provider detection and falls back to URL hostname parsing.
+ */
+function normalizeRegistrar(registrar?: { name?: unknown; url?: unknown }): {
+  name: string | null;
+  domain: string | null;
+} {
+  let registrarName = (registrar?.name || "").toString();
+  let registrarDomain: string | null = null;
+
+  // Run provider detection to normalize known registrars
+  const det = detectRegistrar(registrarName);
+  if (det.name) {
+    registrarName = det.name;
+  }
+  if (det.domain) {
+    registrarDomain = det.domain;
+  }
+
+  // Fall back to URL hostname parsing if domain is still unknown
+  try {
+    if (!registrarDomain && registrar?.url) {
+      registrarDomain = new URL(registrar.url.toString()).hostname || null;
+    }
+  } catch {
+    // URL parsing failed, leave domain as null
+  }
+
+  return {
+    name: registrarName.trim() || null,
+    domain: registrarDomain,
+  };
+}
+
+/**
  * Fetch domain registration using rdapper and cache the normalized DomainRecord.
  */
 export async function getRegistration(domain: string): Promise<Registration> {
@@ -159,52 +194,20 @@ export async function getRegistration(domain: string): Promise<Registration> {
       `[registration] ok ${registrable} unregistered (not persisted)`,
     );
 
-    let registrarName = (record.registrar?.name || "").toString();
-    let registrarDomain: string | null = null;
-    const det = detectRegistrar(registrarName);
-    if (det.name) {
-      registrarName = det.name;
-    }
-    if (det.domain) {
-      registrarDomain = det.domain;
-    }
-    try {
-      if (!registrarDomain && record.registrar?.url) {
-        registrarDomain = new URL(record.registrar.url).hostname || null;
-      }
-    } catch {}
+    const registrarProvider = normalizeRegistrar(record.registrar ?? {});
 
     return {
       ...record,
-      registrarProvider: {
-        name: registrarName.trim() || null,
-        domain: registrarDomain,
-      },
+      registrarProvider,
     };
   }
 
   // ===== Persist registered domain to Postgres =====
-  let registrarName = (record.registrar?.name || "").toString();
-  let registrarDomain: string | null = null;
-  const det = detectRegistrar(registrarName);
-  if (det.name) {
-    registrarName = det.name;
-  }
-  if (det.domain) {
-    registrarDomain = det.domain;
-  }
-  try {
-    if (!registrarDomain && record.registrar?.url) {
-      registrarDomain = new URL(record.registrar.url).hostname || null;
-    }
-  } catch {}
+  const registrarProvider = normalizeRegistrar(record.registrar ?? {});
 
   const withProvider: Registration = {
     ...record,
-    registrarProvider: {
-      name: registrarName.trim() || null,
-      domain: registrarDomain,
-    },
+    registrarProvider,
   };
 
   const fetchedAt = new Date();
@@ -218,8 +221,8 @@ export async function getRegistration(domain: string): Promise<Registration> {
     }),
     resolveOrCreateProviderId({
       category: "registrar",
-      domain: registrarDomain,
-      name: registrarName,
+      domain: registrarProvider.domain,
+      name: registrarProvider.name,
     }),
   ]);
 
