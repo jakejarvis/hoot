@@ -18,9 +18,8 @@ export function addSeconds(base: Date, seconds: number): Date {
 }
 
 export function clampFuture(min: Date, max: Date, now: Date): Date {
-  return new Date(
-    Math.min(Math.max(min.getTime(), now.getTime() + 60_000), max.getTime()),
-  );
+  const candidate = Math.max(min.getTime(), now.getTime() + 60_000);
+  return new Date(candidate <= max.getTime() ? candidate : min.getTime());
 }
 
 // TTL calculation functions (return Date objects for Postgres timestamps)
