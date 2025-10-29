@@ -29,9 +29,18 @@ export const HOSTING_PROVIDERS: Array<
     domain: "wpvip.com",
     category: "hosting",
     rule: {
-      kind: "headerIncludes",
-      name: "x-powered-by",
-      substr: "wordpress vip",
+      any: [
+        {
+          kind: "headerIncludes",
+          name: "x-powered-by",
+          substr: "wordpress vip",
+        },
+        {
+          kind: "headerIncludes",
+          name: "x-hacker",
+          substr: "join.a8c.com/viphacker",
+        },
+      ],
     },
   },
   {
@@ -39,9 +48,18 @@ export const HOSTING_PROVIDERS: Array<
     domain: "wordpress.com",
     category: "hosting",
     rule: {
-      kind: "headerIncludes",
-      name: "host-header",
-      substr: "wordpress.com",
+      any: [
+        {
+          kind: "headerIncludes",
+          name: "host-header",
+          substr: "wordpress.com",
+        },
+        {
+          kind: "headerIncludes",
+          name: "x-hacker",
+          substr: "join.a8c.com/hacker",
+        },
+      ],
     },
   },
   {

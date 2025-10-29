@@ -91,6 +91,7 @@ export const BLACKLISTED_SUFFIXES: readonly string[] = [
 
   // other
   ".arpa",
+  ".onion",
 ];
 
 // TLDs or domain suffixes that are not generally available to the public.
