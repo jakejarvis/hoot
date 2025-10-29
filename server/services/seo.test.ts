@@ -186,4 +186,60 @@ describe("getSeo", () => {
     expect(out.preview?.imageUploaded ?? null).toBeNull();
     fetchMock.mockRestore();
   });
+
+  it("filters out non-http(s) schemes during parsing (SSRF protection)", async () => {
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        htmlResponse(
+          `<!doctype html><html><head>
+            <title>Site</title>
+            <meta property="og:image" content="file:///etc/passwd" />
+          </head></html>`,
+          "https://example.com/",
+        ),
+      )
+      .mockResolvedValueOnce(
+        textResponse("User-agent: *\nAllow: /", "text/plain"),
+      );
+
+    const out = await getSeo("ssrf-test.invalid");
+    // non-http(s) URLs are filtered during parsing via resolveUrlMaybe
+    expect(out.preview?.image).toBeNull();
+    expect(out.preview?.imageUploaded).toBeNull();
+    // Verify fetch was only called twice (HTML + robots.txt), never for the image
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    fetchMock.mockRestore();
+  });
+
+  it("resolves relative OG image URLs against base URL", async () => {
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        htmlResponse(
+          `<!doctype html><html><head>
+            <title>Site</title>
+            <meta property="og:image" content="/images/og.png" />
+          </head></html>`,
+          "https://example.com/page",
+        ),
+      )
+      .mockResolvedValueOnce(
+        textResponse("User-agent: *\nAllow: /", "text/plain"),
+      )
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "image/png" }),
+        arrayBuffer: async () => new ArrayBuffer(100),
+        url: "",
+      } as unknown as Response);
+
+    const out = await getSeo("relative-url.invalid");
+    // Relative URL should be resolved to absolute
+    expect(out.preview?.image).toBe("https://example.com/images/og.png");
+    // Should have attempted to upload the resolved URL
+    expect(fetchMock).toHaveBeenCalledTimes(3); // HTML + robots.txt + image
+    fetchMock.mockRestore();
+  });
 });

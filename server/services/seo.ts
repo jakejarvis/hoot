@@ -258,6 +258,17 @@ async function getOrCreateSocialPreviewImageUrl(
   domain: string,
   imageUrl: string,
 ): Promise<{ url: string | null }> {
+  // Guard against non-http(s) schemes to avoid SSRF or unsupported fetches
+  try {
+    const u = new URL(imageUrl);
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      return { url: null };
+    }
+  } catch {
+    // Invalid URL
+    return { url: null };
+  }
+
   const lower = domain.toLowerCase();
   const indexKey = ns(
     "seo-image",
