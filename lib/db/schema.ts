@@ -80,10 +80,13 @@ export const domains = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+    changeFrequency: integer("change_frequency").default(0),
   },
   (t) => [
     unique("u_domains_name").on(t.name),
     index("i_domains_tld").on(t.tld),
+    index("i_domains_last_accessed").on(t.lastAccessedAt),
   ],
 );
 

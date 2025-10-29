@@ -67,16 +67,23 @@ export const REVALIDATE_MIN_REGISTRATION = TTL_REGISTRATION_REGISTERED; // 24h (
 
 // ===== Background Job Configuration =====
 // How often the cron job runs to drain the revalidation queue
-export const DRAIN_CRON_MINUTES = 2;
+export const DRAIN_CRON_MINUTES = 10;
 
 export const PER_SECTION_BATCH = 50;
-export const MAX_EVENTS_PER_RUN = 200;
+export const MAX_EVENTS_PER_RUN = 100;
 
 // Lease duration matches cron interval to prevent overlapping executions
 export const LEASE_SECS = DRAIN_CRON_MINUTES * 60;
 
 export const BACKOFF_BASE_SECS = 5 * 60; // 5 minutes
 export const BACKOFF_MAX_SECS = 6 * 60 * 60; // 6 hours
+
+// Access-based pruning: skip domains not accessed in this many days
+export const STALE_ACCESS_THRESHOLD_DAYS = 30;
+
+// Dead letter queue: max failures before moving to DLQ
+export const MAX_FAILURE_ATTEMPTS = 5;
+export const DLQ_COOLDOWN_HOURS = 24;
 
 // File-like suffixes and extensions that should not be treated as TLDs/domains
 // This is an allowlist of obvious web asset extensions and build artifacts

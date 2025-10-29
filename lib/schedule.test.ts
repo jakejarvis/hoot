@@ -19,6 +19,9 @@ let allSections: typeof import("@/lib/schedule").allSections;
 
 describe("schedule", () => {
   beforeAll(async () => {
+    // Set required env vars for imports
+    vi.stubEnv("DATABASE_URL", "postgresql://test:test@localhost:5432/test");
+
     const { makeInMemoryRedis } = await import("@/lib/redis-mock");
     const impl = makeInMemoryRedis();
     vi.doMock("@/lib/redis", () => impl);
@@ -424,6 +427,279 @@ describe("schedule", () => {
       expect(sections).toContain("seo");
       expect(sections).toContain("registration");
       expect(sections).toHaveLength(6);
+    });
+  });
+
+  describe("Dead Letter Queue", () => {
+    let moveToDLQ: typeof import("@/lib/schedule").moveToDLQ;
+    let restoreFromDLQ: typeof import("@/lib/schedule").restoreFromDLQ;
+    let getFailureAttempts: typeof import("@/lib/schedule").getFailureAttempts;
+
+    beforeAll(async () => {
+      ({ moveToDLQ, restoreFromDLQ, getFailureAttempts } = await import(
+        "@/lib/schedule"
+      ));
+    });
+
+    it("moves domain to DLQ after max failures", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const { MAX_FAILURE_ATTEMPTS } = await import("@/lib/constants");
+
+      // Setup: Add domain to regular queue and set failure count
+      await redis.zadd(ns("due", "dns"), {
+        score: Date.now(),
+        member: "example.com",
+      });
+      await redis.hset(ns("task", "dns"), {
+        "example.com": MAX_FAILURE_ATTEMPTS.toString(),
+      });
+
+      // Execute
+      await moveToDLQ("dns", "example.com");
+
+      // Verify: Domain is in DLQ
+      const dlqMembers = await redis.zrange(ns("dlq", "dns"), 0, -1);
+      expect(dlqMembers).toContain("example.com");
+
+      // Verify: Domain removed from regular queue
+      const dueMembers = await redis.zrange(ns("due", "dns"), 0, -1);
+      expect(dueMembers).not.toContain("example.com");
+
+      // Verify: Failure counter cleared
+      const attempts = await redis.hget(ns("task", "dns"), "example.com");
+      expect(attempts).toBeNull();
+    });
+
+    it("restores domain from DLQ to regular queue", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+
+      // Setup: Add domain to DLQ
+      await redis.zadd(ns("dlq", "dns"), {
+        score: Date.now(),
+        member: "example.com",
+      });
+
+      // Execute
+      await restoreFromDLQ("dns", "example.com");
+
+      // Verify: Domain removed from DLQ
+      const dlqMembers = await redis.zrange(ns("dlq", "dns"), 0, -1);
+      expect(dlqMembers).not.toContain("example.com");
+
+      // Verify: Domain in regular queue
+      const dueMembers = await redis.zrange(ns("due", "dns"), 0, -1);
+      expect(dueMembers).toContain("example.com");
+    });
+
+    it("getFailureAttempts returns attempt count", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+
+      // Setup
+      await redis.hset(ns("task", "dns"), { "example.com": "3" });
+
+      // Execute
+      const attempts = await getFailureAttempts("dns", "example.com");
+
+      // Verify
+      expect(attempts).toBe(3);
+    });
+
+    it("getFailureAttempts returns 0 for domain with no failures", async () => {
+      const attempts = await getFailureAttempts("dns", "newdomain.com");
+      expect(attempts).toBe(0);
+    });
+  });
+
+  describe("Section Bundling", () => {
+    it("auto-schedules DNS when scheduling hosting", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const now = Date.now();
+      const dueAtMs = now + 10000;
+
+      // Execute: Schedule hosting
+      const scheduled = await scheduleSectionIfEarlier(
+        "hosting",
+        "example.com",
+        dueAtMs,
+      );
+
+      // Verify: Hosting was scheduled
+      expect(scheduled).toBe(true);
+      const hostingScore = await redis.zscore(
+        ns("due", "hosting"),
+        "example.com",
+      );
+      expect(hostingScore).toBeGreaterThanOrEqual(dueAtMs);
+
+      // Verify: DNS was auto-scheduled earlier (dependency)
+      const dnsScore = await redis.zscore(ns("due", "dns"), "example.com");
+      expect(dnsScore).toBeDefined();
+      expect(dnsScore).toBeLessThan(hostingScore as number);
+    });
+
+    it("auto-schedules DNS when scheduling certificates", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const now = Date.now();
+      const dueAtMs = now + 10000;
+
+      // Execute: Schedule certificates
+      await scheduleSectionIfEarlier("certificates", "example.com", dueAtMs);
+
+      // Verify: DNS was auto-scheduled (dependency)
+      const dnsScore = await redis.zscore(ns("due", "dns"), "example.com");
+      expect(dnsScore).toBeDefined();
+    });
+
+    it("does not auto-schedule dependencies for sections without them", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const now = Date.now();
+      const dueAtMs = now + 10000;
+
+      // Execute: Schedule SEO (no dependencies)
+      await scheduleSectionIfEarlier("seo", "example.com", dueAtMs);
+
+      // Verify: Only SEO is scheduled
+      const seoScore = await redis.zscore(ns("due", "seo"), "example.com");
+      expect(seoScore).toBeDefined();
+
+      // No other sections should be scheduled
+      const dnsScore = await redis.zscore(ns("due", "dns"), "example.com");
+      expect(dnsScore).toBeNull();
+    });
+  });
+
+  describe("Priority Lanes", () => {
+    it("drains high priority domains before normal priority", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const now = Date.now();
+
+      // Setup: Add domains to different priority queues
+      await redis.zadd(ns("due", "dns", "normal"), {
+        score: now - 1000,
+        member: "normal.com",
+      });
+      await redis.zadd(ns("due", "dns", "high"), {
+        score: now - 1000,
+        member: "high.com",
+      });
+
+      // Execute
+      const result = await drainDueDomainsOnce();
+
+      // Verify: High priority domain should be drained first
+      // (In practice both might be drained, but high should be processed first)
+      expect(result.events.length).toBeGreaterThan(0);
+      const domains = result.events.map((e) => e.data.domain);
+      expect(domains).toContain("high.com");
+    });
+
+    it("processes low priority domains last", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const { MAX_EVENTS_PER_RUN } = await import("@/lib/constants");
+      const now = Date.now();
+
+      // Setup: Fill high priority queue to near-capacity
+      for (let i = 0; i < MAX_EVENTS_PER_RUN - 5; i++) {
+        await redis.zadd(ns("due", "dns", "high"), {
+          score: now - 1000,
+          member: `high${i}.com`,
+        });
+      }
+
+      // Add a few low priority domains
+      await redis.zadd(ns("due", "dns", "low"), {
+        score: now - 1000,
+        member: "low1.com",
+      });
+      await redis.zadd(ns("due", "dns", "low"), {
+        score: now - 1000,
+        member: "low2.com",
+      });
+
+      // Execute
+      const result = await drainDueDomainsOnce();
+
+      // Verify: High priority domains should dominate the result
+      const domains = result.events.map((e) => e.data.domain);
+      const highCount = domains.filter((d) => d.startsWith("high")).length;
+      const lowCount = domains.filter((d) => d.startsWith("low")).length;
+
+      expect(highCount).toBeGreaterThan(lowCount);
+    });
+  });
+
+  describe("Cleanup Orphaned Queue Entries", () => {
+    let cleanupOrphanedQueueEntries: typeof import("@/lib/schedule").cleanupOrphanedQueueEntries;
+
+    beforeAll(async () => {
+      // Clear module cache and mock the database module
+      vi.resetModules();
+
+      vi.doMock("@/lib/db/client", () => ({
+        db: {
+          select: vi.fn(() => ({
+            from: vi.fn(() => ({
+              where: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        },
+      }));
+
+      // Import schedule with mocked DB
+      ({ cleanupOrphanedQueueEntries } = await import("@/lib/schedule"));
+    });
+
+    beforeEach(async () => {
+      const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+      resetInMemoryRedis();
+    });
+
+    afterAll(() => {
+      vi.doUnmock("@/lib/db/client");
+      vi.resetModules();
+    });
+
+    it("removes orphaned domains from queues", async () => {
+      const { redis, ns } = await import("@/lib/redis");
+      const now = Date.now();
+
+      // Setup: Add unique test domains to queue (none exist in DB due to mock)
+      const testDomain1 = "cleanup-test-orphan1.com";
+      const testDomain2 = "cleanup-test-orphan2.com";
+
+      await redis.zadd(ns("due", "dns"), {
+        score: now,
+        member: testDomain1,
+      });
+      await redis.zadd(ns("due", "dns"), {
+        score: now,
+        member: testDomain2,
+      });
+
+      // Verify test domains are in queue before cleanup
+      const beforeMembers = (await redis.zrange(
+        ns("due", "dns"),
+        0,
+        -1,
+      )) as string[];
+      expect(beforeMembers).toContain(testDomain1);
+      expect(beforeMembers).toContain(testDomain2);
+
+      // Execute
+      const result = await cleanupOrphanedQueueEntries();
+
+      // Verify: Test domains were removed (along with any others from previous tests)
+      expect(result.removed).toBeGreaterThanOrEqual(2);
+      expect(result.checked).toBeGreaterThanOrEqual(2);
+
+      // Verify our specific test domains are gone
+      const afterMembers = (await redis.zrange(
+        ns("due", "dns"),
+        0,
+        -1,
+      )) as string[];
+      expect(afterMembers).not.toContain(testDomain1);
+      expect(afterMembers).not.toContain(testDomain2);
     });
   });
 });

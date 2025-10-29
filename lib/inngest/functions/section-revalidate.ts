@@ -1,12 +1,14 @@
 import "server-only";
 import { z } from "zod";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
+import { MAX_FAILURE_ATTEMPTS } from "@/lib/constants";
 import { inngest } from "@/lib/inngest/client";
 import { ns, redis } from "@/lib/redis";
 import {
+  getFailureAttempts,
+  moveToDLQ,
   recordFailureAndBackoff,
   resetFailureBackoff,
-  scheduleSectionIfEarlier,
 } from "@/lib/schedule";
 import { type Section, SectionEnum } from "@/lib/schemas";
 import { getCertificates } from "@/server/services/certificates";
@@ -79,62 +81,97 @@ export const sectionRevalidate = inngest.createFunction(
     for (const section of sections) {
       const lockKey = ns("lock", "revalidate", section, normalizedDomain);
       const resultKey = ns("result", "revalidate", section, normalizedDomain);
-      const wait = await step.run("acquire-lock", async () =>
-        acquireLockOrWaitForResult({
-          lockKey,
-          resultKey,
-          lockTtl: 60,
-        }),
-      );
-      if (!wait.acquired) continue;
-      try {
-        await step.run(`revalidate:${section}`, async () => {
-          logger.info("[section-revalidate] start", {
-            domain: normalizedDomain,
-            section,
+
+      // Step 1: Acquire lock and revalidate section data
+      const result = await step.run(
+        `revalidate-with-lock:${section}`,
+        async () => {
+          // Try to acquire lock or wait for result
+          const wait = await acquireLockOrWaitForResult({
+            lockKey,
+            resultKey,
+            lockTtl: 60,
           });
-          await revalidateSection(normalizedDomain, section);
-          logger.info("[section-revalidate] done", {
-            domain: normalizedDomain,
-            section,
-          });
-          return { domain: normalizedDomain, section };
-        });
-        // On success: compute next due time using DB TTLs where applicable.
-        // We don't know exact DB values here, so schedule a conservative minimum
-        // to ensure the due queue repopulates even if on-write scheduling missed.
-        const fallbackMs = Date.now() + 60 * 60 * 1000; // 1h safety fallback
-        await step.run("reschedule-next-due", async () => {
+
+          if (!wait.acquired) {
+            return { skipped: true, success: false };
+          }
+
+          // Lock acquired, perform revalidation
           try {
-            await scheduleSectionIfEarlier(
+            logger.info("[section-revalidate] start", {
+              domain: normalizedDomain,
               section,
-              normalizedDomain,
-              fallbackMs,
-            );
-            // Clear any accumulated failure backoff on success
-            await resetFailureBackoff(section, normalizedDomain);
-          } catch {}
-        });
-        await step.run("write-result", async () => {
-          try {
-            await redis.set(resultKey, { completedAt: Date.now() }, { ex: 55 });
+            });
+            await revalidateSection(normalizedDomain, section);
+            logger.info("[section-revalidate] done", {
+              domain: normalizedDomain,
+              section,
+            });
+            return { skipped: false, success: true };
           } catch (err) {
-            logger.warn("[section-revalidate] failed to write result", {
+            logger.error("[section-revalidate] failed", {
               domain: normalizedDomain,
               section,
               error: err,
             });
+            return { skipped: false, success: false };
           }
-        });
-      } catch {
-        // On failure: backoff and reschedule
-        await step.run("backoff-on-failure", async () => {
-          try {
-            await recordFailureAndBackoff(section, normalizedDomain);
-          } catch {}
-        });
-      } finally {
-        await step.run("release-lock", async () => {
+        },
+      );
+
+      // Skip cleanup if we didn't acquire the lock
+      if (result.skipped) continue;
+
+      // Step 2: Cleanup - write result, reset/record backoff, release lock
+      await step.run(`cleanup:${section}`, async () => {
+        try {
+          if (result.success) {
+            // Write completion result for deduplication
+            try {
+              await redis.set(
+                resultKey,
+                JSON.stringify({ completedAt: Date.now() }),
+                { ex: 55 },
+              );
+            } catch (err) {
+              logger.warn("[section-revalidate] failed to write result", {
+                domain: normalizedDomain,
+                section,
+                error: err,
+              });
+            }
+
+            // Clear any accumulated failure backoff on success
+            // Services already schedule next run after successful writes
+            try {
+              await resetFailureBackoff(section, normalizedDomain);
+            } catch {}
+          } else {
+            // On failure: record failure and apply backoff
+            try {
+              await recordFailureAndBackoff(section, normalizedDomain);
+
+              // Check if we've hit max failures and should move to DLQ
+              const attempts = await getFailureAttempts(
+                section,
+                normalizedDomain,
+              );
+              if (attempts >= MAX_FAILURE_ATTEMPTS) {
+                await moveToDLQ(section, normalizedDomain);
+                logger.warn(
+                  "[section-revalidate] moved to DLQ after max failures",
+                  {
+                    domain: normalizedDomain,
+                    section,
+                    attempts,
+                  },
+                );
+              }
+            } catch {}
+          }
+        } finally {
+          // Always release lock
           try {
             await redis.del(lockKey);
           } catch (err) {
@@ -144,8 +181,8 @@ export const sectionRevalidate = inngest.createFunction(
               error: err,
             });
           }
-        });
-      }
+        }
+      });
     }
   },
 );

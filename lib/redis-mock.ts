@@ -243,6 +243,62 @@ export function makeInMemoryRedis() {
     return removed;
   }
 
+  async function hgetall(key: string): Promise<Record<string, string>> {
+    const h = hashes.get(key);
+    if (!h || h.size === 0) return {};
+    return Object.fromEntries(h.entries());
+  }
+
+  function pipeline() {
+    type PipelineCommand = () => Promise<unknown>;
+    const commands: PipelineCommand[] = [];
+
+    const pipelineProxy = {
+      set(key: string, value: unknown, options?: SetOptions) {
+        commands.push(() => set(key, value, options));
+        return pipelineProxy;
+      },
+      get(key: string) {
+        commands.push(() => get(key));
+        return pipelineProxy;
+      },
+      del(key: string) {
+        commands.push(() => del(key));
+        return pipelineProxy;
+      },
+      zadd(key: string, entry: ZAddEntry | ZAddEntry[]) {
+        commands.push(() => zadd(key, entry));
+        return pipelineProxy;
+      },
+      zrem(key: string, ...members: string[]) {
+        commands.push(() => zrem(key, ...members));
+        return pipelineProxy;
+      },
+      hset(key: string, fieldValues: Record<string, string | number>) {
+        commands.push(() => hset(key, fieldValues));
+        return pipelineProxy;
+      },
+      hdel(key: string, ...fields: string[]) {
+        commands.push(() => hdel(key, ...fields));
+        return pipelineProxy;
+      },
+      async exec(): Promise<Array<[Error | null, unknown]>> {
+        const results: Array<[Error | null, unknown]> = [];
+        for (const cmd of commands) {
+          try {
+            const result = await cmd();
+            results.push([null, result]);
+          } catch (err) {
+            results.push([err as Error, null]);
+          }
+        }
+        return results;
+      },
+    };
+
+    return pipelineProxy;
+  }
+
   const ns = (...parts: string[]) => parts.join(":");
 
   // Register the most recently created instance as the active one
@@ -271,6 +327,8 @@ export function makeInMemoryRedis() {
       hset,
       hincrby,
       hdel,
+      hgetall,
+      pipeline,
     },
     reset: resetInMemoryRedis,
   } as const;

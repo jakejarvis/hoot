@@ -324,18 +324,20 @@ export async function getRegistration(domain: string): Promise<Registration> {
     })),
   });
 
-  // Schedule background revalidation
-  try {
-    await scheduleSectionIfEarlier(
-      "registration",
-      registrable,
-      expiresAt.getTime(),
-    );
-  } catch (err) {
-    console.warn(
-      `[registration] schedule failed for ${registrable}`,
-      err instanceof Error ? err : new Error(String(err)),
-    );
+  // Schedule background revalidation (only for registered domains)
+  if (record.isRegistered) {
+    try {
+      await scheduleSectionIfEarlier(
+        "registration",
+        registrable,
+        expiresAt.getTime(),
+      );
+    } catch (err) {
+      console.warn(
+        `[registration] schedule failed for ${registrable}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
+    }
   }
 
   console.info(
