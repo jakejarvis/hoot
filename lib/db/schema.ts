@@ -225,7 +225,7 @@ export const httpHeaders = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    unique("u_http_header").on(t.domainId, t.name),
+    index("i_http_domain").on(t.domainId),
     index("i_http_name").on(t.name),
   ],
 );
