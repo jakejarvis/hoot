@@ -1,6 +1,6 @@
 import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { registrationNameservers, registrations } from "@/lib/db/schema";
 import {
@@ -52,25 +52,29 @@ export async function upsertRegistration(
         .where(inArray(registrationNameservers.id, toDelete));
     }
 
-    for (const n of ns) {
-      const host = n.host.trim().toLowerCase();
-      const nsInsert = RegistrationNameserverInsertSchema.parse({
-        domainId,
-        host,
-        ipv4: (n.ipv4 ?? []) as string[],
-        ipv6: (n.ipv6 ?? []) as string[],
+    // Batch upsert all nameservers
+    if (ns.length > 0) {
+      const values = ns.map((n) => {
+        const host = n.host.trim().toLowerCase();
+        return RegistrationNameserverInsertSchema.parse({
+          domainId,
+          host,
+          ipv4: (n.ipv4 ?? []) as string[],
+          ipv6: (n.ipv6 ?? []) as string[],
+        });
       });
+
       await tx
         .insert(registrationNameservers)
-        .values(nsInsert)
+        .values(values)
         .onConflictDoUpdate({
           target: [
             registrationNameservers.domainId,
             registrationNameservers.host,
           ],
           set: {
-            ipv4: (n.ipv4 ?? []) as string[],
-            ipv6: (n.ipv6 ?? []) as string[],
+            ipv4: sql`excluded.${sql.identifier(registrationNameservers.ipv4.name)}`,
+            ipv6: sql`excluded.${sql.identifier(registrationNameservers.ipv6.name)}`,
           },
         });
     }

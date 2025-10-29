@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { replaceCertificates } from "@/lib/db/repos/certificates";
 import { findDomainByName } from "@/lib/db/repos/domains";
-import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
+import { batchResolveOrCreateProviderIds } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
@@ -121,23 +121,37 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
     // Persist to Postgres only if domain exists (i.e., is registered)
     if (existingDomain) {
-      const chainWithIds = await Promise.all(
-        out.map(async (c) => {
-          const caProviderId = await resolveOrCreateProviderId({
-            category: "ca",
-            domain: c.caProvider.domain,
-            name: c.caProvider.name,
-          });
-          return {
-            issuer: c.issuer,
-            subject: c.subject,
-            altNames: c.altNames as unknown as string[],
-            validFrom: new Date(c.validFrom),
-            validTo: new Date(c.validTo),
-            caProviderId,
-          };
-        }),
-      );
+      // Batch resolve all CA providers in one query
+      const caProviderInputs = out.map((c) => ({
+        category: "ca" as const,
+        domain: c.caProvider.domain,
+        name: c.caProvider.name,
+      }));
+
+      const caProviderMap =
+        await batchResolveOrCreateProviderIds(caProviderInputs);
+
+      // Helper to create lookup key matching the batch function
+      const inputKey = (input: (typeof caProviderInputs)[number]) =>
+        `${input.category}|${input.domain?.toLowerCase() ?? ""}|${input.name?.trim() ?? ""}`;
+
+      const chainWithIds = out.map((c) => {
+        const key = inputKey({
+          category: "ca",
+          domain: c.caProvider.domain,
+          name: c.caProvider.name,
+        });
+        const caProviderId = caProviderMap.get(key);
+
+        return {
+          issuer: c.issuer,
+          subject: c.subject,
+          altNames: c.altNames as unknown as string[],
+          validFrom: new Date(c.validFrom),
+          validTo: new Date(c.validTo),
+          caProviderId,
+        };
+      });
 
       const nextDue = ttlForCertificates(now, earliestValidTo);
       await replaceCertificates({

@@ -1,12 +1,9 @@
 import "server-only";
 import type { InferInsertModel } from "drizzle-orm";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { dnsRecords, type dnsRecordType } from "@/lib/db/schema";
-import {
-  DnsRecordInsert as DnsRecordInsertSchema,
-  DnsRecordUpdate as DnsRecordUpdateSchema,
-} from "@/lib/db/zod";
+import { DnsRecordInsert as DnsRecordInsertSchema } from "@/lib/db/zod";
 import type { DnsResolver } from "@/lib/schemas";
 
 type DnsRecordInsert = InferInsertModel<typeof dnsRecords>;
@@ -29,73 +26,96 @@ export type UpsertDnsParams = {
 
 export async function replaceDns(params: UpsertDnsParams) {
   const { domainId, recordsByType } = params;
-  // For each type, compute replace-set by (type,name,value)
+
+  // Fetch all existing records for all types in a single query
+  const allExisting = await db
+    .select({
+      id: dnsRecords.id,
+      type: dnsRecords.type,
+      name: dnsRecords.name,
+      value: dnsRecords.value,
+    })
+    .from(dnsRecords)
+    .where(eq(dnsRecords.domainId, domainId));
+
+  // Build a map of existing records for quick lookup
+  const existingMap = new Map<string, string>();
+  for (const record of allExisting) {
+    const key = `${record.type}|${record.name.trim().toLowerCase()}|${record.value.trim().toLowerCase()}`;
+    existingMap.set(key, record.id);
+  }
+
+  // Collect all records to upsert and records to delete
+  const allRecordsToUpsert: ReturnType<typeof DnsRecordInsertSchema.parse>[] =
+    [];
+
+  const allNextKeys = new Set<string>();
+
   for (const type of Object.keys(recordsByType) as Array<
     (typeof dnsRecordType.enumValues)[number]
   >) {
     const next = (recordsByType[type] ?? []).map((r) => ({
       ...r,
+      type,
       // Normalize DNS record name/value for case-insensitive uniqueness
       name: (r.name as string).trim().toLowerCase(),
       value: (r.value as string).trim().toLowerCase(),
     }));
-    const existing = await db
-      .select({
-        id: dnsRecords.id,
-        name: dnsRecords.name,
-        value: dnsRecords.value,
-      })
-      .from(dnsRecords)
-      .where(and(eq(dnsRecords.domainId, domainId), eq(dnsRecords.type, type)));
-    const nextKey = (r: (typeof next)[number]) =>
-      `${type as string}|${r.name as string}|${r.value as string}`;
-    const nextMap = new Map(next.map((r) => [nextKey(r), r]));
-    const toDelete = existing
-      .filter(
-        (e) =>
-          !nextMap.has(
-            `${type}|${e.name.trim().toLowerCase()}|${e.value
-              .trim()
-              .toLowerCase()}`,
-          ),
-      )
-      .map((e) => e.id);
-    if (toDelete.length > 0) {
-      await db.delete(dnsRecords).where(inArray(dnsRecords.id, toDelete));
-    }
+
     for (const r of next) {
-      const insertRow = DnsRecordInsertSchema.parse({
-        domainId,
-        type,
-        name: r.name as string,
-        value: r.value as string,
-        ttl: r.ttl ?? null,
-        priority: r.priority ?? null,
-        isCloudflare: r.isCloudflare ?? null,
-        resolver: params.resolver,
-        fetchedAt: params.fetchedAt as Date | string,
-        expiresAt: r.expiresAt as Date | string,
-      });
-      const updateSet = DnsRecordUpdateSchema.parse({
-        ttl: r.ttl ?? null,
-        priority: r.priority ?? null,
-        isCloudflare: r.isCloudflare ?? null,
-        resolver: params.resolver,
-        fetchedAt: params.fetchedAt as Date | string,
-        expiresAt: r.expiresAt as Date | string,
-      });
-      await db
-        .insert(dnsRecords)
-        .values(insertRow)
-        .onConflictDoUpdate({
-          target: [
-            dnsRecords.domainId,
-            dnsRecords.type,
-            dnsRecords.name,
-            dnsRecords.value,
-          ],
-          set: updateSet,
-        });
+      const key = `${type}|${r.name}|${r.value}`;
+      allNextKeys.add(key);
+
+      allRecordsToUpsert.push(
+        DnsRecordInsertSchema.parse({
+          domainId,
+          type,
+          name: r.name,
+          value: r.value,
+          ttl: r.ttl ?? null,
+          priority: r.priority ?? null,
+          isCloudflare: r.isCloudflare ?? null,
+          resolver: params.resolver,
+          fetchedAt: params.fetchedAt,
+          expiresAt: r.expiresAt,
+        }),
+      );
     }
+  }
+
+  // Identify records to delete (exist in DB but not in the new set)
+  const idsToDelete = allExisting
+    .filter((e) => {
+      const key = `${e.type}|${e.name.trim().toLowerCase()}|${e.value.trim().toLowerCase()}`;
+      return !allNextKeys.has(key);
+    })
+    .map((e) => e.id);
+
+  // Delete obsolete records
+  if (idsToDelete.length > 0) {
+    await db.delete(dnsRecords).where(inArray(dnsRecords.id, idsToDelete));
+  }
+
+  // Batch upsert all records
+  if (allRecordsToUpsert.length > 0) {
+    await db
+      .insert(dnsRecords)
+      .values(allRecordsToUpsert)
+      .onConflictDoUpdate({
+        target: [
+          dnsRecords.domainId,
+          dnsRecords.type,
+          dnsRecords.name,
+          dnsRecords.value,
+        ],
+        set: {
+          ttl: sql`excluded.${sql.identifier(dnsRecords.ttl.name)}`,
+          priority: sql`excluded.${sql.identifier(dnsRecords.priority.name)}`,
+          isCloudflare: sql`excluded.${sql.identifier(dnsRecords.isCloudflare.name)}`,
+          resolver: sql`excluded.${sql.identifier(dnsRecords.resolver.name)}`,
+          fetchedAt: sql`excluded.${sql.identifier(dnsRecords.fetchedAt.name)}`,
+          expiresAt: sql`excluded.${sql.identifier(dnsRecords.expiresAt.name)}`,
+        },
+      });
   }
 }
