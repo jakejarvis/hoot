@@ -63,8 +63,9 @@ describe("TTL policy", () => {
     const validTo = new Date("2024-01-04T00:00:00.000Z");
     const d = ttlForCertificates(now, validTo);
     // min(now+24h, valid_to-48h) => valid_to-48h here (Jan 2)
+    // but clamped to at least TTL_CERTIFICATES_MIN (1h)
     expect(d.toISOString()).toBe(
-      new Date("2024-01-02T00:00:00.000Z").toISOString(),
+      new Date("2024-01-01T01:00:00.000Z").toISOString(),
     );
   });
 });

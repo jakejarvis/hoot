@@ -17,9 +17,9 @@ export function addSeconds(base: Date, seconds: number): Date {
   return new Date(base.getTime() + seconds * 1000);
 }
 
-export function clampFuture(min: Date, max: Date): Date {
+export function clampFuture(min: Date, max: Date, now: Date): Date {
   return new Date(
-    Math.min(Math.max(min.getTime(), Date.now() + 60_000), max.getTime()),
+    Math.min(Math.max(min.getTime(), now.getTime() + 60_000), max.getTime()),
   );
 }
 
@@ -58,6 +58,7 @@ export function ttlForCertificates(now: Date, validTo: Date): Date {
   return clampFuture(
     addSeconds(now, TTL_CERTIFICATES_MIN),
     new Date(Math.min(window.getTime(), revalidateBefore.getTime())),
+    now,
   );
 }
 
