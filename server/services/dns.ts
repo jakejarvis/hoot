@@ -388,7 +388,9 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
       console.info(
         `[dns] ok ${registrable} counts=${JSON.stringify(counts)} resolver=${resolverUsed} durations=${JSON.stringify(durationByProvider)}`,
       );
-      return { records: flat, resolver: resolverUsed } as DnsResolveResult;
+      // Sort records deterministically to match cache-path ordering
+      const sorted = sortDnsRecordsByType(flat, types);
+      return { records: sorted, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
       console.warn(
         `[dns] provider attempt failed ${registrable} provider=${provider.key}`,
