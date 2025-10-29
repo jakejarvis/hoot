@@ -40,6 +40,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   const { resetPGliteDb } = await import("@/lib/db/pglite");
   await resetPGliteDb();
+  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+  resetInMemoryRedis();
 });
 
 afterEach(async () => {
@@ -51,9 +53,8 @@ afterEach(async () => {
 describe("probeHeaders", () => {
   it("uses GET and caches result", async () => {
     // Create domain record first (simulates registered domain)
-    const { db } = await import("@/lib/db/client");
-    const { domains } = await import("@/lib/db/schema");
-    await db.insert(domains).values({
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
       name: "example.com",
       tld: "com",
       unicodeName: "example.com",

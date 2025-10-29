@@ -142,9 +142,8 @@ describe("resolveAll", () => {
     resetInMemoryRedis();
 
     // Create domain record first (simulates registered domain)
-    const { db } = await import("@/lib/db/client");
-    const { domains } = await import("@/lib/db/schema");
-    await db.insert(domains).values({
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
       name: "example.com",
       tld: "com",
       unicodeName: "example.com",
@@ -373,9 +372,8 @@ describe("providerOrderForLookup (hash-based selection)", () => {
     resetInMemoryRedis();
 
     // Create domain record first (simulates registered domain)
-    const { db } = await import("@/lib/db/client");
-    const { domains } = await import("@/lib/db/schema");
-    await db.insert(domains).values({
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
       name: "domain1.com",
       tld: "com",
       unicodeName: "domain1.com",

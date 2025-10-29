@@ -78,6 +78,14 @@ export async function upsertRegistration(
 }
 
 /**
+ * Build the Redis cache key for registration status.
+ * This helper ensures consistent key format across the codebase.
+ */
+export function getRegistrationCacheKey(domain: string): string {
+  return ns("reg", domain.toLowerCase());
+}
+
+/**
  * Get cached registration status from Redis.
  * Returns true if registered, false if unregistered, null on cache miss or error.
  */
@@ -85,7 +93,7 @@ export async function getRegistrationStatusFromCache(
   domain: string,
 ): Promise<boolean | null> {
   try {
-    const key = ns("reg", domain.toLowerCase());
+    const key = getRegistrationCacheKey(domain);
     const value = await redis.get<string>(key);
     if (value === "1") return true;
     if (value === "0") return false;
@@ -109,7 +117,7 @@ export async function setRegistrationStatusInCache(
   ttlSeconds: number,
 ): Promise<void> {
   try {
-    const key = ns("reg", domain.toLowerCase());
+    const key = getRegistrationCacheKey(domain);
     const value = isRegistered ? "1" : "0";
     await redis.setex(key, ttlSeconds, value);
   } catch (err) {

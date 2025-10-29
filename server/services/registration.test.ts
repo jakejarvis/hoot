@@ -89,8 +89,11 @@ describe("getRegistration", () => {
     expect(spy).not.toHaveBeenCalled();
 
     // Verify Redis cache was updated when hitting Postgres cache
-    const { redis, ns } = await import("@/lib/redis");
-    const cached = await redis.get(ns("reg", "example.com"));
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    const cached = await redis.get(getRegistrationCacheKey("example.com"));
     expect(cached).toBe("1"); // "1" means registered
   });
 
@@ -157,8 +160,13 @@ describe("getRegistration", () => {
     expect(d.length).toBe(0);
 
     // Verify cached in Redis
-    const { redis, ns } = await import("@/lib/redis");
-    const cached = await redis.get(ns("reg", "unregistered.test"));
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    const cached = await redis.get(
+      getRegistrationCacheKey("unregistered.test"),
+    );
     expect(cached).toBe("0"); // "0" means unregistered
   });
 
@@ -167,8 +175,15 @@ describe("getRegistration", () => {
     resetInMemoryRedis();
 
     // Pre-cache unregistered status
-    const { redis, ns } = await import("@/lib/redis");
-    await redis.setex(ns("reg", "cached-unregistered.test"), 3600, "0");
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    await redis.setex(
+      getRegistrationCacheKey("cached-unregistered.test"),
+      3600,
+      "0",
+    );
 
     const { lookup } = await import("rdapper");
     const spy = lookup as unknown as import("vitest").Mock;
@@ -221,8 +236,11 @@ describe("getRegistration", () => {
     expect(reg[0].isRegistered).toBe(true);
 
     // Verify cached in Redis
-    const { redis, ns } = await import("@/lib/redis");
-    const cached = await redis.get(ns("reg", "registered.test"));
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    const cached = await redis.get(getRegistrationCacheKey("registered.test"));
     expect(cached).toBe("1"); // "1" means registered
   });
 });

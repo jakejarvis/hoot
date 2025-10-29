@@ -21,11 +21,29 @@ describe("TTL policy", () => {
     expect(d.getTime() - now.getTime()).toBe(24 * 60 * 60 * 1000);
   });
 
-  it("registration: <=1h when expiry within 7d", () => {
+  it("registration: 1h when expiry within 7d", () => {
     const now = new Date("2024-01-01T00:00:00.000Z");
     const exp = new Date("2024-01-05T00:00:00.000Z");
     const d = ttlForRegistration(now, exp);
     expect(d.getTime() - now.getTime()).toBe(60 * 60 * 1000);
+  });
+
+  it("registration: 1h when expiry exactly at 7d threshold", () => {
+    const now = new Date("2024-01-01T00:00:00.000Z");
+    // Exactly 7 days from now (threshold boundary)
+    const exp = new Date("2024-01-08T00:00:00.000Z");
+    const d = ttlForRegistration(now, exp);
+    // Should use near-expiry TTL (1h) because msUntil <= threshold
+    expect(d.getTime() - now.getTime()).toBe(60 * 60 * 1000);
+  });
+
+  it("registration: 24h when expiry just beyond 7d threshold", () => {
+    const now = new Date("2024-01-01T00:00:00.000Z");
+    // 7 days + 1 second from now (just beyond threshold)
+    const exp = new Date("2024-01-08T00:00:01.000Z");
+    const d = ttlForRegistration(now, exp);
+    // Should use standard TTL (24h) because msUntil > threshold
+    expect(d.getTime() - now.getTime()).toBe(24 * 60 * 60 * 1000);
   });
 
   it("dns: default 1h when ttl missing", () => {

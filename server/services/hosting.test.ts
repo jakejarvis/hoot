@@ -240,8 +240,9 @@ describe("detectHosting", () => {
 
     // Create domain record first (simulates registered domain)
     const { db } = await import("@/lib/db/client");
-    const { domains } = await import("@/lib/db/schema");
-    await db.insert(domains).values({
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    const { domains, hosting, providers } = await import("@/lib/db/schema");
+    await upsertDomain({
       name: "provider-create.com",
       tld: "com",
       unicodeName: "provider-create.com",
@@ -249,7 +250,6 @@ describe("detectHosting", () => {
 
     await detectHosting("provider-create.com");
 
-    const { hosting, providers } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })

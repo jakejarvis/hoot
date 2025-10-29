@@ -136,8 +136,11 @@ describe("getCertificates", () => {
 
     // Create domain record first (simulates registered domain)
     const { db } = await import("@/lib/db/client");
-    const { domains } = await import("@/lib/db/schema");
-    await db.insert(domains).values({
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    const { domains, certificates, providers } = await import(
+      "@/lib/db/schema"
+    );
+    await upsertDomain({
       name: "example.com",
       tld: "com",
       unicodeName: "example.com",
@@ -148,7 +151,6 @@ describe("getCertificates", () => {
     expect(out.length).toBeGreaterThan(0);
 
     // Verify DB persistence and CA provider creation
-    const { certificates, providers } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })
