@@ -1,9 +1,8 @@
 import { eq } from "drizzle-orm";
-import { getDomainTld } from "rdapper";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
-import { SOCIAL_PREVIEW_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { TTL_SOCIAL_PREVIEW, USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName } from "@/lib/db/repos/domains";
 import { upsertSeo } from "@/lib/db/repos/seo";
 import { seo as seoTable } from "@/lib/db/schema";
 import { ttlForSeo } from "@/lib/db/ttl";
@@ -27,16 +26,16 @@ const SOCIAL_HEIGHT = 630;
 
 export async function getSeo(domain: string): Promise<SeoResponse> {
   console.debug(`[seo] start ${domain}`);
-  // Fast path: DB
+
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
-  const existing = d
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
+
+  // Fast path: Check Postgres for cached SEO data
+  const existingDomain = await findDomainByName(registrable);
+  const existing = existingDomain
     ? await db
         .select({
           sourceFinalUrl: seoTable.sourceFinalUrl,
@@ -53,7 +52,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
           expiresAt: seoTable.expiresAt,
         })
         .from(seoTable)
-        .where(eq(seoTable.domainId, d.id))
+        .where(eq(seoTable.domainId, existingDomain.id))
     : ([] as Array<{
         sourceFinalUrl: string | null;
         sourceStatus: number | null;
@@ -82,7 +81,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     if (preview?.image) {
       try {
         const refreshed = await getOrCreateSocialPreviewImageUrl(
-          registrable ?? domain,
+          registrable,
           preview.image,
         );
         preview.imageUploaded = refreshed?.url ?? null;
@@ -118,7 +117,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
     return response;
   }
 
-  let finalUrl: string = `https://${registrable ?? domain}/`;
+  let finalUrl: string = `https://${registrable}/`;
   let status: number | null = null;
   let htmlError: string | undefined;
   let robotsError: string | undefined;
@@ -159,7 +158,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   // robots.txt fetch (no Redis cache; stored in Postgres with row TTL)
   try {
-    const robotsUrl = `https://${registrable ?? domain}/robots.txt`;
+    const robotsUrl = `https://${registrable}/robots.txt`;
     const res = await fetchWithTimeout(
       robotsUrl,
       {
@@ -185,11 +184,11 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   const preview = meta ? selectPreview(meta, finalUrl) : null;
 
-  // If a social image is present, store a cached copy via UploadThing for privacy
+  // If a social preview image is present, store a cached copy via Vercel Blob for privacy
   if (preview?.image) {
     try {
       const stored = await getOrCreateSocialPreviewImageUrl(
-        registrable ?? domain,
+        registrable,
         preview.image,
       );
       // Preserve original image URL for meta display; attach uploaded URL for rendering
@@ -215,11 +214,14 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       : {}),
   };
 
-  // Persist to Postgres only when we have a domainId
+  // Persist to Postgres only if domain exists (i.e., is registered)
   const now = new Date();
-  if (d) {
+  const expiresAt = ttlForSeo(now);
+  const dueAtMs = expiresAt.getTime();
+
+  if (existingDomain) {
     await upsertSeo({
-      domainId: d.id,
+      domainId: existingDomain.id,
       sourceFinalUrl: response.source.finalUrl ?? null,
       sourceStatus: response.source.status ?? null,
       metaOpenGraph: response.meta?.openGraph ?? ({} as OpenGraphMeta),
@@ -233,21 +235,20 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
       robotsSitemaps: response.robots?.sitemaps ?? [],
       errors: response.errors ?? {},
       fetchedAt: now,
-      expiresAt: ttlForSeo(now),
+      expiresAt,
     });
     try {
-      const dueAtMs = ttlForSeo(now).getTime();
-      await scheduleSectionIfEarlier("seo", registrable ?? domain, dueAtMs);
+      await scheduleSectionIfEarlier("seo", registrable, dueAtMs);
     } catch (err) {
       console.warn(
-        `[seo] schedule failed for ${registrable ?? domain}`,
+        `[seo] schedule failed for ${registrable}`,
         err instanceof Error ? err : new Error(String(err)),
       );
     }
   }
 
   console.info(
-    `[seo] ok ${registrable ?? domain} status=${status ?? -1} has_meta=${!!meta} has_robots=${!!robots} has_errors=${Boolean(htmlError || robotsError)}`,
+    `[seo] ok ${registrable} status=${status ?? -1} has_meta=${!!meta} has_robots=${!!robots} has_errors=${Boolean(htmlError || robotsError)}`,
   );
 
   return response;
@@ -257,6 +258,17 @@ async function getOrCreateSocialPreviewImageUrl(
   domain: string,
   imageUrl: string,
 ): Promise<{ url: string | null }> {
+  // Guard against non-http(s) schemes to avoid SSRF or unsupported fetches
+  try {
+    const u = new URL(imageUrl);
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      return { url: null };
+    }
+  } catch {
+    // Invalid URL
+    return { url: null };
+  }
+
   const lower = domain.toLowerCase();
   const indexKey = ns(
     "seo-image",
@@ -333,7 +345,7 @@ async function getOrCreateSocialPreviewImageUrl(
     });
 
     try {
-      const ttl = SOCIAL_PREVIEW_TTL_SECONDS;
+      const ttl = TTL_SOCIAL_PREVIEW;
       const expiresAtMs = Date.now() + ttl * 1000;
       await redis.set(
         indexKey,

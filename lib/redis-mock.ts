@@ -80,6 +80,15 @@ export function makeInMemoryRedis() {
     return "OK" as const;
   }
 
+  async function setex(
+    key: string,
+    seconds: number,
+    value: unknown,
+  ): Promise<"OK"> {
+    await set(key, value, { ex: seconds });
+    return "OK" as const;
+  }
+
   async function del(key: string): Promise<number> {
     const exists = kv.get(key);
     const removed = kv.delete(key) ? 1 : 0;
@@ -248,6 +257,7 @@ export function makeInMemoryRedis() {
     redis: {
       get,
       set,
+      setex,
       del,
       exists,
       incr,

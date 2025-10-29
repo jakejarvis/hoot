@@ -1,9 +1,8 @@
 import tls from "node:tls";
 import { eq } from "drizzle-orm";
-import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
 import { replaceCertificates } from "@/lib/db/repos/certificates";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName } from "@/lib/db/repos/domains";
 import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
@@ -14,16 +13,16 @@ import type { Certificate } from "@/lib/schemas";
 
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug(`[certificates] start ${domain}`);
-  // Fast path: DB
+
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
-  const existing = d
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
+
+  // Fast path: Check Postgres for cached certificate data
+  const existingDomain = await findDomainByName(registrable);
+  const existing = existingDomain
     ? await db
         .select({
           issuer: certTable.issuer,
@@ -34,7 +33,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
           expiresAt: certTable.expiresAt,
         })
         .from(certTable)
-        .where(eq(certTable.domainId, d.id))
+        .where(eq(certTable.domainId, existingDomain.id))
     : ([] as Array<{
         issuer: string;
         subject: string;
@@ -62,6 +61,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   }
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
+  // Probe TLS connection to get certificate chain
 
   try {
     const chain = await new Promise<tls.DetailedPeerCertificate[]>(
@@ -118,7 +118,9 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       out.length > 0
         ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
         : new Date(Date.now() + 3600_000);
-    if (d) {
+
+    // Persist to Postgres only if domain exists (i.e., is registered)
+    if (existingDomain) {
       const chainWithIds = await Promise.all(
         out.map(async (c) => {
           const caProviderId = await resolveOrCreateProviderId({
@@ -139,33 +141,27 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
 
       const nextDue = ttlForCertificates(now, earliestValidTo);
       await replaceCertificates({
-        domainId: d.id,
+        domainId: existingDomain.id,
         chain: chainWithIds,
         fetchedAt: now,
         expiresAt: nextDue,
       });
       try {
         const dueAtMs = nextDue.getTime();
-        await scheduleSectionIfEarlier(
-          "certificates",
-          registrable ?? domain,
-          dueAtMs,
-        );
+        await scheduleSectionIfEarlier("certificates", registrable, dueAtMs);
       } catch (err) {
         console.warn(
-          `[certificates] schedule failed for ${registrable ?? domain}`,
+          `[certificates] schedule failed for ${registrable}`,
           err instanceof Error ? err : new Error(String(err)),
         );
       }
     }
 
-    console.info(
-      `[certificates] ok ${registrable ?? domain} chainLength=${out.length}`,
-    );
+    console.info(`[certificates] ok ${registrable} chainLength=${out.length}`);
     return out;
   } catch (err) {
     console.warn(
-      `[certificates] error ${registrable ?? domain}`,
+      `[certificates] error ${registrable}`,
       err instanceof Error ? err : new Error(String(err)),
     );
     // Do not treat as fatal; return empty and avoid long-lived negative cache

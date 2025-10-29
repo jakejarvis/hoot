@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
-import { getDomainTld } from "rdapper";
 import { db } from "@/lib/db/client";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName } from "@/lib/db/repos/domains";
 import { replaceHeaders } from "@/lib/db/repos/headers";
 import { httpHeaders } from "@/lib/db/schema";
 import { ttlForHeaders } from "@/lib/db/ttl";
@@ -13,16 +12,16 @@ import type { HttpHeader } from "@/lib/schemas";
 export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
   console.debug(`[headers] start ${domain}`);
-  // Fast path: read from Postgres if fresh
+
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
-  const existing = d
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
+
+  // Fast path: Check Postgres for cached HTTP headers
+  const existingDomain = await findDomainByName(registrable);
+  const existing = existingDomain
     ? await db
         .select({
           name: httpHeaders.name,
@@ -30,7 +29,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
           expiresAt: httpHeaders.expiresAt,
         })
         .from(httpHeaders)
-        .where(eq(httpHeaders.domainId, d.id))
+        .where(eq(httpHeaders.domainId, existingDomain.id))
     : ([] as Array<{ name: string; value: string; expiresAt: Date | null }>);
   if (existing.length > 0) {
     const now = Date.now();
@@ -40,7 +39,7 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
         existing.map((h) => ({ name: h.name, value: h.value })),
       );
       console.info(
-        `[headers] cache hit ${registrable ?? domain} count=${normalized.length}`,
+        `[headers] cache hit ${registrable} count=${normalized.length}`,
       );
       return normalized;
     }
@@ -61,36 +60,34 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     });
     const normalized = normalize(headers);
 
-    // Persist to Postgres
+    // Persist to Postgres only if domain exists (i.e., is registered)
     const now = new Date();
-    if (d) {
+    const expiresAt = ttlForHeaders(now);
+    const dueAtMs = expiresAt.getTime();
+
+    if (existingDomain) {
       await replaceHeaders({
-        domainId: d.id,
+        domainId: existingDomain.id,
         headers: normalized,
         fetchedAt: now,
-        expiresAt: ttlForHeaders(now),
+        expiresAt,
       });
       try {
-        const dueAtMs = ttlForHeaders(now).getTime();
-        await scheduleSectionIfEarlier(
-          "headers",
-          registrable ?? domain,
-          dueAtMs,
-        );
+        await scheduleSectionIfEarlier("headers", registrable, dueAtMs);
       } catch (err) {
         console.warn(
-          `[headers] schedule failed for ${registrable ?? domain}`,
+          `[headers] schedule failed for ${registrable}`,
           err instanceof Error ? err : new Error(String(err)),
         );
       }
     }
     console.info(
-      `[headers] ok ${registrable ?? domain} status=${final.status} count=${normalized.length}`,
+      `[headers] ok ${registrable} status=${final.status} count=${normalized.length}`,
     );
     return normalized;
   } catch (err) {
     console.error(
-      `[headers] error ${registrable ?? domain}`,
+      `[headers] error ${registrable}`,
       err instanceof Error ? err : new Error(String(err)),
     );
     // Return empty on failure without caching to avoid long-lived negatives

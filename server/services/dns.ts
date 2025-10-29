@@ -1,16 +1,15 @@
 import { eq } from "drizzle-orm";
-import { getDomainTld } from "rdapper";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
 import { isCloudflareIpAsync } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
 import { replaceDns } from "@/lib/db/repos/dns";
-import { upsertDomain } from "@/lib/db/repos/domains";
+import { findDomainByName } from "@/lib/db/repos/domains";
 import { dnsRecords } from "@/lib/db/schema";
 import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { ns } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
@@ -73,18 +72,55 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     maxWaitMs: 5000,
   });
 
+  // If another worker holds the lock and we have a cached result, return it
   if (!lockResult.acquired && lockResult.cachedResult) {
     console.debug(`[dns] cache hit concurrent ${domain}`);
     return lockResult.cachedResult;
   }
 
-  // Lock acquired or no cached result - perform resolution
+  // If we do not own the lock and no cached result is available, poll cache with backoff before falling back
+  if (!lockResult.acquired) {
+    console.debug(
+      `[dns] lock not acquired, polling cache with backoff ${domain}`,
+    );
+
+    // Poll with exponential backoff + jitter to reduce thundering herd
+    const MAX_POLL_ATTEMPTS = 5;
+    const BASE_DELAY_MS = 100;
+
+    for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
+      // Check if result appeared in cache
+      try {
+        const cached = (await redis.get(resultKey)) as DnsResolveResult | null;
+        if (cached) {
+          console.debug(`[dns] cache hit after backoff poll ${domain}`);
+          return cached;
+        }
+      } catch (err) {
+        console.debug(
+          `[dns] cache poll failed ${domain}`,
+          err instanceof Error ? err : new Error(String(err)),
+        );
+      }
+
+      // Wait with exponential backoff + jitter (unless last attempt)
+      if (attempt < MAX_POLL_ATTEMPTS) {
+        const backoffMs = BASE_DELAY_MS * 2 ** (attempt - 1);
+        const jitterMs = Math.random() * backoffMs * 0.5; // 0-50% jitter
+        const delayMs = Math.min(backoffMs + jitterMs, 2000); // cap at 2s
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+
+    // Still no result after polling, fall back to local resolution
+    console.debug(`[dns] proceed without lock after polling ${domain}`);
+    return await resolveAllInternal(domain);
+  }
+
+  // We own the lock: compute, publish, and release
   try {
     const result = await resolveAllInternal(domain);
-
-    // Cache result for other concurrent callers
     try {
-      const { redis } = await import("@/lib/redis");
       await redis.set(resultKey, result, { ex: 5 });
     } catch (err) {
       console.debug(
@@ -92,12 +128,9 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         err instanceof Error ? err : new Error(String(err)),
       );
     }
-
     return result;
   } finally {
-    // Release lock
     try {
-      const { redis } = await import("@/lib/redis");
       await redis.del(lockKey);
     } catch (err) {
       console.debug(
@@ -114,17 +147,16 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
   let lastError: unknown = null;
   const types = DnsTypeSchema.options;
 
-  // Read from Postgres first; return if fresh
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
-  const d = registrable
-    ? await upsertDomain({
-        name: registrable,
-        tld: getDomainTld(registrable) ?? "",
-        unicodeName: domain,
-      })
-    : null;
+  if (!registrable) {
+    throw new Error(`Cannot extract registrable domain from ${domain}`);
+  }
+
+  // Fast path: Check Postgres for cached DNS records
+  const existingDomain = await findDomainByName(registrable);
   const rows = (
-    d
+    existingDomain
       ? await db
           .select({
             type: dnsRecords.type,
@@ -137,7 +169,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
             expiresAt: dnsRecords.expiresAt,
           })
           .from(dnsRecords)
-          .where(eq(dnsRecords.domainId, d.id))
+          .where(eq(dnsRecords.domainId, existingDomain.id))
       : []
   ) as Array<{
     type: DnsType;
@@ -241,9 +273,10 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
             expiresAt: Date;
           }>
         >;
-        if (d) {
+        // Persist to Postgres only if domain exists (i.e., is registered)
+        if (existingDomain) {
           await replaceDns({
-            domainId: d.id,
+            domainId: existingDomain.id,
             resolver: pinnedProvider.key,
             fetchedAt: nowDate,
             recordsByType: recordsByTypeToPersist,
@@ -257,14 +290,10 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
               );
             // Always schedule: use the soonest expiry if available, otherwise schedule immediately
             const soonest = times.length > 0 ? Math.min(...times) : Date.now();
-            await scheduleSectionIfEarlier(
-              "dns",
-              registrable ?? domain,
-              soonest,
-            );
+            await scheduleSectionIfEarlier("dns", registrable, soonest);
           } catch (err) {
             console.warn(
-              `[dns] schedule failed partial ${registrable ?? domain}`,
+              `[dns] schedule failed partial ${registrable}`,
               err instanceof Error ? err : new Error(String(err)),
             );
           }
@@ -293,7 +322,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
           { A: 0, AAAA: 0, MX: 0, TXT: 0, NS: 0 } as Record<DnsType, number>,
         );
         console.info(
-          `[dns] ok partial ${registrable ?? domain} counts=${JSON.stringify(counts)} resolver=${pinnedProvider.key} duration=${durationByProvider[pinnedProvider.key]}ms`,
+          `[dns] ok partial ${registrable} counts=${JSON.stringify(counts)} resolver=${pinnedProvider.key} duration=${durationByProvider[pinnedProvider.key]}ms`,
         );
         return {
           records: merged,
@@ -301,7 +330,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
         } as DnsResolveResult;
       } catch (err) {
         console.warn(
-          `[dns] partial refresh failed ${registrable ?? domain} provider=${pinnedProvider.key}`,
+          `[dns] partial refresh failed ${registrable} provider=${pinnedProvider.key}`,
           err instanceof Error ? err : new Error(String(err)),
         );
         // Fall through to full provider loop below
@@ -340,58 +369,65 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
         NS: [],
       };
       for (const r of flat) recordsByType[r.type].push(r);
-      if (d) {
+
+      // Persist to Postgres only if domain exists (i.e., is registered)
+      // Compute expiresAt for each record once before persistence
+      const recordsByTypeToPersist = Object.fromEntries(
+        (Object.keys(recordsByType) as DnsType[]).map((t) => [
+          t,
+          (recordsByType[t] as DnsRecord[]).map((r) => ({
+            name: r.name,
+            value: r.value,
+            ttl: r.ttl ?? null,
+            priority: r.priority ?? null,
+            isCloudflare: r.isCloudflare ?? null,
+            expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
+          })),
+        ]),
+      ) as Record<
+        DnsType,
+        Array<{
+          name: string;
+          value: string;
+          ttl: number | null;
+          priority: number | null;
+          isCloudflare: boolean | null;
+          expiresAt: Date;
+        }>
+      >;
+
+      if (existingDomain) {
         await replaceDns({
-          domainId: d.id,
+          domainId: existingDomain.id,
           resolver: resolverUsed,
           fetchedAt: now,
-          recordsByType: Object.fromEntries(
-            (Object.keys(recordsByType) as DnsType[]).map((t) => [
-              t,
-              (recordsByType[t] as DnsRecord[]).map((r) => ({
-                name: r.name,
-                value: r.value,
-                ttl: r.ttl ?? null,
-                priority: r.priority ?? null,
-                isCloudflare: r.isCloudflare ?? null,
-                expiresAt: ttlForDnsRecord(now, r.ttl ?? null),
-              })),
-            ]),
-          ) as Record<
-            DnsType,
-            Array<{
-              name: string;
-              value: string;
-              ttl: number | null;
-              priority: number | null;
-              isCloudflare: boolean | null;
-              expiresAt: Date;
-            }>
-          >,
+          recordsByType: recordsByTypeToPersist,
         });
         try {
-          const times = Object.values(recordsByType)
+          const times = Object.values(recordsByTypeToPersist)
             .flat()
-            .map((r) => ttlForDnsRecord(now, r.ttl ?? null)?.getTime?.())
+            .map((r) => r.expiresAt?.getTime?.())
             .filter(
               (t): t is number => typeof t === "number" && Number.isFinite(t),
             );
           const soonest = times.length > 0 ? Math.min(...times) : now.getTime();
-          await scheduleSectionIfEarlier("dns", registrable ?? domain, soonest);
+          await scheduleSectionIfEarlier("dns", registrable, soonest);
         } catch (err) {
           console.warn(
-            `[dns] schedule failed full ${registrable ?? domain}`,
+            `[dns] schedule failed full ${registrable}`,
             err instanceof Error ? err : new Error(String(err)),
           );
         }
       }
       console.info(
-        `[dns] ok ${registrable ?? domain} counts=${JSON.stringify(counts)} resolver=${resolverUsed} durations=${JSON.stringify(durationByProvider)}`,
+        `[dns] ok ${registrable} counts=${JSON.stringify(counts)} resolver=${resolverUsed} durations=${JSON.stringify(durationByProvider)}`,
       );
-      return { records: flat, resolver: resolverUsed } as DnsResolveResult;
+      // Sort records deterministically to match cache-path ordering
+      const sorted = sortDnsRecordsByType(flat, types);
+      return { records: sorted, resolver: resolverUsed } as DnsResolveResult;
     } catch (err) {
       console.warn(
-        `[dns] provider attempt failed ${registrable ?? domain} provider=${provider.key}`,
+        `[dns] provider attempt failed ${registrable} provider=${provider.key}`,
         err instanceof Error ? err : new Error(String(err)),
       );
       durationByProvider[provider.key] = Date.now() - attemptStart;
@@ -402,11 +438,11 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
 
   // All providers failed
   console.error(
-    `[dns] all providers failed ${registrable ?? domain} tried=${providers.map((p) => p.key).join(",")}`,
+    `[dns] all providers failed ${registrable} tried=${providers.map((p) => p.key).join(",")}`,
     lastError,
   );
   throw new Error(
-    `All DoH providers failed for ${registrable ?? domain}: ${String(lastError)}`,
+    `All DoH providers failed for ${registrable}: ${String(lastError)}`,
   );
 }
 

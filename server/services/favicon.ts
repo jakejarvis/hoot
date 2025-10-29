@@ -1,5 +1,5 @@
 import { getOrCreateCachedAsset } from "@/lib/cache";
-import { FAVICON_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { TTL_FAVICON, USER_AGENT } from "@/lib/constants";
 import { fetchWithTimeout } from "@/lib/fetch";
 import { convertBufferToImageCover } from "@/lib/image";
 import { ns } from "@/lib/redis";
@@ -23,7 +23,7 @@ export async function getOrCreateFaviconBlobUrl(
 ): Promise<{ url: string | null }> {
   const indexKey = ns("favicon", "url", domain, String(DEFAULT_SIZE));
   const lockKey = ns("lock", "favicon", domain, String(DEFAULT_SIZE));
-  const ttl = FAVICON_TTL_SECONDS;
+  const ttl = TTL_FAVICON;
 
   return await getOrCreateCachedAsset({
     indexKey,

@@ -190,7 +190,7 @@ describe("schedule", () => {
       const now = Date.now();
       const nextAtMs = await recordFailureAndBackoff("dns", "example.com");
 
-      const { BACKOFF_BASE_SECS } = await import("@/lib/revalidation-config");
+      const { BACKOFF_BASE_SECS } = await import("@/lib/constants");
       // Should be at least the configured base backoff
       expect(nextAtMs).toBeGreaterThanOrEqual(now + BACKOFF_BASE_SECS * 1000);
 
@@ -229,7 +229,7 @@ describe("schedule", () => {
       const now = Date.now();
       const nextAtMs = await recordFailureAndBackoff("dns", "example.com");
 
-      const { BACKOFF_MAX_SECS } = await import("@/lib/revalidation-config");
+      const { BACKOFF_MAX_SECS } = await import("@/lib/constants");
       // Should be capped at configured maximum
       const maxBackoffMs = BACKOFF_MAX_SECS * 1000;
       expect(nextAtMs).toBeLessThanOrEqual(now + maxBackoffMs + 100); // small tolerance
@@ -344,7 +344,7 @@ describe("schedule", () => {
       });
 
       // Set an existing lease
-      const { LEASE_SECS } = await import("@/lib/revalidation-config");
+      const { LEASE_SECS } = await import("@/lib/constants");
       await redis.set(ns("lease", "dns", "example.com"), "1", {
         ex: LEASE_SECS,
       });
@@ -377,7 +377,7 @@ describe("schedule", () => {
       const now = Date.now();
 
       // Add many domains to a single section (more than PER_SECTION_BATCH)
-      const { PER_SECTION_BATCH } = await import("@/lib/revalidation-config");
+      const { PER_SECTION_BATCH } = await import("@/lib/constants");
       const batchSize = PER_SECTION_BATCH;
       for (let i = 0; i < batchSize + 20; i++) {
         await redis.zadd(ns("due", "dns"), {
@@ -397,7 +397,7 @@ describe("schedule", () => {
       const now = Date.now();
 
       // Add many domains across multiple sections
-      const { MAX_EVENTS_PER_RUN } = await import("@/lib/revalidation-config");
+      const { MAX_EVENTS_PER_RUN } = await import("@/lib/constants");
       const globalMax = MAX_EVENTS_PER_RUN;
       for (let i = 0; i < globalMax + 50; i++) {
         await redis.zadd(ns("due", "dns"), {

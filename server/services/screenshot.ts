@@ -1,6 +1,6 @@
 import type { Browser } from "puppeteer-core";
 import { getOrCreateCachedAsset } from "@/lib/cache";
-import { SCREENSHOT_TTL_SECONDS, USER_AGENT } from "@/lib/constants";
+import { TTL_SCREENSHOT, USER_AGENT } from "@/lib/constants";
 import { addWatermarkToScreenshot, optimizeImageCover } from "@/lib/image";
 import { launchChromium } from "@/lib/puppeteer";
 import { ns } from "@/lib/redis";
@@ -60,7 +60,7 @@ export async function getOrCreateScreenshotBlobUrl(
     domain,
     `${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}`,
   );
-  const ttl = SCREENSHOT_TTL_SECONDS;
+  const ttl = TTL_SCREENSHOT;
 
   return await getOrCreateCachedAsset({
     indexKey,

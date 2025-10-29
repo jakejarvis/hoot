@@ -26,9 +26,12 @@ vi.mock("@/lib/domain-server", async (importOriginal) => {
   return {
     ...actual,
     toRegistrableDomain: (input: string) => {
-      const v = (input ?? "").trim().toLowerCase();
-      if (!v) return null;
-      return v;
+      // Allow reserved TLDs for safe testing
+      if (input.endsWith(".invalid") || input.endsWith(".test")) {
+        return input.toLowerCase();
+      }
+      // Use real implementation for everything else
+      return actual.toRegistrableDomain(input);
     },
   };
 });
@@ -87,6 +90,14 @@ describe("getRegistration", () => {
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
     expect(spy).not.toHaveBeenCalled();
+
+    // Verify Redis cache was updated when hitting Postgres cache
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    const cached = await redis.get(getRegistrationCacheKey("example.com"));
+    expect(cached).toBe("1"); // "1" means registered
   });
 
   it("loads via rdapper, creates registrar provider when missing, and caches", async () => {
@@ -126,7 +137,7 @@ describe("getRegistration", () => {
     expect(prov?.name).toBe("GoDaddy");
   });
 
-  it("sets shorter TTL for unregistered domains (observed via second call)", async () => {
+  it("caches unregistered domains in Redis only (not Postgres)", async () => {
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
     const { lookup } = await import("rdapper");
@@ -135,39 +146,114 @@ describe("getRegistration", () => {
       error: null,
       record: { isRegistered: false, source: "rdap" },
     });
-    // Freeze time for deterministic TTL checks
-    vi.useFakeTimers();
-    try {
-      const fixedNow = new Date("2024-01-01T00:00:00.000Z");
-      vi.setSystemTime(fixedNow);
 
-      const { getRegistration } = await import("./registration");
-      const rec = await getRegistration("unregistered.test");
-      expect(rec.isRegistered).toBe(false);
+    const { getRegistration } = await import("./registration");
+    const rec = await getRegistration("unregistered.test");
+    expect(rec.isRegistered).toBe(false);
 
-      // Verify stored TTL is 6h from now for unregistered
-      const { db } = await import("@/lib/db/client");
-      const { domains, registrations } = await import("@/lib/db/schema");
-      const { eq } = await import("drizzle-orm");
-      const d = await db
-        .select({ id: domains.id })
-        .from(domains)
-        .where(eq(domains.name, "unregistered.test"))
-        .limit(1);
-      const row = (
-        await db
-          .select()
-          .from(registrations)
-          .where(eq(registrations.domainId, d[0].id))
-          .limit(1)
-      )[0];
-      expect(row).toBeTruthy();
-      expect(row.isRegistered).toBe(false);
-      expect(row.expiresAt.getTime() - fixedNow.getTime()).toBe(
-        6 * 60 * 60 * 1000,
-      );
-    } finally {
-      vi.useRealTimers();
-    }
+    // Verify NOT stored in Postgres
+    const { db } = await import("@/lib/db/client");
+    const { domains } = await import("@/lib/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "unregistered.test"))
+      .limit(1);
+    expect(d.length).toBe(0);
+
+    // Verify cached in Redis
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    const cached = await redis.get(
+      getRegistrationCacheKey("unregistered.test"),
+    );
+    expect(cached).toBe("0"); // "0" means unregistered
+  });
+
+  it("returns cached unregistered status from Redis without calling rdapper", async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+
+    // Pre-cache unregistered status using the canonical helper
+    const { REDIS_TTL_UNREGISTERED } = await import("@/lib/constants");
+    const { setRegistrationStatusInCache } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    await setRegistrationStatusInCache(
+      "cached-unregistered.test",
+      false,
+      REDIS_TTL_UNREGISTERED,
+    );
+
+    const { lookup } = await import("rdapper");
+    const spy = lookup as unknown as import("vitest").Mock;
+    spy.mockClear();
+
+    const { getRegistration } = await import("./registration");
+    const result = await getRegistration("cached-unregistered.test");
+
+    // Should return a minimal Registration object with isRegistered: false
+    expect(result).toMatchObject({
+      domain: "cached-unregistered.test",
+      tld: "test",
+      isRegistered: false,
+      source: "rdap",
+      registrarProvider: {
+        name: null,
+        domain: null,
+      },
+    });
+
+    // rdapper should not have been called
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("caches registered domains in both Redis and Postgres", async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+    const { lookup } = await import("rdapper");
+    (lookup as unknown as import("vitest").Mock).mockResolvedValueOnce({
+      ok: true,
+      error: null,
+      record: {
+        isRegistered: true,
+        source: "rdap",
+        registrar: { name: "Test Registrar" },
+      },
+    });
+
+    const { getRegistration } = await import("./registration");
+    const rec = await getRegistration("registered.test");
+    expect(rec.isRegistered).toBe(true);
+
+    // Verify stored in Postgres
+    const { db } = await import("@/lib/db/client");
+    const { domains, registrations } = await import("@/lib/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const d = await db
+      .select({ id: domains.id })
+      .from(domains)
+      .where(eq(domains.name, "registered.test"))
+      .limit(1);
+    expect(d.length).toBe(1);
+
+    const reg = await db
+      .select()
+      .from(registrations)
+      .where(eq(registrations.domainId, d[0].id))
+      .limit(1);
+    expect(reg.length).toBe(1);
+    expect(reg[0].isRegistered).toBe(true);
+
+    // Verify cached in Redis
+    const { redis } = await import("@/lib/redis");
+    const { getRegistrationCacheKey } = await import(
+      "@/lib/db/repos/registrations"
+    );
+    const cached = await redis.get(getRegistrationCacheKey("registered.test"));
+    expect(cached).toBe("1"); // "1" means registered
   });
 });

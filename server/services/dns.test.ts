@@ -25,12 +25,12 @@ beforeAll(async () => {
 beforeEach(async () => {
   const { resetPGliteDb } = await import("@/lib/db/pglite");
   await resetPGliteDb();
+  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+  resetInMemoryRedis();
 });
 
 afterEach(async () => {
   vi.restoreAllMocks();
-  const { resetInMemoryRedis } = await import("@/lib/redis-mock");
-  resetInMemoryRedis();
 });
 
 function dohAnswer(
@@ -100,8 +100,6 @@ describe("resolveAll", () => {
 
   it("retries next provider when first fails and succeeds on second", async () => {
     const { resolveAll } = await import("./dns");
-    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
-    resetInMemoryRedis();
     let call = 0;
     const fetchMock = vi.spyOn(global, "fetch").mockImplementation(async () => {
       call += 1;
@@ -138,8 +136,15 @@ describe("resolveAll", () => {
 
   it("caches results across providers and preserves resolver metadata", async () => {
     const { resolveAll } = await import("./dns");
-    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
-    resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+
     // First run: succeed and populate cache and resolver meta
     const firstFetch = vi
       .spyOn(global, "fetch")
@@ -186,8 +191,6 @@ describe("resolveAll", () => {
 
   it("dedupes concurrent callers via aggregate cache/lock", async () => {
     const { resolveAll } = await import("./dns");
-    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
-    resetInMemoryRedis();
     // Use the top-level dohAnswer helper declared above
 
     const fetchMock = vi
@@ -228,8 +231,14 @@ describe("resolveAll", () => {
 
   it("fetches missing AAAA during partial revalidation", async () => {
     const { resolveAll } = await import("./dns");
-    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
-    resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
 
     // First run: full fetch; AAAA returns empty, others present
     const firstFetch = vi
@@ -358,9 +367,15 @@ describe("providerOrderForLookup (hash-based selection)", () => {
   });
 
   it("ensures resolver consistency improves cache hits", async () => {
-    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     const { resolveAll } = await import("./dns");
-    resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
+      name: "domain1.com",
+      tld: "com",
+      unicodeName: "domain1.com",
+    });
 
     // First request for domain1
     const fetchMock1 = vi

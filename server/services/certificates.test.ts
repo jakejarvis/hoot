@@ -26,6 +26,24 @@ vi.mock("node:tls", async () => {
   };
 });
 
+// Mock toRegistrableDomain to allow .invalid domains for testing
+vi.mock("@/lib/domain-server", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/domain-server")>(
+    "@/lib/domain-server",
+  );
+  return {
+    ...actual,
+    toRegistrableDomain: (input: string) => {
+      // Allow .invalid domains (reserved, never resolve) for safe testing
+      if (input.endsWith(".invalid")) {
+        return input.toLowerCase();
+      }
+      // Use real implementation for everything else
+      return actual.toRegistrableDomain(input);
+    },
+  };
+});
+
 import {
   afterEach,
   beforeAll,
@@ -115,15 +133,24 @@ describe("getCertificates", () => {
 
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();
+
+    // Create domain record first (simulates registered domain)
+    const { db } = await import("@/lib/db/client");
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    const { domains, certificates, providers } = await import(
+      "@/lib/db/schema"
+    );
+    await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+
     const { getCertificates } = await import("./certificates");
     const out = await getCertificates("example.com");
     expect(out.length).toBeGreaterThan(0);
 
     // Verify DB persistence and CA provider creation
-    const { db } = await import("@/lib/db/client");
-    const { certificates, domains, providers } = await import(
-      "@/lib/db/schema"
-    );
     const { eq } = await import("drizzle-orm");
     const d = await db
       .select({ id: domains.id })
@@ -179,7 +206,7 @@ describe("getCertificates", () => {
 
     const { getCertificates } = await import("./certificates");
     // Kick off without awaiting so the function can attach error handler first
-    const pending = getCertificates("timeout.test");
+    const pending = getCertificates("timeout.invalid");
     // Yield to event loop to allow synchronous setup inside getCertificates
     await Promise.resolve();
     // Now trigger the timeout callback
