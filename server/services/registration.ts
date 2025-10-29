@@ -155,10 +155,18 @@ export async function getRegistration(domain: string): Promise<Registration> {
       };
 
       // Update Redis fast-path cache to keep it hot for subsequent requests
+      // Fire-and-forget to avoid blocking the response on Redis latency
       const ttl = row.isRegistered
         ? REDIS_TTL_REGISTERED
         : REDIS_TTL_UNREGISTERED;
-      await setRegistrationStatusInCache(registrable, row.isRegistered, ttl);
+      setRegistrationStatusInCache(registrable, row.isRegistered, ttl).catch(
+        (err) => {
+          console.warn(
+            `[registration] failed to warm Redis cache for ${registrable}:`,
+            err instanceof Error ? err : new Error(String(err)),
+          );
+        },
+      );
 
       console.info(
         `[registration] ok cached ${registrable} registered=${row.isRegistered} registrar=${registrarProvider.name}`,
@@ -188,10 +196,18 @@ export async function getRegistration(domain: string): Promise<Registration> {
   console.debug(`[registration] rdapper result for ${registrable}`, record);
 
   // Cache the registration status (true/false) in Redis for fast lookups
+  // Fire-and-forget to avoid blocking the response on Redis latency
   const ttl = record.isRegistered
     ? REDIS_TTL_REGISTERED
     : REDIS_TTL_UNREGISTERED;
-  await setRegistrationStatusInCache(registrable, record.isRegistered, ttl);
+  setRegistrationStatusInCache(registrable, record.isRegistered, ttl).catch(
+    (err) => {
+      console.warn(
+        `[registration] failed to cache status for ${registrable}:`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
+    },
+  );
 
   // If unregistered, return response without persisting to Postgres
   if (!record.isRegistered) {
