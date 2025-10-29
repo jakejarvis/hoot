@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/cron/due-drain",
-      "schedule": "*/2 * * * *"
+      "schedule": "*/10 * * * *"
     },
     {
       "path": "/api/cron/blob-prune",
