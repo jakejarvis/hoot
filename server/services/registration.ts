@@ -193,8 +193,30 @@ export async function getRegistration(domain: string): Promise<Registration> {
 
     const registrarProvider = normalizeRegistrar(record.registrar ?? {});
 
+    // Explicitly construct Registration object to avoid leaking rdapper internals
     return {
-      ...record,
+      domain: record.domain,
+      tld: record.tld,
+      isRegistered: record.isRegistered,
+      unicodeName: record.unicodeName,
+      punycodeName: record.punycodeName,
+      registry: record.registry,
+      registrar: record.registrar,
+      reseller: record.reseller,
+      statuses: record.statuses,
+      creationDate: record.creationDate,
+      updatedDate: record.updatedDate,
+      expirationDate: record.expirationDate,
+      deletionDate: record.deletionDate,
+      transferLock: record.transferLock,
+      dnssec: record.dnssec,
+      nameservers: record.nameservers,
+      contacts: record.contacts,
+      privacyEnabled: record.privacyEnabled,
+      whoisServer: record.whoisServer,
+      rdapServers: record.rdapServers,
+      source: record.source,
+      warnings: record.warnings,
       registrarProvider,
     };
   }
@@ -202,8 +224,30 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // ===== Persist registered domain to Postgres =====
   const registrarProvider = normalizeRegistrar(record.registrar ?? {});
 
+  // Explicitly construct Registration object to avoid leaking rdapper internals
   const withProvider: Registration = {
-    ...record,
+    domain: record.domain,
+    tld: record.tld,
+    isRegistered: record.isRegistered,
+    unicodeName: record.unicodeName,
+    punycodeName: record.punycodeName,
+    registry: record.registry,
+    registrar: record.registrar,
+    reseller: record.reseller,
+    statuses: record.statuses,
+    creationDate: record.creationDate,
+    updatedDate: record.updatedDate,
+    expirationDate: record.expirationDate,
+    deletionDate: record.deletionDate,
+    transferLock: record.transferLock,
+    dnssec: record.dnssec,
+    nameservers: record.nameservers,
+    contacts: record.contacts,
+    privacyEnabled: record.privacyEnabled,
+    whoisServer: record.whoisServer,
+    rdapServers: record.rdapServers,
+    source: record.source,
+    warnings: record.warnings,
     registrarProvider,
   };
 
