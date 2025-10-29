@@ -20,16 +20,13 @@ export async function upsertDomain(params: UpsertDomainParams) {
   const inserted = await db
     .insert(domains)
     .values({ name, tld, unicodeName })
-    .onConflictDoNothing({ target: [domains.name] })
+    .onConflictDoUpdate({
+      target: [domains.name],
+      set: { tld, unicodeName, updatedAt: new Date() },
+    })
     .returning();
-  if (inserted[0]) return inserted[0];
 
-  const rows = await db
-    .select()
-    .from(domains)
-    .where(eq(domains.name, name))
-    .limit(1);
-  return rows[0];
+  return inserted[0];
 }
 
 /**

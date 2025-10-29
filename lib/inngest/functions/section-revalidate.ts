@@ -106,13 +106,11 @@ export const sectionRevalidate = inngest.createFunction(
         const fallbackMs = Date.now() + 60 * 60 * 1000; // 1h safety fallback
         await step.run("reschedule-next-due", async () => {
           try {
-            await scheduleSectionIfEarlier(
-              section,
-              normalizedDomain,
-              fallbackMs,
-            );
-            // Clear any accumulated failure backoff on success
-            await resetFailureBackoff(section, normalizedDomain);
+            // Both operations are independent and can run in parallel
+            await Promise.all([
+              scheduleSectionIfEarlier(section, normalizedDomain, fallbackMs),
+              resetFailureBackoff(section, normalizedDomain),
+            ]);
           } catch {}
         });
         await step.run("write-result", async () => {

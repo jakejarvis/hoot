@@ -63,7 +63,14 @@ export const providers = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [unique("u_providers_category_slug").on(t.category, t.slug)],
+  (t) => [
+    unique("u_providers_category_slug").on(t.category, t.slug),
+    index("i_providers_name_lower").using(
+      "btree",
+      t.category,
+      sql`lower(${t.name})`,
+    ),
+  ],
 );
 
 // Domains

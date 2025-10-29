@@ -92,38 +92,34 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // ===== Fast path 2: Postgres cache for full registration data =====
   const existingDomain = await findDomainByName(registrable);
   if (existingDomain) {
+    // Fetch registration with provider data using LEFT JOIN
     const existing = await db
-      .select()
+      .select({
+        registration: registrations,
+        providerName: providers.name,
+        providerDomain: providers.domain,
+      })
       .from(registrations)
+      .leftJoin(providers, eq(registrations.registrarProviderId, providers.id))
       .where(eq(registrations.domainId, existingDomain.id))
       .limit(1);
+
     const now = new Date();
-    if (existing[0] && existing[0].expiresAt > now) {
-      const row = existing[0];
+    if (existing[0] && existing[0].registration.expiresAt > now) {
+      const { registration: row, providerName, providerDomain } = existing[0];
 
-      // Resolve registrar provider details (if present) and nameservers in parallel
-      const [prov, ns] = await Promise.all([
-        row.registrarProviderId
-          ? db
-              .select({ name: providers.name, domain: providers.domain })
-              .from(providers)
-              .where(eq(providers.id, row.registrarProviderId))
-              .limit(1)
-          : Promise.resolve(
-              [] as Array<{ name: string; domain: string | null }>,
-            ),
-        db
-          .select({
-            host: registrationNameservers.host,
-            ipv4: registrationNameservers.ipv4,
-            ipv6: registrationNameservers.ipv6,
-          })
-          .from(registrationNameservers)
-          .where(eq(registrationNameservers.domainId, existingDomain.id)),
-      ]);
+      // Fetch nameservers separately (reasonable due to 1-to-many relationship)
+      const ns = await db
+        .select({
+          host: registrationNameservers.host,
+          ipv4: registrationNameservers.ipv4,
+          ipv6: registrationNameservers.ipv6,
+        })
+        .from(registrationNameservers)
+        .where(eq(registrationNameservers.domainId, existingDomain.id));
 
-      const registrarProvider = prov[0]
-        ? { name: prov[0].name, domain: prov[0].domain ?? null }
+      const registrarProvider = providerName
+        ? { name: providerName, domain: providerDomain ?? null }
         : { name: null as string | null, domain: null as string | null };
 
       const contactsArray: RegistrationContacts = row.contacts ?? [];

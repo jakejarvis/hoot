@@ -108,6 +108,9 @@ export async function recordFailureAndBackoff(
     attempts = 1;
   }
   const nextAtMs = Date.now() + backoffMsForAttempts(attempts);
+
+  // Batch the zadd operation with any future parallel work
+  // (for now just one operation, but keeping pattern consistent)
   await redis.zadd(ns("due", section), { score: nextAtMs, member: domain });
   return nextAtMs;
 }
@@ -169,17 +172,25 @@ export async function drainDueDomainsOnce(): Promise<DueDrainResult> {
     })) as string[];
     if (!dueMembers.length) continue;
 
-    for (const domain of dueMembers) {
+    // Batch lease acquisitions using pipeline for efficiency
+    const pipeline = redis.pipeline();
+    const leaseKeys = dueMembers.map((domain) => ns("lease", section, domain));
+
+    for (const leaseKey of leaseKeys) {
+      pipeline.set(leaseKey, "1", { nx: true, ex: leaseSecs });
+    }
+
+    const leaseResults = await pipeline.exec<Array<string | null>>();
+
+    // Process results and track which domains got leases
+    for (let i = 0; i < dueMembers.length; i++) {
+      const domain = dueMembers[i];
+      const leaseAcquired = leaseResults[i] === "OK";
+
+      if (!leaseAcquired) continue;
+
       const previouslySelected = domainToSections.has(domain);
       if (!previouslySelected && eventsSent >= globalMax) continue;
-      const leaseKey = ns("lease", section, domain);
-      // Attempt to acquire lease for this section+domain
-      const ok = await redis.set(leaseKey, "1", {
-        nx: true,
-        ex: leaseSecs,
-      });
-      // If lease not acquired, skip
-      if (ok !== "OK") continue;
 
       // Enforce global budget at selection time: increment when first selecting a domain
       if (!previouslySelected) {

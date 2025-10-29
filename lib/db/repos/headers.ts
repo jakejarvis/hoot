@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { httpHeaders } from "@/lib/db/schema";
 
@@ -33,13 +33,27 @@ export async function replaceHeaders(params: ReplaceHeadersParams) {
   if (toDelete.length > 0) {
     await db.delete(httpHeaders).where(inArray(httpHeaders.id, toDelete));
   }
-  for (const h of normalized) {
+
+  // Batch upsert all headers
+  if (normalized.length > 0) {
+    const values = normalized.map((h) => ({
+      domainId,
+      name: h.name,
+      value: h.value,
+      fetchedAt,
+      expiresAt,
+    }));
+
     await db
       .insert(httpHeaders)
-      .values({ domainId, name: h.name, value: h.value, fetchedAt, expiresAt })
+      .values(values)
       .onConflictDoUpdate({
         target: [httpHeaders.domainId, httpHeaders.name],
-        set: { value: h.value, fetchedAt, expiresAt },
+        set: {
+          value: sql`excluded.${sql.identifier(httpHeaders.value.name)}`,
+          fetchedAt: sql`excluded.${sql.identifier(httpHeaders.fetchedAt.name)}`,
+          expiresAt: sql`excluded.${sql.identifier(httpHeaders.expiresAt.name)}`,
+        },
       });
   }
 }

@@ -120,24 +120,30 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   // We own the lock: compute, publish, and release
   try {
     const result = await resolveAllInternal(domain);
+    // Use pipeline to batch result cache write and lock release
     try {
-      await redis.set(resultKey, result, { ex: 5 });
+      const pipeline = redis.pipeline();
+      pipeline.set(resultKey, result, { ex: 5 });
+      pipeline.del(lockKey);
+      await pipeline.exec();
     } catch (err) {
       console.debug(
-        `[dns] redis result cache failed ${domain}`,
+        `[dns] redis operations failed ${domain}`,
         err instanceof Error ? err : new Error(String(err)),
       );
     }
     return result;
-  } finally {
+  } catch (resolveErr) {
+    // If resolution failed, still clean up the lock
     try {
       await redis.del(lockKey);
-    } catch (err) {
+    } catch (delErr) {
       console.debug(
         `[dns] redis lock release failed ${domain}`,
-        err instanceof Error ? err : new Error(String(err)),
+        delErr instanceof Error ? delErr : new Error(String(delErr)),
       );
     }
+    throw resolveErr;
   }
 }
 
