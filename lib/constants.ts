@@ -66,10 +66,15 @@ export const REVALIDATE_MIN_SEO = TTL_SEO; // 24h (refresh when expires)
 export const REVALIDATE_MIN_REGISTRATION = TTL_REGISTRATION_REGISTERED; // 24h (refresh when expires)
 
 // ===== Background Job Configuration =====
+// How often the cron job runs to drain the revalidation queue
 export const DRAIN_CRON_MINUTES = 2;
+
 export const PER_SECTION_BATCH = 50;
 export const MAX_EVENTS_PER_RUN = 200;
-export const LEASE_SECS = 120;
+
+// Lease duration matches cron interval to prevent overlapping executions
+export const LEASE_SECS = DRAIN_CRON_MINUTES * 60;
+
 export const BACKOFF_BASE_SECS = 5 * 60; // 5 minutes
 export const BACKOFF_MAX_SECS = 6 * 60 * 60; // 6 hours
 
