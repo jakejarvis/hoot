@@ -3,7 +3,10 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { replaceCertificates } from "@/lib/db/repos/certificates";
 import { findDomainByName } from "@/lib/db/repos/domains";
-import { batchResolveOrCreateProviderIds } from "@/lib/db/repos/providers";
+import {
+  batchResolveOrCreateProviderIds,
+  makeProviderKey,
+} from "@/lib/db/repos/providers";
 import { certificates as certTable } from "@/lib/db/schema";
 import { ttlForCertificates } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
@@ -131,16 +134,12 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       const caProviderMap =
         await batchResolveOrCreateProviderIds(caProviderInputs);
 
-      // Helper to create lookup key matching the batch function
-      const inputKey = (input: (typeof caProviderInputs)[number]) =>
-        `${input.category}|${input.domain?.toLowerCase() ?? ""}|${input.name?.trim() ?? ""}`;
-
       const chainWithIds = out.map((c) => {
-        const key = inputKey({
-          category: "ca",
-          domain: c.caProvider.domain,
-          name: c.caProvider.name,
-        });
+        const key = makeProviderKey(
+          "ca",
+          c.caProvider.domain,
+          c.caProvider.name,
+        );
         const caProviderId = caProviderMap.get(key);
 
         return {

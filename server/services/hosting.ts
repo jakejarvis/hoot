@@ -3,7 +3,10 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db/client";
 import { findDomainByName } from "@/lib/db/repos/domains";
 import { upsertHosting } from "@/lib/db/repos/hosting";
-import { batchResolveOrCreateProviderIds } from "@/lib/db/repos/providers";
+import {
+  batchResolveOrCreateProviderIds,
+  makeProviderKey,
+} from "@/lib/db/repos/providers";
 import {
   hosting as hostingTable,
   providers as providersTable,
@@ -30,47 +33,13 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Fast path: Check Postgres for cached hosting data
+  // Fast path: Check Postgres for cached hosting data with providers in single query
   const existingDomain = await findDomainByName(registrable);
-  const existing = existingDomain
-    ? await db
-        .select({
-          hostingProviderId: hostingTable.hostingProviderId,
-          emailProviderId: hostingTable.emailProviderId,
-          dnsProviderId: hostingTable.dnsProviderId,
-          geoCity: hostingTable.geoCity,
-          geoRegion: hostingTable.geoRegion,
-          geoCountry: hostingTable.geoCountry,
-          geoCountryCode: hostingTable.geoCountryCode,
-          geoLat: hostingTable.geoLat,
-          geoLon: hostingTable.geoLon,
-          expiresAt: hostingTable.expiresAt,
-        })
-        .from(hostingTable)
-        .where(eq(hostingTable.domainId, existingDomain.id))
-        .limit(1)
-    : ([] as Array<{
-        hostingProviderId: string | null;
-        emailProviderId: string | null;
-        dnsProviderId: string | null;
-        geoCity: string | null;
-        geoRegion: string | null;
-        geoCountry: string | null;
-        geoCountryCode: string | null;
-        geoLat: number | null;
-        geoLon: number | null;
-        expiresAt: Date | null;
-      }>);
-  if (
-    existingDomain &&
-    existing[0] &&
-    (existing[0].expiresAt?.getTime?.() ?? 0) > Date.now()
-  ) {
-    // Fast path: return hydrated providers from DB when TTL is valid
+  if (existingDomain) {
     const hp = alias(providersTable, "hp");
     const ep = alias(providersTable, "ep");
     const dp = alias(providersTable, "dp");
-    const hydrated = await db
+    const existing = await db
       .select({
         hostingProviderName: hp.name,
         hostingProviderDomain: hp.domain,
@@ -84,6 +53,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
         geoCountryCode: hostingTable.geoCountryCode,
         geoLat: hostingTable.geoLat,
         geoLon: hostingTable.geoLon,
+        expiresAt: hostingTable.expiresAt,
       })
       .from(hostingTable)
       .leftJoin(hp, eq(hp.id, hostingTable.hostingProviderId))
@@ -91,8 +61,8 @@ export async function detectHosting(domain: string): Promise<Hosting> {
       .leftJoin(dp, eq(dp.id, hostingTable.dnsProviderId))
       .where(eq(hostingTable.domainId, existingDomain.id))
       .limit(1);
-    const row = hydrated[0];
-    if (row) {
+    const row = existing[0];
+    if (row && (row.expiresAt?.getTime?.() ?? 0) > Date.now()) {
       const info: Hosting = {
         hostingProvider: {
           name: row.hostingProviderName ?? null,
@@ -231,38 +201,21 @@ export async function detectHosting(domain: string): Promise<Hosting> {
 
     const providerMap = await batchResolveOrCreateProviderIds(providerInputs);
 
-    // Helper to create lookup key matching the batch function
-    const inputKey = (input: {
-      category: string;
-      domain: string | null;
-      name: string;
-    }) =>
-      `${input.category}|${input.domain?.toLowerCase() ?? ""}|${input.name?.trim() ?? ""}`;
-
     const hostingProviderId = hostingName
       ? (providerMap.get(
-          inputKey({
-            category: "hosting",
-            domain: hostingIconDomain,
-            name: hostingName,
-          }),
+          makeProviderKey("hosting", hostingIconDomain, hostingName),
         ) ?? null)
       : null;
 
     const emailProviderId = emailName
       ? (providerMap.get(
-          inputKey({
-            category: "email",
-            domain: emailIconDomain,
-            name: emailName,
-          }),
+          makeProviderKey("email", emailIconDomain, emailName),
         ) ?? null)
       : null;
 
     const dnsProviderId = dnsName
-      ? (providerMap.get(
-          inputKey({ category: "dns", domain: dnsIconDomain, name: dnsName }),
-        ) ?? null)
+      ? (providerMap.get(makeProviderKey("dns", dnsIconDomain, dnsName)) ??
+        null)
       : null;
 
     await upsertHosting({

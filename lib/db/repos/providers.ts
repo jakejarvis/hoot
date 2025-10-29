@@ -11,6 +11,20 @@ export type ResolveProviderInput = {
 };
 
 /**
+ * Generate a normalized lookup key for provider identification.
+ * Keys are case-insensitive to match SQL comparison semantics.
+ */
+export function makeProviderKey(
+  category: string,
+  domain: string | null | undefined,
+  name: string | null | undefined,
+): string {
+  const domainNorm = domain ? domain.trim().toLowerCase() : "";
+  const nameNorm = name ? name.trim().toLowerCase() : "";
+  return `${category}|${domainNorm}|${nameNorm}`;
+}
+
+/**
  * Resolve a provider id by exact domain when provided, falling back to case-insensitive name.
  */
 export async function resolveProviderId(
@@ -99,17 +113,15 @@ export async function batchResolveOrCreateProviderIds(
   // Normalize inputs and create lookup keys
   const normalized = inputs.map((input) => ({
     category: input.category,
-    domain: input.domain?.toLowerCase() ?? null,
+    domain: input.domain ? input.domain.trim().toLowerCase() : null,
     name: input.name?.trim() ?? null,
   }));
 
-  // Create unique key for each input
-  const inputKey = (input: (typeof normalized)[number]) =>
-    `${input.category}|${input.domain ?? ""}|${input.name ?? ""}`;
-
   // Deduplicate inputs
   const uniqueInputs = Array.from(
-    new Map(normalized.map((n) => [inputKey(n), n])).values(),
+    new Map(
+      normalized.map((n) => [makeProviderKey(n.category, n.domain, n.name), n]),
+    ).values(),
   );
 
   // Build OR conditions for batch query
@@ -148,11 +160,7 @@ export async function batchResolveOrCreateProviderIds(
   // Build map of existing providers
   const existingMap = new Map<string, string>();
   for (const row of existing) {
-    const key = inputKey({
-      category: row.category,
-      domain: row.domain,
-      name: row.name,
-    });
+    const key = makeProviderKey(row.category, row.domain, row.name);
     if (!existingMap.has(key)) {
       existingMap.set(key, row.id);
     }
@@ -161,7 +169,9 @@ export async function batchResolveOrCreateProviderIds(
   // Identify missing providers
   const toCreate = uniqueInputs.filter((input) => {
     if (!input.name) return false;
-    return !existingMap.has(inputKey(input));
+    return !existingMap.has(
+      makeProviderKey(input.category, input.domain, input.name),
+    );
   });
 
   // Batch create missing providers
@@ -190,11 +200,7 @@ export async function batchResolveOrCreateProviderIds(
 
       // Add newly created providers to the map
       for (const row of inserted) {
-        const key = inputKey({
-          category: row.category,
-          domain: row.domain,
-          name: row.name,
-        });
+        const key = makeProviderKey(row.category, row.domain, row.name);
         if (!existingMap.has(key)) {
           existingMap.set(key, row.id);
         }
@@ -202,7 +208,10 @@ export async function batchResolveOrCreateProviderIds(
 
       // Handle any that weren't inserted due to conflicts (race condition)
       const stillMissing = toCreate.filter(
-        (input) => !existingMap.has(inputKey(input)),
+        (input) =>
+          !existingMap.has(
+            makeProviderKey(input.category, input.domain, input.name),
+          ),
       );
       if (stillMissing.length > 0) {
         // Fetch the conflicted ones
@@ -230,11 +239,7 @@ export async function batchResolveOrCreateProviderIds(
             .where(or(...conflictConditions));
 
           for (const row of conflicted) {
-            const key = inputKey({
-              category: row.category,
-              domain: row.domain,
-              name: row.name,
-            });
+            const key = makeProviderKey(row.category, row.domain, row.name);
             if (!existingMap.has(key)) {
               existingMap.set(key, row.id);
             }
@@ -245,11 +250,12 @@ export async function batchResolveOrCreateProviderIds(
       console.warn("[providers] batch insert partial failure", err);
       // Fall back to individual resolution for failed items
       for (const input of toCreate) {
-        if (!existingMap.has(inputKey(input))) {
+        const key = makeProviderKey(input.category, input.domain, input.name);
+        if (!existingMap.has(key)) {
           try {
             const id = await resolveOrCreateProviderId(input);
             if (id) {
-              existingMap.set(inputKey(input), id);
+              existingMap.set(key, id);
             }
           } catch {
             // Skip individual failures
@@ -262,7 +268,7 @@ export async function batchResolveOrCreateProviderIds(
   // Build final result map matching original inputs
   const result = new Map<string, string | null>();
   for (const input of normalized) {
-    const key = inputKey(input);
+    const key = makeProviderKey(input.category, input.domain, input.name);
     result.set(key, existingMap.get(key) ?? null);
   }
 
