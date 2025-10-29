@@ -13,12 +13,13 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
   const url = `https://${domain}/`;
   console.debug(`[headers] start ${domain}`);
 
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
   if (!registrable) {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Fast path: read from Postgres if fresh
+  // Fast path: Check Postgres for cached HTTP headers
   const existingDomain = await findDomainByName(registrable);
   const existing = existingDomain
     ? await db

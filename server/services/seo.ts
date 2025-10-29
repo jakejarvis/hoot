@@ -27,12 +27,13 @@ const SOCIAL_HEIGHT = 630;
 export async function getSeo(domain: string): Promise<SeoResponse> {
   console.debug(`[seo] start ${domain}`);
 
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
   if (!registrable) {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Fast path: DB
+  // Fast path: Check Postgres for cached SEO data
   const existingDomain = await findDomainByName(registrable);
   const existing = existingDomain
     ? await db
@@ -183,7 +184,7 @@ export async function getSeo(domain: string): Promise<SeoResponse> {
 
   const preview = meta ? selectPreview(meta, finalUrl) : null;
 
-  // If a social image is present, store a cached copy via UploadThing for privacy
+  // If a social preview image is present, store a cached copy via Vercel Blob for privacy
   if (preview?.image) {
     try {
       const stored = await getOrCreateSocialPreviewImageUrl(

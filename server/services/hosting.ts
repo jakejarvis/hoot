@@ -24,12 +24,13 @@ import { lookupIpMeta } from "@/server/services/ip";
 export async function detectHosting(domain: string): Promise<Hosting> {
   console.debug(`[hosting] start ${domain}`);
 
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
   if (!registrable) {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Fast path: DB
+  // Fast path: Check Postgres for cached hosting data
   const existingDomain = await findDomainByName(registrable);
   const existing = existingDomain
     ? await db
@@ -199,6 +200,7 @@ export async function detectHosting(domain: string): Promise<Hosting> {
     dnsProvider: { name: dnsName, domain: dnsIconDomain },
     geo,
   };
+
   // Persist to Postgres only if domain exists (i.e., is registered)
   const now = new Date();
   if (existingDomain) {

@@ -14,12 +14,13 @@ import type { Certificate } from "@/lib/schemas";
 export async function getCertificates(domain: string): Promise<Certificate[]> {
   console.debug(`[certificates] start ${domain}`);
 
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
   if (!registrable) {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Fast path: DB
+  // Fast path: Check Postgres for cached certificate data
   const existingDomain = await findDomainByName(registrable);
   const existing = existingDomain
     ? await db
@@ -60,6 +61,7 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
   }
 
   // Client gating avoids calling this without A/AAAA; server does not pre-check DNS here.
+  // Probe TLS connection to get certificate chain
 
   try {
     const chain = await new Promise<tls.DetailedPeerCertificate[]>(
@@ -116,7 +118,8 @@ export async function getCertificates(domain: string): Promise<Certificate[]> {
       out.length > 0
         ? new Date(Math.min(...out.map((c) => new Date(c.validTo).getTime())))
         : new Date(Date.now() + 3600_000);
-    // Only persist if domain exists (i.e., is registered)
+
+    // Persist to Postgres only if domain exists (i.e., is registered)
     if (existingDomain) {
       const chainWithIds = await Promise.all(
         out.map(async (c) => {

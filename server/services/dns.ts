@@ -113,12 +113,13 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
   let lastError: unknown = null;
   const types = DnsTypeSchema.options;
 
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
   if (!registrable) {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Read from Postgres first; return if fresh
+  // Fast path: Check Postgres for cached DNS records
   const existingDomain = await findDomainByName(registrable);
   const rows = (
     existingDomain
@@ -238,7 +239,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
             expiresAt: Date;
           }>
         >;
-        // Only persist if domain exists (i.e., is registered)
+        // Persist to Postgres only if domain exists (i.e., is registered)
         if (existingDomain) {
           await replaceDns({
             domainId: existingDomain.id,
@@ -334,7 +335,8 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
         NS: [],
       };
       for (const r of flat) recordsByType[r.type].push(r);
-      // Only persist if domain exists (i.e., is registered)
+
+      // Persist to Postgres only if domain exists (i.e., is registered)
       if (existingDomain) {
         await replaceDns({
           domainId: existingDomain.id,

@@ -33,22 +33,23 @@ import type {
 export async function getRegistration(domain: string): Promise<Registration> {
   console.debug(`[registration] start ${domain}`);
 
+  // Only support registrable domains (no subdomains, IPs, or invalid TLDs)
   const registrable = toRegistrableDomain(domain);
   if (!registrable) {
     throw new Error(`Cannot extract registrable domain from ${domain}`);
   }
 
-  // Step 1: Check Redis for cached registration status
+  // ===== Fast path 1: Redis cache for registration status =====
   const cachedStatus = await getRegistrationStatusFromCache(registrable);
 
-  // If Redis says unregistered, fail fast
+  // If Redis cache says unregistered, fail fast without checking Postgres
   if (cachedStatus === false) {
     const err = new Error(`Domain ${registrable} is not registered (cached)`);
     console.info(`[registration] cache hit unregistered ${registrable}`);
     throw err;
   }
 
-  // Step 2: Check Postgres for full registration data (if domain exists)
+  // ===== Fast path 2: Postgres cache for full registration data =====
   const existingDomain = await findDomainByName(registrable);
   if (existingDomain) {
     const existing = await db
@@ -121,7 +122,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     }
   }
 
-  // Step 3: Call rdapper to fetch fresh data
+  // ===== Slow path: Fetch fresh data from WHOIS/RDAP via rdapper =====
   const { ok, record, error } = await lookup(registrable, {
     timeoutMs: 5000,
   });
@@ -140,15 +141,13 @@ export async function getRegistration(domain: string): Promise<Registration> {
   // Log raw rdapper record for observability (safe; already public data)
   console.debug(`[registration] rdapper result for ${registrable}`, record);
 
-  // Step 4: Cache registration status in Redis
-  if (registrable) {
-    const ttl = record.isRegistered
-      ? REDIS_TTL_REGISTERED
-      : REDIS_TTL_UNREGISTERED;
-    await setRegistrationStatusInCache(registrable, record.isRegistered, ttl);
-  }
+  // Cache the registration status (true/false) in Redis for fast lookups
+  const ttl = record.isRegistered
+    ? REDIS_TTL_REGISTERED
+    : REDIS_TTL_UNREGISTERED;
+  await setRegistrationStatusInCache(registrable, record.isRegistered, ttl);
 
-  // Step 5: If unregistered, return early without persisting
+  // If unregistered, return response without persisting to Postgres
   if (!record.isRegistered) {
     console.info(
       `[registration] ok ${registrable} unregistered (not persisted)`,
@@ -178,7 +177,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
     };
   }
 
-  // Step 6: For registered domains, persist to Postgres
+  // ===== Persist registered domain to Postgres =====
   let registrarName = (record.registrar?.name || "").toString();
   let registrarDomain: string | null = null;
   const det = detectRegistrar(registrarName);
@@ -202,64 +201,69 @@ export async function getRegistration(domain: string): Promise<Registration> {
     },
   };
 
-  // Create domain record and persist registration snapshot
-  if (registrable) {
-    const domainRecord = await upsertDomain({
+  const fetchedAt = new Date();
+
+  // Upsert domain record and resolve registrar provider in parallel (independent operations)
+  const [domainRecord, registrarProviderId] = await Promise.all([
+    upsertDomain({
       name: registrable,
       tld: getDomainTld(registrable) ?? "",
       unicodeName: record.unicodeName ?? registrable,
-    });
-
-    const fetchedAt = new Date();
-    const registrarProviderId = await resolveOrCreateProviderId({
+    }),
+    resolveOrCreateProviderId({
       category: "registrar",
       domain: registrarDomain,
       name: registrarName,
-    });
-    const expiresAt = ttlForRegistration(
-      fetchedAt,
-      record.expirationDate ? new Date(record.expirationDate) : null,
+    }),
+  ]);
+
+  const expiresAt = ttlForRegistration(
+    fetchedAt,
+    record.expirationDate ? new Date(record.expirationDate) : null,
+  );
+
+  await upsertRegistration({
+    domainId: domainRecord.id,
+    isRegistered: record.isRegistered,
+    privacyEnabled: record.privacyEnabled ?? false,
+    registry: record.registry ?? null,
+    creationDate: record.creationDate ? new Date(record.creationDate) : null,
+    updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
+    expirationDate: record.expirationDate
+      ? new Date(record.expirationDate)
+      : null,
+    deletionDate: record.deletionDate ? new Date(record.deletionDate) : null,
+    transferLock: record.transferLock ?? null,
+    statuses: record.statuses ?? [],
+    contacts: record.contacts ?? [],
+    whoisServer: record.whoisServer ?? null,
+    rdapServers: record.rdapServers ?? [],
+    source: record.source,
+    registrarProviderId,
+    resellerProviderId: null,
+    fetchedAt,
+    expiresAt,
+    nameservers: (record.nameservers ?? []).map((n) => ({
+      host: n.host,
+      ipv4: n.ipv4 ?? [],
+      ipv6: n.ipv6 ?? [],
+    })),
+  });
+
+  // Schedule background revalidation
+  try {
+    await scheduleSectionIfEarlier(
+      "registration",
+      registrable,
+      expiresAt.getTime(),
     );
-    await upsertRegistration({
-      domainId: domainRecord.id,
-      isRegistered: record.isRegistered,
-      privacyEnabled: record.privacyEnabled ?? false,
-      registry: record.registry ?? null,
-      creationDate: record.creationDate ? new Date(record.creationDate) : null,
-      updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
-      expirationDate: record.expirationDate
-        ? new Date(record.expirationDate)
-        : null,
-      deletionDate: record.deletionDate ? new Date(record.deletionDate) : null,
-      transferLock: record.transferLock ?? null,
-      statuses: record.statuses ?? [],
-      contacts: record.contacts ?? [],
-      whoisServer: record.whoisServer ?? null,
-      rdapServers: record.rdapServers ?? [],
-      source: record.source,
-      registrarProviderId,
-      resellerProviderId: null,
-      fetchedAt,
-      expiresAt,
-      nameservers: (record.nameservers ?? []).map((n) => ({
-        host: n.host,
-        ipv4: n.ipv4 ?? [],
-        ipv6: n.ipv6 ?? [],
-      })),
-    });
-    try {
-      await scheduleSectionIfEarlier(
-        "registration",
-        registrable,
-        expiresAt.getTime(),
-      );
-    } catch (err) {
-      console.warn(
-        `[registration] schedule failed for ${registrable}`,
-        err instanceof Error ? err : new Error(String(err)),
-      );
-    }
+  } catch (err) {
+    console.warn(
+      `[registration] schedule failed for ${registrable}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
   }
+
   console.info(
     `[registration] ok ${registrable} registered=${record.isRegistered} registrar=${withProvider.registrarProvider.name}`,
   );
