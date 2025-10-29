@@ -232,6 +232,14 @@ describe("resolveAll", () => {
   it("fetches missing AAAA during partial revalidation", async () => {
     const { resolveAll } = await import("./dns");
 
+    // Create domain record first (simulates registered domain)
+    const { upsertDomain } = await import("@/lib/db/repos/domains");
+    await upsertDomain({
+      name: "example.com",
+      tld: "com",
+      unicodeName: "example.com",
+    });
+
     // First run: full fetch; AAAA returns empty, others present
     const firstFetch = vi
       .spyOn(global, "fetch")
