@@ -9,7 +9,7 @@ import { dnsRecords } from "@/lib/db/schema";
 import { ttlForDnsRecord } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { fetchWithTimeout } from "@/lib/fetch";
-import { ns } from "@/lib/redis";
+import { ns, redis } from "@/lib/redis";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
@@ -78,9 +78,42 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     return lockResult.cachedResult;
   }
 
-  // If we do not own the lock and no cached result is available, compute locally without touching lock/result keys
+  // If we do not own the lock and no cached result is available, poll cache with backoff before falling back
   if (!lockResult.acquired) {
-    console.debug(`[dns] proceed without lock ${domain}`);
+    console.debug(
+      `[dns] lock not acquired, polling cache with backoff ${domain}`,
+    );
+
+    // Poll with exponential backoff + jitter to reduce thundering herd
+    const MAX_POLL_ATTEMPTS = 5;
+    const BASE_DELAY_MS = 100;
+
+    for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
+      // Check if result appeared in cache
+      try {
+        const cached = (await redis.get(resultKey)) as DnsResolveResult | null;
+        if (cached) {
+          console.debug(`[dns] cache hit after backoff poll ${domain}`);
+          return cached;
+        }
+      } catch (err) {
+        console.debug(
+          `[dns] cache poll failed ${domain}`,
+          err instanceof Error ? err : new Error(String(err)),
+        );
+      }
+
+      // Wait with exponential backoff + jitter (unless last attempt)
+      if (attempt < MAX_POLL_ATTEMPTS) {
+        const backoffMs = BASE_DELAY_MS * 2 ** (attempt - 1);
+        const jitterMs = Math.random() * backoffMs * 0.5; // 0-50% jitter
+        const delayMs = Math.min(backoffMs + jitterMs, 2000); // cap at 2s
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+
+    // Still no result after polling, fall back to local resolution
+    console.debug(`[dns] proceed without lock after polling ${domain}`);
     return await resolveAllInternal(domain);
   }
 
@@ -88,7 +121,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
   try {
     const result = await resolveAllInternal(domain);
     try {
-      const { redis } = await import("@/lib/redis");
       await redis.set(resultKey, result, { ex: 5 });
     } catch (err) {
       console.debug(
@@ -99,7 +131,6 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     return result;
   } finally {
     try {
-      const { redis } = await import("@/lib/redis");
       await redis.del(lockKey);
     } catch (err) {
       console.debug(
