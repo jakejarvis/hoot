@@ -72,16 +72,21 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
     maxWaitMs: 5000,
   });
 
+  // If another worker holds the lock and we have a cached result, return it
   if (!lockResult.acquired && lockResult.cachedResult) {
     console.debug(`[dns] cache hit concurrent ${domain}`);
     return lockResult.cachedResult;
   }
 
-  // Lock acquired or no cached result - perform resolution
+  // If we do not own the lock and no cached result is available, compute locally without touching lock/result keys
+  if (!lockResult.acquired) {
+    console.debug(`[dns] proceed without lock ${domain}`);
+    return await resolveAllInternal(domain);
+  }
+
+  // We own the lock: compute, publish, and release
   try {
     const result = await resolveAllInternal(domain);
-
-    // Cache result for other concurrent callers
     try {
       const { redis } = await import("@/lib/redis");
       await redis.set(resultKey, result, { ex: 5 });
@@ -91,10 +96,8 @@ export async function resolveAll(domain: string): Promise<DnsResolveResult> {
         err instanceof Error ? err : new Error(String(err)),
       );
     }
-
     return result;
   } finally {
-    // Release lock
     try {
       const { redis } = await import("@/lib/redis");
       await redis.del(lockKey);
