@@ -3,7 +3,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db/client";
 import { findDomainByName } from "@/lib/db/repos/domains";
 import { upsertHosting } from "@/lib/db/repos/hosting";
-import { resolveOrCreateProviderId } from "@/lib/db/repos/providers";
+import { batchResolveOrCreateProviderIds } from "@/lib/db/repos/providers";
 import {
   hosting as hostingTable,
   providers as providersTable,
@@ -208,30 +208,63 @@ export async function detectHosting(domain: string): Promise<Hosting> {
   const dueAtMs = expiresAt.getTime();
 
   if (existingDomain) {
-    const [hostingProviderId, emailProviderId, dnsProviderId] =
-      await Promise.all([
-        hostingName
-          ? resolveOrCreateProviderId({
-              category: "hosting",
-              domain: hostingIconDomain,
-              name: hostingName,
-            })
-          : Promise.resolve(null),
-        emailName
-          ? resolveOrCreateProviderId({
-              category: "email",
-              domain: emailIconDomain,
-              name: emailName,
-            })
-          : Promise.resolve(null),
-        dnsName
-          ? resolveOrCreateProviderId({
-              category: "dns",
-              domain: dnsIconDomain,
-              name: dnsName,
-            })
-          : Promise.resolve(null),
-      ]);
+    // Batch resolve all providers in one query
+    const providerInputs = [
+      hostingName
+        ? {
+            category: "hosting" as const,
+            domain: hostingIconDomain,
+            name: hostingName,
+          }
+        : null,
+      emailName
+        ? {
+            category: "email" as const,
+            domain: emailIconDomain,
+            name: emailName,
+          }
+        : null,
+      dnsName
+        ? { category: "dns" as const, domain: dnsIconDomain, name: dnsName }
+        : null,
+    ].filter((p): p is NonNullable<typeof p> => p !== null);
+
+    const providerMap = await batchResolveOrCreateProviderIds(providerInputs);
+
+    // Helper to create lookup key matching the batch function
+    const inputKey = (input: {
+      category: string;
+      domain: string | null;
+      name: string;
+    }) =>
+      `${input.category}|${input.domain?.toLowerCase() ?? ""}|${input.name?.trim() ?? ""}`;
+
+    const hostingProviderId = hostingName
+      ? (providerMap.get(
+          inputKey({
+            category: "hosting",
+            domain: hostingIconDomain,
+            name: hostingName,
+          }),
+        ) ?? null)
+      : null;
+
+    const emailProviderId = emailName
+      ? (providerMap.get(
+          inputKey({
+            category: "email",
+            domain: emailIconDomain,
+            name: emailName,
+          }),
+        ) ?? null)
+      : null;
+
+    const dnsProviderId = dnsName
+      ? (providerMap.get(
+          inputKey({ category: "dns", domain: dnsIconDomain, name: dnsName }),
+        ) ?? null)
+      : null;
+
     await upsertHosting({
       domainId: existingDomain.id,
       hostingProviderId,
