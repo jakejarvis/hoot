@@ -1,4 +1,23 @@
 /* @vitest-environment node */
+
+// Mock toRegistrableDomain to allow .invalid domains for testing
+vi.mock("@/lib/domain-server", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/domain-server")>(
+    "@/lib/domain-server",
+  );
+  return {
+    ...actual,
+    toRegistrableDomain: (input: string) => {
+      // Allow .invalid domains (reserved, never resolve) for safe testing
+      if (input.endsWith(".invalid")) {
+        return input.toLowerCase();
+      }
+      // Use real implementation for everything else
+      return actual.toRegistrableDomain(input);
+    },
+  };
+});
+
 import {
   afterEach,
   beforeAll,
@@ -121,7 +140,7 @@ describe("getSeo", () => {
       } as unknown as Response)
       .mockResolvedValueOnce(textResponse("", "text/plain"));
 
-    const out = await getSeo("nonhtml.com");
+    const out = await getSeo("nonhtml.invalid");
     expect(out.errors?.html).toMatch(/Non-HTML content-type/i);
     fetchMock.mockRestore();
   });
@@ -160,7 +179,7 @@ describe("getSeo", () => {
         url: "",
       } as unknown as Response);
 
-    const out = await getSeo("img-fail.com");
+    const out = await getSeo("img-fail.invalid");
     // original image remains for Meta Tags display
     expect(out.preview?.image ?? "").toContain("/og.png");
     // uploaded url is null on failure for privacy-safe rendering

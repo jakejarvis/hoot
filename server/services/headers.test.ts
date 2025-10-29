@@ -1,4 +1,23 @@
 /* @vitest-environment node */
+
+// Mock toRegistrableDomain to allow .invalid domains for testing
+vi.mock("@/lib/domain-server", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/domain-server")>(
+    "@/lib/domain-server",
+  );
+  return {
+    ...actual,
+    toRegistrableDomain: (input: string) => {
+      // Allow .invalid domains (reserved, never resolve) for safe testing
+      if (input.endsWith(".invalid")) {
+        return input.toLowerCase();
+      }
+      // Use real implementation for everything else
+      return actual.toRegistrableDomain(input);
+    },
+  };
+});
+
 import {
   afterEach,
   beforeAll,
@@ -98,7 +117,7 @@ describe("probeHeaders", () => {
       throw new Error("network");
     });
     const { probeHeaders } = await import("./headers");
-    const out = await probeHeaders("fail.com");
+    const out = await probeHeaders("fail.invalid");
     expect(out.length).toBe(0);
     fetchMock.mockRestore();
   });

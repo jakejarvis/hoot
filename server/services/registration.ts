@@ -114,6 +114,12 @@ export async function getRegistration(domain: string): Promise<Registration> {
         registrarProvider,
       };
 
+      // Update Redis fast-path cache to keep it hot for subsequent requests
+      const ttl = row.isRegistered
+        ? REDIS_TTL_REGISTERED
+        : REDIS_TTL_UNREGISTERED;
+      await setRegistrationStatusInCache(registrable, row.isRegistered, ttl);
+
       console.info(
         `[registration] ok cached ${registrable} registered=${row.isRegistered} registrar=${registrarProvider.name}`,
       );

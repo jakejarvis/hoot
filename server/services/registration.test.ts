@@ -87,6 +87,11 @@ describe("getRegistration", () => {
     const rec = await getRegistration("example.com");
     expect(rec.isRegistered).toBe(true);
     expect(spy).not.toHaveBeenCalled();
+
+    // Verify Redis cache was updated when hitting Postgres cache
+    const { redis, ns } = await import("@/lib/redis");
+    const cached = await redis.get(ns("reg", "example.com"));
+    expect(cached).toBe("1"); // "1" means registered
   });
 
   it("loads via rdapper, creates registrar provider when missing, and caches", async () => {
