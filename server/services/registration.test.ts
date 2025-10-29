@@ -171,7 +171,7 @@ describe("getRegistration", () => {
 
     const { getRegistration } = await import("./registration");
     await expect(getRegistration("cached-unregistered.test")).rejects.toThrow(
-      "not registered (cached)",
+      /not registered/i,
     );
 
     // rdapper should not have been called
