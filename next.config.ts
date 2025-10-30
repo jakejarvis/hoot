@@ -3,22 +3,16 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactCompiler: true,
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
-  reactCompiler: true,
   images: {
     unoptimized: true,
   },
-  experimental: {
-    ppr: "incremental",
-    staleTimes: {
-      dynamic: 0, // disable client-side router cache for dynamic pages
-    },
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  outputFileTracingIncludes: {
+    "/api/**": ["node_modules/@sparticuz/chromium/bin/**"],
   },
   rewrites: async () => {
     return [

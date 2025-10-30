@@ -3,7 +3,8 @@
   "build": {
     "env": {
       "ENABLE_EXPERIMENTAL_COREPACK": "1",
-      "PUPPETEER_SKIP_DOWNLOAD": "1"
+      "PUPPETEER_SKIP_DOWNLOAD": "1",
+      "NPM_CONFIG_NODE_LINKER": "hoisted"
     }
   },
   "crons": [
