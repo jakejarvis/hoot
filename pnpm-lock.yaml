@@ -102,8 +102,8 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
       inngest:
-        specifier: ^3.44.3
-        version: 3.44.3(next@16.0.1(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@4.1.12)
+        specifier: ^3.44.4
+        version: 3.44.4(next@16.0.1(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@4.1.12)
       ipaddr.js:
         specifier: ^2.2.0
         version: 2.2.0
@@ -4113,8 +4113,8 @@ packages:
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
-  inngest@3.44.3:
-    resolution: {integrity: sha512-tCzFBCl47+Mt6sscMiKeN28N+FPCyF/3ntVAGxgmx5NjgXHjXxGeAyWhYMAYSU1Agk+R8f+jjR/uN2bOHTs3DA==}
+  inngest@3.44.4:
+    resolution: {integrity: sha512-1yxvhN4qVPvywitDCVLsQYz3Hi8CGN5XHSYlkbahs3zPs8qyzSfpFmZmflTrp5FylCDKu9C7qJNp9O12oNl69Q==}
     engines: {node: '>=20'}
     peerDependencies:
       '@sveltejs/kit': '>=1.27.3'
@@ -8549,7 +8549,7 @@ snapshots:
 
   '@types/pg-pool@2.0.6':
     dependencies:
-      '@types/pg': 8.6.1
+      '@types/pg': 8.15.6
 
   '@types/pg@8.15.6':
     dependencies:
@@ -9703,7 +9703,7 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  inngest@3.44.3(next@16.0.1(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@4.1.12):
+  inngest@3.44.4(next@16.0.1(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@4.1.12):
     dependencies:
       '@bufbuild/protobuf': 2.10.0
       '@inngest/ai': 0.1.7
