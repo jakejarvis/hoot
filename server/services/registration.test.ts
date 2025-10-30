@@ -298,6 +298,44 @@ describe("getRegistration", () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it("handles TLDs with unresponsive WHOIS servers gracefully (timeout)", async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+    const { lookup } = await import("rdapper");
+
+    // Simulate rdapper timeout error (WHOIS server exists but doesn't respond)
+    (lookup as unknown as import("vitest").Mock).mockResolvedValueOnce({
+      ok: false,
+      error: "WHOIS socket timeout",
+      record: null,
+    });
+
+    const consoleSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const { getRegistration } = await import("./registration");
+    const rec = await getRegistration("timeout.ls");
+
+    // Should return minimal unregistered response
+    expect(rec.domain).toBe("timeout.ls");
+    expect(rec.tld).toBe("ls");
+    expect(rec.isRegistered).toBe(false);
+    expect(rec.source).toBeNull();
+
+    // Should log as info (not error) since timeouts indicate unavailable WHOIS
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[registration] unavailable"),
+    );
+
+    // Should NOT log as error
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
   it("logs actual registration errors as errors (timeout, network failure)", async () => {
     const { resetInMemoryRedis } = await import("@/lib/redis-mock");
     resetInMemoryRedis();

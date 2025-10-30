@@ -13,11 +13,18 @@ export function useDomainQueries(domain: string) {
     ),
   );
 
+  // Enable other sections if:
+  // 1. Domain is confirmed registered (isRegistered === true), OR
+  // 2. WHOIS/RDAP is unavailable (source === null) - we can still check DNS, hosting, etc.
+  const shouldEnableSections =
+    registration.data?.isRegistered === true ||
+    registration.data?.source === null;
+
   const dns = useQuery(
     trpc.domain.dns.queryOptions(
       { domain },
       {
-        enabled: registration.data?.isRegistered,
+        enabled: shouldEnableSections,
         placeholderData: (prev) => prev,
       },
     ),
@@ -27,10 +34,7 @@ export function useDomainQueries(domain: string) {
     trpc.domain.hosting.queryOptions(
       { domain },
       {
-        // Optional micro-tuning: wait until DNS has resolved once to better
-        // reuse warm caches server-side. If DNS errored, still allow hosting to run.
-        enabled:
-          registration.data?.isRegistered && (dns.isSuccess || dns.isError),
+        enabled: shouldEnableSections,
         placeholderData: (prev) => prev,
       },
     ),
@@ -40,7 +44,7 @@ export function useDomainQueries(domain: string) {
     trpc.domain.certificates.queryOptions(
       { domain },
       {
-        enabled: registration.data?.isRegistered,
+        enabled: shouldEnableSections,
         placeholderData: (prev) => prev,
       },
     ),
@@ -50,7 +54,7 @@ export function useDomainQueries(domain: string) {
     trpc.domain.headers.queryOptions(
       { domain },
       {
-        enabled: registration.data?.isRegistered,
+        enabled: shouldEnableSections,
         placeholderData: (prev) => prev,
       },
     ),
@@ -60,7 +64,7 @@ export function useDomainQueries(domain: string) {
     trpc.domain.seo.queryOptions(
       { domain },
       {
-        enabled: registration.data?.isRegistered,
+        enabled: shouldEnableSections,
         placeholderData: (prev) => prev,
       },
     ),

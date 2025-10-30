@@ -13,6 +13,9 @@ export const makeQueryClient = cache(() => {
         refetchOnMount: false,
         refetchOnReconnect: false,
         refetchOnWindowFocus: false,
+        // Disable retries by default - most tRPC endpoints should fail fast
+        // (can be overridden per-query if needed)
+        retry: false,
       },
       dehydrate: {
         // Include pending queries so streaming works smoothly

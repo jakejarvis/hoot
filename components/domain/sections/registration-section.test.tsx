@@ -85,6 +85,33 @@ describe("RegistrationSection", () => {
     // skeletons are present via role none; just assert section title appears to ensure render
     expect(screen.getAllByText(/Registration/i).length).toBeGreaterThan(0);
   });
+
+  it("renders unavailable message when WHOIS/RDAP is not available (source is null)", () => {
+    const record = {
+      domain: "whois.ls",
+      tld: "ls",
+      isRegistered: false,
+      source: null, // WHOIS/RDAP unavailable
+      registrarProvider: { name: null, domain: null },
+    } as unknown as import("@/lib/schemas").Registration;
+
+    render(
+      <RegistrationSection
+        data={record}
+        isLoading={false}
+        isError={false}
+        onRetryAction={() => {}}
+      />,
+    );
+
+    expect(
+      screen.getByText("Registration Data Unavailable"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/registry does not publish public WHOIS\/RDAP data/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\.ls/)).toBeInTheDocument();
+  });
 });
 
 describe("formatRegistrant", () => {

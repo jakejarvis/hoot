@@ -78,10 +78,14 @@ export function DomainReportView({ domain }: { domain: string }) {
     return <DomainLoadingState />;
   }
 
-  // Show unregistered state if domain is not registered
-  const isUnregistered =
-    registration.isSuccess && registration.data?.isRegistered === false;
-  if (isUnregistered) {
+  // Show unregistered state ONLY if we confirmed the domain is unregistered
+  // (source is available but domain is not registered)
+  // If source is null, WHOIS/RDAP is unavailable - show full report with notice
+  const isConfirmedUnregistered =
+    registration.isSuccess &&
+    registration.data?.isRegistered === false &&
+    registration.data?.source !== null;
+  if (isConfirmedUnregistered) {
     captureClient("report_unregistered_viewed", { domain });
     return <DomainUnregisteredState domain={domain} />;
   }

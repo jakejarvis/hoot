@@ -375,6 +375,10 @@ function isExpectedRegistrationError(error: unknown): boolean {
     errorStr.includes("no rdap server found") ||
     errorStr.includes("registry may not publish public whois") ||
     errorStr.includes("tld is not supported") ||
-    errorStr.includes("no whois server configured")
+    errorStr.includes("no whois server configured") ||
+    // Timeouts often indicate WHOIS server is unreachable/unresponsive
+    errorStr.includes("whois socket timeout") ||
+    errorStr.includes("whois timeout") ||
+    errorStr.includes("rdap timeout")
   );
 }
