@@ -18,18 +18,17 @@
 
 ## 🛠️ Tech Stack
 
-- **Next.js 15** (App Router) + **React 19** + **TypeScript**
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4**
 - **tRPC** API
 - **Postgres** + **Drizzle ORM**
 - **Inngest** for background jobs and scheduled revalidation
 - **Upstash Redis** for caching, rate limits, and locks
 - **Vercel Blob** for favicon/screenshot storage
-- **Vercel Flags SDK** + **Statsig** for feature flags (via Edge Config)
 - [**rdapper**](https://github.com/jakejarvis/rdapper) for RDAP lookups with WHOIS fallback
 - **Puppeteer** (with `@sparticuz/chromium` on server) for screenshots
 - **Mapbox** for IP geolocation maps
-- **PostHog** analytics
+- **PostHog** analytics with sourcemap uploads
 - **Vitest** for testing and **Biome** for lint/format
 
 ---
@@ -46,27 +45,46 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create `.env.local` (used by `pnpm dev`):
+Create `.env.local` (see `.env.example` for full details):
 
 ```env
+# --- PostHog Analytics ---
+NEXT_PUBLIC_POSTHOG_HOST=
+NEXT_PUBLIC_POSTHOG_KEY=
+POSTHOG_API_KEY=
+POSTHOG_ENV_ID=
+
 # --- Database (local) ---
 # TCP URL used by Drizzle CLI & direct TCP usage
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/main
 
 # --- Redis (local via SRH) ---
-# SRH mimics Upstash REST locally; point your app’s Upstash client here.
+# SRH mimics Upstash REST locally; point your app's Upstash client here.
 KV_REST_API_URL=http://localhost:8079
 KV_REST_API_TOKEN=dev-token
 
 # --- Inngest Dev Server ---
 INNGEST_DEV=1
 INNGEST_BASE_URL=http://localhost:8288
-# If your Inngest handler lives at a custom route, set:
 INNGEST_SERVE_PATH=/api/inngest
+# Production: set INNGEST_EVENT_KEY and INNGEST_SIGNING_KEY
 
 # --- Vercel Blob Storage ---
 # Obtain from Vercel dashboard or use test token locally
 BLOB_READ_WRITE_TOKEN=your-token-here
+# Production: set BLOB_SIGNING_SECRET for blob key hashing
+
+# --- Vercel Cron ---
+# Required for authenticating scheduled tasks
+CRON_SECRET=
+
+# --- Mapbox ---
+# Public token for react-map-gl
+NEXT_PUBLIC_MAPBOX_TOKEN=
+
+# --- Optional ---
+# Override user agent sent with upstream requests
+EXTERNAL_USER_AGENT=
 ```
 
 ### 3. Start local dev services (Docker)
@@ -102,7 +120,7 @@ pnpm docker:down
 ```bash
 pnpm db:generate   # generate SQL from schema
 pnpm db:migrate    # apply migrations to local Postgres
-pnpm db:seed:providers  # seed known providers in lib/providers/rules/
+pnpm db:seed       # seed database (if needed)
 ```
 
 ### 5. Start the Next.js dev server
@@ -123,15 +141,22 @@ Open [http://localhost:3000](http://localhost:3000)
 pnpm dev           # start Next.js dev server
 pnpm docker:up     # start Dockerized local services and wait until ready
 pnpm docker:down   # stop all Dockerized local services (docker compose down)
+pnpm build         # compile production bundle
+pnpm start         # serve compiled output for smoke tests
 pnpm lint          # Biome lint/format checks
+pnpm format        # apply Biome formatting
 pnpm typecheck     # tsc --noEmit
-pnpm test:run      # Vitest
+pnpm test          # Vitest (watch mode)
+pnpm test:run      # Vitest (single run)
+pnpm test:ui       # Vitest UI
+pnpm test:coverage # Vitest with coverage report
 
 # Drizzle
-pnpm db:generate    # generate SQL migrations from schema
-pnpm db:migrate     # apply db migrations
-pnpm db:studio      # open Drizzle Studio against your current env URL
-pnpm db:seed:providers
+pnpm db:generate   # generate SQL migrations from schema
+pnpm db:push       # push the current schema to the database
+pnpm db:migrate    # apply migrations to the database
+pnpm db:studio     # open Drizzle Studio
+pnpm db:seed       # run seed script (scripts/db/seed.ts)
 ```
 
 ---

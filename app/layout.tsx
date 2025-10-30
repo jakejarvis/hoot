@@ -1,5 +1,4 @@
 import { Analytics } from "@vercel/analytics/next";
-import { VercelToolbar } from "@vercel/toolbar/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
@@ -47,7 +46,6 @@ export default function RootLayout({
           <Toaster />
         </Providers>
         <Analytics />
-        {process.env.NODE_ENV === "development" && <VercelToolbar />}
       </body>
     </html>
   );

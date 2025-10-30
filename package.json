@@ -48,7 +48,6 @@
     "@vercel/blob": "^2.0.0",
     "@vercel/functions": "^3.1.4",
     "@vercel/otel": "^2.1.0",
-    "@vercel/toolbar": "^0.1.41",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
