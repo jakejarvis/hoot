@@ -88,7 +88,7 @@ export const RegistrationSchema = z.object({
   privacyEnabled: z.boolean().optional(),
   whoisServer: z.string().optional(),
   rdapServers: z.array(z.string()).optional(),
-  source: z.enum(["rdap", "whois"]),
+  source: z.enum(["rdap", "whois"]).nullable(),
   warnings: z.array(z.string()).optional(),
 
   registrarProvider: ProviderRefSchema,

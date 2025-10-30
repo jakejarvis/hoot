@@ -18,11 +18,7 @@ import { ttlForRegistration } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
-import type {
-  Registration,
-  RegistrationContacts,
-  RegistrationSource,
-} from "@/lib/schemas";
+import type { Registration, RegistrationContacts } from "@/lib/schemas";
 
 /**
  * Normalize registrar provider information from raw rdapper data.
@@ -81,7 +77,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
       domain: registrable,
       tld: getDomainTld(registrable) ?? "",
       isRegistered: false,
-      source: "rdap" as const,
+      source: null,
       registrarProvider: {
         name: null,
         domain: null,
@@ -146,7 +142,7 @@ export async function getRegistration(domain: string): Promise<Registration> {
         contacts: contactsArray,
         whoisServer: row.whoisServer ?? undefined,
         rdapServers: row.rdapServers ?? undefined,
-        source: row.source as RegistrationSource,
+        source: row.source ?? null,
         registrarProvider,
       };
 
@@ -178,6 +174,29 @@ export async function getRegistration(domain: string): Promise<Registration> {
   });
 
   if (!ok || !record) {
+    // Classify error: some TLDs don't offer public WHOIS/RDAP services
+    const isKnownLimitation = isExpectedRegistrationError(error);
+
+    if (isKnownLimitation) {
+      console.info(
+        `[registration] unavailable ${registrable} reason=${error || "unknown"}`,
+      );
+
+      // Return minimal unregistered response for TLDs without WHOIS/RDAP
+      // (We can't determine registration status without WHOIS/RDAP access)
+      return {
+        domain: registrable,
+        tld: getDomainTld(registrable) ?? "",
+        isRegistered: false,
+        source: null,
+        registrarProvider: {
+          name: null,
+          domain: null,
+        },
+      };
+    }
+
+    // Actual errors (timeouts, network failures, etc.) are still logged as errors
     const err = new Error(
       `Registration lookup failed for ${registrable}: ${error || "unknown error"}`,
     );
@@ -339,4 +358,23 @@ export async function getRegistration(domain: string): Promise<Registration> {
   );
 
   return withProvider;
+}
+
+/**
+ * Check if a registration error is an expected limitation.
+ * These occur when TLDs don't offer public WHOIS/RDAP services.
+ */
+function isExpectedRegistrationError(error: unknown): boolean {
+  if (!error) return false;
+
+  const errorStr = String(error).toLowerCase();
+
+  // Known patterns indicating TLD doesn't support public WHOIS/RDAP
+  return (
+    errorStr.includes("no whois server discovered") ||
+    errorStr.includes("no rdap server found") ||
+    errorStr.includes("registry may not publish public whois") ||
+    errorStr.includes("tld is not supported") ||
+    errorStr.includes("no whois server configured")
+  );
 }

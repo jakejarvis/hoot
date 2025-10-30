@@ -68,55 +68,57 @@ export function RegistrationSection({
                 ) : undefined
               }
               suffix={
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="inline-flex items-center gap-[5px]">
+                d.source ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <span>
-                        Verified by{" "}
-                        <span className="font-medium">
-                          {d.source === "rdap" &&
-                          Array.isArray(d.rdapServers) &&
-                          d.rdapServers.length > 0 ? (
-                            <a
-                              href={
-                                d.rdapServers[d.rdapServers.length - 1] ?? "#"
-                              }
-                              target="_blank"
-                              rel="noopener"
-                              className="underline underline-offset-2"
-                            >
-                              {extractSourceDomain(
-                                d.rdapServers[d.rdapServers.length - 1],
-                              ) ?? "RDAP"}
-                            </a>
-                          ) : (
-                            (d.whoisServer ?? "WHOIS")
-                          )}
-                        </span>
+                        <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
                       </span>
-                      <a
-                        href={
-                          d.source === "rdap"
-                            ? "https://about.rdap.org/"
-                            : "https://en.wikipedia.org/wiki/WHOIS"
-                        }
-                        target="_blank"
-                        rel="noopener"
-                        title={`Learn about ${
-                          d.source === "rdap" ? "RDAP" : "WHOIS"
-                        }`}
-                        className="text-muted/80"
-                      >
-                        <GraduationCap className="size-3" />
-                      </a>
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="inline-flex items-center gap-[5px]">
+                        <span>
+                          Verified by{" "}
+                          <span className="font-medium">
+                            {d.source === "rdap" &&
+                            Array.isArray(d.rdapServers) &&
+                            d.rdapServers.length > 0 ? (
+                              <a
+                                href={
+                                  d.rdapServers[d.rdapServers.length - 1] ?? "#"
+                                }
+                                target="_blank"
+                                rel="noopener"
+                                className="underline underline-offset-2"
+                              >
+                                {extractSourceDomain(
+                                  d.rdapServers[d.rdapServers.length - 1],
+                                ) ?? "RDAP"}
+                              </a>
+                            ) : (
+                              (d.whoisServer ?? "WHOIS")
+                            )}
+                          </span>
+                        </span>
+                        <a
+                          href={
+                            d.source === "rdap"
+                              ? "https://about.rdap.org/"
+                              : "https://en.wikipedia.org/wiki/WHOIS"
+                          }
+                          target="_blank"
+                          rel="noopener"
+                          title={`Learn about ${
+                            d.source === "rdap" ? "RDAP" : "WHOIS"
+                          }`}
+                          className="text-muted/80"
+                        >
+                          <GraduationCap className="size-3" />
+                        </a>
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : undefined
               }
             />
 

@@ -200,7 +200,7 @@ describe("getRegistration", () => {
       domain: "cached-unregistered.test",
       tld: "test",
       isRegistered: false,
-      source: "rdap",
+      source: null,
       registrarProvider: {
         name: null,
         domain: null,
@@ -255,5 +255,87 @@ describe("getRegistration", () => {
     );
     const cached = await redis.get(getRegistrationCacheKey("registered.test"));
     expect(cached).toBe("1"); // "1" means registered
+  });
+
+  it("handles TLDs without WHOIS/RDAP gracefully (no server discovered)", async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+    const { lookup } = await import("rdapper");
+
+    // Simulate rdapper error for TLD without WHOIS server
+    (lookup as unknown as import("vitest").Mock).mockResolvedValueOnce({
+      ok: false,
+      error:
+        "No WHOIS server discovered for TLD 'ls'. This registry may not publish public WHOIS over port 43.",
+      record: null,
+    });
+
+    const consoleSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const { getRegistration } = await import("./registration");
+    const rec = await getRegistration("whois.ls");
+
+    // Should return minimal unregistered response
+    expect(rec.domain).toBe("whois.ls");
+    expect(rec.tld).toBe("ls");
+    expect(rec.isRegistered).toBe(false);
+    expect(rec.source).toBeNull();
+    expect(rec.registrarProvider.name).toBeNull();
+    expect(rec.registrarProvider.domain).toBeNull();
+
+    // Should log as info (not error) since this is a known limitation
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[registration] unavailable"),
+    );
+
+    // Should NOT log as error
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("logs actual registration errors as errors (timeout, network failure)", async () => {
+    const { resetInMemoryRedis } = await import("@/lib/redis-mock");
+    resetInMemoryRedis();
+    const { lookup } = await import("rdapper");
+
+    // Simulate a real error (timeout, network failure, etc.)
+    (lookup as unknown as import("vitest").Mock).mockResolvedValueOnce({
+      ok: false,
+      error: "Connection timeout after 5000ms",
+      record: null,
+    });
+
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const consoleInfoSpy = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => {});
+
+    const { getRegistration } = await import("./registration");
+
+    // Should throw error
+    await expect(getRegistration("timeout.test")).rejects.toThrow(
+      "Registration lookup failed for timeout.test: Connection timeout after 5000ms",
+    );
+
+    // Should log as error since this is unexpected
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[registration] error"),
+      expect.any(Error),
+    );
+
+    // Should NOT log as info (unavailable)
+    expect(consoleInfoSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("[registration] unavailable"),
+    );
+
+    consoleErrorSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
   });
 });
