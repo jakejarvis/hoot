@@ -14,13 +14,12 @@ import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import {
   type DnsRecord,
   type DnsResolveResult,
-  type DnsResolver,
   type DnsType,
   DnsTypeSchema,
 } from "@/lib/schemas";
 
 export type DohProvider = {
-  key: DnsResolver;
+  key: string;
   url: string;
   headers?: Record<string, string>;
 };
@@ -39,11 +38,11 @@ export const DOH_PROVIDERS: DohProvider[] = [
     key: "google",
     url: "https://dns.google/resolve",
   },
-  {
-    key: "quad9",
-    // dns10 is the unfiltered server
-    url: "https://dns10.quad9.net/dns-query",
-  },
+  // {
+  //   key: "quad9",
+  //   // dns10 is the unfiltered server
+  //   url: "https://dns10.quad9.net/dns-query",
+  // },
 ];
 
 function buildDohUrl(
@@ -184,7 +183,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
     ttl: number | null;
     priority: number | null;
     isCloudflare: boolean | null;
-    resolver: DnsResolver | null;
+    resolver: string | null;
     expiresAt: Date | null;
   }>;
   if (rows.length > 0) {
@@ -224,7 +223,7 @@ async function resolveAllInternal(domain: string): Promise<DnsResolveResult> {
       priority: r.priority ?? undefined,
       isCloudflare: r.isCloudflare ?? undefined,
     }));
-    const resolverHint = (rows[0]?.resolver ?? "cloudflare") as DnsResolver;
+    const resolverHint = rows[0]?.resolver;
     const sorted = sortDnsRecordsByType(assembled, types);
     if (allFreshAcrossTypes) {
       return { records: sorted, resolver: resolverHint };

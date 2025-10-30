@@ -4,13 +4,12 @@ import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { dnsRecords, type dnsRecordType } from "@/lib/db/schema";
 import { DnsRecordInsert as DnsRecordInsertSchema } from "@/lib/db/zod";
-import type { DnsResolver } from "@/lib/schemas";
 
 type DnsRecordInsert = InferInsertModel<typeof dnsRecords>;
 
 export type UpsertDnsParams = {
   domainId: string;
-  resolver: DnsResolver;
+  resolver: string;
   fetchedAt: Date;
   // complete set per type
   recordsByType: Record<
