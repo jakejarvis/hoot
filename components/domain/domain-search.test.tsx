@@ -8,7 +8,7 @@ const nav = vi.hoisted(() => ({
   push: vi.fn(),
 }));
 
-vi.mock("@bprogress/next/app", () => ({
+vi.mock("@/hooks/use-router", () => ({
   useRouter: () => ({ push: nav.push }),
 }));
 

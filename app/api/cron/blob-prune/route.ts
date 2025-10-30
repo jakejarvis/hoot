@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { pruneDueBlobsOnce } from "@/lib/storage";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(request: Request) {
   // Verify Vercel cron secret
   const authHeader = request.headers.get("authorization");

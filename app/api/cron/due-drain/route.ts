@@ -3,8 +3,6 @@ import { inngest } from "@/lib/inngest/client";
 import { ns, redis } from "@/lib/redis";
 import { drainDueDomainsOnce } from "@/lib/schedule";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(request: Request) {
   // Verify Vercel cron secret
   const authHeader = request.headers.get("authorization");

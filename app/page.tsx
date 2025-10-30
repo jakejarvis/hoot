@@ -1,4 +1,4 @@
-import { DomainSuggestionsServer } from "@/components/domain/domain-suggestions-server";
+import { DomainSuggestions } from "@/components/domain/domain-suggestions";
 import { HomeHero } from "@/components/home-hero";
 import { HomeSearchSection } from "@/components/home-search-section";
 
@@ -8,7 +8,7 @@ export default function Home() {
       <div className="w-full space-y-6">
         <HomeHero />
         <HomeSearchSection>
-          <DomainSuggestionsServer />
+          <DomainSuggestions />
         </HomeSearchSection>
       </div>
     </div>

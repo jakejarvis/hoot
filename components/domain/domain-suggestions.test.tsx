@@ -4,16 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DomainSuggestions } from "@/components/domain/domain-suggestions";
+import { HomeSearchProvider } from "@/components/home-search-context";
 
-const TEST_SUGGESTIONS = [
-  "github.com",
-  "reddit.com",
-  "wikipedia.org",
-  "firefox.com",
-  "jarv.is",
-];
-
-vi.mock("@bprogress/next/app", () => ({
+vi.mock("@/hooks/use-router", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
@@ -25,6 +18,18 @@ vi.mock("@/components/domain/favicon", () => ({
     }),
 }));
 
+// Helper to render with provider
+function renderWithProvider(
+  ui: React.ReactElement,
+  onSuggestionClick?: (domain: string) => void,
+) {
+  return render(
+    <HomeSearchProvider onSuggestionClickAction={onSuggestionClick || vi.fn()}>
+      {ui}
+    </HomeSearchProvider>,
+  );
+}
+
 describe("DomainSuggestions", () => {
   beforeEach(() => {
     // Reset history between tests
@@ -32,7 +37,7 @@ describe("DomainSuggestions", () => {
   });
 
   it("renders provided suggestions when there is no history", async () => {
-    render(<DomainSuggestions suggestions={TEST_SUGGESTIONS} />);
+    renderWithProvider(<DomainSuggestions />);
     // Wait for a known suggestion like jarv.is to appear
     expect(
       await screen.findByRole("button", { name: /jarv\.is/i }),
@@ -48,7 +53,7 @@ describe("DomainSuggestions", () => {
       "search-history",
       JSON.stringify(["foo.com", "github.com", "bar.org"]),
     );
-    render(<DomainSuggestions suggestions={TEST_SUGGESTIONS} max={4} />);
+    renderWithProvider(<DomainSuggestions max={4} />);
     // History entries appear
     expect(
       await screen.findByRole("button", { name: /foo\.com/i }),
@@ -65,12 +70,7 @@ describe("DomainSuggestions", () => {
   it("invokes onSelect when a suggestion is clicked", async () => {
     const onSelect = vi.fn();
     localStorage.setItem("search-history", JSON.stringify(["example.com"]));
-    render(
-      <DomainSuggestions
-        suggestions={TEST_SUGGESTIONS}
-        onSelectAction={onSelect}
-      />,
-    );
+    renderWithProvider(<DomainSuggestions />, onSelect);
     await userEvent.click(screen.getByRole("button", { name: /example.com/i }));
     expect(onSelect).toHaveBeenCalledWith("example.com");
   });
