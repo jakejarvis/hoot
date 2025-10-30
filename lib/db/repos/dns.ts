@@ -33,6 +33,7 @@ export async function replaceDns(params: UpsertDnsParams) {
       type: dnsRecords.type,
       name: dnsRecords.name,
       value: dnsRecords.value,
+      priority: dnsRecords.priority,
     })
     .from(dnsRecords)
     .where(eq(dnsRecords.domainId, domainId));
@@ -40,7 +41,8 @@ export async function replaceDns(params: UpsertDnsParams) {
   // Build a map of existing records for quick lookup
   const existingMap = new Map<string, string>();
   for (const record of allExisting) {
-    const key = `${record.type}|${record.name.trim().toLowerCase()}|${record.value.trim().toLowerCase()}`;
+    const priorityPart = record.priority != null ? `|${record.priority}` : "";
+    const key = `${record.type}|${record.name.trim().toLowerCase()}|${record.value.trim().toLowerCase()}${priorityPart}`;
     existingMap.set(key, record.id);
   }
 
@@ -62,7 +64,16 @@ export async function replaceDns(params: UpsertDnsParams) {
     }));
 
     for (const r of next) {
-      const key = `${type}|${r.name}|${r.value}`;
+      // Include priority in the uniqueness key for MX/SRV records
+      // (same host with different priorities = different records)
+      const priorityPart = r.priority != null ? `|${r.priority}` : "";
+      const key = `${type}|${r.name}|${r.value}${priorityPart}`;
+
+      // Skip duplicates within the same batch
+      if (allNextKeys.has(key)) {
+        continue;
+      }
+
       allNextKeys.add(key);
 
       allRecordsToUpsert.push(
@@ -85,7 +96,8 @@ export async function replaceDns(params: UpsertDnsParams) {
   // Identify records to delete (exist in DB but not in the new set)
   const idsToDelete = allExisting
     .filter((e) => {
-      const key = `${e.type}|${e.name.trim().toLowerCase()}|${e.value.trim().toLowerCase()}`;
+      const priorityPart = e.priority != null ? `|${e.priority}` : "";
+      const key = `${e.type}|${e.name.trim().toLowerCase()}|${e.value.trim().toLowerCase()}${priorityPart}`;
       return !allNextKeys.has(key);
     })
     .map((e) => e.id);
@@ -106,10 +118,10 @@ export async function replaceDns(params: UpsertDnsParams) {
           dnsRecords.type,
           dnsRecords.name,
           dnsRecords.value,
+          dnsRecords.priority,
         ],
         set: {
           ttl: sql`excluded.${sql.identifier(dnsRecords.ttl.name)}`,
-          priority: sql`excluded.${sql.identifier(dnsRecords.priority.name)}`,
           isCloudflare: sql`excluded.${sql.identifier(dnsRecords.isCloudflare.name)}`,
           resolver: sql`excluded.${sql.identifier(dnsRecords.resolver.name)}`,
           fetchedAt: sql`excluded.${sql.identifier(dnsRecords.fetchedAt.name)}`,

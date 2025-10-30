@@ -89,6 +89,62 @@ describe("resolveAll", () => {
     fetchMock.mockRestore();
   });
 
+  it("handles duplicate MX records with different priorities (jarv.net case)", async () => {
+    const { resolveAll } = await import("./dns");
+    // jarv.net has MX records pointing to the same host with different priorities:
+    // Priority 10: mx.netidentity.com.cust.hostedemail.com
+    // Priority 20: mx.netidentity.com.cust.hostedemail.com (same host!)
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "jarv.net.", TTL: 300, data: "216.40.34.37" }]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "jarv.net.", TTL: 300, data: "216.40.34.37" }]),
+      ) // AAAA (returns A for simplicity)
+      .mockResolvedValueOnce(
+        dohAnswer([
+          {
+            name: "jarv.net.",
+            TTL: 300,
+            data: "10 mx.netidentity.com.cust.hostedemail.com.",
+          },
+          {
+            name: "jarv.net.",
+            TTL: 300,
+            data: "20 mx.netidentity.com.cust.hostedemail.com.",
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([
+          {
+            name: "jarv.net.",
+            TTL: 300,
+            data: '"v=spf1 include:_spf.hostedemail.com ~all"',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        dohAnswer([{ name: "jarv.net.", TTL: 300, data: "ns1.mailbank.com." }]),
+      );
+
+    const out = await resolveAll("jarv.net");
+
+    // Should have both MX records (same host, different priorities)
+    const mxRecords = out.records.filter((r) => r.type === "MX");
+    expect(mxRecords.length).toBe(2);
+    expect(mxRecords.some((r) => r.priority === 10)).toBe(true);
+    expect(mxRecords.some((r) => r.priority === 20)).toBe(true);
+    expect(
+      mxRecords.every(
+        (r) => r.value === "mx.netidentity.com.cust.hostedemail.com",
+      ),
+    ).toBe(true);
+
+    fetchMock.mockRestore();
+  });
+
   it("throws when all providers fail", async () => {
     const { resolveAll } = await import("./dns");
     const fetchMock = vi
