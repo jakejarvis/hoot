@@ -94,13 +94,18 @@ export async function detectHosting(domain: string): Promise<Hosting> {
 
   const { records: dns } = await resolveAll(domain);
   const a = dns.find((d) => d.type === "A");
+  const aaaa = dns.find((d) => d.type === "AAAA");
   const mx = dns.filter((d) => d.type === "MX");
   const nsRecords = dns.filter((d) => d.type === "NS");
-  const ip = a?.value ?? null;
+  const ip = (a?.value || aaaa?.value) ?? null;
+  const hasWebHosting = a !== undefined || aaaa !== undefined;
 
-  const headers = await probeHeaders(domain).catch(
-    () => [] as { name: string; value: string }[],
-  );
+  // Skip headers probe if domain has no A/AAAA records (no web hosting)
+  const headers = hasWebHosting
+    ? await probeHeaders(domain).catch(
+        () => [] as { name: string; value: string }[],
+      )
+    : [];
 
   const meta = ip
     ? await lookupIpMeta(ip)

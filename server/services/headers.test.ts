@@ -122,4 +122,86 @@ describe("probeHeaders", () => {
     expect(out.length).toBe(0);
     fetchMock.mockRestore();
   });
+
+  it("handles DNS resolution errors gracefully (ENOTFOUND)", async () => {
+    // Simulate ENOTFOUND error (domain has no A/AAAA records)
+    const enotfoundError = new Error("fetch failed");
+    const cause = new Error(
+      "getaddrinfo ENOTFOUND no-web-hosting.invalid",
+    ) as Error & {
+      code?: string;
+      errno?: number;
+      syscall?: string;
+      hostname?: string;
+    };
+    cause.code = "ENOTFOUND";
+    cause.errno = -3007;
+    cause.syscall = "getaddrinfo";
+    cause.hostname = "no-web-hosting.invalid";
+    (enotfoundError as Error & { cause?: Error }).cause = cause;
+
+    const fetchMock = vi.spyOn(global, "fetch").mockImplementation(async () => {
+      throw enotfoundError;
+    });
+
+    const consoleSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const { probeHeaders } = await import("./headers");
+    const out = await probeHeaders("no-web-hosting.invalid");
+
+    // Should return empty array
+    expect(out.length).toBe(0);
+
+    // Should log as debug (not error) since this is expected
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[headers] no web hosting"),
+    );
+
+    // Should NOT log as error
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    fetchMock.mockRestore();
+    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("logs actual errors (non-DNS) as errors", async () => {
+    // Simulate a real error (not DNS-related)
+    const realError = new Error("Connection timeout");
+
+    const fetchMock = vi.spyOn(global, "fetch").mockImplementation(async () => {
+      throw realError;
+    });
+
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const consoleDebugSpy = vi
+      .spyOn(console, "debug")
+      .mockImplementation(() => {});
+
+    const { probeHeaders } = await import("./headers");
+    const out = await probeHeaders("timeout.invalid");
+
+    // Should return empty array
+    expect(out.length).toBe(0);
+
+    // Should log as error since this is unexpected
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[headers] error"),
+      realError,
+    );
+
+    // Should NOT log as debug (no web hosting)
+    expect(consoleDebugSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("[headers] no web hosting"),
+    );
+
+    fetchMock.mockRestore();
+    consoleErrorSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
+  });
 });

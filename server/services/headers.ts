@@ -86,10 +86,20 @@ export async function probeHeaders(domain: string): Promise<HttpHeader[]> {
     );
     return normalized;
   } catch (err) {
-    console.error(
-      `[headers] error ${registrable}`,
-      err instanceof Error ? err : new Error(String(err)),
-    );
+    // Classify error: DNS resolution failures are expected for domains without A/AAAA records
+    const isDnsError = isExpectedDnsError(err);
+
+    if (isDnsError) {
+      console.debug(
+        `[headers] no web hosting ${registrable} (no A/AAAA records)`,
+      );
+    } else {
+      console.error(
+        `[headers] error ${registrable}`,
+        err instanceof Error ? err : new Error(String(err)),
+      );
+    }
+
     // Return empty on failure without caching to avoid long-lived negatives
     return [];
   }
@@ -116,5 +126,33 @@ function normalize(h: HttpHeader[]): HttpHeader[] {
     (a, b) =>
       Number(important.has(b.name)) - Number(important.has(a.name)) ||
       a.name.localeCompare(b.name),
+  );
+}
+
+/**
+ * Check if an error is an expected DNS resolution failure.
+ * These occur when a domain has no A/AAAA records (i.e., no web hosting).
+ */
+function isExpectedDnsError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+
+  // Check for ENOTFOUND (getaddrinfo failure)
+  const cause = (err as Error & { cause?: Error }).cause;
+  if (cause && "code" in cause && cause.code === "ENOTFOUND") {
+    return true;
+  }
+
+  // Check for other DNS-related error codes
+  const errorWithCode = err as Error & { code?: string };
+  if (errorWithCode.code === "ENOTFOUND") {
+    return true;
+  }
+
+  // Check error message patterns
+  const message = err.message.toLowerCase();
+  return (
+    message.includes("enotfound") ||
+    message.includes("getaddrinfo") ||
+    message.includes("dns lookup failed")
   );
 }

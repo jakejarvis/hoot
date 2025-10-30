@@ -153,6 +153,69 @@ describe("detectHosting", () => {
     expect(result.hostingProvider.domain).toBeNull();
   });
 
+  it("skips headers probe when domain has no A or AAAA records", async () => {
+    const { resolveAll } = await import("@/server/services/dns");
+    const { probeHeaders } = await import("@/server/services/headers");
+    const { detectHosting } = await import("@/server/services/hosting");
+
+    // Clear any previous calls
+    (probeHeaders as unknown as Mock).mockClear();
+
+    // Mock DNS with no A/AAAA records (email-only domain)
+    (resolveAll as unknown as Mock).mockResolvedValue({
+      records: [
+        {
+          type: "MX",
+          name: "email-only.example",
+          value: "aspmx.l.google.com",
+          ttl: 300,
+          priority: 10,
+        },
+        {
+          type: "NS",
+          name: "email-only.example",
+          value: "ns1.cloudflare.com",
+          ttl: 600,
+        },
+      ],
+      source: "mock",
+    });
+
+    await detectHosting("email-only.example");
+
+    // probeHeaders should NOT have been called
+    expect(probeHeaders).not.toHaveBeenCalled();
+  });
+
+  it("calls headers probe when domain has A or AAAA records", async () => {
+    const { resolveAll } = await import("@/server/services/dns");
+    const { probeHeaders } = await import("@/server/services/headers");
+    const { detectHosting } = await import("@/server/services/hosting");
+
+    // Clear any previous calls
+    (probeHeaders as unknown as Mock).mockClear();
+
+    // Mock DNS with A record (web hosting present)
+    (resolveAll as unknown as Mock).mockResolvedValue({
+      records: [
+        { type: "A", name: "web-hosting.example", value: "1.2.3.4", ttl: 60 },
+        {
+          type: "NS",
+          name: "web-hosting.example",
+          value: "ns1.cloudflare.com",
+          ttl: 600,
+        },
+      ],
+      source: "mock",
+    });
+    (probeHeaders as unknown as Mock).mockResolvedValue([]);
+
+    await detectHosting("web-hosting.example");
+
+    // probeHeaders SHOULD have been called since A record exists
+    expect(probeHeaders).toHaveBeenCalledWith("web-hosting.example");
+  });
+
   it("falls back to IP owner when hosting is unknown and IP owner exists", async () => {
     const { resolveAll } = await import("@/server/services/dns");
     const { probeHeaders } = await import("@/server/services/headers");
