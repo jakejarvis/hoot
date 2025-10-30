@@ -6,19 +6,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   reactCompiler: true,
   images: {
     unoptimized: true,
-  },
-  experimental: {
-    ppr: "incremental",
-    staleTimes: {
-      dynamic: 0, // disable client-side router cache for dynamic pages
-    },
   },
   rewrites: async () => {
     return [
