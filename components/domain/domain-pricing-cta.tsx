@@ -4,6 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { CloudflareIcon, PorkbunIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -25,17 +30,20 @@ export function DomainPricingCTASkeleton({
 const PROVIDER_CONFIG: Record<
   string,
   {
+    name: string;
     icon: React.ComponentType<{ className?: string }>;
     url: (domain: string) => string;
     transparentIcon?: boolean;
   }
 > = {
   porkbun: {
+    name: "Porkbun",
     icon: PorkbunIcon,
     url: (domain) => `https://porkbun.com/checkout/search?q=${domain}`,
     transparentIcon: false,
   },
   cloudflare: {
+    name: "Cloudflare",
     icon: CloudflareIcon,
     url: (domain) => `https://domains.cloudflare.com/?domain=${domain}`,
     transparentIcon: true,
@@ -117,14 +125,19 @@ export function DomainPricingCTA({
                 aria-label={`Register this domain with ${providerPricing.provider}`}
                 className="flex items-center gap-2"
               >
-                <span
-                  className={cn(
-                    "rounded-full",
-                    config.transparentIcon ? "bg-transparent" : "bg-white",
-                  )}
-                >
-                  <Icon className="size-5" />
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={cn(
+                        "rounded-full",
+                        config.transparentIcon ? "bg-transparent" : "bg-white",
+                      )}
+                    >
+                      <Icon className="size-5" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{config.name}</TooltipContent>
+                </Tooltip>
 
                 <span>
                   <span className="text-foreground/85">.{tldSuffix} from</span>{" "}

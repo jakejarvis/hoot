@@ -14,7 +14,7 @@ export function proxy(request: NextRequest) {
   if (path.length <= 1) {
     return NextResponse.next({
       headers: {
-        "x-middleware-decision": "ignore",
+        "x-middleware-decision": "skip",
       },
     });
   }
@@ -86,7 +86,7 @@ export function proxy(request: NextRequest) {
   if (!candidate) {
     return NextResponse.next({
       headers: {
-        "x-middleware-decision": "ignore",
+        "x-middleware-decision": "skip",
       },
     });
   }
@@ -96,7 +96,7 @@ export function proxy(request: NextRequest) {
   if (!registrable) {
     return NextResponse.next({
       headers: {
-        "x-middleware-decision": "ignore",
+        "x-middleware-decision": "skip",
       },
     });
   }
@@ -118,7 +118,7 @@ export function proxy(request: NextRequest) {
   // Otherwise, it's already a bare registrable domain — proceed
   return NextResponse.next({
     headers: {
-      "x-middleware-decision": "ok",
+      "x-middleware-decision": "match",
     },
   });
 }
