@@ -9,9 +9,7 @@
   "packageRules": [
     {
       "matchPackageNames": ["next", "@next/*"],
-      "matchDepTypes": ["dependencies", "devDependencies"],
       "groupName": "next.js",
-      "followTag": "canary",
       "rangeStrategy": "pin"
     },
     {

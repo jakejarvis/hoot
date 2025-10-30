@@ -3,13 +3,16 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactCompiler: true,
   typescript: {
     ignoreBuildErrors: true,
   },
-  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
-  reactCompiler: true,
   images: {
     unoptimized: true,
+  },
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  outputFileTracingIncludes: {
+    "/api/**": ["node_modules/@sparticuz/chromium/bin/**"],
   },
   rewrites: async () => {
     return [
