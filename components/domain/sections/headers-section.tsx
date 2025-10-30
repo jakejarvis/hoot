@@ -58,9 +58,9 @@ export function HeadersSection({
                 "cache-control",
                 "permissions-policy",
               ]);
-              return d.map((h) => (
+              return d.map((h, index) => (
                 <KeyValue
-                  key={`${h.name}:${String((h as { value: unknown }).value)}`}
+                  key={`${h.name}-${String((h as { value: unknown }).value)}-${index}`}
                   label={h.name}
                   value={String((h as { value: unknown }).value)}
                   copyable
