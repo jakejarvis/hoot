@@ -10,7 +10,7 @@ import {
 } from "vitest";
 
 vi.mock("@/lib/cloudflare", () => ({
-  isCloudflareIpAsync: vi.fn(async () => false),
+  isCloudflareIp: vi.fn(async () => false),
 }));
 
 beforeAll(async () => {

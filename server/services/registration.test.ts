@@ -21,6 +21,14 @@ vi.mock("rdapper", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/rdap-bootstrap", () => ({
+  getRdapBootstrapData: vi.fn().mockResolvedValue({
+    version: "1.0",
+    publication: "2024-01-01T00:00:00Z",
+    services: [],
+  }),
+}));
+
 vi.mock("@/lib/domain-server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/domain-server")>();
   return {

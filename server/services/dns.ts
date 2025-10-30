@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { acquireLockOrWaitForResult } from "@/lib/cache";
-import { isCloudflareIpAsync } from "@/lib/cloudflare";
+import { isCloudflareIp } from "@/lib/cloudflare";
 import { USER_AGENT } from "@/lib/constants";
 import { db } from "@/lib/db/client";
 import { replaceDns } from "@/lib/db/repos/dns";
@@ -485,7 +485,7 @@ function normalizeAnswer(
     case "A":
     case "AAAA": {
       const value = trimDot(a.data);
-      const isCloudflarePromise = isCloudflareIpAsync(value);
+      const isCloudflarePromise = isCloudflareIp(value);
       return isCloudflarePromise.then((isCloudflare) => ({
         type,
         name,

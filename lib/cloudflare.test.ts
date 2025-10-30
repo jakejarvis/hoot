@@ -1,8 +1,8 @@
 /* @vitest-environment node */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isCloudflareIpAsync } from "./cloudflare";
+import { isCloudflareIp } from "./cloudflare";
 
-describe("isCloudflareIpAsync", () => {
+describe("isCloudflareIp", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -19,10 +19,10 @@ describe("isCloudflareIpAsync", () => {
       }),
     );
 
-    expect(await isCloudflareIpAsync("1.2.3.4")).toBe(true);
-    expect(await isCloudflareIpAsync("5.6.7.8")).toBe(false);
-    expect(await isCloudflareIpAsync("2001:db8::1")).toBe(true);
-    expect(await isCloudflareIpAsync("2001:dead::1")).toBe(false);
+    expect(await isCloudflareIp("1.2.3.4")).toBe(true);
+    expect(await isCloudflareIp("5.6.7.8")).toBe(false);
+    expect(await isCloudflareIp("2001:db8::1")).toBe(true);
+    expect(await isCloudflareIp("2001:dead::1")).toBe(false);
     fetchMock.mockRestore();
   });
 });

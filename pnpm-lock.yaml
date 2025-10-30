@@ -138,8 +138,8 @@ importers:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       rdapper:
-        specifier: ^0.10.4
-        version: 0.10.4
+        specifier: ^0.11.0
+        version: 0.11.0
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -4493,8 +4493,8 @@ packages:
       '@types/react-dom':
         optional: true
 
-  rdapper@0.10.4:
-    resolution: {integrity: sha512-sV48xSaHQsJ9UlKQx0bb/2eWv5xUMAIO1jKSt8/8Zw1VmsyXiVN9mQ2ZB13PQJkIWEw0p6hFYesa6AKO8F2eBQ==}
+  rdapper@0.11.0:
+    resolution: {integrity: sha512-zNT9srfA1J9NXTazv/nBQxJMhbMqqYR1o/d42O86UCVdkn6eeZP3/TNjyPa0R5Iqmg/KZgy/UXqt17wFVsh60g==}
     engines: {node: '>=18.17'}
     hasBin: true
 
@@ -9787,7 +9787,7 @@ snapshots:
       '@types/react': 19.2.2
       '@types/react-dom': 19.2.2(@types/react@19.2.2)
 
-  rdapper@0.10.4:
+  rdapper@0.11.0:
     dependencies:
       tldts: 7.0.17
 

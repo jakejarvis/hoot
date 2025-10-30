@@ -17,6 +17,7 @@ import {
 import { ttlForRegistration } from "@/lib/db/ttl";
 import { toRegistrableDomain } from "@/lib/domain-server";
 import { detectRegistrar } from "@/lib/providers/detection";
+import { getRdapBootstrapData } from "@/lib/rdap-bootstrap";
 import { scheduleSectionIfEarlier } from "@/lib/schedule";
 import type { Registration, RegistrationContacts } from "@/lib/schemas";
 
@@ -169,8 +170,12 @@ export async function getRegistration(domain: string): Promise<Registration> {
   }
 
   // ===== Slow path: Fetch fresh data from WHOIS/RDAP via rdapper =====
+  // Fetch bootstrap data with Next.js caching to avoid redundant IANA requests
+  const bootstrapData = await getRdapBootstrapData();
+
   const { ok, record, error } = await lookup(registrable, {
     timeoutMs: 5000,
+    customBootstrapData: bootstrapData,
   });
 
   if (!ok || !record) {

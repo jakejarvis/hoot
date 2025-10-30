@@ -48,7 +48,6 @@
 - Global setup in `vitest.setup.ts`:
   - Mocks analytics clients/servers (`@/lib/analytics/server` and `@/lib/analytics/client`).
   - Mocks `server-only` module.
-  - `unstable_cache` mocked as a no-op; caching behavior is not under test.
 - Database in tests: Drizzle client is not globally mocked. Replace `@/server/db/client` with a PGlite-backed instance when needed (`@/lib/db/pglite`).
 - Redis in tests: do NOT use globals. Mock per-suite with the in-memory adapter:
   - In `beforeAll`: `const { makeInMemoryRedis } = await import("@/lib/redis-mock"); const impl = makeInMemoryRedis(); vi.doMock("@/lib/redis", () => impl);`

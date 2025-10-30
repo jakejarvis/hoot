@@ -8,44 +8,67 @@ export const USER_AGENT =
 
 export const REPOSITORY_SLUG = "jakejarvis/domainstack.io";
 
-// Time constants
-const SECONDS_PER_HOUR = 60 * 60;
-const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
+/**
+ * RDAP Bootstrap Registry URL from IANA.
+ * This JSON file maps TLDs to their authoritative RDAP servers.
+ * @see https://datatracker.ietf.org/doc/html/rfc7484
+ */
+export const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
+
+/**
+ * Cloudflare IP Ranges URL.
+ * This JSON file contains the IP ranges for Cloudflare's network.
+ * @see https://developers.cloudflare.com/api/resources/ips/methods/list/
+ */
+export const CLOUDFLARE_IPS_URL = "https://api.cloudflare.com/client/v4/ips";
+
+// Time constants (in seconds)
+const ONE_HOUR = 60 * 60;
+const ONE_DAY = 24 * ONE_HOUR;
+const ONE_WEEK = 7 * ONE_DAY;
+
+// RDAP bootstrap data (dns.json from IANA)
+// Changes infrequently (new TLDs, server updates); safe to cache aggressively
+export const TTL_RDAP_BOOTSTRAP = ONE_DAY; // 24 hours
+
+// Cloudflare IP ranges
+// Changes infrequently (new IP ranges); safe to cache aggressively
+export const TTL_CLOUDFLARE_IPS = ONE_DAY; // 24 hours
 
 // ===== Blob Storage Cache TTLs =====
 // How long to cache uploaded assets (favicons, screenshots, social images)
-export const TTL_FAVICON = 7 * SECONDS_PER_DAY; // 1 week
-export const TTL_SCREENSHOT = 14 * SECONDS_PER_DAY; // 2 weeks
-export const TTL_SOCIAL_PREVIEW = 7 * SECONDS_PER_DAY; // 1 week
+export const TTL_FAVICON = ONE_WEEK; // 1 week
+export const TTL_SCREENSHOT = 2 * ONE_WEEK; // 2 weeks
+export const TTL_SOCIAL_PREVIEW = ONE_WEEK; // 1 week
 
 // ===== Database Cache Expiry TTLs =====
 // When cached data in Postgres becomes stale and needs refresh.
 // Used by lib/db/ttl.ts functions to calculate expiresAt timestamps.
 
 // Registration data
-export const TTL_REGISTRATION_REGISTERED = SECONDS_PER_DAY; // 24 hours
-export const TTL_REGISTRATION_NEAR_EXPIRY = SECONDS_PER_HOUR; // 1 hour (aggressive near expiry)
-export const TTL_REGISTRATION_EXPIRY_THRESHOLD = 7 * SECONDS_PER_DAY; // 7 days (when to switch to aggressive)
+export const TTL_REGISTRATION_REGISTERED = ONE_DAY; // 24 hours
+export const TTL_REGISTRATION_NEAR_EXPIRY = ONE_HOUR; // 1 hour (aggressive near expiry)
+export const TTL_REGISTRATION_EXPIRY_THRESHOLD = ONE_WEEK; // 7 days (when to switch to aggressive)
 
 // DNS records
-export const TTL_DNS_DEFAULT = SECONDS_PER_HOUR; // 1 hour (fallback when no TTL provided)
-export const TTL_DNS_MAX = SECONDS_PER_DAY; // 24 hours (cap for received TTLs)
+export const TTL_DNS_DEFAULT = ONE_HOUR; // 1 hour (fallback when no TTL provided)
+export const TTL_DNS_MAX = ONE_DAY; // 24 hours (cap for received TTLs)
 
 // TLS certificates
-export const TTL_CERTIFICATES_WINDOW = SECONDS_PER_DAY; // 24 hours (normal refresh window)
-export const TTL_CERTIFICATES_MIN = SECONDS_PER_HOUR; // 1 hour (minimum check interval)
-export const TTL_CERTIFICATES_EXPIRY_BUFFER = 48 * SECONDS_PER_HOUR; // 48 hours (start aggressive checking before expiry)
+export const TTL_CERTIFICATES_WINDOW = ONE_DAY; // 24 hours (normal refresh window)
+export const TTL_CERTIFICATES_MIN = ONE_HOUR; // 1 hour (minimum check interval)
+export const TTL_CERTIFICATES_EXPIRY_BUFFER = 2 * ONE_DAY; // 48 hours (start aggressive checking before expiry)
 
 // HTTP headers, hosting, SEO
-export const TTL_HEADERS = 12 * SECONDS_PER_HOUR; // 12 hours
-export const TTL_HOSTING = SECONDS_PER_DAY; // 24 hours
-export const TTL_SEO = SECONDS_PER_DAY; // 24 hours
+export const TTL_HEADERS = 12 * ONE_HOUR; // 12 hours
+export const TTL_HOSTING = ONE_DAY; // 24 hours
+export const TTL_SEO = ONE_DAY; // 24 hours
 
 // ===== Redis Cache TTLs =====
 // Lightweight registration status cache (stores only true/false, not full data).
 // Unregistered domains are ONLY cached here, never in Postgres.
-export const REDIS_TTL_REGISTERED = SECONDS_PER_DAY; // 24 hours
-export const REDIS_TTL_UNREGISTERED = SECONDS_PER_HOUR; // 1 hour
+export const REDIS_TTL_REGISTERED = ONE_DAY; // 24 hours
+export const REDIS_TTL_UNREGISTERED = ONE_HOUR; // 1 hour
 
 // ===== Background Job Revalidation =====
 // How often Inngest jobs attempt to refresh each section's data.
