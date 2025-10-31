@@ -29,9 +29,11 @@ function DomainReportContent({ domain }: { domain: string }) {
     registration.isRegistered === false && registration.source !== null;
 
   if (isConfirmedUnregistered) {
-    captureClient("report_unregistered_viewed", { domain });
+    captureClient("unregistered_viewed", { domain });
     return <DomainUnregisteredState domain={domain} />;
   }
+
+  captureClient("report_viewed", { domain });
 
   return (
     <div className="space-y-4">

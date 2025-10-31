@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { BASE_URL } from "@/lib/constants";
 import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Domainstack — Domain Intelligence Made Easy",
@@ -36,13 +37,15 @@ export default function RootLayout({
           <div aria-hidden className="-z-10 fixed inset-0 bg-background" />
 
           {/* App Shell */}
-          <TRPCProvider>
-            <div className="isolate flex min-h-svh flex-col">
-              <AppHeader />
-              <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-              <AppFooter />
-            </div>
-          </TRPCProvider>
+          <div className="isolate flex min-h-svh flex-col">
+            <AppHeader />
+            <main className="flex min-h-0 flex-1 flex-col">
+              <Suspense fallback={<div />}>
+                <TRPCProvider>{children}</TRPCProvider>
+              </Suspense>
+            </main>
+            <AppFooter />
+          </div>
           <Toaster />
         </Providers>
         <Analytics />
