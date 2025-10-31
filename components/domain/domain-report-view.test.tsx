@@ -17,12 +17,36 @@ vi.mock("@/lib/json-export", () => ({
 vi.mock("@/lib/trpc/client", () => ({
   useTRPC: () => ({
     domain: {
-      registration: { queryOptions: (input: { domain: string }) => ({ queryKey: ["registration", input] }) },
-      dns: { queryOptions: (input: { domain: string }) => ({ queryKey: ["dns", input] }) },
-      hosting: { queryOptions: (input: { domain: string }) => ({ queryKey: ["hosting", input] }) },
-      certificates: { queryOptions: (input: { domain: string }) => ({ queryKey: ["certificates", input] }) },
-      headers: { queryOptions: (input: { domain: string }) => ({ queryKey: ["headers", input] }) },
-      seo: { queryOptions: (input: { domain: string }) => ({ queryKey: ["seo", input] }) },
+      registration: {
+        queryOptions: (input: { domain: string }) => ({
+          queryKey: ["registration", input],
+        }),
+      },
+      dns: {
+        queryOptions: (input: { domain: string }) => ({
+          queryKey: ["dns", input],
+        }),
+      },
+      hosting: {
+        queryOptions: (input: { domain: string }) => ({
+          queryKey: ["hosting", input],
+        }),
+      },
+      certificates: {
+        queryOptions: (input: { domain: string }) => ({
+          queryKey: ["certificates", input],
+        }),
+      },
+      headers: {
+        queryOptions: (input: { domain: string }) => ({
+          queryKey: ["headers", input],
+        }),
+      },
+      seo: {
+        queryOptions: (input: { domain: string }) => ({
+          queryKey: ["seo", input],
+        }),
+      },
     },
   }),
 }));
@@ -46,7 +70,13 @@ vi.mock("@/components/domain/domain-unregistered-state", () => ({
 }));
 
 vi.mock("@/components/domain/export-button", () => ({
-  ExportButton: ({ onExportAction, disabled }: { onExportAction: () => void; disabled: boolean }) => (
+  ExportButton: ({
+    onExportAction,
+    disabled,
+  }: {
+    onExportAction: () => void;
+    disabled: boolean;
+  }) => (
     <button type="button" onClick={onExportAction} disabled={disabled}>
       Export
     </button>
@@ -58,32 +88,46 @@ vi.mock("@/components/domain/favicon", () => ({
 }));
 
 vi.mock("@/components/domain/screenshot-tooltip", () => ({
-  ScreenshotTooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ScreenshotTooltip: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock("@/components/domain/tools-dropdown", () => ({
   ToolsDropdown: () => <div>Tools</div>,
 }));
 
-vi.mock("@/components/domain/sections-with-data/registration-section-with-data", () => ({
-  RegistrationSectionWithData: () => <div>Registration</div>,
-}));
+vi.mock(
+  "@/components/domain/sections-with-data/registration-section-with-data",
+  () => ({
+    RegistrationSectionWithData: () => <div>Registration</div>,
+  }),
+);
 
-vi.mock("@/components/domain/sections-with-data/hosting-section-with-data", () => ({
-  HostingSectionWithData: () => <div>Hosting</div>,
-}));
+vi.mock(
+  "@/components/domain/sections-with-data/hosting-section-with-data",
+  () => ({
+    HostingSectionWithData: () => <div>Hosting</div>,
+  }),
+);
 
 vi.mock("@/components/domain/sections-with-data/dns-section-with-data", () => ({
   DnsSectionWithData: () => <div>DNS</div>,
 }));
 
-vi.mock("@/components/domain/sections-with-data/certificates-section-with-data", () => ({
-  CertificatesSectionWithData: () => <div>Certificates</div>,
-}));
+vi.mock(
+  "@/components/domain/sections-with-data/certificates-section-with-data",
+  () => ({
+    CertificatesSectionWithData: () => <div>Certificates</div>,
+  }),
+);
 
-vi.mock("@/components/domain/sections-with-data/headers-section-with-data", () => ({
-  HeadersSectionWithData: () => <div>Headers</div>,
-}));
+vi.mock(
+  "@/components/domain/sections-with-data/headers-section-with-data",
+  () => ({
+    HeadersSectionWithData: () => <div>Headers</div>,
+  }),
+);
 
 vi.mock("@/components/domain/sections-with-data/seo-section-with-data", () => ({
   SeoSectionWithData: () => <div>SEO</div>,
@@ -131,7 +175,9 @@ describe("DomainReportView Export", () => {
     await userEvent.click(exportButton);
 
     // Verify analytics was captured
-    expect(captureClient).toHaveBeenCalledWith("export_json_clicked", { domain });
+    expect(captureClient).toHaveBeenCalledWith("export_json_clicked", {
+      domain,
+    });
 
     // Verify exportDomainData was called with aggregated data
     expect(exportDomainData).toHaveBeenCalledWith(domain, {
@@ -144,4 +190,3 @@ describe("DomainReportView Export", () => {
     });
   });
 });
-
