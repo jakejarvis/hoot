@@ -33,7 +33,7 @@ export function HeadersSection({ data }: { data?: HttpHeader[] | null }) {
         <KeyValueGrid colsDesktop={2}>
           {data.map((h, index) => (
             <KeyValue
-              key={`${h.name}-${h.value}-${index}`}
+              key={`header-${h.name}-${index}`}
               label={h.name}
               value={h.value}
               copyable
