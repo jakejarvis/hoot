@@ -170,8 +170,13 @@ describe("DomainReportView Export", () => {
       expect(screen.getByText("example.com")).toBeInTheDocument();
     });
 
-    // Click export button
+    // Wait for export button to be enabled (all data loaded)
     const exportButton = screen.getByText("Export");
+    await waitFor(() => {
+      expect(exportButton).not.toBeDisabled();
+    });
+
+    // Click export button
     await userEvent.click(exportButton);
 
     // Verify analytics was captured
@@ -188,5 +193,39 @@ describe("DomainReportView Export", () => {
       headers: [],
       seo: { title: "Test" },
     });
+  });
+
+  it("disables export button until all data is loaded", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: Number.POSITIVE_INFINITY,
+        },
+      },
+    });
+
+    const domain = "example.com";
+
+    // Only set registration data initially
+    queryClient.setQueryData(["registration", { domain }], {
+      isRegistered: true,
+      domain: "example.com",
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <DomainReportView domain={domain} />
+      </QueryClientProvider>,
+    );
+
+    // Wait for component to render
+    await waitFor(() => {
+      expect(screen.getByText("example.com")).toBeInTheDocument();
+    });
+
+    // Export button should be disabled when not all data is loaded
+    const exportButton = screen.getByText("Export");
+    expect(exportButton).toBeDisabled();
   });
 });

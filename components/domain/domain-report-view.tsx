@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
-import { Suspense } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
 import { ExportButton } from "@/components/domain/export-button";
@@ -29,6 +29,7 @@ function DomainReportContent({ domain }: { domain: string }) {
   const { data: registration } = useRegistrationQuery(domain);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
+  const [allDataLoaded, setAllDataLoaded] = useState(false);
 
   // Show unregistered state if confirmed unregistered
   const isConfirmedUnregistered =
@@ -36,6 +37,27 @@ function DomainReportContent({ domain }: { domain: string }) {
 
   // Add to search history (only for registered domains)
   useDomainHistory(isConfirmedUnregistered ? "" : domain);
+
+  // Memoize query keys to avoid repeated queryOptions calls
+  const queryKeys = useMemo(
+    () => ({
+      registration: trpc.domain.registration.queryOptions({ domain }).queryKey,
+      dns: trpc.domain.dns.queryOptions({ domain }).queryKey,
+      hosting: trpc.domain.hosting.queryOptions({ domain }).queryKey,
+      certificates: trpc.domain.certificates.queryOptions({ domain }).queryKey,
+      headers: trpc.domain.headers.queryOptions({ domain }).queryKey,
+      seo: trpc.domain.seo.queryOptions({ domain }).queryKey,
+    }),
+    [trpc, domain],
+  );
+
+  // Check if all section data is loaded in cache
+  useEffect(() => {
+    const hasAllData = Object.values(queryKeys).every(
+      (key) => queryClient.getQueryData(key) !== undefined,
+    );
+    setAllDataLoaded(hasAllData);
+  }, [queryClient, queryKeys]);
 
   if (isConfirmedUnregistered) {
     captureClient("unregistered_viewed", { domain });
@@ -49,25 +71,13 @@ function DomainReportContent({ domain }: { domain: string }) {
     captureClient("export_json_clicked", { domain });
 
     try {
-      // Get query keys for all domain sections
-      const registrationKey = trpc.domain.registration.queryOptions({
-        domain,
-      }).queryKey;
-      const dnsKey = trpc.domain.dns.queryOptions({ domain }).queryKey;
-      const hostingKey = trpc.domain.hosting.queryOptions({ domain }).queryKey;
-      const certificatesKey = trpc.domain.certificates.queryOptions({
-        domain,
-      }).queryKey;
-      const headersKey = trpc.domain.headers.queryOptions({ domain }).queryKey;
-      const seoKey = trpc.domain.seo.queryOptions({ domain }).queryKey;
-
-      // Read data from cache
-      const registrationData = queryClient.getQueryData(registrationKey);
-      const dnsData = queryClient.getQueryData(dnsKey);
-      const hostingData = queryClient.getQueryData(hostingKey);
-      const certificatesData = queryClient.getQueryData(certificatesKey);
-      const headersData = queryClient.getQueryData(headersKey);
-      const seoData = queryClient.getQueryData(seoKey);
+      // Read data from cache using memoized query keys
+      const registrationData = queryClient.getQueryData(queryKeys.registration);
+      const dnsData = queryClient.getQueryData(queryKeys.dns);
+      const hostingData = queryClient.getQueryData(queryKeys.hosting);
+      const certificatesData = queryClient.getQueryData(queryKeys.certificates);
+      const headersData = queryClient.getQueryData(queryKeys.headers);
+      const seoData = queryClient.getQueryData(queryKeys.seo);
 
       // Aggregate into export format
       const exportData = {
@@ -113,7 +123,10 @@ function DomainReportContent({ domain }: { domain: string }) {
         </ScreenshotTooltip>
 
         <div className="flex items-center gap-2">
-          <ExportButton onExportAction={handleExport} />
+          <ExportButton
+            onExportAction={handleExport}
+            disabled={!allDataLoaded}
+          />
 
           <ToolsDropdown domain={domain} />
         </div>
