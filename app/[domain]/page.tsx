@@ -36,8 +36,6 @@ export default async function DomainPage({
 }: {
   params: Promise<{ domain: string }>;
 }) {
-  "use cache";
-
   const { domain: raw } = await params;
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
