@@ -6,6 +6,7 @@ describe("isCloudflareIp", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
+
   it("matches IPv4 and IPv6 against ranges", async () => {
     // Mock fetch of CF ranges
     const body = (data: unknown) =>
