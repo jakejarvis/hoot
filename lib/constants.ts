@@ -27,14 +27,6 @@ const ONE_HOUR = 60 * 60;
 const ONE_DAY = 24 * ONE_HOUR;
 const ONE_WEEK = 7 * ONE_DAY;
 
-// RDAP bootstrap data (dns.json from IANA)
-// Now cached with Cache Components: cacheLife('days')
-// Migration note: Previously used TTL_RDAP_BOOTSTRAP = ONE_DAY
-
-// Cloudflare IP ranges
-// Now cached with Cache Components: cacheLife('days')
-// Migration note: Previously used TTL_CLOUDFLARE_IPS = ONE_DAY
-
 // ===== Blob Storage Cache TTLs =====
 // How long to cache uploaded assets (favicons, screenshots, social images)
 export const TTL_FAVICON = ONE_WEEK; // 1 week
