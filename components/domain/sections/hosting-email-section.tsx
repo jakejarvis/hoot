@@ -36,9 +36,10 @@ const HostingMap = dynamic(
 
 export function HostingEmailSection({ data }: { data?: Hosting | null }) {
   const hasAnyProvider =
-    data?.dnsProvider.name ||
-    data?.hostingProvider.name ||
-    data?.emailProvider.name;
+    data &&
+    (data.dnsProvider.name ||
+      data.hostingProvider.name ||
+      data.emailProvider.name);
 
   return (
     <Section {...sections.hosting}>
