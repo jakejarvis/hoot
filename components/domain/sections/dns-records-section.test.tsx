@@ -35,14 +35,7 @@ describe("DnsRecordsSection", () => {
       { type: "NS", name: "ns", value: "ns1.example.com" },
     ] as unknown as import("@/lib/schemas").DnsRecord[];
 
-    render(
-      <DnsRecordsSection
-        records={records}
-        isLoading={false}
-        isError={false}
-        onRetryAction={() => {}}
-      />,
-    );
+    render(<DnsRecordsSection records={records} />);
 
     expect(screen.getByText("A Records")).toBeInTheDocument();
     const counts = screen.getAllByText("count:1");
@@ -50,25 +43,8 @@ describe("DnsRecordsSection", () => {
     expect(screen.getByText("MX Records")).toBeInTheDocument();
   });
 
-  it("shows error and loading states", () => {
-    render(
-      <DnsRecordsSection
-        records={null}
-        isLoading={false}
-        isError
-        onRetryAction={() => {}}
-      />,
-    );
-    expect(screen.getByText(/Failed to load DNS/i)).toBeInTheDocument();
-
-    render(
-      <DnsRecordsSection
-        records={null}
-        isLoading
-        isError={false}
-        onRetryAction={() => {}}
-      />,
-    );
-    expect(screen.getAllByText("DNS Records").length).toBeGreaterThan(0);
+  it("shows empty state when no records", () => {
+    render(<DnsRecordsSection records={null} />);
+    expect(screen.getByText(/No DNS records found/i)).toBeInTheDocument();
   });
 });

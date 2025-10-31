@@ -6,14 +6,11 @@ import {
   GraduationCap,
   HatGlasses,
 } from "lucide-react";
-import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
-import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { RelativeExpiryString } from "@/components/domain/relative-expiry";
 import { Section } from "@/components/domain/section";
-import { SectionContent } from "@/components/domain/section-content";
 import {
   Tooltip,
   TooltipContent,
@@ -25,188 +22,147 @@ import { SECTION_DEFS } from "@/lib/sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
 
-export function RegistrationSection({
-  data,
-  isLoading,
-  isError,
-  onRetryAction,
-}: {
-  data?: Registration | null;
-  isLoading: boolean;
-  isError: boolean;
-  onRetryAction: () => void;
-}) {
-  const registrant: RegistrantView | null = data
-    ? extractRegistrantView(data)
-    : null;
+export function RegistrationSection({ data }: { data?: Registration | null }) {
+  if (!data) return null;
 
-  // Check if WHOIS/RDAP is unavailable for this TLD
-  const isWhoisUnavailable = data && data.source === null;
+  const registrant = extractRegistrantView(data);
+  const isWhoisUnavailable = data.source === null;
 
   return (
-    <Section
-      {...SECTION_DEFS.registration}
-      isError={isError}
-      isLoading={isLoading}
-    >
-      <SectionContent
-        isLoading={isLoading}
-        isError={isError}
-        data={data ?? null}
-        renderLoading={() => (
-          <KeyValueGrid colsDesktop={2}>
-            <KeyValueSkeleton label="Registrar" withLeading withSuffix />
-            <KeyValueSkeleton label="Registrant" />
-            <KeyValueSkeleton label="Created" />
-            <KeyValueSkeleton label="Expires" withSuffix />
-          </KeyValueGrid>
-        )}
-        renderData={(d) => {
-          // If WHOIS/RDAP is unavailable, show a helpful message
-          if (isWhoisUnavailable) {
-            return (
-              <div className="flex items-start gap-3 rounded-lg border border-warning-border bg-warning-border/10 p-4 text-sm">
-                <AlertCircle className="mt-0.5 size-4 flex-shrink-0 text-yellow-800 dark:text-yellow-200" />
-                <div className="space-y-1">
-                  <p className="font-medium text-yellow-800 dark:text-yellow-200">
-                    Registration Data Unavailable
-                  </p>
-                  <p className="text-yellow-800/90 dark:text-yellow-200/80">
-                    The{" "}
-                    <code className="rounded bg-amber-900/10 px-1 py-0.5 font-mono text-xs dark:bg-amber-100/10">
-                      .{d.tld}
-                    </code>{" "}
-                    registry does not publish public WHOIS/RDAP data.
-                    Registration details cannot be verified for this domain.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          // Normal registration data display
-          return (
-            <KeyValueGrid colsDesktop={2}>
-              <KeyValue
-                label="Registrar"
-                value={d.registrarProvider?.name || "Unknown"}
-                leading={
-                  d.registrarProvider?.domain ? (
-                    <Favicon
-                      domain={d.registrarProvider.domain}
-                      size={16}
-                      className="rounded"
-                    />
-                  ) : undefined
-                }
-                suffix={
-                  d.source ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="inline-flex items-center gap-[5px]">
-                          <span>
-                            Verified by{" "}
-                            <span className="font-medium">
-                              {d.source === "rdap" &&
-                              Array.isArray(d.rdapServers) &&
-                              d.rdapServers.length > 0 ? (
-                                <a
-                                  href={
-                                    d.rdapServers[d.rdapServers.length - 1] ??
-                                    "#"
-                                  }
-                                  target="_blank"
-                                  rel="noopener"
-                                  className="underline underline-offset-2"
-                                >
-                                  {extractSourceDomain(
-                                    d.rdapServers[d.rdapServers.length - 1],
-                                  ) ?? "RDAP"}
-                                </a>
-                              ) : (
-                                (d.whoisServer ?? "WHOIS")
-                              )}
-                            </span>
-                          </span>
-                          <a
-                            href={
-                              d.source === "rdap"
-                                ? "https://about.rdap.org/"
-                                : "https://en.wikipedia.org/wiki/WHOIS"
-                            }
-                            target="_blank"
-                            rel="noopener"
-                            title={`Learn about ${
-                              d.source === "rdap" ? "RDAP" : "WHOIS"
-                            }`}
-                            className="text-muted/80"
-                          >
-                            <GraduationCap className="size-3" />
-                          </a>
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : undefined
-                }
-              />
-
-              <KeyValue
-                label="Registrant"
-                value={
-                  d.privacyEnabled || !registrant
-                    ? "Hidden"
-                    : formatRegistrant(registrant)
-                }
-                leading={
-                  d.privacyEnabled || !registrant ? (
-                    <HatGlasses className="stroke-muted-foreground" />
-                  ) : undefined
-                }
-              />
-
-              <KeyValue
-                label="Created"
-                value={formatDate(d.creationDate || "Unknown")}
-                valueTooltip={
-                  d.creationDate ? formatDateTimeUtc(d.creationDate) : undefined
-                }
-              />
-
-              <KeyValue
-                label="Expires"
-                value={formatDate(d.expirationDate || "Unknown")}
-                valueTooltip={
-                  d.expirationDate
-                    ? formatDateTimeUtc(d.expirationDate)
-                    : undefined
-                }
-                suffix={
-                  d.expirationDate ? (
-                    <span className="text-[11px] text-muted-foreground leading-none">
-                      <RelativeExpiryString
-                        to={d.expirationDate}
-                        dangerDays={30}
-                        warnDays={45}
-                      />
+    <Section {...SECTION_DEFS.registration}>
+      {isWhoisUnavailable ? (
+        <div className="flex items-start gap-3 rounded-lg border border-warning-border bg-warning-border/10 p-4 text-sm">
+          <AlertCircle className="mt-0.5 size-4 flex-shrink-0 text-yellow-800 dark:text-yellow-200" />
+          <div className="space-y-1">
+            <p className="font-medium text-yellow-800 dark:text-yellow-200">
+              Registration Data Unavailable
+            </p>
+            <p className="text-yellow-800/90 dark:text-yellow-200/80">
+              The{" "}
+              <code className="rounded bg-amber-900/10 px-1 py-0.5 font-mono text-xs dark:bg-amber-100/10">
+                .{data.tld}
+              </code>{" "}
+              registry does not publish public WHOIS/RDAP data. Registration
+              details cannot be verified for this domain.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <KeyValueGrid colsDesktop={2}>
+          <KeyValue
+            label="Registrar"
+            value={data.registrarProvider?.name || "Unknown"}
+            leading={
+              data.registrarProvider?.domain ? (
+                <Favicon
+                  domain={data.registrarProvider.domain}
+                  size={16}
+                  className="rounded"
+                />
+              ) : undefined
+            }
+            suffix={
+              data.source ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
                     </span>
-                  ) : null
-                }
-              />
-            </KeyValueGrid>
-          );
-        }}
-        renderError={() => (
-          <ErrorWithRetry
-            message="Failed to load WHOIS."
-            onRetryAction={onRetryAction}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="inline-flex items-center gap-[5px]">
+                      <span>
+                        Verified by{" "}
+                        <span className="font-medium">
+                          {data.source === "rdap" &&
+                          Array.isArray(data.rdapServers) &&
+                          data.rdapServers.length > 0 ? (
+                            <a
+                              href={
+                                data.rdapServers[data.rdapServers.length - 1] ??
+                                "#"
+                              }
+                              target="_blank"
+                              rel="noopener"
+                              className="underline underline-offset-2"
+                            >
+                              {extractSourceDomain(
+                                data.rdapServers[data.rdapServers.length - 1],
+                              ) ?? "RDAP"}
+                            </a>
+                          ) : (
+                            (data.whoisServer ?? "WHOIS")
+                          )}
+                        </span>
+                      </span>
+                      <a
+                        href={
+                          data.source === "rdap"
+                            ? "https://about.rdap.org/"
+                            : "https://en.wikipedia.org/wiki/WHOIS"
+                        }
+                        target="_blank"
+                        rel="noopener"
+                        title={`Learn about ${
+                          data.source === "rdap" ? "RDAP" : "WHOIS"
+                        }`}
+                        className="text-muted/80"
+                      >
+                        <GraduationCap className="size-3" />
+                      </a>
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : undefined
+            }
           />
-        )}
-      />
+
+          <KeyValue
+            label="Registrant"
+            value={
+              data.privacyEnabled || !registrant
+                ? "Hidden"
+                : formatRegistrant(registrant)
+            }
+            leading={
+              data.privacyEnabled || !registrant ? (
+                <HatGlasses className="stroke-muted-foreground" />
+              ) : undefined
+            }
+          />
+
+          <KeyValue
+            label="Created"
+            value={formatDate(data.creationDate || "Unknown")}
+            valueTooltip={
+              data.creationDate
+                ? formatDateTimeUtc(data.creationDate)
+                : undefined
+            }
+          />
+
+          <KeyValue
+            label="Expires"
+            value={formatDate(data.expirationDate || "Unknown")}
+            valueTooltip={
+              data.expirationDate
+                ? formatDateTimeUtc(data.expirationDate)
+                : undefined
+            }
+            suffix={
+              data.expirationDate ? (
+                <span className="text-[11px] text-muted-foreground leading-none">
+                  <RelativeExpiryString
+                    to={data.expirationDate}
+                    dangerDays={30}
+                    warnDays={45}
+                  />
+                </span>
+              ) : null
+            }
+          />
+        </KeyValueGrid>
+      )}
     </Section>
   );
 }

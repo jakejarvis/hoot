@@ -3,11 +3,9 @@
 import { hasFlag } from "country-flag-icons";
 import { MailQuestionMark } from "lucide-react";
 import dynamic from "next/dynamic";
-import { ErrorWithRetry } from "@/components/domain/error-with-retry";
 import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
-import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import {
   Empty,
@@ -30,45 +28,15 @@ const HostingMap = dynamic(
   },
 );
 
-export function HostingEmailSection({
-  data,
-  isLoading,
-  isError,
-  onRetryAction,
-}: {
-  data?: Hosting | null;
-  isLoading: boolean;
-  isError: boolean;
-  onRetryAction: () => void;
-}) {
+export function HostingEmailSection({ data }: { data?: Hosting | null }) {
+  const hasAnyProvider =
+    data?.dnsProvider.name ||
+    data?.hostingProvider.name ||
+    data?.emailProvider.name;
+
   return (
-    <Section {...SECTION_DEFS.hosting} isError={isError} isLoading={isLoading}>
-      {isLoading ? (
-        <>
-          <KeyValueGrid colsDesktop={3}>
-            <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
-            <KeyValueSkeleton
-              label="Hosting"
-              withLeading
-              widthClass="w-[100px]"
-            />
-            <KeyValueSkeleton
-              label="Email"
-              withLeading
-              widthClass="w-[100px]"
-            />
-          </KeyValueGrid>
-
-          <KeyValueSkeleton
-            label="Location"
-            withLeading
-            widthClass="w-[100px]"
-          />
-
-          {/* Map skeleton provided by dynamic component's loading prop; keep spacing */}
-          <div className="h-[280px] w-full rounded-2xl border border-black/10 bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10" />
-        </>
-      ) : data ? (
+    <Section {...SECTION_DEFS.hosting}>
+      {hasAnyProvider ? (
         <>
           <KeyValueGrid colsDesktop={3}>
             <KeyValue
@@ -141,11 +109,6 @@ export function HostingEmailSection({
             </>
           ) : null}
         </>
-      ) : isError ? (
-        <ErrorWithRetry
-          message="Failed to load hosting details."
-          onRetryAction={onRetryAction}
-        />
       ) : (
         <Empty className="border border-dashed">
           <EmptyHeader>

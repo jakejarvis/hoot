@@ -1,6 +1,8 @@
+import "server-only";
 import * as ipaddr from "ipaddr.js";
+import { cacheLife } from "next/cache";
 import { cache } from "react";
-import { CLOUDFLARE_IPS_URL, TTL_CLOUDFLARE_IPS } from "@/lib/constants";
+import { CLOUDFLARE_IPS_URL } from "@/lib/constants";
 import { ipV4InCidr, ipV6InCidr } from "@/lib/ip";
 
 export interface CloudflareIpRanges {
@@ -11,10 +13,19 @@ export interface CloudflareIpRanges {
 let lastLoadedIpv4Parsed: Array<[ipaddr.IPv4, number]> | undefined;
 let lastLoadedIpv6Parsed: Array<[ipaddr.IPv6, number]> | undefined;
 
+/**
+ * Fetch Cloudflare IP ranges with Cache Components.
+ *
+ * The IP ranges change infrequently (when Cloudflare expands infrastructure),
+ * so we cache for 1 day using Next.js 16 Cache Components.
+ *
+ * Also wrapped in React's cache() for per-request deduplication.
+ */
 const getCloudflareIpRanges = cache(async (): Promise<CloudflareIpRanges> => {
-  const res = await fetch(CLOUDFLARE_IPS_URL, {
-    next: { revalidate: TTL_CLOUDFLARE_IPS },
-  });
+  "use cache";
+  cacheLife("days");
+
+  const res = await fetch(CLOUDFLARE_IPS_URL);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch Cloudflare IPs: ${res.status}`);

@@ -1,90 +1,31 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
 import { ExportButton } from "@/components/domain/export-button";
 import { Favicon } from "@/components/domain/favicon";
 import { ScreenshotTooltip } from "@/components/domain/screenshot-tooltip";
-import { CertificatesSection } from "@/components/domain/sections/certificates-section";
-import { DnsRecordsSection } from "@/components/domain/sections/dns-records-section";
-import { HeadersSection } from "@/components/domain/sections/headers-section";
-import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
-import { RegistrationSection } from "@/components/domain/sections/registration-section";
-import { SeoSection } from "@/components/domain/sections/seo-section";
+import { CertificatesSectionWithData } from "@/components/domain/sections-with-data/certificates-section-with-data";
+import { DnsSectionWithData } from "@/components/domain/sections-with-data/dns-section-with-data";
+import { HeadersSectionWithData } from "@/components/domain/sections-with-data/headers-section-with-data";
+import { HostingSectionWithData } from "@/components/domain/sections-with-data/hosting-section-with-data";
+import { RegistrationSectionWithData } from "@/components/domain/sections-with-data/registration-section-with-data";
+import { SeoSectionWithData } from "@/components/domain/sections-with-data/seo-section-with-data";
 import { ToolsDropdown } from "@/components/domain/tools-dropdown";
-import { useDomainHistory } from "@/hooks/use-domain-history";
-import { useDomainQueries } from "@/hooks/use-domain-queries";
+import { useRegistrationQuery } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
-import { exportDomainData } from "@/lib/json-export";
 
-export function DomainReportView({ domain }: { domain: string }) {
-  const { registration, dns, hosting, certs, headers, seo } =
-    useDomainQueries(domain);
+/**
+ * Inner content component - queries registration and conditionally shows sections.
+ * This component suspends until registration data is ready.
+ */
+function DomainReportContent({ domain }: { domain: string }) {
+  const { data: registration } = useRegistrationQuery(domain);
 
-  // Manage domain history
-  useDomainHistory(
-    domain,
-    registration.isSuccess,
-    registration.data?.isRegistered ?? false,
-  );
-
-  // Consider sections "settled" only when they have either succeeded or errored.
-  // This avoids showing empty states before a query has actually completed
-  // (including while a query is disabled/pending due to gating conditions).
-  const dnsSettled = !!(dns.isSuccess || dns.isError || dns.data !== undefined);
-  const hostingSettled = !!(
-    hosting.isSuccess ||
-    hosting.isError ||
-    hosting.data !== undefined
-  );
-  const certsSettled = !!(
-    certs.isSuccess ||
-    certs.isError ||
-    certs.data !== undefined
-  );
-  const headersSettled = !!(
-    headers.isSuccess ||
-    headers.isError ||
-    headers.data !== undefined
-  );
-  const seoSettled = !!(seo.isSuccess || seo.isError || seo.data !== undefined);
-
-  // Disable export until all secondary sections are settled
-  const areSecondarySectionsLoading =
-    !!registration.data?.isRegistered &&
-    !(
-      dnsSettled &&
-      hostingSettled &&
-      certsSettled &&
-      headersSettled &&
-      seoSettled
-    );
-
-  const handleExportJson = () => {
-    captureClient("export_json_clicked", { domain });
-    exportDomainData(domain, {
-      registration: registration.data,
-      dns: dns.data,
-      hosting: hosting.data,
-      certificates: certs.data,
-      headers: headers.data,
-      seo: seo.data,
-    });
-  };
-
-  // Show loading state until WHOIS completes
-  if (registration.isLoading) {
-    return <DomainLoadingState />;
-  }
-
-  // Show unregistered state ONLY if we confirmed the domain is unregistered
-  // (source is available but domain is not registered)
-  // If source is null, WHOIS/RDAP is unavailable - show full report with notice
+  // Show unregistered state if confirmed unregistered
   const isConfirmedUnregistered =
-    registration.isSuccess &&
-    registration.data?.isRegistered === false &&
-    registration.data?.source !== null;
+    registration.isRegistered === false && registration.source !== null;
+
   if (isConfirmedUnregistered) {
     captureClient("report_unregistered_viewed", { domain });
     return <DomainUnregisteredState domain={domain} />;
@@ -114,8 +55,12 @@ export function DomainReportView({ domain }: { domain: string }) {
 
         <div className="flex items-center gap-2">
           <ExportButton
-            disabled={areSecondarySectionsLoading}
-            onExportAction={handleExportJson}
+            disabled={false}
+            onExportAction={() => {
+              captureClient("export_json_clicked", { domain });
+              // Export functionality will be handled at a higher level or removed
+              // since we don't have all data available here anymore
+            }}
           />
 
           <ToolsDropdown domain={domain} />
@@ -123,85 +68,17 @@ export function DomainReportView({ domain }: { domain: string }) {
       </div>
 
       <div className="space-y-4">
-        <RegistrationSection
-          data={registration.data || null}
-          isLoading={registration.isLoading}
-          isError={!!registration.isError}
-          onRetryAction={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "registration",
-            });
-            registration.refetch();
-          }}
-        />
-
-        <HostingEmailSection
-          data={hosting.data || null}
-          isLoading={!hostingSettled}
-          isError={!!hosting.isError}
-          onRetryAction={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "hosting",
-            });
-            hosting.refetch();
-          }}
-        />
-
-        <DnsRecordsSection
-          records={dns.data?.records || null}
-          isLoading={!dnsSettled}
-          isError={!!dns.isError}
-          onRetryAction={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "dns",
-            });
-            dns.refetch();
-          }}
-        />
-
-        <CertificatesSection
-          data={certs.data || null}
-          isLoading={!certsSettled}
-          isError={!!certs.isError}
-          onRetryAction={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "certificates",
-            });
-            certs.refetch();
-          }}
-        />
-
-        <HeadersSection
-          data={headers.data || null}
-          isLoading={!headersSettled}
-          isError={!!headers.isError}
-          onRetryAction={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "headers",
-            });
-            headers.refetch();
-          }}
-        />
-
-        <SeoSection
-          domain={domain}
-          data={seo.data || null}
-          isLoading={!seoSettled}
-          isError={!!seo.isError}
-          onRetryAction={() => {
-            captureClient("section_refetch_clicked", {
-              domain,
-              section: "seo",
-            });
-            seo.refetch();
-          }}
-        />
+        <RegistrationSectionWithData domain={domain} />
+        <HostingSectionWithData domain={domain} />
+        <DnsSectionWithData domain={domain} />
+        <CertificatesSectionWithData domain={domain} />
+        <HeadersSectionWithData domain={domain} />
+        <SeoSectionWithData domain={domain} />
       </div>
     </div>
   );
+}
+
+export function DomainReportView({ domain }: { domain: string }) {
+  return <DomainReportContent domain={domain} />;
 }

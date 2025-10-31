@@ -1,6 +1,12 @@
-import { Section } from "@/components/domain/section";
+import {
+  CertificatesSectionSkeleton,
+  DnsSectionSkeleton,
+  HeadersSectionSkeleton,
+  HostingSectionSkeleton,
+  RegistrationSectionSkeleton,
+  SeoSectionSkeleton,
+} from "@/components/domain/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SECTION_DEFS, SECTION_ORDER } from "@/lib/sections-meta";
 
 export function DomainLoadingState() {
   return (
@@ -16,9 +22,12 @@ export function DomainLoadingState() {
       </div>
 
       <div className="space-y-4">
-        {SECTION_ORDER.map((key) => (
-          <Section {...SECTION_DEFS[key]} key={key} isLoading />
-        ))}
+        <RegistrationSectionSkeleton />
+        <HostingSectionSkeleton />
+        <DnsSectionSkeleton />
+        <CertificatesSectionSkeleton />
+        <HeadersSectionSkeleton />
+        <SeoSectionSkeleton />
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
+import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainReportView } from "@/components/domain/domain-report-view";
 import { DomainSsrAnalytics } from "@/components/domain/domain-ssr-analytics";
 import { normalizeDomainInput } from "@/lib/domain";
@@ -34,6 +36,8 @@ export default async function DomainPage({
 }: {
   params: Promise<{ domain: string }>;
 }) {
+  "use cache";
+
   const { domain: raw } = await params;
   const decoded = decodeURIComponent(raw);
   const normalized = normalizeDomainInput(decoded);
@@ -60,9 +64,11 @@ export default async function DomainPage({
         canonicalized={normalized !== decoded}
       />
 
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <DomainReportView domain={normalized} />
-      </HydrationBoundary>
+      <Suspense fallback={<DomainLoadingState />}>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <DomainReportView domain={normalized} />
+        </HydrationBoundary>
+      </Suspense>
     </div>
   );
 }
