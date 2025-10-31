@@ -1,6 +1,8 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
+import { Suspense } from "react";
+import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
 import { ExportButton } from "@/components/domain/export-button";
 import { Favicon } from "@/components/domain/favicon";
@@ -80,5 +82,9 @@ function DomainReportContent({ domain }: { domain: string }) {
 }
 
 export function DomainReportView({ domain }: { domain: string }) {
-  return <DomainReportContent domain={domain} />;
+  return (
+    <Suspense fallback={<DomainLoadingState />}>
+      <DomainReportContent domain={domain} />
+    </Suspense>
+  );
 }
