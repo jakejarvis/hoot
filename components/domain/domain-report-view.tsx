@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
 import { ExportButton } from "@/components/domain/export-button";
@@ -96,6 +97,15 @@ function DomainReportContent({ domain }: { domain: string }) {
       captureClient("export_json_failed", {
         domain,
         error: error instanceof Error ? error.message : String(error),
+      });
+
+      // Show error toast
+      toast.error(`Failed to export ${domain}`, {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An error occurred while exporting",
+        position: "bottom-center",
       });
     }
   };
