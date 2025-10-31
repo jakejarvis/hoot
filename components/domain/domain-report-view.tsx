@@ -14,6 +14,7 @@ import { HostingSectionWithData } from "@/components/domain/sections-with-data/h
 import { RegistrationSectionWithData } from "@/components/domain/sections-with-data/registration-section-with-data";
 import { SeoSectionWithData } from "@/components/domain/sections-with-data/seo-section-with-data";
 import { ToolsDropdown } from "@/components/domain/tools-dropdown";
+import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useRegistrationQuery } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
 
@@ -27,6 +28,9 @@ function DomainReportContent({ domain }: { domain: string }) {
   // Show unregistered state if confirmed unregistered
   const isConfirmedUnregistered =
     registration.isRegistered === false && registration.source !== null;
+
+  // Add to search history (only for registered domains)
+  useDomainHistory(isConfirmedUnregistered ? "" : domain);
 
   if (isConfirmedUnregistered) {
     captureClient("unregistered_viewed", { domain });
