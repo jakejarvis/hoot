@@ -22,6 +22,70 @@ import { sections } from "@/lib/sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
 
+function VerificationBadge({
+  source,
+  rdapServers,
+  whoisServer,
+}: {
+  source?: string | null;
+  rdapServers?: string[] | null;
+  whoisServer?: string | null;
+}) {
+  if (!source) return null;
+
+  const serverUrl =
+    rdapServers && rdapServers.length > 0
+      ? rdapServers[rdapServers.length - 1]
+      : undefined;
+  const serverName = serverUrl
+    ? (extractSourceDomain(serverUrl) ?? "RDAP")
+    : (whoisServer ?? "WHOIS");
+  const learnUrl =
+    source === "rdap"
+      ? "https://about.rdap.org/"
+      : "https://en.wikipedia.org/wiki/WHOIS";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>
+          <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="inline-flex items-center gap-[5px]">
+          <span>
+            Verified by{" "}
+            <span className="font-medium">
+              {serverUrl ? (
+                <a
+                  href={serverUrl}
+                  target="_blank"
+                  rel="noopener"
+                  className="underline underline-offset-2"
+                >
+                  {serverName}
+                </a>
+              ) : (
+                serverName
+              )}
+            </span>
+          </span>
+          <a
+            href={learnUrl}
+            target="_blank"
+            rel="noopener"
+            title={`Learn about ${source === "rdap" ? "RDAP" : "WHOIS"}`}
+            className="text-muted/80"
+          >
+            <GraduationCap className="size-3" />
+          </a>
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function RegistrationSection({ data }: { data?: Registration | null }) {
   if (!data) return null;
 
@@ -62,58 +126,11 @@ export function RegistrationSection({ data }: { data?: Registration | null }) {
               ) : undefined
             }
             suffix={
-              data.source ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <BadgeCheck className="!h-3.5 !w-3.5 stroke-muted-foreground/80" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="inline-flex items-center gap-[5px]">
-                      <span>
-                        Verified by{" "}
-                        <span className="font-medium">
-                          {data.source === "rdap" &&
-                          Array.isArray(data.rdapServers) &&
-                          data.rdapServers.length > 0 ? (
-                            <a
-                              href={
-                                data.rdapServers[data.rdapServers.length - 1] ??
-                                "#"
-                              }
-                              target="_blank"
-                              rel="noopener"
-                              className="underline underline-offset-2"
-                            >
-                              {extractSourceDomain(
-                                data.rdapServers[data.rdapServers.length - 1],
-                              ) ?? "RDAP"}
-                            </a>
-                          ) : (
-                            (data.whoisServer ?? "WHOIS")
-                          )}
-                        </span>
-                      </span>
-                      <a
-                        href={
-                          data.source === "rdap"
-                            ? "https://about.rdap.org/"
-                            : "https://en.wikipedia.org/wiki/WHOIS"
-                        }
-                        target="_blank"
-                        rel="noopener"
-                        title={`Learn about ${
-                          data.source === "rdap" ? "RDAP" : "WHOIS"
-                        }`}
-                        className="text-muted/80"
-                      >
-                        <GraduationCap className="size-3" />
-                      </a>
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              ) : undefined
+              <VerificationBadge
+                source={data.source}
+                rdapServers={data.rdapServers}
+                whoisServer={data.whoisServer}
+              />
             }
           />
 
