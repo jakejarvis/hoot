@@ -34,6 +34,11 @@ const HostingMap = dynamic(
   },
 );
 
+function formatLocation(geo: Hosting["geo"]): string {
+  const parts = [geo.city, geo.region, geo.country].filter(Boolean);
+  return parts.join(", ");
+}
+
 export function HostingEmailSection({ data }: { data?: Hosting | null }) {
   const hasAnyProvider =
     data &&
@@ -91,11 +96,7 @@ export function HostingEmailSection({ data }: { data?: Hosting | null }) {
             <>
               <KeyValue
                 label="Location"
-                value={`${
-                  data.geo.city || data.geo.region || data.geo.country
-                    ? `${data.geo.city ? `${data.geo.city}, ` : ""}${data.geo.region ? `${data.geo.region}, ` : ""}${data.geo.country}`
-                    : ""
-                }`}
+                value={formatLocation(data.geo)}
                 leading={
                   data.geo.country_code &&
                   hasFlag(data.geo.country_code.toUpperCase()) ? (
