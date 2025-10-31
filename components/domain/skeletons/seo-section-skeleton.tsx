@@ -3,11 +3,11 @@ import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import { SubheadCountSkeleton } from "@/components/domain/subhead-count";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 export function SeoSectionSkeleton() {
   return (
-    <Section {...SECTION_DEFS.seo} isLoading>
+    <Section {...sections.seo} isLoading>
       <div className="space-y-4">
         {/* Meta Tags */}
         <div className="space-y-3">

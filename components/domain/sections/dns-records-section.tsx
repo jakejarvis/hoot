@@ -13,7 +13,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import type { DnsRecord } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 export function DnsRecordsSection({
   records,
@@ -37,7 +37,7 @@ export function DnsRecordsSection({
   }, [records]);
 
   return (
-    <Section {...SECTION_DEFS.dns}>
+    <Section {...sections.dns}>
       {records && records.length > 0 ? (
         <div className="space-y-4">
           <DnsGroup

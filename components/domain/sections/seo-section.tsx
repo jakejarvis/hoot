@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useProgressiveReveal } from "@/hooks/use-progressive-reveal";
 import type { SeoResponse, SocialPreviewProvider } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
 
 export function SeoSection({
@@ -94,7 +94,7 @@ export function SeoSection({
     useState<SocialPreviewProvider>("twitter");
 
   return (
-    <Section {...SECTION_DEFS.seo}>
+    <Section {...sections.seo}>
       {hasAnySeoMeta ? (
         <div className="space-y-4">
           <RedirectedAlert

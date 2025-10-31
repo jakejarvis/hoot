@@ -15,7 +15,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import type { Hosting } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
 
 const HostingMap = dynamic(
@@ -35,7 +35,7 @@ export function HostingEmailSection({ data }: { data?: Hosting | null }) {
     data?.emailProvider.name;
 
   return (
-    <Section {...SECTION_DEFS.hosting}>
+    <Section {...sections.hosting}>
       {hasAnyProvider ? (
         <>
           <KeyValueGrid colsDesktop={3}>

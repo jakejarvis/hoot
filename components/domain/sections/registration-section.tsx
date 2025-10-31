@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Registration } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 type RegistrantView = { organization: string; country: string; state?: string };
 
@@ -29,7 +29,7 @@ export function RegistrationSection({ data }: { data?: Registration | null }) {
   const isWhoisUnavailable = data.source === null;
 
   return (
-    <Section {...SECTION_DEFS.registration}>
+    <Section {...sections.registration}>
       {isWhoisUnavailable ? (
         <div className="flex items-start gap-3 rounded-lg border border-warning-border bg-warning-border/10 p-4 text-sm">
           <AlertCircle className="mt-0.5 size-4 flex-shrink-0 text-yellow-800 dark:text-yellow-200" />

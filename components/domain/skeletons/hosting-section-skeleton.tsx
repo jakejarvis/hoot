@@ -1,11 +1,11 @@
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 export function HostingSectionSkeleton() {
   return (
-    <Section {...SECTION_DEFS.hosting} isLoading>
+    <Section {...sections.hosting} isLoading>
       <KeyValueGrid colsDesktop={3}>
         <KeyValueSkeleton label="DNS" withLeading widthClass="w-[100px]" />
         <KeyValueSkeleton label="Hosting" withLeading widthClass="w-[100px]" />

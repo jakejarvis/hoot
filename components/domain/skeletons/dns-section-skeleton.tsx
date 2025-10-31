@@ -1,7 +1,7 @@
 import { KeyValueSkeleton } from "@/components/domain/key-value-skeleton";
 import { Section } from "@/components/domain/section";
 import { SubheadCountSkeleton } from "@/components/domain/subhead-count";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 function DnsGroupSkeleton({
   title,
@@ -32,7 +32,7 @@ function DnsGroupSkeleton({
 
 export function DnsSectionSkeleton() {
   return (
-    <Section {...SECTION_DEFS.dns} isLoading>
+    <Section {...sections.dns} isLoading>
       <div className="space-y-4">
         <DnsGroupSkeleton title="A Records" />
         <DnsGroupSkeleton title="AAAA Records" />

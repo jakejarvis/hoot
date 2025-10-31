@@ -12,11 +12,11 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import type { HttpHeader } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 export function HeadersSection({ data }: { data?: HttpHeader[] | null }) {
   return (
-    <Section {...SECTION_DEFS.headers}>
+    <Section {...sections.headers}>
       {data && data.length > 0 ? (
         <KeyValueGrid colsDesktop={2}>
           {(() => {

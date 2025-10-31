@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/tooltip";
 import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
-import { SECTION_DEFS } from "@/lib/sections-meta";
+import { sections } from "@/lib/sections-meta";
 
 export function CertificatesSection({ data }: { data?: Certificate[] | null }) {
   const [showAll, setShowAll] = useState(false);
@@ -37,7 +37,7 @@ export function CertificatesSection({ data }: { data?: Certificate[] | null }) {
   const remainingCerts = data && data.length > 1 ? data.slice(1) : [];
 
   return (
-    <Section {...SECTION_DEFS.certificates}>
+    <Section {...sections.certificates}>
       {firstCert ? (
         <>
           <Fragment
