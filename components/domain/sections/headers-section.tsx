@@ -14,33 +14,32 @@ import {
 import type { HttpHeader } from "@/lib/schemas";
 import { sections } from "@/lib/sections-meta";
 
+const IMPORTANT_HEADERS = new Set([
+  "strict-transport-security",
+  "content-security-policy",
+  "content-security-policy-report-only",
+  "x-frame-options",
+  "referrer-policy",
+  "server",
+  "x-powered-by",
+  "cache-control",
+  "permissions-policy",
+]);
+
 export function HeadersSection({ data }: { data?: HttpHeader[] | null }) {
   return (
     <Section {...sections.headers}>
       {data && data.length > 0 ? (
         <KeyValueGrid colsDesktop={2}>
-          {(() => {
-            const important = new Set([
-              "strict-transport-security",
-              "content-security-policy",
-              "content-security-policy-report-only",
-              "x-frame-options",
-              "referrer-policy",
-              "server",
-              "x-powered-by",
-              "cache-control",
-              "permissions-policy",
-            ]);
-            return data.map((h, index) => (
-              <KeyValue
-                key={`${h.name}-${h.value}-${index}`}
-                label={h.name}
-                value={h.value}
-                copyable
-                highlight={important.has(h.name)}
-              />
-            ));
-          })()}
+          {data.map((h, index) => (
+            <KeyValue
+              key={`${h.name}-${h.value}-${index}`}
+              label={h.name}
+              value={h.value}
+              copyable
+              highlight={IMPORTANT_HEADERS.has(h.name)}
+            />
+          ))}
         </KeyValueGrid>
       ) : (
         <Empty className="border border-dashed">
