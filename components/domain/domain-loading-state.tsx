@@ -11,11 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * Reusable loading state for domain reports.
  * Used by both route-level loading.tsx and Suspense fallback in DomainReportView.
- * Contains the fade-in animation, header skeleton, and all section skeletons.
+ * Contains the header skeleton and all section skeletons.
  */
 export function DomainLoadingState() {
   return (
-    <div className="fade-in slide-in-from-bottom-2 animate-in space-y-4">
+    <div className="space-y-4">
       {/* Domain header skeleton */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
