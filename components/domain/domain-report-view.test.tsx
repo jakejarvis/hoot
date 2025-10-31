@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DomainReportView } from "./domain-report-view";
 
 // Mock all required modules
@@ -51,14 +51,17 @@ vi.mock("@/lib/trpc/client", () => ({
   }),
 }));
 
+// Mock implementation for useRegistrationQuery
+const mockUseRegistrationQuery = vi.fn((domain: string) => ({
+  data: {
+    isRegistered: true,
+    domain,
+    source: "rdap" as "rdap" | "whois" | null,
+  },
+}));
+
 vi.mock("@/hooks/use-domain-queries", () => ({
-  useRegistrationQuery: () => ({
-    data: {
-      isRegistered: true,
-      domain: "example.com",
-      source: "rdap",
-    },
-  }),
+  useRegistrationQuery: (domain: string) => mockUseRegistrationQuery(domain),
 }));
 
 vi.mock("@/hooks/use-domain-history", () => ({
@@ -134,6 +137,16 @@ vi.mock("@/components/domain/sections-with-data/seo-section-with-data", () => ({
 }));
 
 describe("DomainReportView Export", () => {
+  beforeEach(() => {
+    // Reset to default mock implementation
+    mockUseRegistrationQuery.mockImplementation((domain: string) => ({
+      data: {
+        isRegistered: true,
+        domain,
+        source: "rdap",
+      },
+    }));
+  });
   it("calls exportDomainData with cached query data when Export button is clicked", async () => {
     const { exportDomainData } = await import("@/lib/json-export");
     const { captureClient } = await import("@/lib/analytics/client");
@@ -227,5 +240,80 @@ describe("DomainReportView Export", () => {
     // Export button should be disabled when not all data is loaded
     const exportButton = screen.getByText("Export");
     expect(exportButton).toBeDisabled();
+  });
+
+  it("supports testing different domains via domain-aware mock", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: Number.POSITIVE_INFINITY,
+        },
+      },
+    });
+
+    const domain = "test-domain.org";
+
+    // Pre-populate cache with test data for different domain
+    queryClient.setQueryData(["registration", { domain }], {
+      isRegistered: true,
+      domain,
+      source: "whois",
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <DomainReportView domain={domain} />
+      </QueryClientProvider>,
+    );
+
+    // Wait for component to render with the correct domain
+    await waitFor(() => {
+      expect(screen.getByText("test-domain.org")).toBeInTheDocument();
+    });
+
+    // Verify mock was called with the correct domain
+    expect(mockUseRegistrationQuery).toHaveBeenCalledWith(domain);
+  });
+
+  it("can test unregistered domains using mockImplementation", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: Number.POSITIVE_INFINITY,
+        },
+      },
+    });
+
+    const domain = "unregistered-domain.test";
+
+    // Customize mock to return unregistered state
+    // Note: source must be non-null to trigger unregistered state view
+    mockUseRegistrationQuery.mockImplementation((d: string) => ({
+      data: {
+        isRegistered: false,
+        domain: d,
+        source: "rdap",
+      },
+    }));
+
+    // Pre-populate cache with unregistered data
+    queryClient.setQueryData(["registration", { domain }], {
+      isRegistered: false,
+      domain,
+      source: "rdap",
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <DomainReportView domain={domain} />
+      </QueryClientProvider>,
+    );
+
+    // Wait for unregistered state to render
+    await waitFor(() => {
+      expect(screen.getByText("Unregistered")).toBeInTheDocument();
+    });
   });
 });
