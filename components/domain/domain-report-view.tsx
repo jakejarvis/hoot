@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { Suspense } from "react";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
@@ -17,6 +18,8 @@ import { ToolsDropdown } from "@/components/domain/tools-dropdown";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useRegistrationQuery } from "@/hooks/use-domain-queries";
 import { captureClient } from "@/lib/analytics/client";
+import { exportDomainData } from "@/lib/json-export";
+import { useTRPC } from "@/lib/trpc/client";
 
 /**
  * Inner content component - queries registration and conditionally shows sections.
@@ -24,6 +27,8 @@ import { captureClient } from "@/lib/analytics/client";
  */
 function DomainReportContent({ domain }: { domain: string }) {
   const { data: registration } = useRegistrationQuery(domain);
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
 
   // Show unregistered state if confirmed unregistered
   const isConfirmedUnregistered =
@@ -38,6 +43,52 @@ function DomainReportContent({ domain }: { domain: string }) {
   }
 
   captureClient("report_viewed", { domain });
+
+  // Export handler that reads all data from React Query cache
+  const handleExport = () => {
+    captureClient("export_json_clicked", { domain });
+
+    try {
+      // Get query keys for all domain sections
+      const registrationKey = trpc.domain.registration.queryOptions({
+        domain,
+      }).queryKey;
+      const dnsKey = trpc.domain.dns.queryOptions({ domain }).queryKey;
+      const hostingKey = trpc.domain.hosting.queryOptions({ domain }).queryKey;
+      const certificatesKey = trpc.domain.certificates.queryOptions({
+        domain,
+      }).queryKey;
+      const headersKey = trpc.domain.headers.queryOptions({ domain }).queryKey;
+      const seoKey = trpc.domain.seo.queryOptions({ domain }).queryKey;
+
+      // Read data from cache
+      const registrationData = queryClient.getQueryData(registrationKey);
+      const dnsData = queryClient.getQueryData(dnsKey);
+      const hostingData = queryClient.getQueryData(hostingKey);
+      const certificatesData = queryClient.getQueryData(certificatesKey);
+      const headersData = queryClient.getQueryData(headersKey);
+      const seoData = queryClient.getQueryData(seoKey);
+
+      // Aggregate into export format
+      const exportData = {
+        registration: registrationData ?? null,
+        dns: dnsData ?? null,
+        hosting: hostingData ?? null,
+        certificates: certificatesData ?? null,
+        headers: headersData ?? null,
+        seo: seoData ?? null,
+      };
+
+      // Export with partial data (graceful degradation)
+      exportDomainData(domain, exportData);
+    } catch (error) {
+      console.error("[export] failed to export domain data", error);
+      captureClient("export_json_failed", {
+        domain,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -62,14 +113,7 @@ function DomainReportContent({ domain }: { domain: string }) {
         </ScreenshotTooltip>
 
         <div className="flex items-center gap-2">
-          <ExportButton
-            disabled={false}
-            onExportAction={() => {
-              captureClient("export_json_clicked", { domain });
-              // Export functionality will be handled at a higher level or removed
-              // since we don't have all data available here anymore
-            }}
-          />
+          <ExportButton onExportAction={handleExport} />
 
           <ToolsDropdown domain={domain} />
         </div>

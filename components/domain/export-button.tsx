@@ -13,7 +13,10 @@ type ExportButtonProps = {
   onExportAction: () => void;
 };
 
-export function ExportButton({ disabled, onExportAction }: ExportButtonProps) {
+export function ExportButton({
+  disabled = false,
+  onExportAction,
+}: ExportButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
