@@ -15,7 +15,13 @@ import {
 import type { DnsRecord } from "@/lib/schemas";
 import { sections } from "@/lib/sections-meta";
 
-export function DnsSection({ records }: { records?: DnsRecord[] | null }) {
+export function DnsSection({
+  data,
+}: {
+  domain?: string;
+  data?: { records?: DnsRecord[] | null } | null;
+}) {
+  const records = data?.records;
   const recordsByType = useMemo(() => {
     const byType: Record<DnsRecord["type"], DnsRecord[]> = {
       A: [],

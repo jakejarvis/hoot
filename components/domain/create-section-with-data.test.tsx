@@ -52,9 +52,13 @@ describe("createSectionWithData", () => {
       data: testData,
     }));
 
-    const MockSection = vi.fn(({ records }: { records: string[] }) => (
-      <div data-testid="section">{records.join(", ")}</div>
-    ));
+    const MockSection = vi.fn(
+      ({ domain, data }: { domain: string; data: { records: string[] } }) => (
+        <div data-testid="section">
+          {domain}: {data.records.join(", ")}
+        </div>
+      ),
+    );
 
     const MockSkeleton = () => <div data-testid="skeleton">Loading...</div>;
 
@@ -62,7 +66,6 @@ describe("createSectionWithData", () => {
       mockUseQuery,
       MockSection,
       MockSkeleton,
-      (_domain, data) => ({ records: data.records }),
     );
 
     // Verify the factory creates the correct structure

@@ -40,7 +40,12 @@ function formatLocation(geo: Hosting["geo"]): string {
   return parts.join(", ");
 }
 
-export function HostingSection({ data }: { data?: Hosting | null }) {
+export function HostingSection({
+  data,
+}: {
+  domain?: string;
+  data?: Hosting | null;
+}) {
   // Early return for empty state - this satisfies TypeScript's control-flow analysis
   if (!data) {
     return (

@@ -35,7 +35,7 @@ describe("DnsSection", () => {
       { type: "NS", name: "ns", value: "ns1.example.com" },
     ] as unknown as import("@/lib/schemas").DnsRecord[];
 
-    render(<DnsSection records={records} />);
+    render(<DnsSection data={{ records }} />);
 
     expect(screen.getByText("A Records")).toBeInTheDocument();
     const counts = screen.getAllByText("count:1");
@@ -44,7 +44,7 @@ describe("DnsSection", () => {
   });
 
   it("shows empty state when no records", () => {
-    render(<DnsSection records={null} />);
+    render(<DnsSection data={{ records: null }} />);
     expect(screen.getByText(/No DNS records found/i)).toBeInTheDocument();
   });
 });

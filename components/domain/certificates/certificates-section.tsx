@@ -31,7 +31,12 @@ import { formatDate, formatDateTimeUtc } from "@/lib/format";
 import type { Certificate } from "@/lib/schemas";
 import { sections } from "@/lib/sections-meta";
 
-export function CertificatesSection({ data }: { data?: Certificate[] | null }) {
+export function CertificatesSection({
+  data,
+}: {
+  domain?: string;
+  data?: Certificate[] | null;
+}) {
   const [showAll, setShowAll] = useState(false);
   const firstCert = data && data.length > 0 ? data[0] : null;
   const remainingCerts = data && data.length > 1 ? data.slice(1) : [];

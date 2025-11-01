@@ -35,42 +35,36 @@ const RegistrationSectionWithData = createSectionWithData(
   useRegistrationQuery,
   RegistrationSection,
   RegistrationSectionSkeleton,
-  (_domain, data) => ({ data }),
 );
 
 const HostingSectionWithData = createSectionWithData(
   useHostingQuery,
   HostingSection,
   HostingSectionSkeleton,
-  (_domain, data) => ({ data }),
 );
 
 const DnsSectionWithData = createSectionWithData(
   useDnsQuery,
   DnsSection,
   DnsSectionSkeleton,
-  (_domain, data) => ({ records: data.records }),
 );
 
 const CertificatesSectionWithData = createSectionWithData(
   useCertificatesQuery,
   CertificatesSection,
   CertificatesSectionSkeleton,
-  (_domain, data) => ({ data }),
 );
 
 const HeadersSectionWithData = createSectionWithData(
   useHeadersQuery,
   HeadersSection,
   HeadersSectionSkeleton,
-  (_domain, data) => ({ data }),
 );
 
 const SeoSectionWithData = createSectionWithData(
   useSeoQuery,
   SeoSection,
   SeoSectionSkeleton,
-  (domain, data) => ({ domain, data }),
 );
 
 /**

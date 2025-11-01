@@ -9,10 +9,6 @@ interface QueryResult<TData> {
 
 type UseQueryHook<TData> = (domain: string) => QueryResult<TData>;
 
-interface SectionProps {
-  [key: string]: unknown;
-}
-
 /**
  * Higher-order factory that creates a SectionWithData component
  * following the Suspense+query+render pattern.
@@ -20,18 +16,26 @@ interface SectionProps {
  * @param useQuery - The query hook to fetch data (e.g., useHostingQuery)
  * @param Section - The presentational component to render with data
  * @param Skeleton - The skeleton component to show during loading
- * @param mapDataToProps - Function to map query data to Section props
+ * @param mapDataToProps - Optional function to map query data to Section props. Defaults to `(domain, data) => ({ domain, data })`
  * @returns A SectionWithData component that handles Suspense and data fetching
  */
-export function createSectionWithData<TData, TProps extends SectionProps>(
+export function createSectionWithData<
+  TData,
+  TProps extends Record<string, unknown> = { domain: string; data: TData },
+>(
   useQuery: UseQueryHook<TData>,
   Section: ComponentType<TProps>,
   Skeleton: ComponentType,
-  mapDataToProps: (domain: string, data: TData) => TProps,
+  mapDataToProps?: (domain: string, data: TData) => TProps,
 ) {
+  const defaultMapper = (domain: string, data: TData) =>
+    ({ domain, data }) as unknown as TProps;
+
+  const mapper = mapDataToProps ?? defaultMapper;
+
   function SectionContent({ domain }: { domain: string }) {
     const { data } = useQuery(domain);
-    const props = mapDataToProps(domain, data);
+    const props = mapper(domain, data);
     return <Section {...props} />;
   }
 

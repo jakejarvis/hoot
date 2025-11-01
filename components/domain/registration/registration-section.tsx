@@ -86,7 +86,12 @@ function VerificationBadge({
   );
 }
 
-export function RegistrationSection({ data }: { data?: Registration | null }) {
+export function RegistrationSection({
+  data,
+}: {
+  domain?: string;
+  data?: Registration | null;
+}) {
   if (!data) return null;
 
   const registrant = extractRegistrantView(data);

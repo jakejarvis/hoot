@@ -26,7 +26,12 @@ const IMPORTANT_HEADERS = new Set([
   "permissions-policy",
 ]);
 
-export function HeadersSection({ data }: { data?: HttpHeader[] | null }) {
+export function HeadersSection({
+  data,
+}: {
+  domain?: string;
+  data?: HttpHeader[] | null;
+}) {
   return (
     <Section {...sections.headers}>
       {data && data.length > 0 ? (
