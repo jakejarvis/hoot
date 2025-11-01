@@ -22,9 +22,9 @@ import {
 } from "@/components/brand-icons";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
-import { RedirectedAlert } from "@/components/domain/redirected-alert";
 import { Section } from "@/components/domain/section";
-import { SocialPreview } from "@/components/domain/social-preview";
+import { RedirectedAlert } from "@/components/domain/seo/redirected-alert";
+import { SocialPreview } from "@/components/domain/seo/social-preview";
 import { SubheadCount } from "@/components/domain/subhead-count";
 import {
   Accordion,

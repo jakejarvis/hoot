@@ -1,13 +1,13 @@
 "use client";
 
 import { Suspense } from "react";
-import { HostingEmailSection } from "@/components/domain/sections/hosting-email-section";
-import { HostingSectionSkeleton } from "@/components/domain/skeletons";
+import { HostingSection } from "@/components/domain/hosting/hosting-section";
+import { HostingSectionSkeleton } from "@/components/domain/hosting/hosting-section-skeleton";
 import { useHostingQuery } from "@/hooks/use-domain-queries";
 
 function HostingSectionContent({ domain }: { domain: string }) {
   const { data } = useHostingQuery(domain);
-  return <HostingEmailSection data={data} />;
+  return <HostingSection data={data} />;
 }
 
 export function HostingSectionWithData({ domain }: { domain: string }) {

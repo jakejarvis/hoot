@@ -62,6 +62,11 @@ const mockUseRegistrationQuery = vi.fn((domain: string) => ({
 
 vi.mock("@/hooks/use-domain-queries", () => ({
   useRegistrationQuery: (domain: string) => mockUseRegistrationQuery(domain),
+  useDnsQuery: vi.fn(() => ({ data: { records: [] } })),
+  useHostingQuery: vi.fn(() => ({ data: null })),
+  useCertificatesQuery: vi.fn(() => ({ data: [] })),
+  useHeadersQuery: vi.fn(() => ({ data: [] })),
+  useSeoQuery: vi.fn(() => ({ data: null })),
 }));
 
 vi.mock("@/hooks/use-domain-history", () => ({
@@ -86,7 +91,7 @@ vi.mock("@/components/domain/export-button", () => ({
   ),
 }));
 
-vi.mock("@/components/domain/favicon", () => ({
+vi.mock("@/components/favicon", () => ({
   Favicon: () => <div>Favicon</div>,
 }));
 
@@ -101,38 +106,32 @@ vi.mock("@/components/domain/tools-dropdown", () => ({
 }));
 
 vi.mock(
-  "@/components/domain/sections-with-data/registration-section-with-data",
+  "@/components/domain/registration/registration-section-with-data",
   () => ({
     RegistrationSectionWithData: () => <div>Registration</div>,
   }),
 );
 
-vi.mock(
-  "@/components/domain/sections-with-data/hosting-section-with-data",
-  () => ({
-    HostingSectionWithData: () => <div>Hosting</div>,
-  }),
-);
+vi.mock("@/components/domain/hosting/hosting-section-with-data", () => ({
+  HostingSectionWithData: () => <div>Hosting</div>,
+}));
 
-vi.mock("@/components/domain/sections-with-data/dns-section-with-data", () => ({
+vi.mock("@/components/domain/dns/dns-section-with-data", () => ({
   DnsSectionWithData: () => <div>DNS</div>,
 }));
 
 vi.mock(
-  "@/components/domain/sections-with-data/certificates-section-with-data",
+  "@/components/domain/certificates/certificates-section-with-data",
   () => ({
     CertificatesSectionWithData: () => <div>Certificates</div>,
   }),
 );
 
-vi.mock(
-  "@/components/domain/sections-with-data/headers-section-with-data",
-  () => ({
-    HeadersSectionWithData: () => <div>Headers</div>,
-  }),
-);
+vi.mock("@/components/domain/headers/headers-section-with-data", () => ({
+  HeadersSectionWithData: () => <div>Headers</div>,
+}));
 
-vi.mock("@/components/domain/sections-with-data/seo-section-with-data", () => ({
+vi.mock("@/components/domain/seo/seo-section-with-data", () => ({
   SeoSectionWithData: () => <div>SEO</div>,
 }));
 

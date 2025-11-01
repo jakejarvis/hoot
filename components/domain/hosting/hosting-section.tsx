@@ -3,10 +3,10 @@
 import { hasFlag } from "country-flag-icons";
 import { MailQuestionMark } from "lucide-react";
 import dynamic from "next/dynamic";
-import { Favicon } from "@/components/domain/favicon";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { Section } from "@/components/domain/section";
+import { Favicon } from "@/components/favicon";
 import {
   Empty,
   EmptyDescription,
@@ -20,7 +20,8 @@ import { sections } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
 
 const HostingMap = dynamic(
-  () => import("@/components/domain/hosting-map").then((m) => m.HostingMap),
+  () =>
+    import("@/components/domain/hosting/hosting-map").then((m) => m.HostingMap),
   {
     ssr: false,
     loading: () => (
@@ -39,7 +40,7 @@ function formatLocation(geo: Hosting["geo"]): string {
   return parts.join(", ");
 }
 
-export function HostingEmailSection({ data }: { data?: Hosting | null }) {
+export function HostingSection({ data }: { data?: Hosting | null }) {
   // Early return for empty state - this satisfies TypeScript's control-flow analysis
   if (!data) {
     return (

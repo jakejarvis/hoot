@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { RegistrationSection } from "@/components/domain/sections/registration-section";
-import { RegistrationSectionSkeleton } from "@/components/domain/skeletons";
+import { RegistrationSection } from "@/components/domain/registration/registration-section";
+import { RegistrationSectionSkeleton } from "@/components/domain/registration/registration-section-skeleton";
 import { useRegistrationQuery } from "@/hooks/use-domain-queries";
 
 function RegistrationSectionContent({ domain }: { domain: string }) {

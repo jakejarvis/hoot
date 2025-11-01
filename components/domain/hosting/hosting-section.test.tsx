@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { HostingEmailSection } from "./hosting-email-section";
+import { HostingSection } from "./hosting-section";
 
 vi.mock("next/dynamic", () => ({
   __esModule: true,
@@ -12,11 +12,11 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
-vi.mock("@/components/domain/favicon", () => ({
+vi.mock("@/components/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => <div>icon:{domain}</div>,
 }));
 
-describe("HostingEmailSection", () => {
+describe("HostingSection", () => {
   it("renders provider names and icons", () => {
     const data = {
       dnsProvider: { name: "Cloudflare", domain: "cloudflare.com" },
@@ -31,7 +31,7 @@ describe("HostingEmailSection", () => {
         lon: null,
       },
     } as unknown as import("@/lib/schemas").Hosting;
-    render(<HostingEmailSection data={data} />);
+    render(<HostingSection data={data} />);
     expect(screen.getByText("Cloudflare")).toBeInTheDocument();
     expect(screen.getByText(/icon:cloudflare.com/)).toBeInTheDocument();
     expect(screen.getByText("Vercel")).toBeInTheDocument();
@@ -39,7 +39,7 @@ describe("HostingEmailSection", () => {
   });
 
   it("shows empty state when no providers", () => {
-    render(<HostingEmailSection data={null} />);
+    render(<HostingSection data={null} />);
     expect(
       screen.getByText(/No hosting details available/i),
     ).toBeInTheDocument();

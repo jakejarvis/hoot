@@ -2,8 +2,8 @@
 
 import { Earth } from "lucide-react";
 import { useMemo } from "react";
-import { DnsGroup } from "@/components/domain/dns-group";
-import { DnsRecordList } from "@/components/domain/dns-record-list";
+import { DnsGroup } from "@/components/domain/dns/dns-group";
+import { DnsRecordList } from "@/components/domain/dns/dns-record-list";
 import { Section } from "@/components/domain/section";
 import {
   Empty,
@@ -15,11 +15,7 @@ import {
 import type { DnsRecord } from "@/lib/schemas";
 import { sections } from "@/lib/sections-meta";
 
-export function DnsRecordsSection({
-  records,
-}: {
-  records?: DnsRecord[] | null;
-}) {
+export function DnsSection({ records }: { records?: DnsRecord[] | null }) {
   const recordsByType = useMemo(() => {
     const byType: Record<DnsRecord["type"], DnsRecord[]> = {
       A: [],

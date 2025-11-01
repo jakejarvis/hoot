@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { HeadersSection } from "@/components/domain/sections/headers-section";
-import { HeadersSectionSkeleton } from "@/components/domain/skeletons";
+import { HeadersSection } from "@/components/domain/headers/headers-section";
+import { HeadersSectionSkeleton } from "@/components/domain/headers/headers-section-skeleton";
 import { useHeadersQuery } from "@/hooks/use-domain-queries";
 
 function HeadersSectionContent({ domain }: { domain: string }) {

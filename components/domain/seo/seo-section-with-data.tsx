@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { SeoSection } from "@/components/domain/sections/seo-section";
-import { SeoSectionSkeleton } from "@/components/domain/skeletons";
+import { SeoSection } from "@/components/domain/seo/seo-section";
+import { SeoSectionSkeleton } from "@/components/domain/seo/seo-section-skeleton";
 import { useSeoQuery } from "@/hooks/use-domain-queries";
 
 function SeoSectionContent({ domain }: { domain: string }) {

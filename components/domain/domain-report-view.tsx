@@ -1,15 +1,15 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
+import { CertificatesSectionWithData } from "@/components/domain/certificates/certificates-section-with-data";
+import { DnsSectionWithData } from "@/components/domain/dns/dns-section-with-data";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainReportHeader } from "@/components/domain/domain-report-header";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
-import { CertificatesSectionWithData } from "@/components/domain/sections-with-data/certificates-section-with-data";
-import { DnsSectionWithData } from "@/components/domain/sections-with-data/dns-section-with-data";
-import { HeadersSectionWithData } from "@/components/domain/sections-with-data/headers-section-with-data";
-import { HostingSectionWithData } from "@/components/domain/sections-with-data/hosting-section-with-data";
-import { RegistrationSectionWithData } from "@/components/domain/sections-with-data/registration-section-with-data";
-import { SeoSectionWithData } from "@/components/domain/sections-with-data/seo-section-with-data";
+import { HeadersSectionWithData } from "@/components/domain/headers/headers-section-with-data";
+import { HostingSectionWithData } from "@/components/domain/hosting/hosting-section-with-data";
+import { RegistrationSectionWithData } from "@/components/domain/registration/registration-section-with-data";
+import { SeoSectionWithData } from "@/components/domain/seo/seo-section-with-data";
 import { useDomainExport } from "@/hooks/use-domain-export";
 import { useDomainHistory } from "@/hooks/use-domain-history";
 import { useRegistrationQuery } from "@/hooks/use-domain-queries";
