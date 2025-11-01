@@ -1,20 +1,77 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import { CertificatesSectionWithData } from "@/components/domain/certificates/certificates-section-with-data";
-import { DnsSectionWithData } from "@/components/domain/dns/dns-section-with-data";
+import { CertificatesSection } from "@/components/domain/certificates/certificates-section";
+import { CertificatesSectionSkeleton } from "@/components/domain/certificates/certificates-section-skeleton";
+import { createSectionWithData } from "@/components/domain/create-section-with-data";
+import { DnsSection } from "@/components/domain/dns/dns-section";
+import { DnsSectionSkeleton } from "@/components/domain/dns/dns-section-skeleton";
 import { DomainLoadingState } from "@/components/domain/domain-loading-state";
 import { DomainReportHeader } from "@/components/domain/domain-report-header";
 import { DomainUnregisteredState } from "@/components/domain/domain-unregistered-state";
-import { HeadersSectionWithData } from "@/components/domain/headers/headers-section-with-data";
-import { HostingSectionWithData } from "@/components/domain/hosting/hosting-section-with-data";
-import { RegistrationSectionWithData } from "@/components/domain/registration/registration-section-with-data";
-import { SeoSectionWithData } from "@/components/domain/seo/seo-section-with-data";
+import { HeadersSection } from "@/components/domain/headers/headers-section";
+import { HeadersSectionSkeleton } from "@/components/domain/headers/headers-section-skeleton";
+import { HostingSection } from "@/components/domain/hosting/hosting-section";
+import { HostingSectionSkeleton } from "@/components/domain/hosting/hosting-section-skeleton";
+import { RegistrationSection } from "@/components/domain/registration/registration-section";
+import { RegistrationSectionSkeleton } from "@/components/domain/registration/registration-section-skeleton";
+import { SeoSection } from "@/components/domain/seo/seo-section";
+import { SeoSectionSkeleton } from "@/components/domain/seo/seo-section-skeleton";
 import { useDomainExport } from "@/hooks/use-domain-export";
 import { useDomainHistory } from "@/hooks/use-domain-history";
-import { useRegistrationQuery } from "@/hooks/use-domain-queries";
+import {
+  useCertificatesQuery,
+  useDnsQuery,
+  useHeadersQuery,
+  useHostingQuery,
+  useRegistrationQuery,
+  useSeoQuery,
+} from "@/hooks/use-domain-queries";
 import { useDomainQueryKeys } from "@/hooks/use-domain-query-keys";
 import { captureClient } from "@/lib/analytics/client";
+
+// Create section components using the factory
+const RegistrationSectionWithData = createSectionWithData(
+  useRegistrationQuery,
+  RegistrationSection,
+  RegistrationSectionSkeleton,
+  (_domain, data) => ({ data }),
+);
+
+const HostingSectionWithData = createSectionWithData(
+  useHostingQuery,
+  HostingSection,
+  HostingSectionSkeleton,
+  (_domain, data) => ({ data }),
+);
+
+const DnsSectionWithData = createSectionWithData(
+  useDnsQuery,
+  DnsSection,
+  DnsSectionSkeleton,
+  (_domain, data) => ({ records: data.records }),
+);
+
+const CertificatesSectionWithData = createSectionWithData(
+  useCertificatesQuery,
+  CertificatesSection,
+  CertificatesSectionSkeleton,
+  (_domain, data) => ({ data }),
+);
+
+const HeadersSectionWithData = createSectionWithData(
+  useHeadersQuery,
+  HeadersSection,
+  HeadersSectionSkeleton,
+  (_domain, data) => ({ data }),
+);
+
+const SeoSectionWithData = createSectionWithData(
+  useSeoQuery,
+  SeoSection,
+  SeoSectionSkeleton,
+  (domain, data) => ({ domain, data }),
+);
 
 /**
  * Inner content component - queries registration and conditionally shows sections.

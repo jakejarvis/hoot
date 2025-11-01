@@ -105,34 +105,62 @@ vi.mock("@/components/domain/tools-dropdown", () => ({
   ToolsDropdown: () => <div>Tools</div>,
 }));
 
-vi.mock(
-  "@/components/domain/registration/registration-section-with-data",
-  () => ({
-    RegistrationSectionWithData: () => <div>Registration</div>,
-  }),
-);
-
-vi.mock("@/components/domain/hosting/hosting-section-with-data", () => ({
-  HostingSectionWithData: () => <div>Hosting</div>,
+vi.mock("@/components/domain/create-section-with-data", () => ({
+  createSectionWithData: () => () => <div>Section</div>,
 }));
 
-vi.mock("@/components/domain/dns/dns-section-with-data", () => ({
-  DnsSectionWithData: () => <div>DNS</div>,
+vi.mock("@/components/domain/registration/registration-section", () => ({
+  RegistrationSection: () => <div>Registration</div>,
 }));
 
 vi.mock(
-  "@/components/domain/certificates/certificates-section-with-data",
+  "@/components/domain/registration/registration-section-skeleton",
   () => ({
-    CertificatesSectionWithData: () => <div>Certificates</div>,
+    RegistrationSectionSkeleton: () => <div>Registration Skeleton</div>,
   }),
 );
 
-vi.mock("@/components/domain/headers/headers-section-with-data", () => ({
-  HeadersSectionWithData: () => <div>Headers</div>,
+vi.mock("@/components/domain/hosting/hosting-section", () => ({
+  HostingSection: () => <div>Hosting</div>,
 }));
 
-vi.mock("@/components/domain/seo/seo-section-with-data", () => ({
-  SeoSectionWithData: () => <div>SEO</div>,
+vi.mock("@/components/domain/hosting/hosting-section-skeleton", () => ({
+  HostingSectionSkeleton: () => <div>Hosting Skeleton</div>,
+}));
+
+vi.mock("@/components/domain/dns/dns-section", () => ({
+  DnsSection: () => <div>DNS</div>,
+}));
+
+vi.mock("@/components/domain/dns/dns-section-skeleton", () => ({
+  DnsSectionSkeleton: () => <div>DNS Skeleton</div>,
+}));
+
+vi.mock("@/components/domain/certificates/certificates-section", () => ({
+  CertificatesSection: () => <div>Certificates</div>,
+}));
+
+vi.mock(
+  "@/components/domain/certificates/certificates-section-skeleton",
+  () => ({
+    CertificatesSectionSkeleton: () => <div>Certificates Skeleton</div>,
+  }),
+);
+
+vi.mock("@/components/domain/headers/headers-section", () => ({
+  HeadersSection: () => <div>Headers</div>,
+}));
+
+vi.mock("@/components/domain/headers/headers-section-skeleton", () => ({
+  HeadersSectionSkeleton: () => <div>Headers Skeleton</div>,
+}));
+
+vi.mock("@/components/domain/seo/seo-section", () => ({
+  SeoSection: () => <div>SEO</div>,
+}));
+
+vi.mock("@/components/domain/seo/seo-section-skeleton", () => ({
+  SeoSectionSkeleton: () => <div>SEO Skeleton</div>,
 }));
 
 describe("DomainReportView Export", () => {
