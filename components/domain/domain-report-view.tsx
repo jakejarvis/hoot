@@ -39,6 +39,15 @@ function DomainReportContent({ domain }: { domain: string }) {
   // Add to search history (only for registered domains)
   useDomainHistory(isConfirmedUnregistered ? "" : domain);
 
+  // Capture analytics event when registration state resolves
+  useEffect(() => {
+    if (isConfirmedUnregistered) {
+      captureClient("unregistered_viewed", { domain });
+    } else {
+      captureClient("report_viewed", { domain });
+    }
+  }, [domain, isConfirmedUnregistered]);
+
   // Memoize query keys to avoid repeated queryOptions calls
   const queryKeys = useMemo(
     () => ({
@@ -72,11 +81,8 @@ function DomainReportContent({ domain }: { domain: string }) {
   }, [queryClient, queryKeys]);
 
   if (isConfirmedUnregistered) {
-    captureClient("unregistered_viewed", { domain });
     return <DomainUnregisteredState domain={domain} />;
   }
-
-  captureClient("report_viewed", { domain });
 
   // Export handler that reads all data from React Query cache
   const handleExport = () => {
