@@ -2,14 +2,15 @@ import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Providers } from "@/app/providers";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
 import { Toaster } from "@/components/ui/sonner";
 import { BASE_URL } from "@/lib/constants";
 import { TRPCProvider } from "@/trpc/client";
+
 import "./globals.css";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Domainstack — Domain Intelligence Made Easy",
