@@ -54,10 +54,21 @@ function DomainReportContent({ domain }: { domain: string }) {
 
   // Check if all section data is loaded in cache
   useEffect(() => {
+    // Subscribe to query cache updates to reactively check data availability
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      const hasAllData = Object.values(queryKeys).every(
+        (key) => queryClient.getQueryData(key) !== undefined,
+      );
+      setAllDataLoaded(hasAllData);
+    });
+
+    // Initial check
     const hasAllData = Object.values(queryKeys).every(
       (key) => queryClient.getQueryData(key) !== undefined,
     );
     setAllDataLoaded(hasAllData);
+
+    return unsubscribe;
   }, [queryClient, queryKeys]);
 
   if (isConfirmedUnregistered) {
