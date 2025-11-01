@@ -29,6 +29,10 @@ let nextConfig: NextConfig = {
         source: "/_proxy/ingest/:path*",
         destination: "https://us.i.posthog.com/:path*",
       },
+      {
+        source: "/healthz",
+        destination: "/api/healthz",
+      },
     ];
   },
   skipTrailingSlashRedirect: true,
