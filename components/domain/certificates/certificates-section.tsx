@@ -271,9 +271,5 @@ export function CertificatesSection({
 }
 
 export function equalHostname(a: string, b: string): boolean {
-  try {
-    return a.trim().toLowerCase() === b.trim().toLowerCase();
-  } catch {
-    return a === b;
-  }
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
