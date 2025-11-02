@@ -39,10 +39,11 @@ export function HostingSection({
   domain?: string;
   data?: Hosting | null;
 }) {
+  const dnsProvider = data?.dnsProvider ?? null;
+  const hostingProvider = data?.hostingProvider ?? null;
+  const emailProvider = data?.emailProvider ?? null;
   const hasAnyProvider =
-    data?.dnsProvider.name ||
-    data?.hostingProvider.name ||
-    data?.emailProvider.name;
+    dnsProvider?.name || hostingProvider?.name || emailProvider?.name;
 
   return (
     <Section {...sections.hosting}>
@@ -51,11 +52,11 @@ export function HostingSection({
           <KeyValueGrid colsDesktop={3}>
             <KeyValue
               label="DNS"
-              value={data.dnsProvider.name ?? "Not configured"}
+              value={dnsProvider?.name ?? "Not configured"}
               leading={
-                data.dnsProvider.domain ? (
+                dnsProvider?.domain ? (
                   <Favicon
-                    domain={data.dnsProvider.domain}
+                    domain={dnsProvider.domain}
                     size={16}
                     className="rounded"
                   />
@@ -64,11 +65,11 @@ export function HostingSection({
             />
             <KeyValue
               label="Hosting"
-              value={data.hostingProvider.name ?? "Not configured"}
+              value={hostingProvider?.name ?? "Not configured"}
               leading={
-                data.hostingProvider.domain ? (
+                hostingProvider?.domain ? (
                   <Favicon
-                    domain={data.hostingProvider.domain}
+                    domain={hostingProvider.domain}
                     size={16}
                     className="rounded"
                   />
@@ -77,11 +78,11 @@ export function HostingSection({
             />
             <KeyValue
               label="Email"
-              value={data.emailProvider.name ?? "Not configured"}
+              value={emailProvider?.name ?? "Not configured"}
               leading={
-                data.emailProvider.domain ? (
+                emailProvider?.domain ? (
                   <Favicon
-                    domain={data.emailProvider.domain}
+                    domain={emailProvider.domain}
                     size={16}
                     className="rounded"
                   />
@@ -90,7 +91,7 @@ export function HostingSection({
             />
           </KeyValueGrid>
 
-          {data.geo.lat != null && data.geo.lon != null ? (
+          {data?.geo?.lat != null && data?.geo?.lon != null ? (
             <>
               <KeyValue
                 label="Location"
