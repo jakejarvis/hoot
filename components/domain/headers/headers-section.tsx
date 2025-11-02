@@ -42,7 +42,7 @@ export function HeadersSection({
               label={h.name}
               value={h.value}
               copyable
-              highlight={IMPORTANT_HEADERS.has(h.name)}
+              highlight={IMPORTANT_HEADERS.has(h.name?.toLowerCase() ?? "")}
             />
           ))}
         </KeyValueGrid>
