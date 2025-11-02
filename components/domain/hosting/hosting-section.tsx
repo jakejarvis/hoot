@@ -39,31 +39,10 @@ export function HostingSection({
   domain?: string;
   data?: Hosting | null;
 }) {
-  // Early return for empty state - this satisfies TypeScript's control-flow analysis
-  if (!data) {
-    return (
-      <Section {...sections.hosting}>
-        <Empty className="border border-dashed">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <MailQuestionMark />
-            </EmptyMedia>
-            <EmptyTitle>No hosting details available</EmptyTitle>
-            <EmptyDescription>
-              We couldn&apos;t detect hosting, email, or DNS provider info. If
-              the domain has no A/AAAA records or blocked headers, details may
-              be unavailable.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      </Section>
-    );
-  }
-
   const hasAnyProvider =
-    data.dnsProvider.name ||
-    data.hostingProvider.name ||
-    data.emailProvider.name;
+    data?.dnsProvider.name ||
+    data?.hostingProvider.name ||
+    data?.emailProvider.name;
 
   return (
     <Section {...sections.hosting}>
