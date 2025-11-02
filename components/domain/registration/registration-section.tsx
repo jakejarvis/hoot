@@ -211,14 +211,9 @@ export function extractRegistrantView(
   const registrant = record.contacts?.find((c) => c.type === "registrant");
   if (!registrant) return null;
   const organization =
-    (registrant.organization || registrant.name || "").toString().trim() ||
-    "Unknown";
-  const country = (
-    registrant.country ||
-    registrant.countryCode ||
-    ""
-  ).toString();
-  const state = (registrant.state || "").toString() || undefined;
+    (registrant.organization || registrant.name || "").trim() || "Unknown";
+  const country = registrant.country || registrant.countryCode || "";
+  const state = registrant.state || "" || undefined;
   return { organization, country, state };
 }
 
