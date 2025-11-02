@@ -155,7 +155,11 @@ describe("createSectionWithData", () => {
       </QueryClientProvider>,
     );
 
-    // Verify useQuery was called
+    // Verify both domain and data are passed to section
     expect(mockUseQuery).toHaveBeenCalledWith("example.com");
+    expect(MockSection).toHaveBeenCalled();
+    const callArgs = MockSection.mock.calls[0][0];
+    expect(callArgs.domain).toBe("example.com");
+    expect(callArgs.data).toEqual({ seoData: "meta" });
   });
 });
