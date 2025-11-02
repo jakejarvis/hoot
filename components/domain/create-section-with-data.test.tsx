@@ -7,6 +7,16 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createSectionWithData } from "@/components/domain/create-section-with-data";
 
+// Mock the error boundary to avoid class component complexity in tests
+vi.mock("@/components/domain/section-error-boundary", () => ({
+  SectionErrorBoundary: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    sectionName: string;
+  }) => <div>{children}</div>,
+}));
+
 describe("createSectionWithData", () => {
   it("should create a component that queries and renders section", () => {
     const testData = { message: "test data" };
@@ -26,7 +36,7 @@ describe("createSectionWithData", () => {
       mockUseQuery,
       MockSection,
       MockSkeleton,
-      (_domain, data) => ({ data }),
+      "Test Section",
     );
 
     const queryClient = new QueryClient();
@@ -66,6 +76,7 @@ describe("createSectionWithData", () => {
       mockUseQuery,
       MockSection,
       MockSkeleton,
+      "Test Section",
     );
 
     // Verify the factory creates the correct structure
@@ -84,7 +95,7 @@ describe("createSectionWithData", () => {
       mockUseQuery,
       MockSection,
       MockSkeleton,
-      (_domain, data) => ({ data }),
+      "Test Section",
     );
 
     const queryClient = new QueryClient();
@@ -118,7 +129,7 @@ describe("createSectionWithData", () => {
       mockUseQuery,
       MockSection,
       MockSkeleton,
-      (domain, data) => ({ domain, data }),
+      "Test Section",
     );
 
     const queryClient = new QueryClient();

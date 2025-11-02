@@ -35,36 +35,42 @@ const RegistrationSectionWithData = createSectionWithData(
   useRegistrationQuery,
   RegistrationSection,
   RegistrationSectionSkeleton,
+  "Registration",
 );
 
 const HostingSectionWithData = createSectionWithData(
   useHostingQuery,
   HostingSection,
   HostingSectionSkeleton,
+  "Hosting",
 );
 
 const DnsSectionWithData = createSectionWithData(
   useDnsQuery,
   DnsSection,
   DnsSectionSkeleton,
+  "DNS",
 );
 
 const CertificatesSectionWithData = createSectionWithData(
   useCertificatesQuery,
   CertificatesSection,
   CertificatesSectionSkeleton,
+  "Certificates",
 );
 
 const HeadersSectionWithData = createSectionWithData(
   useHeadersQuery,
   HeadersSection,
   HeadersSectionSkeleton,
+  "Headers",
 );
 
 const SeoSectionWithData = createSectionWithData(
   useSeoQuery,
   SeoSection,
   SeoSectionSkeleton,
+  "SEO",
 );
 
 /**
