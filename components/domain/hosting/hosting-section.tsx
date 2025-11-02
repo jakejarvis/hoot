@@ -3,6 +3,7 @@
 import { hasFlag } from "country-flag-icons";
 import { MailQuestionMark } from "lucide-react";
 import dynamic from "next/dynamic";
+import { MapSkeleton } from "@/components/domain/hosting/map-skeleton";
 import { KeyValue } from "@/components/domain/key-value";
 import { KeyValueGrid } from "@/components/domain/key-value-grid";
 import { Section } from "@/components/domain/section";
@@ -14,7 +15,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Spinner } from "@/components/ui/spinner";
 import type { Hosting } from "@/lib/schemas";
 import { sections } from "@/lib/sections-meta";
 import { cn } from "@/lib/utils";
@@ -24,14 +24,7 @@ const HostingMap = dynamic(
     import("@/components/domain/hosting/hosting-map").then((m) => m.HostingMap),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-[280px] w-full items-center justify-center rounded-2xl border border-black/10 bg-muted/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-white/10">
-        <div className="flex items-center gap-2 text-muted-foreground text-xs">
-          <Spinner />
-          <span>Loading map...</span>
-        </div>
-      </div>
-    ),
+    loading: () => <MapSkeleton />,
   },
 );
 
