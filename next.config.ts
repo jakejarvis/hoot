@@ -14,11 +14,6 @@ let nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/**": ["node_modules/@sparticuz/chromium/bin/**"],
   },
-  experimental: {
-    staleTimes: {
-      dynamic: 0, // disable client-side router cache for dynamic pages
-    },
-  },
   rewrites: async () => {
     return [
       {
