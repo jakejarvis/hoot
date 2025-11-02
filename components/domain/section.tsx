@@ -1,4 +1,4 @@
-import { AlertCircle, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -21,7 +21,6 @@ export function Section({
   slug,
   accent = "slate",
   isLoading,
-  isError,
   children,
 }: {
   title: string;
@@ -31,11 +30,10 @@ export function Section({
   slug?: string;
   accent?: "blue" | "purple" | "green" | "orange" | "pink" | "cyan" | "slate";
   isLoading?: boolean;
-  isError?: boolean;
   children?: React.ReactNode;
 }) {
   const Icon = icon;
-  // Loading/Error adornments reflect props only; avoid client-only hydration gates
+  // Loading adornment reflects props only; avoid client-only hydration gates
   const computedSlug = (slug ?? title)
     .toLowerCase()
     .replace(/\s+/g, "-")
@@ -95,20 +93,12 @@ export function Section({
                 )}
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <div className="mr-2 flex items-center gap-2 text-muted-foreground text-xs">
-                  {isLoading && (
-                    <>
-                      <Spinner className="size-5" />
-                      <span className="sr-only">Loading</span>
-                    </>
-                  )}
-                  {isError && (
-                    <>
-                      <AlertCircle className="h-3.5 w-3.5 stroke-destructive" />
-                      <span>Error</span>
-                    </>
-                  )}
-                </div>
+                {isLoading && (
+                  <div className="mr-2 flex items-center gap-2 text-muted-foreground text-xs">
+                    <Spinner className="size-5" />
+                    <span className="sr-only">Loading</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
