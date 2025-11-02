@@ -79,8 +79,23 @@ describe("createSectionWithData", () => {
       "Test Section",
     );
 
-    // Verify the factory creates the correct structure
-    expect(typeof SectionWithData).toBe("function");
+    const queryClient = new QueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SectionWithData domain="example.com" />
+      </QueryClientProvider>,
+    );
+
+    // Verify the section renders with correctly mapped props
+    expect(screen.getByTestId("section")).toBeInTheDocument();
+    expect(screen.getByText("example.com: A, AAAA, MX")).toBeInTheDocument();
+
+    // Verify MockSection was called with the correct props
+    expect(MockSection).toHaveBeenCalled();
+    const callArgs = MockSection.mock.calls[0][0];
+    expect(callArgs.domain).toBe("example.com");
+    expect(callArgs.data).toEqual(testData);
   });
 
   it("should pass domain to useQuery hook", () => {
