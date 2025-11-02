@@ -19,6 +19,7 @@ const IMPORTANT_HEADERS = new Set([
   "content-security-policy",
   "content-security-policy-report-only",
   "x-frame-options",
+  "x-content-type-options",
   "referrer-policy",
   "server",
   "x-powered-by",
