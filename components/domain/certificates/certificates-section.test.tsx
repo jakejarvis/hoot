@@ -5,7 +5,7 @@ import { CertificatesSection, equalHostname } from "./certificates-section";
 
 vi.mock("@/components/favicon", () => ({
   Favicon: ({ domain }: { domain: string }) => (
-    <div data-slot="favicon" data-domain={domain} />
+    <div data-testid="favicon" data-slot="favicon" data-domain={domain} />
   ),
 }));
 
@@ -43,6 +43,24 @@ describe("CertificatesSection", () => {
         .some((n) => n.tagName.toLowerCase() === "span"),
     ).toBe(true);
     expect(screen.getByText("Subject")).toBeInTheDocument();
+
+    // Assert SAN count badge - altNames has 2 items but "example.com" matches subject, so +1
+    expect(screen.getByText("+")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+
+    // Assert tooltip wrapper and content with SAN domains
+    expect(screen.getByRole("button", { name: /\+1/i })).toBeInTheDocument();
+    expect(screen.getByText("*.example.com")).toBeInTheDocument();
+
+    // Assert CA provider favicon with correct domain
+    const favicon = screen.getByTestId("favicon");
+    expect(favicon).toHaveAttribute("data-domain", "letsencrypt.org");
+
+    // Assert CA provider name displayed as annotation
+    const caProviderName = screen
+      .getAllByText("Let's Encrypt")
+      .find((n) => n.className.includes("text-[11px]"));
+    expect(caProviderName).toBeInTheDocument();
   });
 
   it("shows empty state when no certificates", () => {
